@@ -1,0 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    @apply antialiased text-gray-900;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { text-wrap: balance; }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .tracking-hero { letter-spacing: -0.04em; }
+  .tracking-display { letter-spacing: -0.03em; }
+}
+
+/* ── Keyframe animations ──────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(32px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideRight {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes pulse-ring {
+  0%   { transform: scale(1);   opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0);    }
+  50%       { transform: translateY(-8px); }
+}
+
+/* ── Animation utility classes ────────────────────────────── */
+.animate-fade-up     { animation: fadeUp     0.7s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-fade-in     { animation: fadeIn     0.6s ease both; }
+.animate-slide-right { animation: slideRight 0.6s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-scale-in    { animation: scaleIn    0.5s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-float       { animation: float      4s ease-in-out infinite; }
+
+/* Alias set used by GeneratedSite components */
+.anim-fade-up   { animation: fadeUp   0.7s cubic-bezier(0.16,1,0.3,1) both; }
+.anim-fade-in   { animation: fadeIn   0.6s ease both; }
+.anim-scale-in  { animation: scaleIn  0.5s cubic-bezier(0.16,1,0.3,1) both; }
+
+/* Delay helpers */
+.delay-100, .anim-delay-100 { animation-delay: 0.1s; }
+.delay-200, .anim-delay-200 { animation-delay: 0.2s; }
+.delay-300, .anim-delay-300 { animation-delay: 0.3s; }
+.delay-400, .anim-delay-400 { animation-delay: 0.4s; }
+.delay-500, .anim-delay-500 { animation-delay: 0.5s; }
+.delay-600 { animation-delay: 0.6s; }
+.delay-700 { animation-delay: 0.7s; }
+
+/* ── Scroll-reveal (JS adds .is-visible via IntersectionObserver) ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.65s cubic-bezier(0.16,1,0.3,1),
+              transform 0.65s cubic-bezier(0.16,1,0.3,1);
+}
+/* Direct reveal OR child of a revealed parent */
+.reveal.is-visible,
+.is-visible .reveal { opacity: 1; transform: translateY(0); }
+.reveal-delay-1, .is-visible .reveal-delay-1 { transition-delay: 0.08s; }
+.reveal-delay-2, .is-visible .reveal-delay-2 { transition-delay: 0.16s; }
+.reveal-delay-3, .is-visible .reveal-delay-3 { transition-delay: 0.24s; }
+.reveal-delay-4, .is-visible .reveal-delay-4 { transition-delay: 0.32s; }
+.reveal-delay-5, .is-visible .reveal-delay-5 { transition-delay: 0.40s; }
+.reveal-delay-6, .is-visible .reveal-delay-6 { transition-delay: 0.48s; }
+
+/* Slide-in from left */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.anim-slide-left  { animation: slideInLeft  0.7s cubic-bezier(0.16,1,0.3,1) both; }
+.anim-slide-right { animation: slideInRight 0.7s cubic-bezier(0.16,1,0.3,1) both; }
+.anim-zoom-in     { animation: zoomIn       0.6s cubic-bezier(0.16,1,0.3,1) both; }
+
+/* ── FAQ accordion (CSS grid trick) ──────────────────────── */
+.faq-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.16,1,0.3,1);
+}
+.faq-body.open { grid-template-rows: 1fr; }
+.faq-inner { overflow: hidden; }
+
+/* ── Card hover lift ──────────────────────────────────────── */
+.card-lift {
+  transition: transform 0.25s cubic-bezier(0.16,1,0.3,1),
+              box-shadow 0.25s ease;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgba(0,0,0,0.12);
+}
+
+/* ── Gradient text ────────────────────────────────────────── */
+.text-gradient {
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Mobile padding for fixed CTA bar ────────────────────── */
+@media (max-width: 767px) {
+  .pb-mobile-cta { padding-bottom: 80px; }
+}
+
+/* ── Accessibility: reduced motion ──────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+  .animate-fade-up, .anim-fade-up,
+  .animate-fade-in, .anim-fade-in,
+  .animate-scale-in, .anim-scale-in,
+  .animate-slide-right {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .animate-float { animation: none; }
+}
+
+/* ── Focus ring default (visible only on keyboard) ─────── */
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
