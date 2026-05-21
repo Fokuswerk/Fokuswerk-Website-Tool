@@ -116,8 +116,13 @@ export default function SiteForm() {
       if (data.suggested_industry)     setIndustry(data.suggested_industry);
       if (data.primary_color)          setPrimaryColor(data.primary_color);
       setScrapedCtx(data);
-      setScraped(true);
-      setScrapeMsg({ type: "ok", text: `✓ Analysiert${data.suggested_industry ? ` · ${data.suggested_industry}` : ""}` });
+      setScraped(!!data.primary_color);
+      const hints = [
+        data.suggested_industry,
+        data.primary_color ? `Farbe erkannt` : null,
+        data.phone ? "Telefon erkannt" : null,
+      ].filter(Boolean).join(" · ");
+      setScrapeMsg({ type: "ok", text: `✓ Analysiert${hints ? ` · ${hints}` : ""}` });
     } catch {
       setScrapeMsg({ type: "err", text: "Analyse fehlgeschlagen." });
     } finally {
@@ -426,7 +431,7 @@ export default function SiteForm() {
         <div>
           <p className="text-sm font-medium text-gray-800">Primärfarbe</p>
           <p className="text-xs text-gray-400">
-            {scraped ? "Automatisch erkannt" : "Bitte anpassen"} · {primaryColor}
+            {scraped ? "✓ Automatisch erkannt" : oldWebsiteUrl ? "Nicht erkannt – bitte anpassen" : "Bitte anpassen"} · {primaryColor}
           </p>
         </div>
       </div>

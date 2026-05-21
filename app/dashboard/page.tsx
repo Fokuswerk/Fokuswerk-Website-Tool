@@ -2,6 +2,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import type { Site, SiteStatus } from "@/lib/types";
 import SitesTable from "./SitesTable";
+import LogoutButton from "./LogoutButton";
 
 async function getSites(): Promise<Site[]> {
   const { data, error } = await supabase
@@ -58,6 +59,7 @@ export default async function DashboardPage() {
             >
               Rechtliches
             </Link>
+            <LogoutButton />
             <Link
               href="/dashboard/new"
               className="inline-flex items-center gap-2 rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"

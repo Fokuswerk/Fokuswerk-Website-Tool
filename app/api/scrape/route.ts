@@ -158,6 +158,82 @@ function detectIndustry(text: string): string | null {
   return null;
 }
 
+// ─── Primary color extraction ────────────────────────────────────────────────
+
+/** Reject colors that are basically white, black or neutral gray */
+function isUsableColor(hex: string): boolean {
+  const h = hex.replace("#", "").toLowerCase();
+  if (h.length === 3) {
+    const r = parseInt(h[0] + h[0], 16);
+    const g = parseInt(h[1] + h[1], 16);
+    const b = parseInt(h[2] + h[2], 16);
+    return isUsableRgb(r, g, b);
+  }
+  if (h.length === 6) {
+    return isUsableRgb(
+      parseInt(h.slice(0, 2), 16),
+      parseInt(h.slice(2, 4), 16),
+      parseInt(h.slice(4, 6), 16),
+    );
+  }
+  return false;
+}
+
+function isUsableRgb(r: number, g: number, b: number): boolean {
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const lightness = (max + min) / 2 / 255;
+  const saturation = max === min ? 0 : (max - min) / (255 - Math.abs(max + min - 255));
+  // Reject: too light (>0.88), too dark (<0.06), or too gray (sat <0.15)
+  if (lightness > 0.88 || lightness < 0.06) return false;
+  if (saturation < 0.15) return false;
+  return true;
+}
+
+function firstHex(text: string): string | null {
+  const m = text.match(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/);
+  return m ? m[0] : null;
+}
+
+function extractPrimaryColor(html: string): string | null {
+  // 1. theme-color meta tag
+  const themeMeta = extractMeta(html, "theme-color");
+  if (themeMeta) {
+    const hex = firstHex(themeMeta);
+    if (hex && isUsableColor(hex)) return hex;
+  }
+
+  // 2. All <style> block CSS text
+  const styleBlocks = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)];
+  const css = styleBlocks.map(m => m[1]).join("\n");
+
+  // 2a. CSS custom properties with brand/primary names
+  const varPattern = /--(?:color-)?(?:primary|brand|accent|main|theme|highlight|corporate)(?:-color|-bg)?[\s\S]{0,6}:\s*(#[0-9a-fA-F]{3,6})/gi;
+  for (const m of css.matchAll(varPattern)) {
+    if (isUsableColor(m[1])) return m[1];
+  }
+
+  // 2b. Button / CTA background colors (very reliable brand color signal)
+  const btnPattern = /(?:\.btn(?:-primary)?|\.button(?:-primary)?|\.cta|[^{]*:root[^{]*|a\.btn)[^{]{0,60}\{[^}]*background(?:-color)?:\s*(#[0-9a-fA-F]{3,6})/gi;
+  for (const m of css.matchAll(btnPattern)) {
+    if (isUsableColor(m[1])) return m[1];
+  }
+
+  // 2c. Header / nav background color
+  const navPattern = /(?:header|\.header|#header|nav|\.nav|\.navbar|\.site-header)[^{]{0,30}\{[^}]*background(?:-color)?:\s*(#[0-9a-fA-F]{3,6})/gi;
+  for (const m of css.matchAll(navPattern)) {
+    if (isUsableColor(m[1])) return m[1];
+  }
+
+  // 3. Inline style attributes on nav/header/button elements
+  const inlinePattern = /<(?:header|nav|button|a)[^>]+style=["'][^"']*background(?:-color)?:\s*(#[0-9a-fA-F]{3,6})/gi;
+  for (const m of html.matchAll(inlinePattern)) {
+    if (isUsableColor(m[1])) return m[1];
+  }
+
+  return null;
+}
+
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -301,8 +377,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── 8. Theme color ────────────────────────────────────────────────────
-    const themeColor = extractMeta(html, "theme-color") || null;
+    // ── 8. Primary color — multi-source extraction ────────────────────────
+    const themeColor = extractPrimaryColor(html);
 
     // ── 9. Logo ───────────────────────────────────────────────────────────
     // Priority: JSON-LD logo → specific img patterns → apple-touch-icon → og:image
