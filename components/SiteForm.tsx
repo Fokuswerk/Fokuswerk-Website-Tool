@@ -212,7 +212,20 @@ export default function SiteForm() {
       }
       if (!res.ok || data.error) throw new Error((data.error as string) || "KI-Generierung fehlgeschlagen.");
 
-      const finalSlug = slug || toSlug(companyName);
+      // Slug-Konflikt vermeiden: bei Duplikat automatisch Suffix anhängen
+      let baseSlug = slug || toSlug(companyName);
+      // Kürzen falls zu lang
+      if (baseSlug.length > 60) baseSlug = baseSlug.slice(0, 60).replace(/-+$/, "");
+      let finalSlug = baseSlug;
+      let attempt = 0;
+      while (true) {
+        const { data: existing } = await supabase
+          .from("sites").select("id").eq("slug", finalSlug).maybeSingle();
+        if (!existing) break;
+        attempt++;
+        finalSlug = `${baseSlug}-${attempt}`;
+      }
+
       const { data: inserted, error: dbError } = await supabase
         .from("sites")
         .insert({
