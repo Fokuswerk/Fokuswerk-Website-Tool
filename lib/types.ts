@@ -10,6 +10,7 @@ export type SiteTemplate = "premium" | "local" | "minimal" | "arzt" | "arzt-mode
 export interface ServiceItem {
   title: string;
   description: string;
+  highlight?: string;  // Stärkster Vorteil dieser Leistung (1 Satz)
 }
 
 export interface BenefitItem {
@@ -46,8 +47,10 @@ export interface ProcessStep {
 }
 
 export interface AIContent {
-  brand_positioning?: string;  // Einzigartiges Positionierungsmerkmal (aus KI-Analyse)
+  brand_positioning?: string;   // Einzigartiges Positionierungsmerkmal (aus KI-Analyse)
+  brand_tone?: string;          // Tonalität: warm-einfühlsam | modern-souverän | premium-exklusiv | lokal-persönlich | technisch-präzise
   hero_badge?: string;
+  hero_detail?: string;         // 1-2 Sätze ergänzende Info direkt unter dem Hero
   cta_secondary?: string;
   services_detailed?: ServiceItem[];
   service_images?: string[];
@@ -55,6 +58,7 @@ export interface AIContent {
   stats?: StatItem[];
   about_headline?: string;
   about_highlight?: string;
+  about_points?: string[];      // 3-4 konkrete Bulletpoints über das Unternehmen
   trust_badge?: string;
   cta_section_headline?: string;
   cta_section_text?: string;

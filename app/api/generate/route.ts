@@ -117,101 +117,130 @@ function buildPrompt(input: {
 
   const ort = input.location || "der Region";
 
-  return `Du bist ein Senior Brand-Stratege, UX-Direktor, CRO-Spezialist und erfahrener Website-Texter auf Agentur-Niveau (vergleichbar mit einer 15.000€+ Website-Produktion).
+  return `Du bist ein Senior Brand-Stratege, UX-Direktor, CRO-Spezialist und Cheftexter auf Agentur-Niveau. Vergleichbar mit einer 15.000€+ Website-Produktion bei einer deutschen Top-Agentur.
 
-Deine Aufgabe: Erstelle Website-Inhalte, die wirken, als wären sie wochenlang von einem Spezialisten-Team individuell für dieses Unternehmen entwickelt worden — nicht wie ein austauschbares Template.
+Aufgabe: Erstelle vollständige, tiefe Website-Inhalte — so individuell, spezifisch und hochwertig, als hätte ein Team von Spezialisten wochenlang nur für dieses eine Unternehmen gearbeitet.
+
+Qualitätsniveau: Jeder Satz muss so klingen, als wäre er exklusiv für DIESES Unternehmen an DIESEM Ort geschrieben. Kein Satz darf für ein anderes Unternehmen passen.
 
 ══════════════════════════════════════════════════
-SCHRITT 1 — UNTERNEHMENSANALYSE (intern durchführen)
+PHASE 1 — TIEFE UNTERNEHMENSANALYSE
 ══════════════════════════════════════════════════
-Analysiere zuerst gründlich:
-• Was verkauft dieses Unternehmen WIRKLICH? Welche konkreten Probleme löst es?
-• Welche Emotion kauft der ${patientOrKunde}? (Sicherheit? Vertrauen? Gesundheit? Bequemlichkeit? Status?)
-• Was unterscheidet dieses Unternehmen in ${ort} von der Konkurrenz?
-• Welche Tonalität passt exakt? → wähle eine: Warm & einfühlsam / Modern & kompetent / Premium & exklusiv / Lokal & persönlich / Technisch & präzise
-• Was ist der stärkste Conversion-Trigger für diese Zielgruppe?
-• Welche Einwände haben ${patientOrKunde} — und wie kann die Website diese entkräften?
+Führe zuerst intern eine vollständige Analyse durch:
+
+IDENTITÄT: Was ist das Wesen dieses Unternehmens? Nicht was es tut — sondern wofür es steht.
+ZIELGRUPPE: Wer sind die ${patientOrKunde}? Was bewegt sie? Was hindert sie, jetzt anzurufen?
+EMOTION: Welche Emotion kaufen ${patientOrKunde} wirklich? (Sicherheit? Vertrauen? Stolz? Erleichterung?)
+DIFFERENZIERUNG: Was kann kein anderer in ${ort} so gut? Auch wenn es nicht explizit steht — leite es intelligent ab.
+TONALITÄT: Welche Stimme passt perfekt? Wähle exakt eine: Warm & einfühlsam / Modern & souverän / Premium & exklusiv / Lokal & persönlich / Technisch & präzise
+EINWÄNDE: Welche Bedenken haben ${patientOrKunde}? Wie entkräftet die Website jeden einzelnen?
+CONVERSION: Was ist der stärkste Grund, JETZT Kontakt aufzunehmen statt morgen?
 
 UNTERNEHMENSDATEN:
 ${dataLines.join("\n")}${serviceBlock}${pairBlock}${teamBlock}${faqBlock}
 
 ══════════════════════════════════════════════════
-SCHRITT 2 — LEISTUNGEN: NUR ECHTE DIENSTLEISTUNGEN
+PHASE 2 — LEISTUNGEN: EISERNE REGELN
 ══════════════════════════════════════════════════
-Leistungen müssen: konkret, buchbar, branchenspezifisch, realistisch sein.
+Leistungen = buchbare, konkrete Dienstleistungen die ein ${patientOrKunde === "Patienten" ? "Patient" : "Kunde"} direkt in Anspruch nehmen kann.
 
-✅ ERLAUBT — echte, buchbare Leistungen:
-  Zahnarzt: Prophylaxe, Implantologie, Bleaching, Zahnersatz, Invisalign, Kinderzahnheilkunde
-  Handwerk: Sanitärinstallation, Badezimmersanierung, Heizungswartung, Rohrbau
-  Allgemein: konkrete Behandlungen, Eingriffe, Installationen, Beratungen
+✅ KORREKTE Leistungen (konkret, buchbar, branchenspezifisch):
+  Zahnarzt: Professionelle Zahnreinigung, Implantologie, Zahnersatz, Bleaching, Invisalign, Kinderzahnheilkunde, Parodontitis-Behandlung, Wurzelkanalbehandlung
+  Arzt/Praxis: Vorsorgeuntersuchung, Blutbild, Impfberatung, Chronische Erkrankungen, EKG
+  Handwerk: Sanitärinstallation, Badezimmersanierung, Heizungswartung, Rohrreparatur, Notfallservice
 
-❌ NIEMALS — das sind KEINE Leistungen:
-  • Verwaltung: Aufnahmebogen, Anmeldung, Neupatient, Empfang, Rezeption
-  • Personal: ZFA, MFA, Assistenz, Stellenangebot, Ausbildungsplatz
-  • Allgemeines: Team, Benefits, Vorteile, Über uns, Praxisphilosophie, Warum wir
-  • Navigation: Willkommen, Wir freuen uns, Ihr Besuch, Kontakt, Öffnungszeiten
-  • Ergebnisse/Zahlen: Views, Reichweite, Follower, Statistiken, Bewertungen
+❌ VERBOTENE "Leistungen" (diese existieren als Leistung NICHT):
+  Aufnahmebogen · Neupatient · ZFA · MFA · Empfang · Rezeption · Anmeldung
+  Benefits · Vorteile · Warum wir · Über uns · Team · Philosophie · Leitbild
+  Willkommen · Wir freuen uns · Ihr Besuch · Herzlich Willkommen
+  Öffnungszeiten · Kontakt · Anfahrt · Impressum · Downloads · Formulare
+  Statistiken · Bewertungen · Views · Reichweite · Ergebnisse · FAQ
 
 ${validServices.length > 0
-    ? `→ PFLICHT: Verwende genau diese ${validServices.length} bestätigten Leistungen. Titel exakt so, nur Beschreibungen schreiben.`
-    : `→ Leite 5-7 logische, konkrete Leistungen aus Branche "${input.industry}" ab. Keine abstrakten Begriffe.`}
+    ? `→ PFLICHT: Exakt diese ${validServices.length} Leistungen verwenden. Titel 1:1 übernehmen, nur Beschreibungen texten.`
+    : `→ Leite 6-10 konkrete, buchbare Leistungen aus "${input.industry}" ab. Präzise Fachbegriffe verwenden.`}
 
 ══════════════════════════════════════════════════
-SCHRITT 3 — AGENTUR-QUALITÄT BEIM TEXTEN
+PHASE 3 — TEXTEN AUF HÖCHSTEM NIVEAU
 ══════════════════════════════════════════════════
-ABSOLUT VERBOTEN:
-✗ Generische Floskeln: "Ihr zuverlässiger Partner", "höchste Qualität", "maßgeschneiderte Lösungen"
-✗ Inhalte die für 100 andere Unternehmen genauso passen würden
-✗ Zahlen/Stats die NICHT aus den Daten oben stammen → stats: [] (lieber leer als erfunden!)
-✗ Testimonials die wie generierte KI-Texte klingen
+NIEMALS:
+✗ "Ihr zuverlässiger Partner" / "höchste Qualität" / "maßgeschneidert" / "kompetentes Team"
+✗ Inhalte die austauschbar wirken (testet: passt dieser Satz auch für einen Konkurrenten? → neu schreiben)
+✗ Erfundene Zahlen oder Statistiken → stats MUSS [] sein wenn keine Daten vorhanden
+✗ Generische Testimonials ohne spezifische Details
+✗ About-Texte die nichts über das ECHTE Unternehmen aussagen
 
-PFLICHT — jedes Element muss individuell wirken:
-✓ Hero-Headline: spezifisch für DIESES Unternehmen in ${ort} — max. 7 Wörter, kein Werbesprech
-✓ About-Text: Was macht es einzigartig? Persönlichkeit, Geschichte, konkreter Mehrwert
-✓ Services: Jede Beschreibung beantwortet "Was bringt mir das konkret?" — 2-3 präzise Sätze
-✓ Benefits: Echte Differenzierungsmerkmale, nicht "persönliche Beratung" und "faire Preise"
-✓ FAQ: Fragen die ${patientOrKunde} wirklich stellen — ehrliche, informative Antworten
-✓ Testimonials: Spezifisch, mit konkreten Details, authentisch klingend — Rolle z.B. "${testimonialRole}"
+IMMER:
+✓ Hero: Konkret, Ort integriert, überraschend ehrlich — kein Marketing-Speak
+✓ Services: Jede Beschreibung erklärt den echten Patientennutzen — 4-5 präzise Sätze
+✓ Benefits: 6 echte Differenzierungsmerkmale — keine Selbstverständlichkeiten
+✓ About: 5-6 Sätze Persönlichkeit, Geschichte, was dieses Unternehmen antreibt
+✓ FAQ: 8 Fragen die ${patientOrKunde} wirklich stellen — ehrliche, ausführliche Antworten (3-4 Sätze)
+✓ Testimonials: 5 spezifische Stimmen — konkrete Details, klingen wie echte Menschen
+✓ Local SEO: Natürliche Keywords, Ortskontext, Community-Bezug
 
-SEO-ANFORDERUNGEN:
-• meta_title: exakt 52-58 Zeichen | Keyword + Ort | z.B. "Zahnarzt ${ort} | Praxisname"
-• meta_description: exakt 145-155 Zeichen | konkreter Nutzen + handlungsauslösender CTA
-• Ort "${ort}" in Hero-Headline und Local-SEO-Text natürlich integrieren
+SEO (präzise einhalten):
+• meta_title: exakt 52-58 Zeichen | Hauptkeyword + ${ort} | z.B. "Zahnarzt ${ort} | ${input.company_name}"
+• meta_description: exakt 145-155 Zeichen | spezifischer Nutzen + konkreter CTA
+• hero_headline: Ort "${ort}" integriert, max. 7 Wörter, keine Floskel
 
-Antworte AUSSCHLIESSLICH mit validem JSON (kein Text davor/danach):
+Antworte AUSSCHLIESSLICH mit einem einzigen validen JSON-Objekt. Kein erklärender Text davor oder danach.
 
 {
-  "brand_positioning": "string (1 Satz: Was macht dieses Unternehmen einzigartig?)",
-  "meta_title": "string (52-58 Zeichen)",
-  "meta_description": "string (145-155 Zeichen)",
-  "hero_badge": "string (kurzes, konkretes Vertrauenssignal — z.B. 'Seit 1998 in ${ort}')",
-  "hero_headline": "string (max. 7 Wörter, Ort integrieren wenn möglich)",
-  "hero_subheadline": "string (max. 20 Wörter, konkreter Nutzen)",
-  "cta_text": "string (handlungsauslösend, branchenspezifisch)",
-  "cta_secondary": "string (sanfterer zweiter CTA)",
-  "services": [{"title": "string", "description": "string (2-3 präzise Sätze, echter Nutzen)"}],
-  "benefits": [{"title": "string (3-5 Wörter, konkret)", "description": "string (1-2 Sätze, differenzierend)"}],
+  "brand_positioning": "string (1 präziser Satz: Was macht ${input.company_name} einzigartig — konkret, nicht generisch)",
+  "brand_tone": "string (eine der 5 Tonalitäten: warm-einfühlsam | modern-souverän | premium-exklusiv | lokal-persönlich | technisch-präzise)",
+  "meta_title": "string (exakt 52-58 Zeichen)",
+  "meta_description": "string (exakt 145-155 Zeichen, endet mit Handlungsaufforderung)",
+  "hero_badge": "string (konkretes Vertrauenssignal, z.B. 'Seit 1998 in ${ort}' oder Bewertungshinweis)",
+  "hero_headline": "string (max. 7 Wörter, ${ort} integriert, ehrlich und konkret)",
+  "hero_subheadline": "string (max. 25 Wörter, stärkster Nutzen für ${patientOrKunde})",
+  "hero_detail": "string (1-2 Sätze ergänzende Information direkt unter dem Hero — was sie im ersten Gespräch erwartet)",
+  "cta_text": "string (primärer CTA — handlungsauslösend, branchenspezifisch)",
+  "cta_secondary": "string (sekundärer CTA — sanfter, für Zögernde)",
+  "services": [
+    {
+      "title": "string (exakter Leistungsname)",
+      "description": "string (4-5 Sätze: Was ist es? Was passiert konkret? Welchen Nutzen hat der ${patientOrKunde === "Patienten" ? "Patient" : "Kunde"}? Was unterscheidet diese Leistung hier?)",
+      "highlight": "string (1 Satz: der wichtigste Vorteil dieser Leistung)"
+    }
+  ],
+  "benefits": [
+    {"title": "string (3-5 Wörter, echter Differenzierer)", "description": "string (2-3 Sätze, konkret und glaubwürdig — keine Selbstverständlichkeiten)"}
+  ],
   "stats": [{"value": "string", "label": "string"}],
-  "about_headline": "string (individuell, nicht generisch)",
-  "about_text": "string (3 Sätze: Was, Wie, Warum gerade hier)",
-  "about_highlight": "string (max. 12 Wörter, stärkstes Alleinstellungsmerkmal)",
-  "trust_badge": "string",
+  "about_headline": "string (individuell, weckt Neugier, kein Standard)",
+  "about_text": "string (5-6 Sätze: Geschichte/Hintergrund, was antreibt, was man anders macht, warum ${ort}, was man dem ${patientOrKunde === "Patienten" ? "Patienten" : "Kunden"} verspricht)",
+  "about_highlight": "string (max. 15 Wörter: stärkstes Zitat oder Versprechen für die Hervorhebung)",
+  "about_points": [
+    "string (konkretes Merkmal — 1 Satz)",
+    "string",
+    "string",
+    "string"
+  ],
+  "trust_badge": "string (kurzes, starkes Vertrauenssignal)",
   "process_steps": [
-    {"step": 1, "title": "string", "description": "string (konkret, was passiert wann)"},
-    {"step": 2, "title": "string", "description": "string"},
-    {"step": 3, "title": "string", "description": "string"}
+    {"step": 1, "title": "string", "description": "string (2-3 Sätze: was genau passiert, wann, wie schnell)"},
+    {"step": 2, "title": "string", "description": "string (2-3 Sätze)"},
+    {"step": 3, "title": "string", "description": "string (2-3 Sätze)"},
+    {"step": 4, "title": "string", "description": "string (2-3 Sätze: was danach kommt, Follow-up, Ergebnis)"}
   ],
   "faq_items": [
-    {"question": "string (echte ${patientOrKunde}frage)", "answer": "string (ehrlich, informativ, 2-3 Sätze)"},
+    {"question": "string (echte ${patientOrKunde}frage die wirklich gestellt wird)", "answer": "string (3-4 ehrliche, informative Sätze)"},
+    {"question": "string", "answer": "string (3-4 Sätze)"},
+    {"question": "string", "answer": "string"},
+    {"question": "string", "answer": "string"},
+    {"question": "string", "answer": "string"},
     {"question": "string", "answer": "string"},
     {"question": "string", "answer": "string"},
     {"question": "string", "answer": "string"}
   ],
-  "local_seo_text": "string (2-3 Sätze: lokal, natürliche Keywords, Vertrauen)",
-  "cta_section_headline": "string (überzeugend, nicht generisch)",
-  "cta_section_text": "string (1-2 Sätze, letzter Push zur Handlung)",
+  "local_seo_text": "string (3-4 Sätze: ${ort}-Bezug, natürliche lokale Keywords, Community-Verbundenheit)",
+  "cta_section_headline": "string (überzeugend, kein Standard wie 'Jetzt anfragen')  ",
+  "cta_section_text": "string (2-3 Sätze, letzter emotionaler Push — was passiert wenn man jetzt anruft)",
   "testimonials": [
-    {"name": "string", "role": "string", "text": "string (spezifisch, authentisch, 2-3 Sätze)"},
+    {"name": "string (echter Vorname + Nachnamenskürzel, z.B. 'Maria S.')", "role": "string (z.B. '${testimonialRole}')", "text": "string (3-4 Sätze: spezifisch, konkrete Details, klingt wie ein echter Mensch)"},
+    {"name": "string", "role": "string", "text": "string (3-4 Sätze)"},
+    {"name": "string", "role": "string", "text": "string"},
     {"name": "string", "role": "string", "text": "string"},
     {"name": "string", "role": "string", "text": "string"}
   ]${teamJsonField}
@@ -305,7 +334,8 @@ export async function POST(req: NextRequest) {
 
     const msg = await client.messages.create({
       model: "claude-opus-4-5",
-      max_tokens: 4096,
+      max_tokens: 8000,
+      system: "Du bist ein Senior Brand-Stratege und Cheftexter einer deutschen Premium-Webagentur. Du schreibst ausschließlich auf Deutsch. Du lieferst ausschließlich valides JSON — kein erklärender Text, keine Markdown-Blöcke, kein Kommentar. Nur das JSON-Objekt selbst.",
       messages: [{ role: "user", content: prompt }],
     });
 
@@ -368,10 +398,12 @@ export async function POST(req: NextRequest) {
     const rawStats = Array.isArray(data.stats) ? data.stats as StatItem[] : [];
     const stats = rawStats.filter(s => s.value && s.label && s.value !== "string").slice(0, 4);
 
+    // FAQ: bis zu 8 — prefer AI output, fallback zu scraped
     const faq_items: FaqItem[] = Array.isArray(data.faq_items)
-      ? (data.faq_items as FaqItem[]).filter(f => f.question && f.answer).slice(0, 6)
-      : Array.isArray(faq_items_scraped) ? faq_items_scraped.slice(0, 4) : [];
+      ? (data.faq_items as FaqItem[]).filter(f => f.question && f.answer).slice(0, 8)
+      : Array.isArray(faq_items_scraped) ? faq_items_scraped.slice(0, 6) : [];
 
+    // Prozess: bis zu 4 Schritte
     const process_steps: ProcessStep[] = Array.isArray(data.process_steps)
       ? (data.process_steps as ProcessStep[]).filter(s => s.title && s.description).slice(0, 4)
       : [];
@@ -380,9 +412,15 @@ export async function POST(req: NextRequest) {
       ? (data.team_members as TeamMemberItem[]).filter(m => m.name?.trim())
       : null;
 
+    // Testimonials: bis zu 5
     const testimonials = Array.isArray(data.testimonials) && (data.testimonials as TestimonialItem[]).length >= 3
-      ? (data.testimonials as TestimonialItem[]).slice(0, 3)
+      ? (data.testimonials as TestimonialItem[]).slice(0, 5)
       : null;
+
+    // Neue reiche Felder
+    const about_points = Array.isArray(data.about_points) ? (data.about_points as string[]).filter(Boolean).slice(0, 4) : [];
+    const brand_tone   = (data.brand_tone as string) || undefined;
+    const hero_detail  = (data.hero_detail as string) || undefined;
 
     // ── Quality Score ───────────────────────────────────────────────────────
 
@@ -424,13 +462,16 @@ export async function POST(req: NextRequest) {
 
       ai_content: {
         brand_positioning:    data.brand_positioning,
+        brand_tone,
         hero_badge:           data.hero_badge,
+        hero_detail,
         cta_secondary:        data.cta_secondary,
         services_detailed,
         benefits_detailed,
         stats:                stats.length > 0 ? stats : undefined,
         about_headline:       (data.about_headline as string) || `Über ${company_name}`,
         about_highlight:      data.about_highlight,
+        about_points:         about_points.length > 0 ? about_points : undefined,
         trust_badge:          data.trust_badge,
         cta_section_headline: data.cta_section_headline,
         cta_section_text:     data.cta_section_text,

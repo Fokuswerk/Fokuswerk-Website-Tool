@@ -566,6 +566,12 @@ function PremiumHero({ site, color, ai, stats }: TplProps) {
           )}
         </div>
 
+        {ai?.hero_detail && (
+          <p className="anim-fade-up anim-delay-400 mt-6 max-w-md text-sm leading-relaxed text-white/65">
+            {ai.hero_detail}
+          </p>
+        )}
+
         {stats.length > 0 && (
           <div className="anim-fade-up anim-delay-400 mt-16 grid max-w-xl grid-cols-2 gap-x-12 gap-y-6 border-t border-white/15 pt-10 sm:grid-cols-4 sm:max-w-3xl" aria-label="Kennzahlen">
             {stats.map((s, i) => (
@@ -651,10 +657,15 @@ function PremiumServices({ services, color, site, isMedical }: { services: Servi
                 </span>
               </div>
               {/* Text */}
-              <div className="p-6">
+              <div className="flex flex-col p-6">
                 <div className="mb-4 h-0.5 w-8 rounded-full transition-all duration-300 group-hover:w-16" style={{ backgroundColor: color }} aria-hidden="true" />
                 <h3 className="mb-3 text-lg font-semibold text-gray-900">{s.title}</h3>
-                {s.description && <p className="text-sm leading-relaxed text-gray-600">{s.description}</p>}
+                {s.description && <p className="flex-1 text-sm leading-relaxed text-gray-600">{s.description}</p>}
+                {s.highlight && (
+                  <div className="mt-4 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold" style={{ backgroundColor: `${color}12`, color }}>
+                    <span aria-hidden="true">✓</span> {s.highlight}
+                  </div>
+                )}
               </div>
             </article>
           ))}
@@ -715,7 +726,18 @@ function PremiumAbout({ site, color, ai }: { site: Site; color: string; ai: AICo
             <h2 id="about-heading" className="mb-5 text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">
               {ai?.about_headline || site.company_name}
             </h2>
-            <p className="mb-8 text-base leading-relaxed text-gray-700">{site.about_text}</p>
+            <p className="mb-6 text-base leading-relaxed text-gray-700">{site.about_text}</p>
+
+            {ai?.about_points && ai.about_points.length > 0 && (
+              <ul className="mb-8 space-y-2" aria-label="Merkmale">
+                {ai.about_points.map((point, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
+                    <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-white text-[10px] font-black" style={{ backgroundColor: color }} aria-hidden="true">✓</span>
+                    {point}
+                  </li>
+                ))}
+              </ul>
+            )}
 
             <div className="space-y-2.5">
               {[
@@ -891,6 +913,59 @@ const DEFAULT_PATIENT_TESTIMONIALS: TestimonialItem[] = [
   { name: "Andrea M.", role: "Familienpatientin", text: "Wir kommen mit der ganzen Familie hierher – auch die Kinder fühlen sich wohl. Das Praxisteam ist unglaublich freundlich und erklärt alles verständlich. Absolute Empfehlung!" },
 ];
 
+function PremiumFaq({ color, site, isMedical }: { color: string; site: Site; isMedical?: boolean }) {
+  const ai = (site.ai_content as AIContent);
+  const items = ai?.faq_items;
+  if (!items || items.length === 0) return null;
+
+  const ref = useReveal();
+  const [open, setOpen] = useState<number | null>(0);
+  const label = isMedical ? "Häufige Fragen" : "FAQ";
+  const heading = isMedical ? "Ihre Fragen — unsere Antworten" : "Häufige Fragen";
+
+  return (
+    <section className="bg-gray-50 py-20 sm:py-28" aria-labelledby="faq-heading">
+      <div ref={ref} className="reveal mx-auto max-w-4xl px-6">
+        <div className="mb-12 text-center">
+          <p className="mb-2.5 text-xs font-semibold uppercase tracking-widest" style={{ color }}>{label}</p>
+          <h2 id="faq-heading" className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">{heading}</h2>
+        </div>
+        <div className="space-y-3">
+          {items.map((item, i) => (
+            <div
+              key={i}
+              className="overflow-hidden rounded-2xl border border-gray-200 bg-white transition-shadow hover:shadow-sm"
+            >
+              <button
+                type="button"
+                className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
+                onClick={() => setOpen(open === i ? null : i)}
+                aria-expanded={open === i}
+              >
+                <span className="text-sm font-semibold text-gray-900 sm:text-base">{item.question}</span>
+                <span
+                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-white transition-transform duration-300"
+                  style={{ backgroundColor: color, transform: open === i ? "rotate(45deg)" : "rotate(0deg)" }}
+                  aria-hidden="true"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </span>
+              </button>
+              {open === i && (
+                <div className="border-t border-gray-100 px-6 pb-6 pt-4">
+                  <p className="text-sm leading-relaxed text-gray-600">{item.answer}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function PremiumTestimonials({ color, site, isMedical }: { color: string; site: Site; isMedical?: boolean }) {
   const ref = useReveal();
   // Priority: manually saved → AI-generated from ai_content → industry fallback
@@ -960,6 +1035,7 @@ function PremiumTemplate(props: TplProps) {
       <PremiumServices services={services} color={color} site={site} isMedical={isMedical} />
       {site.about_text && <PremiumAbout site={site} color={color} ai={ai} />}
       <PremiumProcess color={color} isMedical={isMedical} />
+      <PremiumFaq color={color} site={site} isMedical={isMedical} />
       <PremiumTestimonials color={color} site={site} isMedical={isMedical} />
       <PremiumCtaBand site={site} color={color} ai={ai} />
       <PremiumContact site={site} color={color} />
