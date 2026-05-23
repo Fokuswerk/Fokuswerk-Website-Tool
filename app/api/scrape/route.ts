@@ -487,15 +487,18 @@ function detectIndustry(text: string): string | null {
 // ─── Structural heading filter ────────────────────────────────────────────────
 
 // Exakter Match (ganzer Titel ist strukturell)
-const STRUCTURAL_EXACT = /^(kontakt|öffnungszeiten?|sprechzeiten?|über uns|über mich|impressum|datenschutz|willkommen|news|blog|jobs|karriere|partner|anfahrt|galerie|bildergalerie|zertifikat|testimonial|häufige fragen|faq|newsletter|fotos|welcome|startseite|home|weiterlesen|mehr erfahren|alle leistungen|jetzt buchen|termin online|online termin|benefits?|vorteile|warum wir|unser team|das team|team|zfa|mfa|rezeption|sekretariat|praxisteam|anmeldung|empfang|referenzen|bewertungen|kundenstimmen|patientenstimmen|lob|feedback|hygiene|corona|covid|aktuell|aktuelles|neuigkeiten|presse|medien|auszeichnung|award|information|informationen|downloads?|formulare?|rechtliches|agb|cookie)$/i;
+const STRUCTURAL_EXACT = /^(kontakt|öffnungszeiten?|sprechzeiten?|über uns|über mich|impressum|datenschutz|willkommen|news|blog|jobs|karriere|partner|anfahrt|galerie|bildergalerie|zertifikat|testimonial|häufige fragen|faq|newsletter|fotos|welcome|startseite|home|weiterlesen|mehr erfahren|alle leistungen|jetzt buchen|termin online|online termin|benefits?|vorteile|warum wir|unser team|das team|team|zfa|mfa|zfa\/mfa|zahnmedizinische fachangestellte?|medizinische fachangestellte?|rezeption|sekretariat|praxisteam|anmeldung|empfang|referenzen|bewertungen|kundenstimmen|patientenstimmen|lob|feedback|hygiene|corona|covid|aktuell|aktuelles|neuigkeiten|presse|medien|auszeichnung|award|information|informationen|downloads?|formulare?|rechtliches|agb|cookie|ausbildung|azubi|auszubildende?|praktikum|stellenangebot|offene stellen|karriere|jobs)$/i;
 
 // Präfix-Match (Titel BEGINNT mit strukturellem Begriff)
-const STRUCTURAL_PREFIX = /^(aufnahmebogen|praxisrundgang|wir freuen|wir heißen|wir begrüß|wir stellen|wir suchen|herzlich willkommen|ihr weg|der weg zu|so finden sie|kontaktieren sie|schreiben sie|rufen sie an|aus der praxis|das sagen|was sagen|mehr\s+infos|mehr\s+dazu|lesen\s+sie|erfahren\s+sie|stellenangebot|stellenanzeige|ausbildung|praktikum|bewerbung|mitarbeiter gesucht|offene stellen|karriere bei|jetzt bewerben|google bewertung|wichtige hinweise|neupatient|new patient|erstbesuch|praxisbesuch|ihr besuch|der besuch|ihr erste|ihre erste|ihr zahnarzt|ihre zahnarzt|ihr arzt|willkommen bei|empfehlung|zur\s)/i;
+const STRUCTURAL_PREFIX = /^(aufnahmebogen|praxisrundgang|wir freuen|wir heißen|wir begrüß|wir stellen|wir suchen|herzlich willkommen|ihr weg|der weg zu|so finden sie|kontaktieren sie|schreiben sie|rufen sie an|aus der praxis|das sagen|was sagen|mehr\s+infos|mehr\s+dazu|lesen\s+sie|erfahren\s+sie|stellenangebot|stellenanzeige|ausbildung|ausbildungsplatz|auszubildende|azubi|praktikum|praktikant|bewerbung|bewerben|mitarbeiter gesucht|offene stellen|karriere bei|jetzt bewerben|wir bilden|wir suchen verstärkung|werden sie teil|google bewertung|wichtige hinweise|neupatient|new patient|erstbesuch|praxisbesuch|ihr besuch|der besuch|ihr erste|ihre erste|ihr zahnarzt|ihre zahnarzt|ihr arzt|willkommen bei|empfehlung|zur\s)/i;
+
+// Begriffe die IRGENDWO im Titel vorkommen dürfen nie als Leistung durchgehen
+const STRUCTURAL_CONTAINS = /\b(zfa|mfa|auszubildende?|azubi|stellenangebot|praktikum|bewerbung|ausbildungsplatz|bewerben|wir bilden aus|zahnmedizinische fachangestellte?|medizinische fachangestellte?)\b/i;
 
 // Kombinierter Filter
 function isStructural(heading: string): boolean {
   const h = heading.trim();
-  return STRUCTURAL_EXACT.test(h) || STRUCTURAL_PREFIX.test(h);
+  return STRUCTURAL_EXACT.test(h) || STRUCTURAL_PREFIX.test(h) || STRUCTURAL_CONTAINS.test(h);
 }
 
 // Legacy export für bestehende Aufrufe

@@ -72,10 +72,22 @@ function buildPrompt(input: {
 }): string {
 
   // ── Vorfilter: nur echte Leistungen durchlassen ──────────────────────────────
-  const SERVICE_BLACKLIST = /^(benefits?|vorteile|warum wir|unser team|team|zfa|mfa|aufnahmebogen|neupatient|anmeldung|empfang|rezeption|willkommen|herzlich willkommen|wir freuen|ihr besuch|praxisrundgang|galerie|aktuelles|news|blog|karriere|jobs|stellenangebot|wir suchen|bewerbung|kontakt|öffnungszeiten|sprechzeiten|anfahrt|impressum|datenschutz|cookie|downloads?|formulare?|links?|über uns|über mich|praxisteam|das team|testimonial|bewertungen|kundenstimmen|patientenstimmen|hygiene|corona|covid|presse|referenzen|auszeichnung|awards?|unsere praxis|die praxis|praxisphilosophie|unsere werte|vision|mission|philosophie|leitbild|informationen|hinweise|ergebnisse|statistik|statistiken|zahlen|views|reichweite|impressionen|konten|follower)/i;
+  // Enthält — diese Begriffe IRGENDWO im Titel → kein Service
+  const SERVICE_CONTAINS_BLACKLIST = /\b(zfa|mfa|auszubildende?|azubi|stellenangebot|praktikum|bewerbung|ausbildungsplatz|zahnmedizinische fachangestellte?|medizinische fachangestellte?)\b/i;
 
-  const validServices = input.services.filter(s => s && s.length > 2 && !SERVICE_BLACKLIST.test(s.trim()));
-  const validPairs    = input.service_pairs.filter(p => p.title && !SERVICE_BLACKLIST.test(p.title.trim()));
+  // Beginnt mit — diese Präfixe → kein Service
+  const SERVICE_BLACKLIST = /^(benefits?|vorteile|warum wir|unser team|team|zfa|mfa|aufnahmebogen|neupatient|anmeldung|empfang|rezeption|willkommen|herzlich willkommen|wir freuen|ihr besuch|praxisrundgang|galerie|aktuelles|news|blog|karriere|jobs|stellenangebot|wir suchen|bewerbung|auszubildende|ausbildung|ausbildungsplatz|azubi|praktikum|kontakt|öffnungszeiten|sprechzeiten|anfahrt|impressum|datenschutz|cookie|downloads?|formulare?|links?|über uns|über mich|praxisteam|das team|testimonial|bewertungen|kundenstimmen|patientenstimmen|hygiene|corona|covid|presse|referenzen|auszeichnung|awards?|unsere praxis|die praxis|praxisphilosophie|unsere werte|vision|mission|philosophie|leitbild|informationen|hinweise|ergebnisse|statistik|statistiken|zahlen|views|reichweite|impressionen|konten|follower)/i;
+
+  const validServices = input.services.filter(s =>
+    s && s.length > 2
+    && !SERVICE_BLACKLIST.test(s.trim())
+    && !SERVICE_CONTAINS_BLACKLIST.test(s.trim())
+  );
+  const validPairs = input.service_pairs.filter(p =>
+    p.title
+    && !SERVICE_BLACKLIST.test(p.title.trim())
+    && !SERVICE_CONTAINS_BLACKLIST.test(p.title.trim())
+  );
 
   // ── Kontextblöcke aufbauen ───────────────────────────────────────────────────
   const dataLines: string[] = [
@@ -350,13 +362,19 @@ export async function POST(req: NextRequest) {
     const auto_filled: string[] = [];
     const hasRealScrapedServices = confirmedServices.length > 0;
 
-    // Blacklist: Titel die KEINE echten Leistungen sind
-    const NON_SERVICE_PATTERNS = /^(anmeldung|empfang|über uns|warum|unser ansatz|praxisphilosophie|unsere werte|patientenorientierung|ihr lächeln|willkommen|kontakt|team|öffnungszeiten|termin|philosophie|vision|mission)/i;
+    // Dritte Sicherheitsebene: filtert den AI-Output — Titel die KEINE echten Leistungen sind
+    const NON_SERVICE_STARTS = /^(anmeldung|empfang|über uns|warum|unser ansatz|praxisphilosophie|unsere werte|patientenorientierung|ihr lächeln|willkommen|kontakt|team|öffnungszeiten|termin|philosophie|vision|mission|vorteile|benefits|warum wir|news|aktuelles|karriere|jobs|ausbildung|auszubildende|azubi|praktikum|stellenangebot|bewerbung|ausbildungsplatz|zfa|mfa)/i;
+    const NON_SERVICE_CONTAINS = /\b(zfa|mfa|auszubildende?|azubi|stellenangebot|praktikum|bewerbung|ausbildungsplatz|zahnmedizinische fachangestellte?)\b/i;
 
     let services_detailed: ServiceItem[] = Array.isArray(data.services)
       ? (data.services as unknown[])
           .map(s => typeof s === "string" ? { title: s, description: "" } : s as ServiceItem)
-          .filter(s => s.title && s.title.length > 2 && !NON_SERVICE_PATTERNS.test(s.title.trim()))
+          .filter(s =>
+            s.title
+            && s.title.length > 2
+            && !NON_SERVICE_STARTS.test(s.title.trim())
+            && !NON_SERVICE_CONTAINS.test(s.title.trim())
+          )
       : [];
 
     // Wenn scraped services vorhanden waren aber AI hat sie ignoriert → erzwingen
