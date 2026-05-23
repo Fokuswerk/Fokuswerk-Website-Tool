@@ -39,10 +39,10 @@ function detectSector(industry: string): Sector {
 
 const CREATE_STEPS = [
   "Website wird analysiert…",
-  "Branche wird erkannt…",
-  "Texte werden erstellt…",
-  "Leistungen werden aufbereitet…",
-  "SEO wird generiert…",
+  "Erster Entwurf wird erstellt…",
+  "SEO · Kunde · Berater · Marketing prüfen…",
+  "Experten-Feedback wird ausgewertet…",
+  "Inhalte werden finalisiert…",
   "Qualitätscheck läuft…",
   "Website wird gespeichert…",
 ];
@@ -63,6 +63,9 @@ export default function SiteForm() {
   const [industry, setIndustry]           = useState("");
   const [slug, setSlug]                   = useState("");
   const [oldWebsiteUrl, setOldWebsiteUrl] = useState("");
+  const [phone, setPhone]                 = useState("");
+  const [city, setCity]                   = useState("");
+  const [notes, setNotes]                 = useState("");
   const [primaryColor, setPrimaryColor]   = useState("#2563eb");
   const [template, setTemplate]           = useState<SiteTemplate>("premium");
   const [variant, setVariant]             = useState<Variant>("modern");
@@ -117,12 +120,19 @@ export default function SiteForm() {
       if (data.primary_color)          setPrimaryColor(data.primary_color);
       setScrapedCtx(data);
       setScraped(!!data.primary_color);
+      const serviceCount   = Array.isArray(data.scraped_services) ? data.scraped_services.length : 0;
+      const pairCount      = Array.isArray(data.service_pairs)    ? data.service_pairs.length    : 0;
+      const teamCount      = Array.isArray(data.team_members)     ? data.team_members.length     : 0;
       const hints = [
-        data.suggested_industry,
-        data.primary_color ? `Farbe erkannt` : null,
-        data.phone ? "Telefon erkannt" : null,
+        serviceCount > 0 ? `${serviceCount} Leistungen` : null,
+        pairCount    > 0 ? `${pairCount} mit Beschreibung` : null,
+        data.primary_color ? "Farbe" : null,
+        data.phone         ? "Tel." : null,
+        data.opening_hours ? "Öffnungszeiten" : null,
+        teamCount    > 0 ? `${teamCount} Teammitgl.` : null,
+        data.rating        ? "Bewertung" : null,
       ].filter(Boolean).join(" · ");
-      setScrapeMsg({ type: "ok", text: `✓ Analysiert${hints ? ` · ${hints}` : ""}` });
+      setScrapeMsg({ type: "ok", text: `✓ Analysiert${hints ? ` — ${hints}` : ""}` });
     } catch {
       setScrapeMsg({ type: "err", text: "Analyse fehlgeschlagen." });
     } finally {
@@ -142,18 +152,45 @@ export default function SiteForm() {
     try {
       if (oldWebsiteUrl && !scraped) await runScrape(oldWebsiteUrl);
 
+      // Manuell eingegebene Infos als Kontext für die KI aufbauen
+      const manualSummary = !oldWebsiteUrl && (phone || city || notes)
+        ? [
+            `Unternehmensname: "${companyName}"`,
+            industry && `Branche: ${industry}`,
+            city     && `Standort: ${city}`,
+            phone    && `Telefon: ${phone}`,
+            notes    && `Hinweise: ${notes}`,
+          ].filter(Boolean).join(". ")
+        : null;
+
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           company_name:        companyName,
           industry:            industry || scrapedCtx?.suggested_industry,
-          description:         scrapedCtx?.company_summary,
+          description:         scrapedCtx?.description,
           old_website_url:     oldWebsiteUrl || null,
-          scraped_headings:    scrapedCtx?.headings,
-          scraped_subheadings: scrapedCtx?.subheadings,
-          scraped_hero:        scrapedCtx?.hero_text,
-          company_summary:     scrapedCtx?.company_summary,
+          scraped_headings:      scrapedCtx?.headings,
+          scraped_subheadings:   scrapedCtx?.subheadings,
+          scraped_services:      scrapedCtx?.scraped_services,
+          service_pairs:         scrapedCtx?.service_pairs,
+          service_descriptions:  scrapedCtx?.service_descriptions,
+          scraped_hero:          scrapedCtx?.hero_text,
+          company_summary:       scrapedCtx?.company_summary || manualSummary,
+          // Rich new fields
+          about_text:          scrapedCtx?.about_text,
+          team_members:        scrapedCtx?.team_members,
+          opening_hours:       scrapedCtx?.opening_hours,
+          rating:              scrapedCtx?.rating,
+          trust_signals:       scrapedCtx?.trust_signals,
+          insurance_info:      scrapedCtx?.insurance_info,
+          area_served:         scrapedCtx?.area_served,
+          founding_year:       scrapedCtx?.founding_year,
+          faq_items:           scrapedCtx?.faq_items,
+          manual_location:     !oldWebsiteUrl ? city   : undefined,
+          manual_phone:        !oldWebsiteUrl ? phone  : undefined,
+          manual_notes:        !oldWebsiteUrl ? notes  : undefined,
           template,
         }),
       });
@@ -174,10 +211,10 @@ export default function SiteForm() {
           industry:        industry || (scrapedCtx?.suggested_industry as string) || "",
           old_website_url: oldWebsiteUrl || null,
           contact_person:  (scrapedCtx?.contact_person as string) || null,
-          phone:           (scrapedCtx?.phone          as string) || null,
+          phone:           (scrapedCtx?.phone as string) || phone || null,
           whatsapp:        null,
-          email:           (scrapedCtx?.email          as string) || null,
-          address:         (scrapedCtx?.address        as string) || null,
+          email:           (scrapedCtx?.email   as string) || null,
+          address:         (scrapedCtx?.address as string) || (city ? city : null),
           primary_color:   primaryColor,
           logo_url:        (scrapedCtx?.logo_url       as string) || null,
           template,
@@ -354,6 +391,50 @@ export default function SiteForm() {
           placeholder="z. B. Zahnarztpraxis, Elektriker, Maler…"
         />
       </div>
+
+      {/* 3b. Manuelle Infos — nur wenn keine URL eingegeben */}
+      {!oldWebsiteUrl && (
+        <div className="space-y-4 rounded-xl border border-dashed border-gray-200 bg-gray-50/60 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+            Infos vom Anruf
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="f-phone" className={lbl}>Telefon</label>
+              <input
+                id="f-phone"
+                className={inp}
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                placeholder="0541 123456"
+                type="tel"
+              />
+            </div>
+            <div>
+              <label htmlFor="f-city" className={lbl}>Ort</label>
+              <input
+                id="f-city"
+                className={inp}
+                value={city}
+                onChange={e => setCity(e.target.value)}
+                placeholder="Rostrup"
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="f-notes" className={lbl}>
+              Notiz <span className="font-normal text-gray-400">(optional)</span>
+            </label>
+            <input
+              id="f-notes"
+              className={inp}
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="z. B. Familiengeführt, seit 1998, macht auch Catering…"
+            />
+          </div>
+        </div>
+      )}
 
       {/* 4. Template — auto-suggested, minimal UI */}
       <div>
