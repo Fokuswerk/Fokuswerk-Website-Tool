@@ -100,47 +100,69 @@ function buildPrompt(input: {
   if (input.rating)        lines.push(`Bewertung: ${input.rating}`);
   if (input.trust_signals.length) lines.push(`Vertrauenssignale: ${input.trust_signals.join(" | ")}`);
 
-  const serviceBlock = input.services.length > 0
-    ? `\n⚠️ PFLICHT-LEISTUNGEN (von der Website extrahiert — ALLE müssen im services-Array erscheinen):\n${input.services.map((s, i) => `  ${i+1}. ${s}`).join("\n")}`
+  // Nur wirklich gültige Leistungen weitergeben — Scraper liefert manchmal Seitentitel mit
+  const SERVICE_BLACKLIST = /^(benefits?|vorteile|warum wir|unser team|team|zfa|mfa|aufnahmebogen|neupatient|anmeldung|empfang|rezeption|willkommen|herzlich willkommen|wir freuen|ihr besuch|praxisrundgang|galerie|aktuelles|news|blog|karriere|jobs|stellenangebot|wir suchen|bewerbung|kontakt|öffnungszeiten|sprechzeiten|anfahrt|impressum|datenschutz|cookie|downloads?|formulare?|links?|über uns|über mich|praxisteam|das team|testimonial|bewertungen|kundenstimmen|patientenstimmen|hygiene|corona|covid|presse|referenzen|auszeichnung|awards?|unsere praxis|die praxis|praxisphilosophie|unsere werte|vision|mission|philosophie|leitbild|informationen|hinweise)/i;
+
+  const validServices = input.services.filter(s => s && s.length > 2 && !SERVICE_BLACKLIST.test(s.trim()));
+  const validPairs = input.service_pairs.filter(p => p.title && !SERVICE_BLACKLIST.test(p.title.trim()));
+
+  const serviceBlock = validServices.length > 0
+    ? `\nVALIDIERTE LEISTUNGEN (von der echten Website — NUR diese im services-Array verwenden):\n${validServices.map((s, i) => `  ${i+1}. ${s}`).join("\n")}`
     : "";
 
-  const pairBlock = input.service_pairs.length > 0
-    ? `\nOriginaltext zu Leistungen:\n${input.service_pairs.slice(0, 6).map(p => `  • ${p.title}: ${p.description.slice(0, 120)}`).join("\n")}`
+  const pairBlock = validPairs.length > 0
+    ? `\nLeistungsbeschreibungen von der Website (für Texte nutzen):\n${validPairs.slice(0, 6).map(p => `  • ${p.title}: ${p.description.slice(0, 150)}`).join("\n")}`
     : "";
 
   const teamBlock = input.is_medical && input.has_real_team
-    ? `\nTeam: ${input.team_members.map(m => m.name + (m.title ? ` (${m.title})` : "")).join(", ")}`
+    ? `\nTeam-Mitglieder: ${input.team_members.map(m => m.name + (m.title ? ` (${m.title})` : "")).join(", ")}`
     : "";
 
   const faqHint = input.faq_scraped.length > 0
-    ? `\nFAQ-Fragen von der Website: ${input.faq_scraped.slice(0, 3).map(f => f.question).join(" | ")}`
+    ? `\nEchte FAQ-Fragen von der Website: ${input.faq_scraped.slice(0, 3).map(f => f.question).join(" | ")}`
     : "";
 
   const teamJsonField = input.is_medical
-    ? `,\n  "team_members": [{"name": "string", "title": "string", "bio": "string (1 Satz)"}]`
+    ? `,\n  "team_members": [{"name": "string", "title": "string", "bio": "string (1 authentischer Satz)"}]`
     : "";
 
-  return `Du bist Deutschlands bester Website-Texter für lokale Unternehmen.
+  const isMedical = input.is_medical || /zahn|dental|arzt|praxis|klinik/i.test(input.industry);
+  const patientOrKunde = isMedical ? "Patient" : "Kunde";
+  const testimonialRole = isMedical ? "Patient seit X Jahren" : "Kunde";
+
+  return `Du bist Deutschlands bester Website-Texter. Erstelle Inhalte EXKLUSIV für dieses Unternehmen.
 
 UNTERNEHMENSDATEN:
 ${lines.join("\n")}${serviceBlock}${pairBlock}${teamBlock}${faqHint}
 
-TEMPLATE: ${input.template_hint}
+STIL: ${input.template_hint}
 
-REGELN:
-1. Hero-Headline: max. 6 Wörter, konkret mit Branche UND Ort "${input.location}" — NICHT generisch
-2. Meta Title: 50-60 Zeichen mit Ort + Hauptkeyword
-3. Meta Description: 140-155 Zeichen, konkreter Nutzen + CTA
-4. ${input.services.length > 0
-  ? `Services: EXAKT diese ${input.services.length} Leistungen — Titel 1:1 übernehmen, NUR Beschreibungen schreiben`
-  : `Services: 5-6 KONKRETE Behandlungen/Leistungen dieser Branche — KEINE abstrakten Konzepte wie "Praxisphilosophie", "Patientenorientierung", "Unsere Werte" etc.`}
-5. Services MÜSSEN echte Behandlungen sein (z.B. "Prophylaxe", "Implantate", "Bleaching") — NICHT: "Anmeldung", "Empfang", "Über uns", "Warum wir", "Unser Ansatz"
-6. FAQ: 4 konkrete Patientenfragen (z.B. "Nehmen Sie Kassenpatienten?" / "Wie schmerzhaft ist...?" / "Was kostet...?")
-7. About-Text: 3 Sätze — individuell auf DIESES Unternehmen, mit Ort, was es besonders macht
-8. local_seo_text: 2 Sätze mit Ort + Branche + Keyword
-9. Kein generisches Marketing — konkret auf DIESES Unternehmen zugeschnitten
-10. Stats: NUR wenn echte Zahlen aus den Daten — sonst leeres Array []
-11. Testimonials: 3 glaubwürdige Stimmen mit spezifischem Kontext (beim Zahnarzt: "Patientin", nicht "Kundin")
+═══ LEISTUNGEN — KRITISCHE REGELN ═══
+Was ins services-Array DARF (✅ echte Leistungen):
+  Konkrete Behandlungen, Eingriffe, Therapien, Untersuchungen die ein ${patientOrKunde} buchen kann
+  Beispiele Zahnarzt: Prophylaxe, Implantologie, Bleaching, Kinderzahnheilkunde, Zahnersatz, Invisalign
+  Beispiele Handwerk: Rohrbau, Sanitärinstallation, Heizungswartung, Badezimmersanierung
+
+Was NIEMALS ins services-Array darf (❌ sofort ignorieren):
+  Verwaltung: Aufnahmebogen, Anmeldung, Neupatient, Erstbesuch, Empfang
+  Personal/Stellen: ZFA, MFA, Rezeption, Assistenz, Stellenangebot
+  Allgemeines: Über uns, Team, Praxisphilosophie, Benefits, Vorteile, Warum wir
+  Navigation: Willkommen, Herzlich Willkommen, Wir freuen uns, Ihr Besuch
+  Infos: Öffnungszeiten, Kontakt, Anfahrt, Downloads, Formulare, News
+
+${validServices.length > 0
+  ? `→ Verwende EXAKT diese ${validServices.length} validierten Leistungen. Titel 1:1, nur Beschreibungen texten.`
+  : `→ Erstelle 5-6 branchentypische Leistungen für "${input.industry}" — konkrete Behandlungen, keine abstrakten Begriffe.`}
+
+═══ WEITERE REGELN ═══
+- Hero-Headline: max. 6 Wörter, konkret mit Ort "${input.location || "der Region"}" — KEIN Werbesprech
+- Meta Title: 52-58 Zeichen mit Keyword + Ort
+- Meta Description: 145-155 Zeichen, konkreter Nutzen + CTA
+- Stats: NUR Zahlen die WIRKLICH aus den Daten stammen — sonst leeres Array [] (lieber leer als falsch!)
+- About: 3 Sätze individuell auf DIESES Unternehmen — was macht es einzigartig?
+- FAQ: 4 echte ${patientOrKunde}fragen die wirklich gestellt werden
+- Testimonials: 3 authentische Stimmen — Rolle z.B. "${testimonialRole}"
+- Kein generisches Marketing — jeder Satz muss zu DIESEM Unternehmen passen
 
 Antworte NUR mit validem JSON:
 

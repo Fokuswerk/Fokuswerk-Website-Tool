@@ -176,20 +176,9 @@ const DEFAULT_BENEFITS: BenefitItem[] = [
   { title: "Schnelle Reaktion", description: "Kurze Reaktionszeiten und zeitnahe Umsetzung – wir wissen, dass Ihre Zeit wertvoll ist." },
 ];
 
-function getDefaultStats(template: string, industry: string): StatItem[] {
-  const isMed = template.startsWith("arzt") || /zahn|dental|arzt|praxis/.test((industry || "").toLowerCase());
-  if (isMed) return [
-    { value: "1.000+", label: "Zufriedene Patienten" },
-    { value: "15+",    label: "Jahre Erfahrung" },
-    { value: "98%",    label: "Weiterempfehlung" },
-    { value: "2",      label: "Behandlungszimmer" },
-  ];
-  return [
-    { value: "500+", label: "Abgeschlossene Projekte" },
-    { value: "10+",  label: "Jahre Erfahrung" },
-    { value: "98%",  label: "Weiterempfehlung" },
-    { value: "24h",  label: "Reaktionszeit" },
-  ];
+// Keine erfundenen Stats — nur echte Daten aus dem Scraper werden angezeigt
+function getDefaultStats(_template: string, _industry: string): StatItem[] {
+  return []; // Lieber nichts als falsche Zahlen
 }
 
 // ─── Logo ────────────────────────────────────────────────────────────────────

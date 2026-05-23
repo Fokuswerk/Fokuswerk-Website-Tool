@@ -486,7 +486,20 @@ function detectIndustry(text: string): string | null {
 
 // ─── Structural heading filter ────────────────────────────────────────────────
 
-const STRUCTURAL = /^(kontakt|öffnungszeiten?|sprechzeiten?|über uns|über mich|impressum|datenschutz|willkommen|news|blog|jobs|karriere|partner|anfahrt|aufnahmebogen|praxisrundgang|galerie|bildergalerie|zertifikat|wir freuen|ihr weg|der weg zu|so finden sie|testimonial|empfehlung|häufige fragen|faq|kontaktieren sie|schreiben sie|rufen sie an|newsletter|fotos|aus der praxis|das sagen|was sagen|herzlich willkommen|welcome|startseite|home|weiterlesen|mehr erfahren|alle leistungen|jetzt buchen|termin online|online termin|zum kontakt|zur\s|mehr\s+infos|mehr\s+dazu|lesen\s+sie|erfahren\s+sie\s+mehr)$/i;
+// Exakter Match (ganzer Titel ist strukturell)
+const STRUCTURAL_EXACT = /^(kontakt|öffnungszeiten?|sprechzeiten?|über uns|über mich|impressum|datenschutz|willkommen|news|blog|jobs|karriere|partner|anfahrt|galerie|bildergalerie|zertifikat|testimonial|häufige fragen|faq|newsletter|fotos|welcome|startseite|home|weiterlesen|mehr erfahren|alle leistungen|jetzt buchen|termin online|online termin|benefits?|vorteile|warum wir|unser team|das team|team|zfa|mfa|rezeption|sekretariat|praxisteam|anmeldung|empfang|referenzen|bewertungen|kundenstimmen|patientenstimmen|lob|feedback|hygiene|corona|covid|aktuell|aktuelles|neuigkeiten|presse|medien|auszeichnung|award|information|informationen|downloads?|formulare?|rechtliches|agb|cookie)$/i;
+
+// Präfix-Match (Titel BEGINNT mit strukturellem Begriff)
+const STRUCTURAL_PREFIX = /^(aufnahmebogen|praxisrundgang|wir freuen|wir heißen|wir begrüß|wir stellen|wir suchen|herzlich willkommen|ihr weg|der weg zu|so finden sie|kontaktieren sie|schreiben sie|rufen sie an|aus der praxis|das sagen|was sagen|mehr\s+infos|mehr\s+dazu|lesen\s+sie|erfahren\s+sie|stellenangebot|stellenanzeige|ausbildung|praktikum|bewerbung|mitarbeiter gesucht|offene stellen|karriere bei|jetzt bewerben|google bewertung|wichtige hinweise|neupatient|new patient|erstbesuch|praxisbesuch|ihr besuch|der besuch|ihr erste|ihre erste|ihr zahnarzt|ihre zahnarzt|ihr arzt|willkommen bei|empfehlung|zur\s)/i;
+
+// Kombinierter Filter
+function isStructural(heading: string): boolean {
+  const h = heading.trim();
+  return STRUCTURAL_EXACT.test(h) || STRUCTURAL_PREFIX.test(h);
+}
+
+// Legacy export für bestehende Aufrufe
+const STRUCTURAL = { test: (h: string) => isStructural(h) };
 
 // ─── Fetch helper with timeout ────────────────────────────────────────────────
 
@@ -743,12 +756,18 @@ export async function POST(req: NextRequest) {
   // OG image
   const ogImage = extractMeta(homeHtml, "og:image") || null;
 
-  // Headings from homepage
+  // Headings from homepage — apply STRUCTURAL filter to avoid nav/admin headings in AI context
   const h2Matches = [...homeHtml.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi)];
-  const headings = h2Matches.map(m => stripHtml(m[1])).filter(h => h.length > 3 && h.length < 120).slice(0, 10);
+  const headings = h2Matches
+    .map(m => stripHtml(m[1]))
+    .filter(h => h.length > 3 && h.length < 120 && !STRUCTURAL.test(h.trim()))
+    .slice(0, 10);
 
   const h3Matches = [...homeHtml.matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>/gi)];
-  const homeSubheadings = h3Matches.map(m => stripHtml(m[1])).filter(h => h.length > 3 && h.length < 100).slice(0, 20);
+  const homeSubheadings = h3Matches
+    .map(m => stripHtml(m[1]))
+    .filter(h => h.length > 3 && h.length < 100 && !STRUCTURAL.test(h.trim()))
+    .slice(0, 20);
 
   // ── Extract rich data from service pages ──────────────────────────────────────
   const allServiceHeadings: string[] = [];
