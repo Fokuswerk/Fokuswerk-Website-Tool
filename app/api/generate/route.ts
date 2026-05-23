@@ -3,8 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { calculateQualityScore } from "@/lib/quality-score";
 import type { ServiceItem, BenefitItem, StatItem, TestimonialItem, TeamMemberItem, FaqItem, ProcessStep } from "@/lib/types";
 
-// Edge Runtime: 25s auf Hobby, 90s auf Pro — kein Node.js-Timeout-Problem
-export const runtime = "edge";
+export const maxDuration = 60;
 
 // ─── Template-Kontext ────────────────────────────────────────────────────────
 
@@ -265,7 +264,7 @@ export async function POST(req: NextRequest) {
     });
 
     const msg = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-3-5-haiku-20241022",
       max_tokens: 3000,
       messages: [{ role: "user", content: prompt }],
     });
