@@ -182,6 +182,7 @@ NIEMALS:
 ✗ Erfundene Zahlen oder Statistiken → stats MUSS [] sein wenn keine Daten vorhanden
 ✗ Generische Testimonials ohne spezifische Details
 ✗ About-Texte die nichts über das ECHTE Unternehmen aussagen
+✗ Karriere/Job-Inhalte in cta_section_headline oder cta_section_text — diese Felder sind AUSSCHLIESSLICH für ${patientOrKunde} die einen Termin buchen oder anfragen wollen. "Wir suchen Fachkräfte", "Jetzt bewerben", "MFA gesucht" — all das gehört NICHT hierher.
 
 IMMER:
 ✓ Hero: Konkret, Ort integriert, überraschend ehrlich — kein Marketing-Speak
@@ -248,8 +249,8 @@ Antworte AUSSCHLIESSLICH mit einem einzigen validen JSON-Objekt. Kein erklärend
     {"question": "string", "answer": "string"}
   ],
   "local_seo_text": "string (3-4 Sätze: ${ort}-Bezug, natürliche lokale Keywords, Community-Verbundenheit)",
-  "cta_section_headline": "string (überzeugend, kein Standard wie 'Jetzt anfragen')  ",
-  "cta_section_text": "string (2-3 Sätze, letzter emotionaler Push — was passiert wenn man jetzt anruft)",
+  "cta_section_headline": "string (überzeugend, motiviert ${patientOrKunde} zum Anruf/Termin — KEIN Karriere-/Jobinhalt, ausschließlich für ${patientOrKunde} die buchen/anfragen wollen)",
+  "cta_section_text": "string (2-3 Sätze, letzter emotionaler Push für ${patientOrKunde} — was passiert wenn man jetzt anruft/bucht — NIEMALS 'Wir suchen Mitarbeiter' oder Stellenangebote)",
   "testimonials": [
     {"name": "string (echter Vorname + Nachnamenskürzel, z.B. 'Maria S.')", "role": "string (z.B. '${testimonialRole}')", "text": "string (3-4 Sätze: spezifisch, konkrete Details, klingt wie ein echter Mensch)"},
     {"name": "string", "role": "string", "text": "string (3-4 Sätze)"},
@@ -434,6 +435,13 @@ export async function POST(req: NextRequest) {
     const brand_tone   = (data.brand_tone as string) || undefined;
     const hero_detail  = (data.hero_detail as string) || undefined;
 
+    // ── CTA-Karriere-Filter: verhindert Job-/Stellenanzeigen im CTA-Band ────
+    const KARRIERE_PATTERN = /\b(karriere|stellenangebot|stellen|bewerben|bewerbung|wir suchen|fachkräfte|mitarbeiter\s*gesucht|mfa|zfa|auszubildende|azubi|ärztehelfer|praxishelfer|ausbildungsplatz|jetzt bewerben|teil unseres teams)\b/i;
+    const ctaHeadlineRaw = (data.cta_section_headline as string) || "";
+    const ctaTextRaw     = (data.cta_section_text as string)     || "";
+    const cta_section_headline = KARRIERE_PATTERN.test(ctaHeadlineRaw) ? undefined : (ctaHeadlineRaw || undefined);
+    const cta_section_text     = KARRIERE_PATTERN.test(ctaTextRaw)     ? undefined : (ctaTextRaw     || undefined);
+
     // ── Quality Score ───────────────────────────────────────────────────────
 
     const qualityResult = calculateQualityScore({
@@ -485,8 +493,8 @@ export async function POST(req: NextRequest) {
         about_highlight:      data.about_highlight,
         about_points:         about_points.length > 0 ? about_points : undefined,
         trust_badge:          data.trust_badge,
-        cta_section_headline: data.cta_section_headline,
-        cta_section_text:     data.cta_section_text,
+        cta_section_headline: cta_section_headline,
+        cta_section_text:     cta_section_text,
         faq_items:            faq_items.length > 0 ? faq_items : undefined,
         process_steps:        process_steps.length > 0 ? process_steps : undefined,
         local_seo_text:       data.local_seo_text as string | undefined,

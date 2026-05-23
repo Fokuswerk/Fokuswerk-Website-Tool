@@ -61,15 +61,15 @@ function getGalleryImages(industry: string, seed = 0): string[] {
   const q = (industry || "").toLowerCase();
   let imgs: string[];
   if (q.match(/zahn|dental/)) imgs = [
-    "https://images.unsplash.com/photo-1598346763242-7ec6b70bee45?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1629909615184-74f495363b67?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?auto=format&fit=crop&w=800&q=80",
     "https://images.unsplash.com/photo-1588776814546-1ffce7f7b3b0?auto=format&fit=crop&w=800&q=80",
     "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80",
     "https://images.unsplash.com/photo-1559839697-b89e6c73d5f0?auto=format&fit=crop&w=800&q=80",
     "https://images.unsplash.com/photo-1612538498456-e861c2c66d1d?auto=format&fit=crop&w=800&q=80",
     "https://images.unsplash.com/photo-1535378620166-273708d44e4c?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1609840114035-3c981b782dfe?auto=format&fit=crop&w=800&q=80",
     "https://images.unsplash.com/photo-1571772996211-2f02c9727629?auto=format&fit=crop&w=800&q=80",
   ];
   else if (q.match(/arzt|praxis|klinik|physio/)) imgs = [
@@ -642,11 +642,16 @@ function PremiumServices({ services, color, site, isMedical }: { services: Servi
               {/* Image header */}
               <div className="relative h-48 overflow-hidden">
                 <img
-                  src={ai?.service_images?.[i] || autoImgs[i % autoImgs.length]}
+                  src={autoImgs[i % autoImgs.length]}
                   alt=""
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   loading="lazy"
                   aria-hidden="true"
+                  onError={(e) => {
+                    const fallbacks = autoImgs.filter((_, j) => j !== i % autoImgs.length);
+                    (e.currentTarget as HTMLImageElement).src = fallbacks[i % fallbacks.length] || autoImgs[0];
+                    (e.currentTarget as HTMLImageElement).onerror = null;
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 via-gray-900/20 to-transparent" />
                 <span
