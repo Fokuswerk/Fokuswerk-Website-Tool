@@ -203,8 +203,14 @@ export default function SiteForm() {
       clearInterval(stepTimer);
       setStep(CREATE_STEPS.length - 1);
 
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "KI-Generierung fehlgeschlagen.");
+      // Non-JSON-Response abfangen (z.B. Vercel-Timeout gibt plain text zurück)
+      let data: Record<string, unknown> = {};
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error(`Server-Fehler ${res.status}: Timeout oder interner Fehler. Bitte nochmal versuchen.`);
+      }
+      if (!res.ok || data.error) throw new Error((data.error as string) || "KI-Generierung fehlgeschlagen.");
 
       const finalSlug = slug || toSlug(companyName);
       const { data: inserted, error: dbError } = await supabase
