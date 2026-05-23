@@ -213,11 +213,17 @@ export async function POST(req: NextRequest) {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
+  // PHASEN 2–5: Hauptpipeline (in try-catch für saubere Fehlerbehandlung)
+  // ══════════════════════════════════════════════════════════════════════════
+  try {
+
   // PHASE 2: WEBSITE-TEXTE GENERIEREN
   // Nutzt Briefing als autoritativen Kontext
   // Strikte Anti-Halluzinations-Regeln über do_not_claim
-  // ══════════════════════════════════════════════════════════════════════════
+  // ──────────────────────────────────────────────────────────────────────────
 
+  // Opus nur für initiale Generierung (mehr Qualität wo es zählt).
+  // Revision läuft immer auf Sonnet — spart ~20s und verhindert Timeout.
   const copyModel = (isMedical || isHandwerk) ? "claude-opus-4-5" : "claude-sonnet-4-6";
   const templateHint = getTemplateHint(template || "premium");
 
@@ -300,8 +306,9 @@ export async function POST(req: NextRequest) {
   // Synthetisiert alle Feedbacks, hält Briefing-Regeln aufrecht
   // ══════════════════════════════════════════════════════════════════════════
 
+  // Revision immer Sonnet — verhindert Timeout durch 2× Opus sequenziell
   const revisionMsg = await client.messages.create({
-    model: (isMedical || isHandwerk) ? "claude-opus-4-5" : "claude-sonnet-4-6",
+    model: "claude-sonnet-4-6",
     max_tokens: 5000,
     messages: [{
       role: "user",
@@ -472,4 +479,22 @@ export async function POST(req: NextRequest) {
       },
     },
   });
+
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("Generate pipeline error:", msg);
+
+    // Timeout-spezifische Fehlermeldung
+    if (msg.includes("timeout") || msg.includes("AbortError") || msg.includes("504")) {
+      return NextResponse.json(
+        { error: "Generierung dauerte zu lange. Bitte nochmals versuchen." },
+        { status: 504 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "KI-Generierung fehlgeschlagen. Bitte API-Key und Guthaben prüfen." },
+      { status: 500 }
+    );
+  }
 }
