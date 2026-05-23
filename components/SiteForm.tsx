@@ -188,6 +188,11 @@ export default function SiteForm() {
           area_served:         scrapedCtx?.area_served,
           founding_year:       scrapedCtx?.founding_year,
           faq_items:           scrapedCtx?.faq_items,
+          // Contact data for quality score
+          phone:               (scrapedCtx?.phone as string) || (!oldWebsiteUrl ? phone : undefined),
+          email:               scrapedCtx?.email,
+          address:             scrapedCtx?.address,
+          logo_url:            scrapedCtx?.logo_url,
           manual_location:     !oldWebsiteUrl ? city   : undefined,
           manual_phone:        !oldWebsiteUrl ? phone  : undefined,
           manual_notes:        !oldWebsiteUrl ? notes  : undefined,

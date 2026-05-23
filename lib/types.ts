@@ -34,11 +34,22 @@ export interface TeamMemberItem {
   bio: string;
 }
 
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface ProcessStep {
+  step: number;
+  title: string;
+  description: string;
+}
+
 export interface AIContent {
   hero_badge?: string;
   cta_secondary?: string;
   services_detailed?: ServiceItem[];
-  service_images?: string[];      // custom image URLs per service card (index-matched)
+  service_images?: string[];
   benefits_detailed?: BenefitItem[];
   stats?: StatItem[];
   about_headline?: string;
@@ -46,8 +57,19 @@ export interface AIContent {
   trust_badge?: string;
   cta_section_headline?: string;
   cta_section_text?: string;
-  testimonials?: TestimonialItem[]; // AI-generated, industry-specific
-  team_members?: TeamMemberItem[];  // AI-extracted from existing website
+  testimonials?: TestimonialItem[];
+  team_members?: TeamMemberItem[];
+  // v6: richer content sections
+  faq_items?: FaqItem[];
+  process_steps?: ProcessStep[];
+  local_seo_text?: string;
+  og_title?: string;
+  og_description?: string;
+  // v6: quality & provenance
+  quality_score?: number;
+  quality_warnings?: string[];
+  quality_info?: string[];
+  data_sources?: Record<string, "scraped" | "derived" | "manual" | "fallback">;
 }
 
 export interface Site {
@@ -70,17 +92,13 @@ export interface Site {
   benefits: string[];
   about_text: string | null;
   status: SiteStatus;
-  // v2 fields
   meta_title: string | null;
   meta_description: string | null;
   logo_url: string | null;
   whatsapp: string | null;
   ai_content: AIContent | null;
-  // v3 fields
   template: SiteTemplate;
-  // v4 fields
   agb_text: string | null;
-  // v5 fields
   hero_image_url: string | null;
   about_image_url: string | null;
   testimonials: TestimonialItem[] | null;

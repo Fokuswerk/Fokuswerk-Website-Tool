@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import type { Site, SiteStatus } from "@/lib/types";
+import { scoreColor } from "@/lib/quality-score";
 import CopyLinkButton from "./CopyLinkButton";
 import DeleteButton from "./DeleteButton";
 import StatusSelect from "./StatusSelect";
@@ -81,6 +82,7 @@ export default function SitesTable({ sites }: { sites: Site[] }) {
               <th scope="col" className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">Status</th>
               <th scope="col" className="hidden px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400 md:table-cell">Template</th>
               <th scope="col" className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400">Demo-Link</th>
+              <th scope="col" className="hidden px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400 xl:table-cell">Qualität</th>
               <th scope="col" className="hidden px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400 lg:table-cell">Erstellt</th>
               <th scope="col" className="px-5 py-3" aria-label="Aktionen" />
             </tr>
@@ -148,6 +150,22 @@ export default function SitesTable({ sites }: { sites: Site[] }) {
                         <ExternalIcon />
                       </a>
                     </div>
+                  </td>
+
+                  {/* Quality score */}
+                  <td className="hidden px-5 py-4 xl:table-cell">
+                    {(() => {
+                      const score = site.ai_content?.quality_score;
+                      if (score == null) return <span className="text-xs text-gray-300">—</span>;
+                      return (
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-sm font-bold tabular-nums ${scoreColor(score)}`}>
+                            {score}
+                          </span>
+                          <span className="text-xs text-gray-400">/100</span>
+                        </div>
+                      );
+                    })()}
                   </td>
 
                   {/* Date */}
