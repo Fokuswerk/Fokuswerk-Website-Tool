@@ -131,13 +131,16 @@ REGELN:
 1. Hero-Headline: max. 6 Wörter, konkret mit Branche UND Ort "${input.location}" — NICHT generisch
 2. Meta Title: 50-60 Zeichen mit Ort + Hauptkeyword
 3. Meta Description: 140-155 Zeichen, konkreter Nutzen + CTA
-4. ${input.services.length > 0 ? `Services: EXAKT diese ${input.services.length} Leistungen — Titel unverändert, nur Beschreibungen schreiben` : "Services: 5 konkrete Leistungen für diese Branche"}
-5. FAQ: 4 echte Fragen der Zielgruppe (keine generischen)
-6. About-Text: 3 Sätze — was macht dieses Unternehmen besonders
-7. local_seo_text: 2 Sätze mit Ort + Branche + Keyword
-8. Kein generisches Marketing — konkret auf DIESES Unternehmen zugeschnitten
-9. Stats: NUR wenn echte Zahlen aus den Daten — sonst leeres Array
-10. Testimonials: 3 glaubwürdige, konkrete Stimmen
+4. ${input.services.length > 0
+  ? `Services: EXAKT diese ${input.services.length} Leistungen — Titel 1:1 übernehmen, NUR Beschreibungen schreiben`
+  : `Services: 5-6 KONKRETE Behandlungen/Leistungen dieser Branche — KEINE abstrakten Konzepte wie "Praxisphilosophie", "Patientenorientierung", "Unsere Werte" etc.`}
+5. Services MÜSSEN echte Behandlungen sein (z.B. "Prophylaxe", "Implantate", "Bleaching") — NICHT: "Anmeldung", "Empfang", "Über uns", "Warum wir", "Unser Ansatz"
+6. FAQ: 4 konkrete Patientenfragen (z.B. "Nehmen Sie Kassenpatienten?" / "Wie schmerzhaft ist...?" / "Was kostet...?")
+7. About-Text: 3 Sätze — individuell auf DIESES Unternehmen, mit Ort, was es besonders macht
+8. local_seo_text: 2 Sätze mit Ort + Branche + Keyword
+9. Kein generisches Marketing — konkret auf DIESES Unternehmen zugeschnitten
+10. Stats: NUR wenn echte Zahlen aus den Daten — sonst leeres Array []
+11. Testimonials: 3 glaubwürdige Stimmen mit spezifischem Kontext (beim Zahnarzt: "Patientin", nicht "Kundin")
 
 Antworte NUR mit validem JSON:
 
@@ -278,11 +281,24 @@ export async function POST(req: NextRequest) {
     const auto_filled: string[] = [];
     const hasRealScrapedServices = confirmedServices.length > 0;
 
+    // Blacklist: Titel die KEINE echten Leistungen sind
+    const NON_SERVICE_PATTERNS = /^(anmeldung|empfang|über uns|warum|unser ansatz|praxisphilosophie|unsere werte|patientenorientierung|ihr lächeln|willkommen|kontakt|team|öffnungszeiten|termin|philosophie|vision|mission)/i;
+
     let services_detailed: ServiceItem[] = Array.isArray(data.services)
-      ? (data.services as unknown[]).map(s =>
-          typeof s === "string" ? { title: s, description: "" } : s as ServiceItem
-        )
+      ? (data.services as unknown[])
+          .map(s => typeof s === "string" ? { title: s, description: "" } : s as ServiceItem)
+          .filter(s => s.title && s.title.length > 2 && !NON_SERVICE_PATTERNS.test(s.title.trim()))
       : [];
+
+    // Wenn scraped services vorhanden waren aber AI hat sie ignoriert → erzwingen
+    if (confirmedServices.length > 0 && services_detailed.length < confirmedServices.length) {
+      const existingTitles = new Set(services_detailed.map(s => s.title.toLowerCase()));
+      for (const title of confirmedServices) {
+        if (!existingTitles.has(title.toLowerCase())) {
+          services_detailed.push({ title, description: "Professionelle Behandlung mit modernen Methoden und höchsten Qualitätsstandards." });
+        }
+      }
+    }
 
     if (services_detailed.length < 3) {
       const fallbacks = getFallbackServices(industry);

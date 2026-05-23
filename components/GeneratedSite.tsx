@@ -65,6 +65,12 @@ function getGalleryImages(industry: string, seed = 0): string[] {
     "https://images.unsplash.com/photo-1606811971618-4486d14f3f99?auto=format&fit=crop&w=800&q=80",
     "https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80",
     "https://images.unsplash.com/photo-1588776814546-1ffce7f7b3b0?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1559839697-b89e6c73d5f0?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1612538498456-e861c2c66d1d?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1535378620166-273708d44e4c?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1609840114035-3c981b782dfe?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1571772996211-2f02c9727629?auto=format&fit=crop&w=800&q=80",
   ];
   else if (q.match(/arzt|praxis|klinik|physio/)) imgs = [
     "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80",
@@ -164,18 +170,27 @@ function getDefaultServices(industry: string): ServiceItem[] {
 }
 
 const DEFAULT_BENEFITS: BenefitItem[] = [
-  { title: "Langjährige Erfahrung", description: "Jahrelange Expertise und hunderte zufriedene Kunden sprechen für unsere Qualität und Verlässlichkeit." },
+  { title: "Langjährige Erfahrung", description: "Jahrelange Expertise und ein eingespieltes Team sprechen für unsere Qualität und Verlässlichkeit." },
   { title: "Persönliche Betreuung", description: "Individuelle Beratung und ein fester Ansprechpartner – wir nehmen uns Zeit für Ihr Anliegen." },
   { title: "Faire Preise", description: "Transparente Kostenstruktur ohne versteckte Gebühren. Qualität muss nicht teuer sein." },
   { title: "Schnelle Reaktion", description: "Kurze Reaktionszeiten und zeitnahe Umsetzung – wir wissen, dass Ihre Zeit wertvoll ist." },
 ];
 
-const DEFAULT_STATS: StatItem[] = [
-  { value: "500+", label: "Zufriedene Kunden" },
-  { value: "10",   label: "Jahre Erfahrung" },
-  { value: "98%",  label: "Weiterempfehlung" },
-  { value: "24h",  label: "Reaktionszeit" },
-];
+function getDefaultStats(template: string, industry: string): StatItem[] {
+  const isMed = template.startsWith("arzt") || /zahn|dental|arzt|praxis/.test((industry || "").toLowerCase());
+  if (isMed) return [
+    { value: "1.000+", label: "Zufriedene Patienten" },
+    { value: "15+",    label: "Jahre Erfahrung" },
+    { value: "98%",    label: "Weiterempfehlung" },
+    { value: "2",      label: "Behandlungszimmer" },
+  ];
+  return [
+    { value: "500+", label: "Abgeschlossene Projekte" },
+    { value: "10+",  label: "Jahre Erfahrung" },
+    { value: "98%",  label: "Weiterempfehlung" },
+    { value: "24h",  label: "Reaktionszeit" },
+  ];
+}
 
 // ─── Logo ────────────────────────────────────────────────────────────────────
 function SiteLogo({ site, color, white = false }: { site: Site; color: string; white?: boolean }) {
@@ -869,6 +884,12 @@ const DEFAULT_TESTIMONIALS: TestimonialItem[] = [
   { name: "Michael S.", role: "Zufriedener Kunde", text: "Absolut professionell und zuverlässig. Die Arbeit wurde pünktlich und in hervorragender Qualität erledigt. Ich bin rundum begeistert und kann es uneingeschränkt weiterempfehlen!" },
   { name: "Sandra K.", role: "Kundin seit 2 Jahren", text: "Von der ersten Kontaktaufnahme bis zum Abschluss war alles einwandfrei. Faire Preise und das Ergebnis hat meine Erwartungen übertroffen. Klare Empfehlung!" },
   { name: "Thomas B.", role: "Stammkunde", text: "Schnelle Reaktion und immer freundlich – genau so stellt man sich einen zuverlässigen Partner vor. Ich komme immer wieder gerne und empfehle das Team weiter." },
+];
+
+const DEFAULT_PATIENT_TESTIMONIALS: TestimonialItem[] = [
+  { name: "Maria S.", role: "Patientin seit 5 Jahren", text: "Ich war lange Zeit sehr ängstlich beim Zahnarzt. Hier wurde ich so einfühlsam betreut, dass ich keine Angst mehr habe. Das Team ist herzlich und die Behandlung schmerzfrei." },
+  { name: "Klaus R.", role: "Patient", text: "Endlich eine Praxis, die sich wirklich Zeit nimmt. Alle Fragen wurden geduldig beantwortet, die Behandlung war professionell und ich bin mit dem Ergebnis sehr zufrieden." },
+  { name: "Andrea M.", role: "Familienpatientin", text: "Wir kommen mit der ganzen Familie hierher – auch die Kinder fühlen sich wohl. Das Praxisteam ist unglaublich freundlich und erklärt alles verständlich. Absolute Empfehlung!" },
 ];
 
 function PremiumTestimonials({ color, site }: { color: string; site: Site }) {
@@ -1906,9 +1927,12 @@ function ArztTrustStrip({ color }: { color: string }) {
   );
 }
 
-function ArztServices({ services, color }: { services: ServiceItem[]; color: string }) {
+function ArztServices({ services, color, site }: { services: ServiceItem[]; color: string; site: Site }) {
   const ref = useReveal();
-  const serviceIcons = ["🩺", "💊", "🩻", "🔬", "🫀", "💉"];
+  const isDental = /zahn|dental/i.test(site.industry || "");
+  const serviceIcons = isDental
+    ? ["🦷", "🪥", "😁", "✨", "👶", "🔬", "🏥", "💎"]
+    : ["🩺", "💊", "🩻", "🔬", "🫀", "💉", "🩹", "🔬"];
   return (
     <section id="leistungen" className="bg-white py-20 sm:py-28" aria-labelledby="arzt-services-heading">
       <div ref={ref} className="reveal mx-auto max-w-7xl px-6">
@@ -1994,7 +2018,7 @@ function ArztTestimonials({ color, site }: { color: string; site: Site }) {
   const aiGenerated = (site.ai_content as AIContent)?.testimonials;
   const reviews = site.testimonials?.length === 3
     ? site.testimonials
-    : (aiGenerated?.length === 3 ? aiGenerated : DEFAULT_TESTIMONIALS);
+    : (aiGenerated?.length === 3 ? aiGenerated : DEFAULT_PATIENT_TESTIMONIALS);
   return (
     <section className="bg-white py-20 sm:py-28" aria-labelledby="arzt-reviews-heading">
       <div ref={ref} className="reveal mx-auto max-w-7xl px-6">
@@ -2167,7 +2191,7 @@ function ArztTemplate(props: TplProps) {
       <ArztNav site={site} color={color} />
       <ArztHero {...props} />
       <ArztTrustStrip color={color} />
-      <ArztServices services={services} color={color} />
+      <ArztServices services={services} color={color} site={site} />
       <ArztTeam site={site} color={color} ai={ai} />
       <ArztTestimonials color={color} site={site} />
       <ArztKarriere site={site} color={color} />
@@ -2412,7 +2436,7 @@ function ArztModernTestimonials({ color, site }: { color: string; site: Site }) 
   const aiGenerated = (site.ai_content as AIContent)?.testimonials;
   const reviews = site.testimonials?.length === 3
     ? site.testimonials
-    : (aiGenerated?.length === 3 ? aiGenerated : DEFAULT_TESTIMONIALS);
+    : (aiGenerated?.length === 3 ? aiGenerated : DEFAULT_PATIENT_TESTIMONIALS);
   return (
     <section className="bg-gray-50 py-20 sm:py-28" aria-labelledby="arzt-modern-reviews-heading">
       <div ref={ref} className="reveal mx-auto max-w-7xl px-6">
@@ -3345,8 +3369,8 @@ export default function GeneratedSite({ site }: { site: Site }) {
     ? rawBenefits
     : [...rawBenefits, ...DEFAULT_BENEFITS.slice(0, 4 - rawBenefits.length)];
 
-  const stats: StatItem[] = (ai?.stats?.length ? ai.stats : null) ?? DEFAULT_STATS;
   const template = (site.template as SiteTemplate) || "premium";
+  const stats: StatItem[] = ai?.stats?.length ? ai.stats : getDefaultStats(template, site.industry || "");
 
   const props: TplProps = { site, color, ai, services, benefits, stats };
 
