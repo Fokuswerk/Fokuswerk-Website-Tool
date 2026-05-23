@@ -203,9 +203,8 @@ export default function SiteForm() {
       clearInterval(stepTimer);
       setStep(CREATE_STEPS.length - 1);
 
-      if (!res.ok) throw new Error("KI-Generierung fehlgeschlagen.");
       const data = await res.json();
-      if (data.error) throw new Error(data.error);
+      if (!res.ok || data.error) throw new Error(data.error || "KI-Generierung fehlgeschlagen.");
 
       const finalSlug = slug || toSlug(companyName);
       const { data: inserted, error: dbError } = await supabase

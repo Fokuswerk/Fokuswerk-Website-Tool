@@ -3,8 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   buildBriefingPrompt,
   buildCopyPrompt,
-  buildReviewPrompt,
-  buildRevisionPrompt,
   type BusinessBriefing,
   type ScrapedInput,
 } from "@/lib/prompts";
@@ -77,423 +75,348 @@ function getFallbackServices(industry: string): ServiceItem[] {
 // ─── Haupthandler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const {
-    company_name,
-    industry,
-    description,
-    old_website_url,
-    scraped_headings,
-    scraped_hero,
-    scraped_subheadings,
-    scraped_services,
-    service_pairs,
-    service_descriptions,
-    about_text,
-    team_members: scraped_team,
-    opening_hours,
-    rating,
-    trust_signals,
-    insurance_info,
-    area_served,
-    founding_year,
-    faq_items: scraped_faq,
-    company_summary,
-    manual_location,
-    manual_phone,
-    manual_notes,
-    template,
-    phone,
-    email,
-    address,
-    logo_url,
-  } = body;
-
-  if (!company_name) {
-    return NextResponse.json({ error: "Unternehmensname fehlt" }, { status: 400 });
-  }
-
-  const hasWebsite = !!old_website_url;
-  const isMedical  = !!(template || "").match(/^arzt/);
-  const isHandwerk = !!(template || "").match(/^handwerk/);
-
-  // ── Confirmed services (höchste Priorität) ────────────────────────────────
-  const confirmedServices: string[] =
-    Array.isArray(scraped_services) && scraped_services.length > 0
-      ? scraped_services as string[]
-      : Array.isArray(scraped_subheadings) && scraped_subheadings.length > 0
-      ? scraped_subheadings as string[]
-      : [];
-
-  const confirmedPairs: Array<{ title: string; description: string }> =
-    Array.isArray(service_pairs) && service_pairs.length > 0
-      ? service_pairs as Array<{ title: string; description: string }>
-      : [];
-
-  const hasRealTeam = Array.isArray(scraped_team) && (scraped_team as Array<{ name: string; title: string }>).length > 0;
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // PHASE 1: BUSINESS-BRIEFING
-  // Analysiert Rohdaten → strukturiertes Unternehmensprofil
-  // Verhindert Halluzinationen durch explizite do_not_claim-Regeln
-  // ══════════════════════════════════════════════════════════════════════════
-
-  const scrapedInput: ScrapedInput = {
-    company_name,
-    industry,
-    description,
-    hero_text: scraped_hero,
-    headings:  scraped_headings,
-    scraped_services: confirmedServices,
-    service_pairs:    confirmedPairs,
-    service_descriptions: service_descriptions as string[] | undefined,
-    about_text:    about_text as string | undefined,
-    team_members:  scraped_team as Array<{ name: string; title: string }> | undefined,
-    opening_hours: opening_hours as string | undefined,
-    rating:        rating as string | undefined,
-    trust_signals: trust_signals as string[] | undefined,
-    insurance_info: insurance_info as string | undefined,
-    founding_year:  founding_year as string | undefined,
-    faq_items:     scraped_faq as Array<{ question: string; answer: string }> | undefined,
-    area_served:   area_served as string | undefined,
-    phone:         phone as string | undefined,
-    email:         email as string | undefined,
-    address:       address as string | undefined,
-    company_summary: company_summary as string | undefined,
-    manual_location: !hasWebsite ? (manual_location as string | undefined) : undefined,
-    manual_phone:    !hasWebsite ? (manual_phone as string | undefined) : undefined,
-    manual_notes:    !hasWebsite ? (manual_notes as string | undefined) : undefined,
-    template,
-  };
-
-  let briefing: BusinessBriefing;
+  let currentPhase = "init";
 
   try {
-    const briefingMsg = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1200,
-      messages: [{ role: "user", content: buildBriefingPrompt(scrapedInput) }],
-    });
-    const rawBriefing = parseJSON(
-      briefingMsg.content[0].type === "text" ? briefingMsg.content[0].text : "{}"
-    );
-    briefing = rawBriefing as unknown as BusinessBriefing;
-
-    // Sicherstellen dass Pflichtfelder vorhanden sind
-    if (!briefing.company_name) briefing.company_name = company_name;
-    if (!briefing.safe_claims)  briefing.safe_claims = ["Persönliche Beratung", "Direkte Ansprechpartner", "Strukturierter Ablauf"];
-    if (!briefing.do_not_claim) briefing.do_not_claim = [];
-    if (!briefing.confirmed_services) briefing.confirmed_services = [];
-    if (!briefing.primary_cta) briefing.primary_cta = isMedical ? "Termin vereinbaren" : "Jetzt anfragen";
-    if (!briefing.city) briefing.city = manual_location || "";
-  } catch {
-    // Briefing-Fallback: Minimales Briefing aus vorhandenen Daten
-    briefing = {
+    const body = await req.json();
+    const {
       company_name,
-      city:        manual_location || "",
-      region:      "",
-      industry:    industry || "Dienstleistung",
-      usp:         `${company_name} — persönliche Beratung und professionelle Umsetzung`,
-      tone:        "professionell und freundlich",
-      audience_type: "B2C",
-      target_audience: "Privat- und Geschäftskunden in der Region",
-      pain_points:  ["Schnelle und zuverlässige Lösung", "Gutes Preis-Leistungs-Verhältnis"],
-      motivations:  ["Qualität", "Verlässlichkeit"],
-      confirmed_services: confirmedServices.map(s => ({ title: s, source: "scraped" as const })),
-      trust_signals_real: (trust_signals as string[] | null) || [],
-      safe_claims:  ["Persönliche Beratung", "Direkte Ansprechpartner", "Klare Kommunikation"],
-      do_not_claim: [],
-      primary_seo_keyword: `${industry || "Dienstleister"} ${manual_location || ""}`.trim(),
-      secondary_seo_keywords: [],
-      primary_cta:  isMedical ? "Termin vereinbaren" : "Jetzt anfragen",
-      cta_urgency:  "Jetzt Kontakt aufnehmen",
-      tone_examples: [],
-      content_notes: [],
-    };
-  }
+      industry,
+      description,
+      old_website_url,
+      scraped_headings,
+      scraped_hero,
+      scraped_subheadings,
+      scraped_services,
+      service_pairs,
+      service_descriptions,
+      about_text,
+      team_members: scraped_team,
+      opening_hours,
+      rating,
+      trust_signals,
+      insurance_info,
+      area_served,
+      founding_year,
+      faq_items: scraped_faq,
+      company_summary,
+      manual_location,
+      manual_phone,
+      manual_notes,
+      template,
+      phone,
+      email,
+      address,
+      logo_url,
+    } = body;
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // PHASEN 2–5: Hauptpipeline (in try-catch für saubere Fehlerbehandlung)
-  // ══════════════════════════════════════════════════════════════════════════
-  try {
-
-  // PHASE 2: WEBSITE-TEXTE GENERIEREN
-  // Nutzt Briefing als autoritativen Kontext
-  // Strikte Anti-Halluzinations-Regeln über do_not_claim
-  // ──────────────────────────────────────────────────────────────────────────
-
-  // Opus nur für initiale Generierung (mehr Qualität wo es zählt).
-  // Revision läuft immer auf Sonnet — spart ~20s und verhindert Timeout.
-  const copyModel = (isMedical || isHandwerk) ? "claude-opus-4-5" : "claude-sonnet-4-6";
-  const templateHint = getTemplateHint(template || "premium");
-
-  const copyPrompt = buildCopyPrompt(
-    briefing,
-    confirmedServices,
-    confirmedPairs,
-    templateHint,
-    hasRealTeam,
-    isMedical,
-  );
-
-  const copyMsg = await client.messages.create({
-    model: copyModel,
-    max_tokens: 5000,
-    messages: [{ role: "user", content: copyPrompt }],
-  });
-  const initial = parseJSON(
-    copyMsg.content[0].type === "text" ? copyMsg.content[0].text : "{}"
-  );
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // PHASE 3: 4 PARALLELE QUALITÄTS-REVIEWS
-  // Jeder Agent prüft eine Dimension: SEO, Kunde, Berater, CRO
-  // ══════════════════════════════════════════════════════════════════════════
-
-  const contentSnapshot = JSON.stringify({
-    hero_headline:    initial.hero_headline,
-    hero_subheadline: initial.hero_subheadline,
-    hero_badge:       initial.hero_badge,
-    meta_title:       initial.meta_title,
-    meta_description: initial.meta_description,
-    cta_text:         initial.cta_text,
-    about_text:       initial.about_text,
-    local_seo_text:   initial.local_seo_text,
-    benefits:         initial.benefits,
-    process_steps:    Array.isArray(initial.process_steps)
-      ? (initial.process_steps as ProcessStep[]).slice(0, 3)
-      : [],
-    faq_items:        Array.isArray(initial.faq_items)
-      ? (initial.faq_items as FaqItem[]).slice(0, 3)
-      : [],
-    testimonials:     initial.testimonials,
-    services:         Array.isArray(initial.services)
-      ? (initial.services as ServiceItem[]).slice(0, 4).map(s =>
-          typeof s === "object" && s !== null ? (s as ServiceItem).title : s
-        )
-      : [],
-  });
-
-  const [seoFeedback, customerFeedback, consultantFeedback, croFeedback] =
-    await Promise.all([
-      client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 800,
-        messages: [{ role: "user", content: buildReviewPrompt("seo", briefing, contentSnapshot) }],
-      }).then(m => parseJSON(m.content[0].type === "text" ? m.content[0].text : "{}")),
-
-      client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 800,
-        messages: [{ role: "user", content: buildReviewPrompt("customer", briefing, contentSnapshot) }],
-      }).then(m => parseJSON(m.content[0].type === "text" ? m.content[0].text : "{}")),
-
-      client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 800,
-        messages: [{ role: "user", content: buildReviewPrompt("consultant", briefing, contentSnapshot) }],
-      }).then(m => parseJSON(m.content[0].type === "text" ? m.content[0].text : "{}")),
-
-      client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 800,
-        messages: [{ role: "user", content: buildReviewPrompt("cro", briefing, contentSnapshot) }],
-      }).then(m => parseJSON(m.content[0].type === "text" ? m.content[0].text : "{}")),
-    ]);
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // PHASE 4: REVISIONS-AGENT
-  // Synthetisiert alle Feedbacks, hält Briefing-Regeln aufrecht
-  // ══════════════════════════════════════════════════════════════════════════
-
-  // Revision immer Sonnet — verhindert Timeout durch 2× Opus sequenziell
-  const revisionMsg = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 5000,
-    messages: [{
-      role: "user",
-      content: buildRevisionPrompt(
-        briefing,
-        initial,
-        { seo: seoFeedback, customer: customerFeedback, consultant: consultantFeedback, cro: croFeedback },
-        confirmedServices,
-      ),
-    }],
-  });
-  const revised = parseJSON(
-    revisionMsg.content[0].type === "text" ? revisionMsg.content[0].text : "{}"
-  );
-
-  // Merge: revision gewinnt, initial als Fallback
-  const data: Record<string, unknown> = { ...initial, ...revised };
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // OUTPUT NORMALISIERUNG
-  // ══════════════════════════════════════════════════════════════════════════
-
-  const auto_filled: string[] = [];
-
-  // Services
-  let services_detailed: ServiceItem[] = Array.isArray(data.services)
-    ? (data.services as unknown[]).map(s =>
-        typeof s === "string" ? { title: s, description: "" } : s as ServiceItem
-      )
-    : [];
-
-  const hasRealScrapedServices = confirmedServices.length > 0;
-
-  if (services_detailed.length < 3) {
-    const fallbacks = getFallbackServices(industry || briefing.industry || "");
-    const needed = Math.max(3, 5) - services_detailed.length;
-    services_detailed = [...services_detailed, ...fallbacks.slice(0, needed)];
-    auto_filled.push(`${Math.max(0, 5 - services_detailed.length)} Leistung(en) aus Branchenvorlage ergänzt`);
-  }
-
-  services_detailed = services_detailed.map(s => ({
-    title:       s.title || "Leistung",
-    description: s.description || "Professionelle Leistung mit höchsten Qualitätsstandards.",
-  }));
-
-  // Benefits
-  let benefits_detailed: BenefitItem[] = Array.isArray(data.benefits)
-    ? (data.benefits as unknown[]).map(b =>
-        typeof b === "string" ? { title: b, description: "" } : b as BenefitItem
-      )
-    : [];
-
-  if (benefits_detailed.length < 3) {
-    const genericBenefits: BenefitItem[] = [
-      { title: "Persönliche Beratung", description: "Individuelle Beratung auf Ihre Situation zugeschnitten." },
-      { title: "Klare Kommunikation", description: "Transparente Prozesse und direkte Ansprechpartner." },
-      { title: "Strukturierter Ablauf", description: "Professionelles Vorgehen von der ersten Anfrage bis zum Abschluss." },
-      { title: "Verlässlichkeit", description: "Termine werden eingehalten, Zusagen werden gehalten." },
-    ];
-    while (benefits_detailed.length < 3) {
-      benefits_detailed.push(genericBenefits[benefits_detailed.length] ?? genericBenefits[0]);
+    if (!company_name) {
+      return NextResponse.json({ error: "Unternehmensname fehlt" }, { status: 400 });
     }
-  }
 
-  // Stats — nur wenn echte Daten vorhanden
-  const rawStats = Array.isArray(data.stats) ? data.stats as StatItem[] : [];
-  const stats = rawStats.filter(s => s.value && s.label && s.value !== "string").slice(0, 4);
-  // Wenn keine echten Stats: leeres Array (kein fake)
-  if (stats.length > 0) {
-    auto_filled.push(`${stats.length} Stats aus KI-Generierung`);
-  }
+    const hasWebsite = !!old_website_url;
+    const isMedical  = !!(template || "").match(/^arzt/);
 
-  // FAQ
-  const faq_items: FaqItem[] = Array.isArray(data.faq_items)
-    ? (data.faq_items as FaqItem[]).filter(f => f.question && f.answer).slice(0, 6)
-    : Array.isArray(scraped_faq)
-    ? (scraped_faq as FaqItem[]).slice(0, 4)
-    : [];
+    // ── Confirmed services (höchste Priorität) ────────────────────────────────
+    const confirmedServices: string[] =
+      Array.isArray(scraped_services) && scraped_services.length > 0
+        ? scraped_services as string[]
+        : Array.isArray(scraped_subheadings) && scraped_subheadings.length > 0
+        ? scraped_subheadings as string[]
+        : [];
 
-  // Process steps
-  const process_steps: ProcessStep[] = Array.isArray(data.process_steps)
-    ? (data.process_steps as ProcessStep[]).filter(s => s.title && s.description).slice(0, 4)
-    : [];
+    const confirmedPairs: Array<{ title: string; description: string }> =
+      Array.isArray(service_pairs) && service_pairs.length > 0
+        ? service_pairs as Array<{ title: string; description: string }>
+        : [];
 
-  // Team
-  const team_members = isMedical && Array.isArray(data.team_members)
-    ? (data.team_members as TeamMemberItem[]).filter(m => m.name?.trim())
-    : null;
+    const hasRealTeam = Array.isArray(scraped_team) && (scraped_team as Array<{ name: string; title: string }>).length > 0;
 
-  // Testimonials
-  const testimonials = Array.isArray(data.testimonials) && (data.testimonials as TestimonialItem[]).length >= 3
-    ? (data.testimonials as TestimonialItem[]).slice(0, 3)
-    : null;
+    // ══════════════════════════════════════════════════════════════════════════
+    // PHASE 1: BUSINESS-BRIEFING
+    // ══════════════════════════════════════════════════════════════════════════
+    currentPhase = "briefing";
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // PHASE 5: QUALITY SCORE
-  // Deterministisch — kein API-Call
-  // ══════════════════════════════════════════════════════════════════════════
+    const scrapedInput: ScrapedInput = {
+      company_name,
+      industry,
+      description,
+      hero_text: scraped_hero,
+      headings:  scraped_headings,
+      scraped_services: confirmedServices,
+      service_pairs:    confirmedPairs,
+      service_descriptions: service_descriptions as string[] | undefined,
+      about_text:    about_text as string | undefined,
+      team_members:  scraped_team as Array<{ name: string; title: string }> | undefined,
+      opening_hours: opening_hours as string | undefined,
+      rating:        rating as string | undefined,
+      trust_signals: trust_signals as string[] | undefined,
+      insurance_info: insurance_info as string | undefined,
+      founding_year:  founding_year as string | undefined,
+      faq_items:     scraped_faq as Array<{ question: string; answer: string }> | undefined,
+      area_served:   area_served as string | undefined,
+      phone:         phone as string | undefined,
+      email:         email as string | undefined,
+      address:       address as string | undefined,
+      company_summary: company_summary as string | undefined,
+      manual_location: !hasWebsite ? (manual_location as string | undefined) : undefined,
+      manual_phone:    !hasWebsite ? (manual_phone as string | undefined) : undefined,
+      manual_notes:    !hasWebsite ? (manual_notes as string | undefined) : undefined,
+      template,
+    };
 
-  const qualityResult = calculateQualityScore({
-    hero_headline:    (data.hero_headline as string) || "",
-    hero_subheadline: (data.hero_subheadline as string) || "",
-    about_text:       (data.about_text as string) || "",
-    meta_title:       (data.meta_title as string) || "",
-    meta_description: (data.meta_description as string) || "",
-    services_detailed,
-    faq_items,
-    process_steps,
-    team_members:     team_members || [],
-    local_seo_text:   (data.local_seo_text as string) || "",
-    phone:            phone as string | null,
-    email:            email as string | null,
-    address:          address as string | null,
-    logo_url:         logo_url as string | null,
-    opening_hours:    opening_hours as string | null,
-    rating:           rating as string | null,
-    trust_signals:    trust_signals as string[] | null,
-    has_real_scraped_services: hasRealScrapedServices,
-    city:             briefing.city,
-    company_name,
-    template,
-  });
+    let briefing: BusinessBriefing;
 
-  // ── Finale Antwort zusammenbauen ─────────────────────────────────────────
+    try {
+      const briefingMsg = await client.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1200,
+        messages: [{ role: "user", content: buildBriefingPrompt(scrapedInput) }],
+      });
+      const rawBriefing = parseJSON(
+        briefingMsg.content[0].type === "text" ? briefingMsg.content[0].text : "{}"
+      );
+      briefing = rawBriefing as unknown as BusinessBriefing;
 
-  return NextResponse.json({
-    // Kern-Felder (werden direkt in DB gespeichert)
-    meta_title:       (data.meta_title       as string) || `${company_name} — ${industry || "Ihr Experte"}`,
-    meta_description: (data.meta_description as string) || `${company_name}: Persönliche Beratung und professionelle Leistungen. Jetzt anfragen!`,
-    hero_headline:    (data.hero_headline    as string) || company_name,
-    hero_subheadline: (data.hero_subheadline as string) || `Professionelle ${industry || "Dienstleistungen"} — persönlich und zuverlässig.`,
-    cta_text:         (data.cta_text         as string) || briefing.primary_cta || "Jetzt anfragen",
-    about_text:       (data.about_text       as string) || `${company_name} steht für Qualität und persönliche Beratung.`,
-    services:         services_detailed.map(s => s.title),
-    benefits:         benefits_detailed.map(b => b.title),
-    testimonials,
-    auto_filled,
+      if (!briefing.company_name) briefing.company_name = company_name;
+      if (!briefing.safe_claims)  briefing.safe_claims = ["Persönliche Beratung", "Direkte Ansprechpartner", "Strukturierter Ablauf"];
+      if (!briefing.do_not_claim) briefing.do_not_claim = [];
+      if (!briefing.confirmed_services) briefing.confirmed_services = [];
+      if (!briefing.primary_cta) briefing.primary_cta = isMedical ? "Termin vereinbaren" : "Jetzt anfragen";
+      if (!briefing.city) briefing.city = manual_location || "";
+      if (!briefing.pain_points) briefing.pain_points = [];
+      if (!briefing.motivations) briefing.motivations = [];
+      if (!briefing.secondary_seo_keywords) briefing.secondary_seo_keywords = [];
+      if (!briefing.tone_examples) briefing.tone_examples = [];
+      if (!briefing.content_notes) briefing.content_notes = [];
+      if (!briefing.trust_signals_real) briefing.trust_signals_real = [];
+      if (!briefing.primary_seo_keyword) briefing.primary_seo_keyword = `${industry || "Dienstleister"} ${manual_location || ""}`.trim();
+      if (!briefing.cta_urgency) briefing.cta_urgency = "Jetzt Kontakt aufnehmen";
+      if (!briefing.usp) briefing.usp = `${company_name} — persönliche Beratung`;
+      if (!briefing.tone) briefing.tone = "professionell und freundlich";
+      if (!briefing.industry) briefing.industry = industry || "Dienstleistung";
+      if (!briefing.audience_type) briefing.audience_type = "B2C";
+      if (!briefing.target_audience) briefing.target_audience = "Kunden in der Region";
 
-    // Erweiterter AI-Content (im ai_content JSONB-Feld gespeichert)
-    ai_content: {
-      hero_badge:           data.hero_badge,
-      cta_secondary:        data.cta_secondary,
+    } catch (briefingErr) {
+      console.error("[Phase 1 briefing error]", briefingErr instanceof Error ? briefingErr.message : briefingErr);
+      // Fallback-Briefing
+      briefing = {
+        company_name,
+        city:        manual_location || "",
+        region:      "",
+        industry:    industry || "Dienstleistung",
+        usp:         `${company_name} — persönliche Beratung und professionelle Umsetzung`,
+        tone:        "professionell und freundlich",
+        audience_type: "B2C",
+        target_audience: "Privat- und Geschäftskunden in der Region",
+        pain_points:  ["Schnelle und zuverlässige Lösung", "Gutes Preis-Leistungs-Verhältnis"],
+        motivations:  ["Qualität", "Verlässlichkeit"],
+        confirmed_services: confirmedServices.map(s => ({ title: s, source: "scraped" as const })),
+        trust_signals_real: (trust_signals as string[] | null) || [],
+        safe_claims:  ["Persönliche Beratung", "Direkte Ansprechpartner", "Klare Kommunikation"],
+        do_not_claim: [],
+        primary_seo_keyword: `${industry || "Dienstleister"} ${manual_location || ""}`.trim(),
+        secondary_seo_keywords: [],
+        primary_cta:  isMedical ? "Termin vereinbaren" : "Jetzt anfragen",
+        cta_urgency:  "Jetzt Kontakt aufnehmen",
+        tone_examples: [],
+        content_notes: [],
+      };
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // PHASE 2: WEBSITE-TEXTE GENERIEREN
+    // Sonnet für alle Templates — zuverlässig unter 60s
+    // ══════════════════════════════════════════════════════════════════════════
+    currentPhase = "copy";
+
+    const templateHint = getTemplateHint(template || "premium");
+
+    const copyPrompt = buildCopyPrompt(
+      briefing,
+      confirmedServices,
+      confirmedPairs,
+      templateHint,
+      hasRealTeam,
+      isMedical,
+    );
+
+    const copyMsg = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 4000,
+      messages: [{ role: "user", content: copyPrompt }],
+    });
+
+    const data = parseJSON(
+      copyMsg.content[0].type === "text" ? copyMsg.content[0].text : "{}"
+    );
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // OUTPUT NORMALISIERUNG
+    // ══════════════════════════════════════════════════════════════════════════
+    currentPhase = "normalization";
+
+    const auto_filled: string[] = [];
+
+    // Services
+    let services_detailed: ServiceItem[] = Array.isArray(data.services)
+      ? (data.services as unknown[]).map(s =>
+          typeof s === "string" ? { title: s, description: "" } : s as ServiceItem
+        )
+      : [];
+
+    const hasRealScrapedServices = confirmedServices.length > 0;
+
+    if (services_detailed.length < 3) {
+      const fallbacks = getFallbackServices(industry || briefing.industry || "");
+      const needed = 5 - services_detailed.length;
+      services_detailed = [...services_detailed, ...fallbacks.slice(0, needed)];
+      auto_filled.push(`${Math.max(0, 5 - services_detailed.length)} Leistung(en) aus Branchenvorlage ergänzt`);
+    }
+
+    services_detailed = services_detailed.map(s => ({
+      title:       s.title || "Leistung",
+      description: s.description || "Professionelle Leistung mit höchsten Qualitätsstandards.",
+    }));
+
+    // Benefits
+    let benefits_detailed: BenefitItem[] = Array.isArray(data.benefits)
+      ? (data.benefits as unknown[]).map(b =>
+          typeof b === "string" ? { title: b, description: "" } : b as BenefitItem
+        )
+      : [];
+
+    if (benefits_detailed.length < 3) {
+      const genericBenefits: BenefitItem[] = [
+        { title: "Persönliche Beratung", description: "Individuelle Beratung auf Ihre Situation zugeschnitten." },
+        { title: "Klare Kommunikation", description: "Transparente Prozesse und direkte Ansprechpartner." },
+        { title: "Strukturierter Ablauf", description: "Professionelles Vorgehen von der ersten Anfrage bis zum Abschluss." },
+        { title: "Verlässlichkeit", description: "Termine werden eingehalten, Zusagen werden gehalten." },
+      ];
+      while (benefits_detailed.length < 3) {
+        benefits_detailed.push(genericBenefits[benefits_detailed.length] ?? genericBenefits[0]);
+      }
+    }
+
+    // Stats — nur wenn echte Daten vorhanden
+    const rawStats = Array.isArray(data.stats) ? data.stats as StatItem[] : [];
+    const stats = rawStats.filter(s => s.value && s.label && s.value !== "string").slice(0, 4);
+
+    // FAQ
+    const faq_items: FaqItem[] = Array.isArray(data.faq_items)
+      ? (data.faq_items as FaqItem[]).filter(f => f.question && f.answer).slice(0, 6)
+      : Array.isArray(scraped_faq)
+      ? (scraped_faq as FaqItem[]).slice(0, 4)
+      : [];
+
+    // Process steps
+    const process_steps: ProcessStep[] = Array.isArray(data.process_steps)
+      ? (data.process_steps as ProcessStep[]).filter(s => s.title && s.description).slice(0, 4)
+      : [];
+
+    // Team
+    const team_members = isMedical && Array.isArray(data.team_members)
+      ? (data.team_members as TeamMemberItem[]).filter(m => m.name?.trim())
+      : null;
+
+    // Testimonials
+    const testimonials = Array.isArray(data.testimonials) && (data.testimonials as TestimonialItem[]).length >= 3
+      ? (data.testimonials as TestimonialItem[]).slice(0, 3)
+      : null;
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // PHASE 3: QUALITY SCORE (deterministisch, kein API-Call)
+    // ══════════════════════════════════════════════════════════════════════════
+    currentPhase = "quality-score";
+
+    const qualityResult = calculateQualityScore({
+      hero_headline:    (data.hero_headline as string) || "",
+      hero_subheadline: (data.hero_subheadline as string) || "",
+      about_text:       (data.about_text as string) || "",
+      meta_title:       (data.meta_title as string) || "",
+      meta_description: (data.meta_description as string) || "",
       services_detailed,
-      benefits_detailed,
-      stats:                stats.length > 0 ? stats : undefined,
-      about_headline:       (data.about_headline as string) || `Über ${company_name}`,
-      about_highlight:      data.about_highlight,
-      trust_badge:          data.trust_badge,
-      cta_section_headline: data.cta_section_headline,
-      cta_section_text:     data.cta_section_text,
-      // Neue Content-Sektionen
-      faq_items:            faq_items.length > 0 ? faq_items : undefined,
-      process_steps:        process_steps.length > 0 ? process_steps : undefined,
-      local_seo_text:       data.local_seo_text as string | undefined,
-      og_title:             data.og_title as string | undefined,
-      og_description:       data.og_description as string | undefined,
-      // Team
-      ...(team_members && team_members.length > 0 ? { team_members } : {}),
-      // Quality
-      quality_score:    qualityResult.score,
-      quality_warnings: qualityResult.warnings,
-      quality_info:     qualityResult.info,
-      data_sources:     {
-        services:      hasRealScrapedServices ? "scraped" : "derived",
-        trust_signals: (trust_signals as string[] | null)?.length ? "scraped" : "fallback",
-        team:          hasRealTeam ? "scraped" : "fallback",
-        opening_hours: opening_hours ? "scraped" : "fallback",
+      faq_items,
+      process_steps,
+      team_members:     team_members || [],
+      local_seo_text:   (data.local_seo_text as string) || "",
+      phone:            phone as string | null,
+      email:            email as string | null,
+      address:          address as string | null,
+      logo_url:         logo_url as string | null,
+      opening_hours:    opening_hours as string | null,
+      rating:           rating as string | null,
+      trust_signals:    trust_signals as string[] | null,
+      has_real_scraped_services: hasRealScrapedServices,
+      city:             briefing.city,
+      company_name,
+      template,
+    });
+
+    // ── Finale Antwort ─────────────────────────────────────────────────────
+
+    return NextResponse.json({
+      meta_title:       (data.meta_title       as string) || `${company_name} — ${industry || "Ihr Experte"}`,
+      meta_description: (data.meta_description as string) || `${company_name}: Persönliche Beratung und professionelle Leistungen. Jetzt anfragen!`,
+      hero_headline:    (data.hero_headline    as string) || company_name,
+      hero_subheadline: (data.hero_subheadline as string) || `Professionelle ${industry || "Dienstleistungen"} — persönlich und zuverlässig.`,
+      cta_text:         (data.cta_text         as string) || briefing.primary_cta || "Jetzt anfragen",
+      about_text:       (data.about_text       as string) || `${company_name} steht für Qualität und persönliche Beratung.`,
+      services:         services_detailed.map(s => s.title),
+      benefits:         benefits_detailed.map(b => b.title),
+      testimonials,
+      auto_filled,
+
+      ai_content: {
+        hero_badge:           data.hero_badge,
+        cta_secondary:        data.cta_secondary,
+        services_detailed,
+        benefits_detailed,
+        stats:                stats.length > 0 ? stats : undefined,
+        about_headline:       (data.about_headline as string) || `Über ${company_name}`,
+        about_highlight:      data.about_highlight,
+        trust_badge:          data.trust_badge,
+        cta_section_headline: data.cta_section_headline,
+        cta_section_text:     data.cta_section_text,
+        faq_items:            faq_items.length > 0 ? faq_items : undefined,
+        process_steps:        process_steps.length > 0 ? process_steps : undefined,
+        local_seo_text:       data.local_seo_text as string | undefined,
+        og_title:             data.og_title as string | undefined,
+        og_description:       data.og_description as string | undefined,
+        ...(team_members && team_members.length > 0 ? { team_members } : {}),
+        quality_score:    qualityResult.score,
+        quality_warnings: qualityResult.warnings,
+        quality_info:     qualityResult.info,
+        data_sources:     {
+          services:      hasRealScrapedServices ? "scraped" : "derived",
+          trust_signals: (trust_signals as string[] | null)?.length ? "scraped" : "fallback",
+          team:          hasRealTeam ? "scraped" : "fallback",
+          opening_hours: opening_hours ? "scraped" : "fallback",
+        },
       },
-    },
-  });
+    });
 
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("Generate pipeline error:", msg);
+    console.error(`[Generate error in phase '${currentPhase}']:`, msg);
 
-    // Timeout-spezifische Fehlermeldung
     if (msg.includes("timeout") || msg.includes("AbortError") || msg.includes("504")) {
       return NextResponse.json(
-        { error: "Generierung dauerte zu lange. Bitte nochmals versuchen." },
+        { error: `Generierung dauerte zu lange (Phase: ${currentPhase}). Bitte nochmals versuchen.` },
         { status: 504 }
       );
     }
 
+    if (msg.toLowerCase().includes("api") || msg.includes("401") || msg.includes("403")) {
+      return NextResponse.json(
+        { error: "API-Key ungültig oder kein Guthaben. Bitte API-Key prüfen." },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "KI-Generierung fehlgeschlagen. Bitte API-Key und Guthaben prüfen." },
+      { error: `KI-Generierung fehlgeschlagen (Phase: ${currentPhase}). Details: ${msg.slice(0, 100)}` },
       { status: 500 }
     );
   }
