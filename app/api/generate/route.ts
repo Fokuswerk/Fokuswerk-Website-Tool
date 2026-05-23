@@ -105,7 +105,7 @@ function buildPrompt(input: {
   if (input.trust_signals.length) dataLines.push(`Vertrauenssignale: ${input.trust_signals.join(" | ")}`);
 
   const serviceBlock = validServices.length > 0
-    ? `\n\nBESTÄTIGTE LEISTUNGEN von der echten Website (NUR diese — 1:1 Titel übernehmen, Beschreibungen texten):\n${validServices.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}`
+    ? `\n\nROHDATEN — Überschriften von der echten Website (ungefiltert, du entscheidest als Profi was davon eine echte Leistung ist):\n${validServices.map((s, i) => `  ${i + 1}. ${s}`).join("\n")}`
     : "";
 
   const pairBlock = validPairs.length > 0
@@ -152,24 +152,25 @@ UNTERNEHMENSDATEN:
 ${dataLines.join("\n")}${serviceBlock}${pairBlock}${teamBlock}${faqBlock}
 
 ══════════════════════════════════════════════════
-PHASE 2 — LEISTUNGEN: EISERNE REGELN
+PHASE 2 — LEISTUNGEN: PROFESSIONELLES URTEIL GEFRAGT
 ══════════════════════════════════════════════════
-Leistungen = buchbare, konkrete Dienstleistungen die ein ${patientOrKunde === "Patienten" ? "Patient" : "Kunde"} direkt in Anspruch nehmen kann.
+Eine Leistung ist etwas, wofür ein ${patientOrKunde === "Patienten" ? "Patient" : "Kunde"} einen Termin bucht oder direkt bezahlt.
 
-✅ KORREKTE Leistungen (konkret, buchbar, branchenspezifisch):
-  Zahnarzt: Professionelle Zahnreinigung, Implantologie, Zahnersatz, Bleaching, Invisalign, Kinderzahnheilkunde, Parodontitis-Behandlung, Wurzelkanalbehandlung
-  Arzt/Praxis: Vorsorgeuntersuchung, Blutbild, Impfberatung, Chronische Erkrankungen, EKG
-  Handwerk: Sanitärinstallation, Badezimmersanierung, Heizungswartung, Rohrreparatur, Notfallservice
+Teste jeden Eintrag aus den Rohdaten: "Kann man das buchen / behandeln lassen / kaufen?"
+→ JA  → echte Leistung, in die Website aufnehmen
+→ NEIN → strukturelles Element der alten Website, ignorieren
 
-❌ VERBOTENE "Leistungen" (diese existieren als Leistung NICHT):
-  Aufnahmebogen · Neupatient · ZFA · MFA · Empfang · Rezeption · Anmeldung
-  Benefits · Vorteile · Warum wir · Über uns · Team · Philosophie · Leitbild
-  Willkommen · Wir freuen uns · Ihr Besuch · Herzlich Willkommen
-  Öffnungszeiten · Kontakt · Anfahrt · Impressum · Downloads · Formulare
-  Statistiken · Bewertungen · Views · Reichweite · Ergebnisse · FAQ
+Beispiele für KEINE Leistungen (erkennst du als Profi sofort):
+• Stellenanzeigen & Ausbildung: "ZFA gesucht", "Auszubildende zur ZFA", "Ausbildungsplatz", "Azubi", "Wir bilden aus"
+• Navigation & Struktur: "Kontakt", "Anfahrt", "Öffnungszeiten", "Impressum", "Downloads"
+• Über das Team: "Unser Team", "Praxisteam", "Über uns", "Über mich", "Philosophie"
+• Marketing-Floskeln: "Willkommen", "Herzlich Willkommen", "Wir freuen uns auf Ihren Besuch"
+• Formulare & Verwaltung: "Aufnahmebogen", "Neupatient", "Anmeldung", "Empfang"
+
+Du brauchst keine vollständige Verbotsliste — du erkennst als Profi sofort was buchbar ist und was nicht.
 
 ${validServices.length > 0
-    ? `→ PFLICHT: Exakt diese ${validServices.length} Leistungen verwenden. Titel 1:1 übernehmen, nur Beschreibungen texten.`
+    ? `→ Prüfe die ${validServices.length} Rohdaten-Einträge oben und wähle nur die echten Leistungen aus. Ergänze mit branchenspezifischen Fachleistungen falls nötig. Ziel: 6-10 konkrete, buchbare Leistungen.`
     : `→ Leite 6-10 konkrete, buchbare Leistungen aus "${input.industry}" ab. Präzise Fachbegriffe verwenden.`}
 
 ══════════════════════════════════════════════════
@@ -377,16 +378,6 @@ export async function POST(req: NextRequest) {
           )
       : [];
 
-    // Wenn scraped services vorhanden waren aber AI hat sie ignoriert → erzwingen
-    if (confirmedServices.length > 0 && services_detailed.length < confirmedServices.length) {
-      const existingTitles = new Set(services_detailed.map(s => s.title.toLowerCase()));
-      for (const title of confirmedServices) {
-        if (!existingTitles.has(title.toLowerCase())) {
-          services_detailed.push({ title, description: "Professionelle Behandlung mit modernen Methoden und höchsten Qualitätsstandards." });
-        }
-      }
-    }
-
     if (services_detailed.length < 3) {
       const fallbacks = getFallbackServices(industry);
       services_detailed = [...services_detailed, ...fallbacks.slice(0, 5 - services_detailed.length)];
@@ -396,6 +387,7 @@ export async function POST(req: NextRequest) {
     services_detailed = services_detailed.map(s => ({
       title:       s.title || "Leistung",
       description: s.description || "Professionelle Leistung mit höchsten Qualitätsstandards.",
+      ...(s.highlight ? { highlight: s.highlight } : {}),
     }));
 
     let benefits_detailed: BenefitItem[] = Array.isArray(data.benefits)
