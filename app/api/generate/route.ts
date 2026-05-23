@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { calculateQualityScore } from "@/lib/quality-score";
 import type { ServiceItem, BenefitItem, StatItem, TestimonialItem, TeamMemberItem, FaqItem, ProcessStep } from "@/lib/types";
 
-export const maxDuration = 60;
+export const maxDuration = 300; // Vercel Pro: bis zu 300s erlaubt
 
 // ─── Robuster JSON-Parser ────────────────────────────────────────────────────
 
@@ -332,15 +332,17 @@ export async function POST(req: NextRequest) {
       has_real_team: hasRealTeam,
     });
 
-    const msg = await client.messages.create({
+    // Streaming-Aufruf — hält Vercel-Verbindung am Leben während Opus generiert
+    const stream = await client.messages.stream({
       model: "claude-opus-4-5",
       max_tokens: 8000,
       system: "Du bist ein Senior Brand-Stratege und Cheftexter einer deutschen Premium-Webagentur. Du schreibst ausschließlich auf Deutsch. Du lieferst ausschließlich valides JSON — kein erklärender Text, keine Markdown-Blöcke, kein Kommentar. Nur das JSON-Objekt selbst.",
       messages: [{ role: "user", content: prompt }],
     });
 
+    const finalMsg = await stream.finalMessage();
     const data = parseJSON(
-      msg.content[0].type === "text" ? msg.content[0].text : "{}"
+      finalMsg.content[0]?.type === "text" ? finalMsg.content[0].text : "{}"
     );
 
     // ── Output normalisieren ────────────────────────────────────────────────
