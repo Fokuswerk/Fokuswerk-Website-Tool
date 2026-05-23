@@ -11,7 +11,16 @@ import type { ServiceItem, BenefitItem, StatItem, TestimonialItem, TeamMemberIte
 
 export const maxDuration = 60;
 
-const client = new Anthropic();
+// Client wird lazy initialisiert — verhindert Modul-Crash wenn kein API Key
+let _client: Anthropic | null = null;
+function getClient(): Anthropic {
+  if (!_client) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) throw new Error("ANTHROPIC_API_KEY fehlt in den Umgebungsvariablen");
+    _client = new Anthropic({ apiKey });
+  }
+  return _client;
+}
 
 // ─── Template-Kontext ────────────────────────────────────────────────────────
 
@@ -168,7 +177,7 @@ export async function POST(req: NextRequest) {
     let briefing: BusinessBriefing;
 
     try {
-      const briefingMsg = await client.messages.create({
+      const briefingMsg = await getClient().messages.create({
         model: "claude-sonnet-4-6",
         max_tokens: 1200,
         messages: [{ role: "user", content: buildBriefingPrompt(scrapedInput) }],
@@ -242,7 +251,7 @@ export async function POST(req: NextRequest) {
       isMedical,
     );
 
-    const copyMsg = await client.messages.create({
+    const copyMsg = await getClient().messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 4000,
       messages: [{ role: "user", content: copyPrompt }],
