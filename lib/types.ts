@@ -46,6 +46,7 @@ export interface ProcessStep {
 }
 
 export interface AIContent {
+  brand_positioning?: string;  // Einzigartiges Positionierungsmerkmal (aus KI-Analyse)
   hero_badge?: string;
   cta_secondary?: string;
   services_detailed?: ServiceItem[];
