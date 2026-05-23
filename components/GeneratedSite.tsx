@@ -181,6 +181,11 @@ function getDefaultStats(_template: string, _industry: string): StatItem[] {
   return []; // Lieber nichts als falsche Zahlen
 }
 
+// Ist das ein medizinisches / Gesundheits-Unternehmen?
+function isMedicalIndustry(industry: string): boolean {
+  return /zahn|dental|arzt|praxis|klinik|physio|therapeut|orthopäd|psycho|psychiatr|derm|kardio|augenarzt|hno|chirurg|hausarzt|frauenarzt/i.test(industry || "");
+}
+
 // ─── Logo ────────────────────────────────────────────────────────────────────
 function SiteLogo({ site, color, white = false }: { site: Site; color: string; white?: boolean }) {
   const [err, setErr] = useState(false);
@@ -427,6 +432,7 @@ function FloatingWhatsApp({ whatsapp }: { whatsapp: string }) {
 type TplProps = {
   site: Site; color: string; ai: AIContent;
   services: ServiceItem[]; benefits: BenefitItem[]; stats: StatItem[];
+  isMedical?: boolean;
 };
 
 function PremiumNav({ site, color }: { site: Site; color: string }) {
@@ -607,7 +613,7 @@ function PremiumBenefits({ site, benefits, color }: { site: Site; benefits: Bene
   );
 }
 
-function PremiumServices({ services, color, site }: { services: ServiceItem[]; color: string; site: Site }) {
+function PremiumServices({ services, color, site, isMedical }: { services: ServiceItem[]; color: string; site: Site; isMedical?: boolean }) {
   const ref = useReveal();
   const ai = site.ai_content as AIContent;
   const autoImgs = getGalleryImages(site.industry || "", slugHash(site.slug));
@@ -617,7 +623,7 @@ function PremiumServices({ services, color, site }: { services: ServiceItem[]; c
         <div className="mb-14">
           <p className="mb-2.5 text-xs font-semibold uppercase tracking-widest" style={{ color }}>Leistungen</p>
           <h2 id="services-heading" className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Was wir für Sie tun
+            {isMedical ? "Unser Behandlungsangebot" : "Was wir für Sie tun"}
           </h2>
         </div>
 
@@ -731,9 +737,13 @@ function PremiumAbout({ site, color, ai }: { site: Site; color: string; ai: AICo
   );
 }
 
-function PremiumProcess({ color }: { color: string }) {
+function PremiumProcess({ color, isMedical }: { color: string; isMedical?: boolean }) {
   const ref = useReveal();
-  const steps = [
+  const steps = isMedical ? [
+    { icon: "📞", n: "01", title: "Termin vereinbaren", desc: "Rufen Sie uns einfach an oder nutzen Sie das Kontaktformular. Wir finden schnell einen passenden Termin – auch kurzfristig und ohne lange Wartezeit." },
+    { icon: "🩺", n: "02", title: "Ausführliche Untersuchung", desc: "Beim ersten Termin nehmen wir uns Zeit für Sie. Wir hören zu, untersuchen gründlich und beantworten alle Ihre Fragen – ohne Zeitdruck." },
+    { icon: "✅", n: "03", title: "Individuelle Behandlung", desc: "Auf Basis der Untersuchung erarbeiten wir gemeinsam Ihren persönlichen Behandlungsplan – transparent, verständlich und ganz auf Sie zugeschnitten." },
+  ] : [
     { icon: "💬", n: "01", title: "Kostenlose Anfrage", desc: "Kontaktieren Sie uns per Telefon, WhatsApp oder Formular. Wir melden uns in der Regel innerhalb von 24 Stunden persönlich bei Ihnen." },
     { icon: "🤝", n: "02", title: "Persönliche Beratung", desc: "In einem unverbindlichen Gespräch besprechen wir Ihre Situation und erstellen ein maßgeschneidertes, transparentes Angebot." },
     { icon: "✅", n: "03", title: "Professionelle Umsetzung", desc: "Nach Ihrer Freigabe beginnen wir sofort. Sie werden regelmäßig über den Fortschritt informiert und sind jederzeit eingebunden." },
@@ -881,21 +891,24 @@ const DEFAULT_PATIENT_TESTIMONIALS: TestimonialItem[] = [
   { name: "Andrea M.", role: "Familienpatientin", text: "Wir kommen mit der ganzen Familie hierher – auch die Kinder fühlen sich wohl. Das Praxisteam ist unglaublich freundlich und erklärt alles verständlich. Absolute Empfehlung!" },
 ];
 
-function PremiumTestimonials({ color, site }: { color: string; site: Site }) {
+function PremiumTestimonials({ color, site, isMedical }: { color: string; site: Site; isMedical?: boolean }) {
   const ref = useReveal();
-  // Priority: manually saved → AI-generated from ai_content → generic fallback
+  // Priority: manually saved → AI-generated from ai_content → industry fallback
   const aiGenerated = (site.ai_content as AIContent)?.testimonials;
+  const fallback = isMedical ? DEFAULT_PATIENT_TESTIMONIALS : DEFAULT_TESTIMONIALS;
   const reviews = site.testimonials?.length === 3
     ? site.testimonials
-    : (aiGenerated?.length === 3 ? aiGenerated : DEFAULT_TESTIMONIALS);
+    : (aiGenerated?.length === 3 ? aiGenerated : fallback);
+  const sectionLabel = isMedical ? "Patientenstimmen" : "Kundenstimmen";
+  const sectionHeading = isMedical ? "Was unsere Patienten sagen" : "Was unsere Kunden sagen";
   return (
     <section className="bg-white py-20 sm:py-28" aria-labelledby="premium-reviews-heading">
       <div ref={ref} className="reveal mx-auto max-w-7xl px-6">
         <div className="mb-14 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="mb-2.5 text-xs font-semibold uppercase tracking-widest" style={{ color }}>Kundenstimmen</p>
+            <p className="mb-2.5 text-xs font-semibold uppercase tracking-widest" style={{ color }}>{sectionLabel}</p>
             <h2 id="premium-reviews-heading" className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Was unsere Kunden sagen
+              {sectionHeading}
             </h2>
           </div>
           <div className="flex items-center gap-1.5 text-amber-400">
@@ -937,17 +950,17 @@ function PremiumTestimonials({ color, site }: { color: string; site: Site }) {
 }
 
 function PremiumTemplate(props: TplProps) {
-  const { site, color, ai, services, benefits } = props;
+  const { site, color, ai, services, benefits, isMedical } = props;
   return (
     <div className="min-h-screen bg-white antialiased">
       <PremiumNav site={site} color={color} />
       <PremiumHero {...props} />
       <GalleryStrip industry={site.industry || ""} seed={slugHash(site.slug)} className="py-4 bg-white" />
       {benefits.length > 0 && <PremiumBenefits site={site} benefits={benefits} color={color} />}
-      <PremiumServices services={services} color={color} site={site} />
+      <PremiumServices services={services} color={color} site={site} isMedical={isMedical} />
       {site.about_text && <PremiumAbout site={site} color={color} ai={ai} />}
-      <PremiumProcess color={color} />
-      <PremiumTestimonials color={color} site={site} />
+      <PremiumProcess color={color} isMedical={isMedical} />
+      <PremiumTestimonials color={color} site={site} isMedical={isMedical} />
       <PremiumCtaBand site={site} color={color} ai={ai} />
       <PremiumContact site={site} color={color} />
       <SharedFooter site={site} color={color} />
@@ -3341,6 +3354,7 @@ function HandwerkLokalTemplate(props: TplProps) {
 export default function GeneratedSite({ site }: { site: Site }) {
   const color = site.primary_color || "#2563eb";
   const ai = (site.ai_content || {}) as AIContent;
+  const isMedical = isMedicalIndustry(site.industry || "");
 
   // Services: ai_content.services_detailed → site.services titles → industry fallback (always ≥ 3)
   const rawServices: ServiceItem[] = ai?.services_detailed?.length
@@ -3358,17 +3372,12 @@ export default function GeneratedSite({ site }: { site: Site }) {
     ? rawBenefits
     : [...rawBenefits, ...DEFAULT_BENEFITS.slice(0, 4 - rawBenefits.length)];
 
-  const template = (site.template as SiteTemplate) || "premium";
-  const stats: StatItem[] = ai?.stats?.length ? ai.stats : getDefaultStats(template, site.industry || "");
+  // Keine erfundenen Stats — nur aus echten Scraper-Daten
+  const stats: StatItem[] = ai?.stats?.length ? ai.stats : [];
 
-  const props: TplProps = { site, color, ai, services, benefits, stats };
+  const props: TplProps = { site, color, ai, services, benefits, stats, isMedical };
 
-  if (template === "local")           return <LocalTemplate {...props} />;
-  if (template === "minimal")         return <MinimalTemplate {...props} />;
-  if (template === "arzt")            return <ArztTemplate {...props} />;
-  if (template === "arzt-modern")     return <ArztModernTemplate {...props} />;
-  if (template === "handwerk")        return <HandwerkTemplate {...props} />;
-  if (template === "handwerk-lokal")  return <HandwerkLokalTemplate {...props} />;
+  // Ein einziges exzellentes Template — adaptiert sich automatisch nach Branche
   return <PremiumTemplate {...props} />;
 }
 

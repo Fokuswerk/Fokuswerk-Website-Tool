@@ -250,7 +250,8 @@ export async function POST(req: NextRequest) {
     }
 
     const hasWebsite = !!old_website_url;
-    const isMedical  = template.match(/^arzt/) !== null;
+    // Medizin aus Branche erkennen — nicht aus Template-Name
+    const isMedical = /zahn|dental|arzt|praxis|klinik|physio|therapeut|orthopäd|psycho|psychiatr|derm|kardio|augenarzt|hno|chirurg|hausarzt|frauenarzt/i.test(industry);
 
     const confirmedServices: string[] =
       Array.isArray(scraped_services) && scraped_services.length > 0 ? scraped_services

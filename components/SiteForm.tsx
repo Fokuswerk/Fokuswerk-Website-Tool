@@ -5,37 +5,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import type { SiteTemplate } from "@/lib/types";
 
-// ─── Active templates (local + minimal hidden) ────────────────────────────────
-const TEMPLATE_LABELS: Record<SiteTemplate, string> = {
-  premium:          "Standard",
-  "arzt-modern":    "Arzt · Modern",
-  arzt:             "Arzt · Klassisch",
-  handwerk:         "Handwerk · Modern",
-  "handwerk-lokal": "Handwerk · Klassisch",
-  local:            "Local",    // hidden
-  minimal:          "Minimal",  // hidden
-};
-
-const ACTIVE_TEMPLATES: SiteTemplate[] = [
-  "premium", "arzt-modern", "arzt", "handwerk", "handwerk-lokal",
-];
-
-type Sector = "arzt" | "handwerk" | null;
-type Variant = "modern" | "klassisch";
-
-const SECTOR_TEMPLATES: Record<"arzt" | "handwerk", Record<Variant, SiteTemplate>> = {
-  arzt:     { modern: "arzt-modern",    klassisch: "arzt"           },
-  handwerk: { modern: "handwerk",       klassisch: "handwerk-lokal" },
-};
-
-function detectSector(industry: string): Sector {
-  const q = (industry || "").toLowerCase();
-  if (q.match(/arzt|zahnarzt|praxis|klinik|medizin|orthopäd|derm|kardio|psycho|therapeut|psychiatr|augenarzt|hausarzt|frauenarzt|hno|chirurg/))
-    return "arzt";
-  if (q.match(/handwerk|sanitär|elektro|maler|dachdeck|bau|installateur|tischler|schlosser|klempner|heizung|kfz|zimmerer|fliesenleger|garten|reinigung/))
-    return "handwerk";
-  return null;
-}
+// Ein einziges exzellentes Template — adaptiert sich automatisch nach Branche
+const TEMPLATE: SiteTemplate = "premium";
 
 const CREATE_STEPS = [
   "Website wird analysiert…",
@@ -67,8 +38,7 @@ export default function SiteForm() {
   const [city, setCity]                   = useState("");
   const [notes, setNotes]                 = useState("");
   const [primaryColor, setPrimaryColor]   = useState("#2563eb");
-  const [template, setTemplate]           = useState<SiteTemplate>("premium");
-  const [variant, setVariant]             = useState<Variant>("modern");
+  const template: SiteTemplate           = TEMPLATE;
 
   const [scraping, setScraping]     = useState(false);
   const [scraped, setScraped]       = useState(false);
@@ -82,16 +52,6 @@ export default function SiteForm() {
   const [savedId, setSavedId]     = useState<string | null>(null);
   const [error, setError]         = useState<string | null>(null);
   const [copyDone, setCopyDone]   = useState(false);
-
-  // Re-derive template whenever industry or variant changes
-  useEffect(() => {
-    const sector = detectSector(industry);
-    if (sector) {
-      setTemplate(SECTOR_TEMPLATES[sector][variant]);
-    } else {
-      setTemplate("premium");
-    }
-  }, [industry, variant]);
 
   // Auto-scrape 1 s after URL typed
   useEffect(() => {
@@ -285,8 +245,6 @@ export default function SiteForm() {
     return `mailto:?subject=${subject}&body=${body}`;
   }
 
-  const sector = detectSector(industry);
-
   // ── Success screen ───────────────────────────────────────────────────────────
   if (savedSlug) {
     const siteUrl = typeof window !== "undefined" ? `${window.location.origin}/site/${savedSlug}` : `/site/${savedSlug}`;
@@ -298,8 +256,7 @@ export default function SiteForm() {
           </svg>
         </div>
         <h2 className="mb-1 text-2xl font-bold text-gray-900">Website erstellt!</h2>
-        <p className="mb-1 text-sm text-gray-500">{companyName}</p>
-        <p className="mb-6 text-xs text-gray-400">{TEMPLATE_LABELS[template]}</p>
+        <p className="mb-6 text-sm text-gray-500">{companyName}</p>
 
         {/* Link display */}
         <div className="mb-6 w-full max-w-sm truncate rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 font-mono text-xs text-gray-500">
@@ -459,71 +416,7 @@ export default function SiteForm() {
         </div>
       )}
 
-      {/* 4. Template — auto-suggested, minimal UI */}
-      <div>
-        <label className={lbl}>Template</label>
-        <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-gray-900">{TEMPLATE_LABELS[template]}</p>
-              <p className="text-xs text-gray-400">
-                {sector === "arzt"     && "Optimiert für Arztpraxen"}
-                {sector === "handwerk" && "Optimiert für Handwerksbetriebe"}
-                {!sector               && "Universell – für alle anderen Branchen"}
-              </p>
-            </div>
-            {/* Modern / Klassisch toggle — only shown for sector-specific templates */}
-            {sector && (
-              <div className="flex flex-shrink-0 rounded-full border border-gray-200 bg-white p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setVariant("modern")}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                    variant === "modern" ? "bg-gray-900 text-white" : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  Modern
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setVariant("klassisch")}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                    variant === "klassisch" ? "bg-gray-900 text-white" : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  Klassisch
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Manual override — collapsed by default */}
-        <details className="mt-2 text-xs">
-          <summary className="cursor-pointer select-none text-gray-400 hover:text-gray-600">
-            Manuell wählen
-          </summary>
-          <div className="mt-2 grid grid-cols-1 gap-1.5">
-            {ACTIVE_TEMPLATES.map(id => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTemplate(id)}
-                className={`flex items-center justify-between rounded-lg border px-3 py-2.5 text-left text-sm transition ${
-                  template === id
-                    ? "border-gray-900 bg-gray-900 text-white"
-                    : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                <span>{TEMPLATE_LABELS[id]}</span>
-                {template === id && <span className="text-xs opacity-60">✓</span>}
-              </button>
-            ))}
-          </div>
-        </details>
-      </div>
-
-      {/* 5. Color — compact row */}
+      {/* 4. Color — compact row */}
       <div className="flex items-center gap-3">
         <input
           type="color"
