@@ -486,7 +486,7 @@ function detectIndustry(text: string): string | null {
 
 // ─── Structural heading filter ────────────────────────────────────────────────
 
-const STRUCTURAL = /^(kontakt|öffnungszeiten?|sprechzeiten?|über uns|über mich|team|impressum|datenschutz|willkommen|news|blog|jobs|karriere|partner|anfahrt|aufnahmebogen|praxisrundgang|galerie|bildergalerie|zertifikat|aktuell|wir freuen|bewertung(en)?|ihr weg|der weg zu|so finden sie|testimonial|empfehlung|referenz|häufige fragen|faq|kontaktieren sie|schreiben sie|rufen sie an|jetzt anfragen|termin|termin vereinbaren|termin buchen|newsletter|galerie|fotos|aus der praxis|aktuelles|das sagen|was sagen)$/i;
+const STRUCTURAL = /^(kontakt|öffnungszeiten?|sprechzeiten?|über uns|über mich|impressum|datenschutz|willkommen|news|blog|jobs|karriere|partner|anfahrt|aufnahmebogen|praxisrundgang|galerie|bildergalerie|zertifikat|wir freuen|ihr weg|der weg zu|so finden sie|testimonial|empfehlung|häufige fragen|faq|kontaktieren sie|schreiben sie|rufen sie an|newsletter|fotos|aus der praxis|das sagen|was sagen|herzlich willkommen|welcome|startseite|home|weiterlesen|mehr erfahren|alle leistungen|jetzt buchen|termin online|online termin|zum kontakt|zur\s|mehr\s+infos|mehr\s+dazu|lesen\s+sie|erfahren\s+sie\s+mehr)$/i;
 
 // ─── Fetch helper with timeout ────────────────────────────────────────────────
 
@@ -527,18 +527,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Website konnte nicht geladen werden." }, { status: 422 });
   }
 
-  // ── Discover subpage URLs ────────────────────────────────────────────────────
-  const NAV_SERVICE_RE  = /leistung|behandlung|service|angebot|therapie|speziali|eingriff|portfolio/i;
-  const NAV_ABOUT_RE    = /über\s*uns|über\s*mich|team|praxis|kanzlei|unternehmen|wir\s*sind|about/i;
-  const NAV_CONTACT_RE  = /kontakt|contact|öffnungszeit|sprechzeit|anfahrt/i;
+  const origin = `${baseUrl.protocol}//${baseUrl.hostname}`;
+
+  // ── Try sitemap.xml first — best way to discover all pages ──────────────────
+  async function getSitemapUrls(): Promise<string[]> {
+    const sitemapUrls = [
+      `${origin}/sitemap.xml`,
+      `${origin}/sitemap_index.xml`,
+      `${origin}/sitemap/`,
+    ];
+    for (const sUrl of sitemapUrls) {
+      try {
+        const r = await fetch(sUrl, { signal: AbortSignal.timeout(4000), headers: { "User-Agent": "Mozilla/5.0" } });
+        if (!r.ok) continue;
+        const text = await r.text();
+        const urls = [...text.matchAll(/<loc>(https?:\/\/[^<]+)<\/loc>/gi)].map(m => m[1].trim());
+        if (urls.length > 0) return urls.filter(u => u.startsWith(origin));
+      } catch { /* skip */ }
+    }
+    return [];
+  }
+
+  // ── Discover subpage URLs from nav links ─────────────────────────────────────
+  // Very broad patterns — better to match too much than too little
+  const NAV_SERVICE_RE = /leistung|behandlung|service|angebot|therapie|speziali|eingriff|portfolio|diagnostik|vorsorge|untersuchung|spektrum|praxisleistung|gesundheit|medizin|leistungsangebot|leistungs-|praxis-leistung|unser.*angebot|was.*wir.*machen|unser.*angebot/i;
+  const NAV_ABOUT_RE   = /über\s*uns|über\s*mich|team|praxis|kanzlei|unternehmen|wir\s*sind|about|die-praxis|praxisteam|wir-über|wir-stellen|wir-sind/i;
+  const NAV_CONTACT_RE = /kontakt|contact|öffnungszeit|sprechzeit|anfahrt|erreichbarkeit/i;
 
   const navLinks = [...homeHtml.matchAll(/<a[^>]+href=["']([^"'#?\s][^"'?\s]*)["'][^>]*>([\s\S]*?)<\/a>/gi)];
 
   const serviceUrls: string[] = [];
   const aboutUrls:   string[] = [];
   const contactUrls: string[] = [];
-
-  const origin = `${baseUrl.protocol}//${baseUrl.hostname}`;
 
   for (const m of navLinks) {
     const href = m[1];
@@ -555,21 +575,61 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Add common German paths as fallbacks
-  const commonService = ["/leistungen/", "/behandlungen/", "/services/", "/angebot/", "/leistungen", "/behandlungen"].map(p => `${origin}${p}`);
-  const commonAbout   = ["/ueber-uns/", "/ueber-uns", "/about/", "/team/", "/praxis/", "/kanzlei/"].map(p => `${origin}${p}`);
-  const commonContact = ["/kontakt/", "/kontakt", "/contact/"].map(p => `${origin}${p}`);
+  // ── Sitemap discovery (parallel with above) ──────────────────────────────────
+  const sitemapUrls = await getSitemapUrls();
 
-  const dedupe = (arr: string[], extra: string[]) => [...new Set([...arr, ...extra])].slice(0, 3);
-  const toFetchService = dedupe(serviceUrls, commonService);
-  const toFetchAbout   = dedupe(aboutUrls, commonAbout);
-  const toFetchContact = dedupe(contactUrls, commonContact);
+  // Filter sitemap URLs into categories
+  const SERVICE_PATH_RE = /leistung|behandlung|service|angebot|therapie|speziali|eingriff|diagnostik|vorsorge|untersuchung|spektrum|gesundheit|medizin/i;
+  const ABOUT_PATH_RE   = /ueber-uns|ueber-mich|about|team|praxis(?!-leistung)|praxisteam|die-praxis/i;
+  const CONTACT_PATH_RE = /kontakt|contact|oeffnungszeit|sprechzeit|anfahrt/i;
+
+  for (const u of sitemapUrls) {
+    const path = new URL(u).pathname;
+    if (SERVICE_PATH_RE.test(path) && !serviceUrls.includes(u)) serviceUrls.push(u);
+    else if (ABOUT_PATH_RE.test(path) && !aboutUrls.includes(u)) aboutUrls.push(u);
+    else if (CONTACT_PATH_RE.test(path) && !contactUrls.includes(u)) contactUrls.push(u);
+  }
+
+  // ── Comprehensive fallback paths (German web reality) ────────────────────────
+  const commonService = [
+    // Generic
+    "/leistungen/", "/leistungen", "/behandlungen/", "/behandlungen",
+    "/services/", "/angebot/", "/unser-angebot/",
+    // Medical specific
+    "/leistungsspektrum/", "/behandlungsspektrum/", "/praxisleistungen/",
+    "/medizinische-leistungen/", "/diagnostik/", "/vorsorge/", "/vorsorgeuntersuchungen/",
+    "/spezialgebiete/", "/gesundheitsleistungen/", "/hausaerztliche-leistungen/",
+    "/leistungen-und-angebote/", "/unser-leistungsspektrum/", "/praxis-leistungen/",
+    // Handwerk
+    "/unsere-leistungen/", "/unsere-arbeiten/", "/referenzen/", "/taetigkeiten/",
+    // Other
+    "/portfolio/", "/was-wir-machen/", "/angebote/",
+  ].map(p => `${origin}${p}`);
+
+  const commonAbout = [
+    "/ueber-uns/", "/ueber-uns", "/about/", "/about-us/",
+    "/team/", "/praxis/", "/die-praxis/", "/kanzlei/",
+    "/praxisteam/", "/wir-ueber-uns/", "/das-team/",
+    "/unser-team/", "/unternehmen/",
+  ].map(p => `${origin}${p}`);
+
+  const commonContact = [
+    "/kontakt/", "/kontakt", "/contact/",
+    "/oeffnungszeiten/", "/sprechzeiten/", "/erreichbarkeit/",
+  ].map(p => `${origin}${p}`);
+
+  const dedupe = (arr: string[], extra: string[]) => [...new Set([...arr, ...extra])];
+
+  // Prioritize nav-detected URLs (most reliable), then sitemap, then guesses
+  const toFetchService = dedupe(serviceUrls, commonService).slice(0, 5);
+  const toFetchAbout   = dedupe(aboutUrls,   commonAbout).slice(0, 3);
+  const toFetchContact = dedupe(contactUrls, commonContact).slice(0, 3);
 
   // ── Parallel fetch all subpages ──────────────────────────────────────────────
   const [serviceResults, aboutResults, contactResults] = await Promise.all([
-    Promise.allSettled(toFetchService.slice(0, 3).map(u => fetchPage(u, 6000))),
-    Promise.allSettled(toFetchAbout.slice(0, 2).map(u => fetchPage(u, 5000))),
-    Promise.allSettled(toFetchContact.slice(0, 2).map(u => fetchPage(u, 5000))),
+    Promise.allSettled(toFetchService.map(u => fetchPage(u, 6000))),
+    Promise.allSettled(toFetchAbout.map(u => fetchPage(u, 5000))),
+    Promise.allSettled(toFetchContact.map(u => fetchPage(u, 5000))),
   ]);
 
   const serviceHtmls = serviceResults.map(r => r.status === "fulfilled" && r.value ? r.value : null).filter(Boolean) as string[];
