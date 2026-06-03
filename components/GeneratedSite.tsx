@@ -622,7 +622,12 @@ function PremiumBenefits({ site, benefits, color }: { site: Site; benefits: Bene
 function PremiumServices({ services, color, site, isMedical }: { services: ServiceItem[]; color: string; site: Site; isMedical?: boolean }) {
   const ref = useReveal();
   const ai = site.ai_content as AIContent;
-  const autoImgs = getGalleryImages(site.industry || "", slugHash(site.slug));
+  // Echte Google-Fotos für Service-Karten nutzen (ab Foto 2), Rest mit Unsplash auffüllen
+  const googlePhotos = (ai as unknown as Record<string, unknown>)?.google_service_photos as string[] | undefined;
+  const stockImgs    = getGalleryImages(site.industry || "", slugHash(site.slug));
+  const autoImgs     = googlePhotos && googlePhotos.length > 0
+    ? [...googlePhotos, ...stockImgs]
+    : stockImgs;
   return (
     <section id="leistungen" className="bg-gray-50 py-20 sm:py-28" aria-labelledby="services-heading">
       <div ref={ref} className="reveal mx-auto max-w-7xl px-6">

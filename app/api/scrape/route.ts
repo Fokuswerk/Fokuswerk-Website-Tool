@@ -866,10 +866,11 @@ export async function POST(req: NextRequest) {
   // Schlägt lautlos fehl wenn kein API-Key oder kein Treffer.
 
   interface GoogleReview { author_name: string; rating: number; text: string; relative_time_description: string; }
-  let googleReviews:   GoogleReview[] = [];
-  let googleRating:    number | null  = null;
-  let googleRatingCount: number | null = null;
-  let googlePlaceId:   string | null  = null;
+  let googleReviews:     GoogleReview[] = [];
+  let googleRating:      number | null  = null;
+  let googleRatingCount: number | null  = null;
+  let googlePlaceId:     string | null  = null;
+  let googlePhotoUrls:   string[]       = [];   // echte Fotos des Unternehmens
 
   const gKey = process.env.GOOGLE_PLACES_API_KEY;
   if (gKey) {
@@ -884,21 +885,39 @@ export async function POST(req: NextRequest) {
 
       if (searchData.status === "OK" && searchData.results?.[0]) {
         const first = searchData.results[0];
-        googlePlaceId    = first.place_id;
-        googleRating     = first.rating     ?? null;
-        googleRatingCount = first.user_ratings_total ?? null;
+        googlePlaceId     = first.place_id;
+        googleRating      = first.rating              ?? null;
+        googleRatingCount = first.user_ratings_total  ?? null;
 
-        // Fetch the full reviews (up to 5, Google default)
-        const detailUrl  = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${googlePlaceId}&fields=reviews,rating,user_ratings_total&key=${gKey}&language=de&reviews_sort=most_relevant`;
+        // Fotos + Reviews in einem Aufruf
+        const detailUrl  = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${googlePlaceId}&fields=reviews,rating,user_ratings_total,photos&key=${gKey}&language=de&reviews_sort=most_relevant`;
         const detailRes  = await fetch(detailUrl, { signal: AbortSignal.timeout(8_000) });
-        const detailData = await detailRes.json() as { status: string; result?: { reviews?: GoogleReview[]; rating?: number; user_ratings_total?: number } };
+        const detailData = await detailRes.json() as {
+          status: string;
+          result?: {
+            reviews?: GoogleReview[];
+            rating?: number;
+            user_ratings_total?: number;
+            photos?: Array<{ photo_reference: string; width: number; height: number }>;
+          };
+        };
 
         if (detailData.status === "OK" && detailData.result) {
-          googleRating      = detailData.result.rating       ?? googleRating;
-          googleRatingCount = detailData.result.user_ratings_total ?? googleRatingCount;
+          googleRating      = detailData.result.rating              ?? googleRating;
+          googleRatingCount = detailData.result.user_ratings_total  ?? googleRatingCount;
           googleReviews     = (detailData.result.reviews ?? [])
-            .filter(r => r.text && r.text.length > 20)  // nur Reviews mit echtem Text
+            .filter(r => r.text && r.text.length > 20)
             .slice(0, 5);
+
+          // Echte Fotos des Unternehmens → als Proxy-URL aufbereiten
+          // Bevorzuge Querformat-Fotos (besser für Hero/About)
+          const photos = (detailData.result.photos ?? [])
+            .sort((a, b) => (b.width / b.height) - (a.width / a.height)) // breiteste zuerst
+            .slice(0, 6);
+
+          googlePhotoUrls = photos.map(p =>
+            `/api/place-photo?ref=${encodeURIComponent(p.photo_reference)}&w=1600`
+          );
         }
       }
     } catch {
@@ -967,10 +986,11 @@ export async function POST(req: NextRequest) {
     suggested_industry,
     company_summary,
 
-    // Google Places — echte Kundenbewertungen
+    // Google Places — echte Kundenbewertungen + Fotos
     google_reviews:      googleReviews.length > 0 ? googleReviews : null,
     google_rating:       googleRating,
     google_rating_count: googleRatingCount,
     google_place_id:     googlePlaceId,
+    google_photos:       googlePhotoUrls.length > 0 ? googlePhotoUrls : null,
   });
 }

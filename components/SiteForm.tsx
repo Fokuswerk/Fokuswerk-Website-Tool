@@ -93,6 +93,7 @@ export default function SiteForm({ initialValues }: { initialValues?: InitialVal
       const pairCount      = Array.isArray(data.service_pairs)    ? data.service_pairs.length    : 0;
       const teamCount      = Array.isArray(data.team_members)     ? data.team_members.length     : 0;
       const reviewCount = Array.isArray(data.google_reviews) ? data.google_reviews.length : 0;
+      const photoCount  = Array.isArray(data.google_photos)  ? data.google_photos.length  : 0;
       const hints = [
         serviceCount > 0 ? `${serviceCount} Leistungen` : null,
         pairCount    > 0 ? `${pairCount} mit Beschreibung` : null,
@@ -100,6 +101,7 @@ export default function SiteForm({ initialValues }: { initialValues?: InitialVal
         data.phone         ? "Tel." : null,
         data.opening_hours ? "Öffnungszeiten" : null,
         teamCount    > 0 ? `${teamCount} Teammitgl.` : null,
+        photoCount   > 0 ? `${photoCount} echte Fotos` : null,
         data.rating || data.google_rating ? `${data.google_rating ?? data.rating}★` : null,
         reviewCount  > 0 ? `${reviewCount} Google-Rezensionen` : null,
       ].filter(Boolean).join(" · ");
@@ -214,7 +216,12 @@ export default function SiteForm({ initialValues }: { initialValues?: InitialVal
           email:           (scrapedCtx?.email   as string) || null,
           address:         (scrapedCtx?.address as string) || (city ? city : null),
           primary_color:   primaryColor,
-          logo_url:        (scrapedCtx?.logo_url       as string) || null,
+          logo_url:        (scrapedCtx?.logo_url as string) || null,
+          // Echte Google-Fotos des Unternehmens — Foto 0 = Hero, Foto 1 = About
+          hero_image_url:  Array.isArray(scrapedCtx?.google_photos) && (scrapedCtx.google_photos as string[]).length > 0
+            ? (scrapedCtx.google_photos as string[])[0] : null,
+          about_image_url: Array.isArray(scrapedCtx?.google_photos) && (scrapedCtx.google_photos as string[]).length > 1
+            ? (scrapedCtx.google_photos as string[])[1] : null,
           template,
           status:          "Entwurf",
           hero_headline:    data.hero_headline    ?? "",
