@@ -51,6 +51,8 @@ function getFallbackServices(industry: string): ServiceItem[] {
 
 // ─── Haupt-Prompt — Agentur-Niveau ──────────────────────────────────────────
 
+interface GoogleReviewInput { author_name: string; rating: number; text: string; relative_time_description?: string; }
+
 function buildPrompt(input: {
   company_name: string;
   industry: string;
@@ -69,6 +71,9 @@ function buildPrompt(input: {
   faq_scraped: Array<{ question: string; answer: string }>;
   is_medical: boolean;
   has_real_team: boolean;
+  google_reviews?: GoogleReviewInput[] | null;
+  google_rating?: number | null;
+  google_rating_count?: number | null;
 }): string {
 
   // ── Vorfilter: nur echte Leistungen durchlassen ──────────────────────────────
@@ -150,6 +155,30 @@ CONVERSION: Was ist der stärkste Grund, JETZT Kontakt aufzunehmen statt morgen?
 
 UNTERNEHMENSDATEN:
 ${dataLines.join("\n")}${serviceBlock}${pairBlock}${teamBlock}${faqBlock}
+${(() => {
+  const reviews = input.google_reviews;
+  if (!reviews || reviews.length === 0) return "";
+  const ratingLine = input.google_rating
+    ? `Google: ${input.google_rating}★ aus ${input.google_rating_count ?? "?"} Bewertungen`
+    : "";
+  const reviewLines = reviews
+    .map(r => `  ${r.rating}★ "${r.text.slice(0, 280).replace(/\n+/g, " ")}" — ${r.author_name}`)
+    .join("\n");
+  return `
+══════════════════════════════════════════════════
+ECHTE GOOGLE-REZENSIONEN — Was Kunden wirklich sagen
+══════════════════════════════════════════════════
+${ratingLine}
+
+${reviewLines}
+
+Analysiere diese Rezensionen sorgfältig:
+① Was loben Kunden konkret? → Diese Stärken in Benefits, About-Text und Services direkt aufgreifen
+② Welche Sprache verwenden echte Kunden? (z.B. "entspannt", "kein Stress", "super erklärt") → Genau diese Worte und diesen Tonfall im Text verwenden
+③ Was schätzen sie am Erlebnis? → Daraus den emotionalen Kern der Website ableiten
+④ Gibt es wiederkehrende Themen? → Das stärkste davon als hero_detail oder about_highlight verwenden
+WICHTIG: Diese Rezensionen sind Gold — sie zeigen exakt was Neukunden überzeugt. Nutze sie, nicht erfinde sie.`;
+})()}
 
 ══════════════════════════════════════════════════
 PHASE 2 — LEISTUNGEN: PROFESSIONELLES URTEIL GEFRAGT
@@ -197,6 +226,22 @@ SEO (präzise einhalten):
 • meta_title: exakt 52-58 Zeichen | Hauptkeyword + ${ort} | z.B. "Zahnarzt ${ort} | ${input.company_name}"
 • meta_description: exakt 145-155 Zeichen | spezifischer Nutzen + konkreter CTA
 • hero_headline: Ort "${ort}" integriert, max. 7 Wörter, keine Floskel
+
+══════════════════════════════════════════════════
+PHASE 4 — SELBST-REVIEW (bevor du JSON ausgibst)
+══════════════════════════════════════════════════
+Prüfe jeden Satz deines Outputs gegen diese Fragen:
+✗ Steht irgendwo "zuverlässiger Partner", "höchste Qualität", "maßgeschneidert", "kompetentes Team"? → streichen, neu formulieren
+✗ Könnte dieser Satz genauso gut für einen Konkurrenten in ${ort} stehen? → zu generisch, spezifischer werden
+✗ Ist der Ort "${ort}" in hero_headline und mindestens einmal in meta_title enthalten? → falls nicht, ergänzen
+✗ Sind die Testimonials wirklich spezifisch? (Konkrete Situation, echte Details) → sonst überarbeiten
+✗ Klingt der about_text wie eine echte Geschichte? (Nicht "Wir sind seit X Jahren tätig...") → sonst neu
+✗ Steht in cta_section_headline oder cta_section_text irgendwas über Jobs, Karriere oder Stellen? → sofort streichen und durch Patienten-/Kunden-CTA ersetzen
+${input.google_reviews && input.google_reviews.length > 0
+  ? "✗ Habe ich die Sprache und Stärken aus den echten Google-Rezensionen aufgegriffen? → falls nicht, mindestens 2-3 authentische Formulierungen einbauen"
+  : ""}
+
+Erst nach dieser Prüfung das JSON ausgeben.
 
 Antworte AUSSCHLIESSLICH mit einem einzigen validen JSON-Objekt. Kein erklärender Text davor oder danach.
 
@@ -302,6 +347,9 @@ export async function POST(req: NextRequest) {
     const email          = body.email as string | undefined;
     const address        = body.address as string | undefined;
     const logo_url       = body.logo_url as string | undefined;
+    const google_reviews      = body.google_reviews as GoogleReviewInput[] | null | undefined;
+    const google_rating       = body.google_rating as number | null | undefined;
+    const google_rating_count = body.google_rating_count as number | null | undefined;
 
     if (!company_name) {
       return NextResponse.json({ error: "Unternehmensname fehlt" }, { status: 400 });
@@ -344,6 +392,9 @@ export async function POST(req: NextRequest) {
       faq_scraped:   faq_items_scraped || [],
       is_medical:    isMedical,
       has_real_team: hasRealTeam,
+      google_reviews:      google_reviews      || null,
+      google_rating:       google_rating       ?? null,
+      google_rating_count: google_rating_count ?? null,
     });
 
     // Streaming-Aufruf — hält Vercel-Verbindung am Leben während Opus generiert

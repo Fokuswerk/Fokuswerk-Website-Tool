@@ -71,7 +71,7 @@ export default function SiteForm() {
     setScraping(true);
     setScrapeMsg(null);
     try {
-      const res  = await fetch("/api/scrape", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
+      const res  = await fetch("/api/scrape", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url, company_name: companyName || undefined }) });
       const data = await res.json();
       if (data.error) { setScrapeMsg({ type: "err", text: "Analyse fehlgeschlagen – bitte manuell ausfüllen." }); return; }
 
@@ -83,6 +83,7 @@ export default function SiteForm() {
       const serviceCount   = Array.isArray(data.scraped_services) ? data.scraped_services.length : 0;
       const pairCount      = Array.isArray(data.service_pairs)    ? data.service_pairs.length    : 0;
       const teamCount      = Array.isArray(data.team_members)     ? data.team_members.length     : 0;
+      const reviewCount = Array.isArray(data.google_reviews) ? data.google_reviews.length : 0;
       const hints = [
         serviceCount > 0 ? `${serviceCount} Leistungen` : null,
         pairCount    > 0 ? `${pairCount} mit Beschreibung` : null,
@@ -90,7 +91,8 @@ export default function SiteForm() {
         data.phone         ? "Tel." : null,
         data.opening_hours ? "Öffnungszeiten" : null,
         teamCount    > 0 ? `${teamCount} Teammitgl.` : null,
-        data.rating        ? "Bewertung" : null,
+        data.rating || data.google_rating ? `${data.google_rating ?? data.rating}★` : null,
+        reviewCount  > 0 ? `${reviewCount} Google-Rezensionen` : null,
       ].filter(Boolean).join(" · ");
       setScrapeMsg({ type: "ok", text: `✓ Analysiert${hints ? ` — ${hints}` : ""}` });
     } catch {
@@ -157,6 +159,10 @@ export default function SiteForm() {
           manual_phone:        !oldWebsiteUrl ? phone  : undefined,
           manual_notes:        !oldWebsiteUrl ? notes  : undefined,
           template,
+          // Google Places Daten — echte Kundenstimmen für bessere KI-Texte
+          google_reviews:      scrapedCtx?.google_reviews  ?? null,
+          google_rating:       scrapedCtx?.google_rating   ?? null,
+          google_rating_count: scrapedCtx?.google_rating_count ?? null,
         }),
       });
 

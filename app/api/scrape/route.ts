@@ -527,7 +527,8 @@ async function fetchPage(url: string, timeoutMs = 6000): Promise<string | null> 
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const { url } = await req.json();
+  const body = await req.json();
+  const { url, company_name: company_name_param } = body as { url: string; company_name?: string };
   if (!url) return NextResponse.json({ error: "URL fehlt" }, { status: 400 });
 
   let baseUrl: URL;
@@ -860,6 +861,51 @@ export async function POST(req: NextRequest) {
   const allText = [title, description, h1, ...headings.slice(0, 5), ...rawServices.slice(0, 8)].filter(Boolean).join(" ");
   const suggested_industry = detectIndustry(allText);
 
+  // ── Google Places: Reviews + Rating ──────────────────────────────────────────
+  // Liefert bis zu 5 echte Kundenbewertungen für bessere KI-Texte.
+  // Schlägt lautlos fehl wenn kein API-Key oder kein Treffer.
+
+  interface GoogleReview { author_name: string; rating: number; text: string; relative_time_description: string; }
+  let googleReviews:   GoogleReview[] = [];
+  let googleRating:    number | null  = null;
+  let googleRatingCount: number | null = null;
+  let googlePlaceId:   string | null  = null;
+
+  const gKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (gKey) {
+    try {
+      const searchName = title || company_name_param || "";
+      const searchCity = ld.addressLocality || "";
+      const searchQ    = encodeURIComponent([searchName, searchCity].filter(Boolean).join(" "));
+      const searchUrl  = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${searchQ}&key=${gKey}&language=de&region=de`;
+
+      const searchRes  = await fetch(searchUrl, { signal: AbortSignal.timeout(8_000) });
+      const searchData = await searchRes.json() as { status: string; results?: Array<{ place_id: string; rating?: number; user_ratings_total?: number }> };
+
+      if (searchData.status === "OK" && searchData.results?.[0]) {
+        const first = searchData.results[0];
+        googlePlaceId    = first.place_id;
+        googleRating     = first.rating     ?? null;
+        googleRatingCount = first.user_ratings_total ?? null;
+
+        // Fetch the full reviews (up to 5, Google default)
+        const detailUrl  = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${googlePlaceId}&fields=reviews,rating,user_ratings_total&key=${gKey}&language=de&reviews_sort=most_relevant`;
+        const detailRes  = await fetch(detailUrl, { signal: AbortSignal.timeout(8_000) });
+        const detailData = await detailRes.json() as { status: string; result?: { reviews?: GoogleReview[]; rating?: number; user_ratings_total?: number } };
+
+        if (detailData.status === "OK" && detailData.result) {
+          googleRating      = detailData.result.rating       ?? googleRating;
+          googleRatingCount = detailData.result.user_ratings_total ?? googleRatingCount;
+          googleReviews     = (detailData.result.reviews ?? [])
+            .filter(r => r.text && r.text.length > 20)  // nur Reviews mit echtem Text
+            .slice(0, 5);
+        }
+      }
+    } catch {
+      // Google Places fehlt oder Fehler → kein Problem, weiter ohne
+    }
+  }
+
   // ── Company summary for AI ────────────────────────────────────────────────────
   const summaryParts: string[] = [
     title            && `Unternehmensname: "${title}"`,
@@ -920,5 +966,11 @@ export async function POST(req: NextRequest) {
     domain:             baseUrl.hostname,
     suggested_industry,
     company_summary,
+
+    // Google Places — echte Kundenbewertungen
+    google_reviews:      googleReviews.length > 0 ? googleReviews : null,
+    google_rating:       googleRating,
+    google_rating_count: googleRatingCount,
+    google_place_id:     googlePlaceId,
   });
 }
