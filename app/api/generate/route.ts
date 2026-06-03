@@ -62,6 +62,7 @@ function buildPrompt(input: {
   address?: string;
   description?: string;
   about_text?: string;
+  scraped_hero?: string;
   services: string[];
   service_pairs: Array<{ title: string; description: string }>;
   trust_signals: string[];
@@ -103,8 +104,9 @@ function buildPrompt(input: {
   if (input.phone)         dataLines.push(`Telefon: ${input.phone}`);
   if (input.email)         dataLines.push(`E-Mail: ${input.email}`);
   if (input.address)       dataLines.push(`Adresse: ${input.address}`);
-  if (input.description)   dataLines.push(`Bestehende Selbstbeschreibung: ${input.description.slice(0, 400)}`);
-  if (input.about_text)    dataLines.push(`Über-uns-Text (Rohfassung): ${input.about_text.slice(0, 500)}`);
+  if (input.scraped_hero)   dataLines.push(`Haupt-Headline der alten Website: "${input.scraped_hero}"`);
+  if (input.description)   dataLines.push(`Selbstbeschreibung/Meta: ${input.description.slice(0, 400)}`);
+  if (input.about_text)    dataLines.push(`Über-uns-Text (Originalton): ${input.about_text.slice(0, 600)}`);
   if (input.opening_hours) dataLines.push(`Öffnungszeiten: ${input.opening_hours}`);
   if (input.rating)        dataLines.push(`Bewertung: ${input.rating}`);
   if (input.trust_signals.length) dataLines.push(`Vertrauenssignale: ${input.trust_signals.join(" | ")}`);
@@ -181,6 +183,19 @@ WICHTIG: Diese Rezensionen sind Gold — sie zeigen exakt was Neukunden überzeu
 })()}
 
 ══════════════════════════════════════════════════
+STIMM-ANALYSE — Wie spricht dieses Unternehmen?
+══════════════════════════════════════════════════
+Bevor du schreibst, analysiere die Sprache dieses Unternehmens anhand der Rohdaten oben:
+
+① TONALITÄT: Schreibt das Unternehmen eher formal (Sie, sachlich, distanziert) oder persönlich (Du/ihr, locker, nahbar)? Schreibe genauso — nur besser.
+② SCHLÜSSELWÖRTER: Welche Begriffe verwendet das Unternehmen selbst immer wieder? Diese Worte gehören ihnen — übernimm sie bewusst.
+③ VERSPRECHEN: Welche impliziten oder expliziten Versprechen machen sie? Z.B. "keine Wartezeiten", "modernste Technik", "für die ganze Familie". Diese Positionierung ausbauen, nicht erfinden.
+④ IDENTITÄT: Was unterscheidet dieses Unternehmen von seinen Mitbewerbern in ${ort}? Auch wenn es nicht explizit steht — leite es aus dem Gesamtbild ab.
+${(input.scraped_hero || input.description) ? `
+Die bisherige Headline lautet: "${input.scraped_hero || input.description?.slice(0, 100)}"
+→ Schreibe eine BESSERE Version davon — stärker, lokaler, überzeugender. Nicht ersetzen sondern verbessern.` : ""}
+
+══════════════════════════════════════════════════
 PHASE 2 — LEISTUNGEN: PROFESSIONELLES URTEIL GEFRAGT
 ══════════════════════════════════════════════════
 Eine Leistung ist etwas, wofür ein ${patientOrKunde === "Patienten" ? "Patient" : "Kunde"} einen Termin bucht oder direkt bezahlt.
@@ -205,27 +220,33 @@ ${validServices.length > 0
 ══════════════════════════════════════════════════
 PHASE 3 — TEXTEN AUF HÖCHSTEM NIVEAU
 ══════════════════════════════════════════════════
-NIEMALS:
-✗ "Ihr zuverlässiger Partner" / "höchste Qualität" / "maßgeschneidert" / "kompetentes Team"
-✗ Inhalte die austauschbar wirken (testet: passt dieser Satz auch für einen Konkurrenten? → neu schreiben)
-✗ Erfundene Zahlen oder Statistiken → stats MUSS [] sein wenn keine Daten vorhanden
-✗ Generische Testimonials ohne spezifische Details
-✗ About-Texte die nichts über das ECHTE Unternehmen aussagen
-✗ Karriere/Job-Inhalte in cta_section_headline oder cta_section_text — diese Felder sind AUSSCHLIESSLICH für ${patientOrKunde} die einen Termin buchen oder anfragen wollen. "Wir suchen Fachkräfte", "Jetzt bewerben", "MFA gesucht" — all das gehört NICHT hierher.
 
-IMMER:
-✓ Hero: Konkret, Ort integriert, überraschend ehrlich — kein Marketing-Speak
-✓ Services: Jede Beschreibung erklärt den echten Patientennutzen — 4-5 präzise Sätze
-✓ Benefits: 6 echte Differenzierungsmerkmale — keine Selbstverständlichkeiten
-✓ About: 5-6 Sätze Persönlichkeit, Geschichte, was dieses Unternehmen antreibt
-✓ FAQ: 8 Fragen die ${patientOrKunde} wirklich stellen — ehrliche, ausführliche Antworten (3-4 Sätze)
-✓ Testimonials: 5 spezifische Stimmen — konkrete Details, klingen wie echte Menschen
-✓ Local SEO: Natürliche Keywords, Ortskontext, Community-Bezug
+DER UNIQUENESS-TEST — für JEDEN Satz den du schreibst:
+Frage dich: "Könnte dieser Satz auch auf der Website von [beliebigem anderen ${input.industry} in Deutschland] stehen?"
+→ JA  → zu generisch. Neu schreiben mit spezifischem Bezug zu ${input.company_name}, ${ort} oder der echten Story.
+→ NEIN → gut, weiter.
 
-SEO (präzise einhalten):
-• meta_title: exakt 52-58 Zeichen | Hauptkeyword + ${ort} | z.B. "Zahnarzt ${ort} | ${input.company_name}"
-• meta_description: exakt 145-155 Zeichen | spezifischer Nutzen + konkreter CTA
-• hero_headline: Ort "${ort}" integriert, max. 7 Wörter, keine Floskel
+VERBOTEN — diese Formulierungen sind gesperrt:
+✗ "zuverlässiger Partner" / "Ihr Partner für" / "kompetentes Team" / "höchste Qualität"
+✗ "maßgeschneidert" / "individuell" / "professionell" (ohne konkreten Beleg)
+✗ "Wir freuen uns auf Ihren Besuch" / "Herzlich Willkommen"
+✗ Erfundene Statistiken oder Zahlen → stats = [] wenn nicht aus Rohdaten bekannt
+✗ Testimonials ohne konkrete Situation: "Sehr zufrieden, immer wieder gerne" → wertlos
+✗ Karriere/Jobs in cta_section_headline oder cta_section_text
+
+GEFORDERT — was jede Sektion leisten muss:
+✓ hero_headline: Eine Aussage die SCHOCKIERT oder ÜBERRASCHT — nicht beschreibt. Ort "${ort}" natürlich integriert. Max. 7 Wörter.
+✓ hero_subheadline: Der stärkste Grund JETZT anzurufen. Konkret, keine Versprechen.
+✓ Services: 4-5 Sätze pro Leistung. Satz 1: Was ist es konkret? Satz 2: Wie fühlt es sich an? Satz 3: Was ändert sich für den ${patientOrKunde === "Patienten" ? "Patienten" : "Kunden"} danach? Satz 4: Was macht es hier besonders?
+✓ Benefits: Echte Differenzierer, keine Selbstverständlichkeiten. "Pünktlichkeit" ist keine Differenzierung. "Abendtermine bis 20 Uhr" schon.
+✓ About: Eine GESCHICHTE — wann, warum, wie. Was das Unternehmen antreibt. Was sie anders machen als alle anderen.
+✓ Testimonials: Konkrete Situation schildern. Name + Kontext. "Nach 3 Jahren Angst vor dem Zahnarzt..." nicht "Sehr nettes Team."
+✓ FAQ: Die Fragen die jeder stellt aber niemand offen beantwortet. Ehrlich, ausführlich.
+
+SEO (exakt einhalten):
+• meta_title: exakt 52-58 Zeichen | z.B. "Zahnarzt ${ort} | ${input.company_name}"
+• meta_description: exakt 145-155 Zeichen | konkreter Nutzen + Handlungsaufforderung
+• hero_headline: "${ort}" integriert, max. 7 Wörter, überraschend ehrlich
 
 ══════════════════════════════════════════════════
 PHASE 4 — SELBST-REVIEW (bevor du JSON ausgibst)
@@ -383,6 +404,7 @@ export async function POST(req: NextRequest) {
       address,
       description,
       about_text,
+      scraped_hero,
       services:      confirmedServices,
       service_pairs: confirmedPairs,
       trust_signals: trust_signals || [],
@@ -400,7 +422,7 @@ export async function POST(req: NextRequest) {
     // Streaming-Aufruf — hält Vercel-Verbindung am Leben während Opus generiert
     const stream = await client.messages.stream({
       model: "claude-opus-4-5",
-      max_tokens: 8000,
+      max_tokens: 12000,
       system: "Du bist ein Senior Brand-Stratege und Cheftexter einer deutschen Premium-Webagentur. Du schreibst ausschließlich auf Deutsch. Du lieferst ausschließlich valides JSON — kein erklärender Text, keine Markdown-Blöcke, kein Kommentar. Nur das JSON-Objekt selbst.",
       messages: [{ role: "user", content: prompt }],
     });
