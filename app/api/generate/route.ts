@@ -235,8 +235,13 @@ VERBOTEN — diese Formulierungen sind gesperrt:
 ✗ Karriere/Jobs in cta_section_headline oder cta_section_text
 
 GEFORDERT — was jede Sektion leisten muss:
-✓ hero_headline: Eine Aussage die SCHOCKIERT oder ÜBERRASCHT — nicht beschreibt. Ort "${ort}" natürlich integriert. Max. 7 Wörter.
-✓ hero_subheadline: Der stärkste Grund JETZT anzurufen. Konkret, keine Versprechen.
+✓ hero_headline: DER KLARHEITSTEST — nicht beschreiben, sondern ZEIGEN was man tut.
+   Stell dir vor: Jemand googelt "[Branche] [Stadt]" und landet auf der Seite.
+   Die Headline muss innerhalb von 2 Sekunden bestätigen: "Ja, hier bin ich richtig."
+   VERBOTEN: Poetische Bilder ("Wärme und Wasser"), leere Superlative, vage Versprechen
+   ERLAUBT: Was tust du? ("Sanitär & Heizung"), Wo? ("in ${ort}"), Was macht dich besonders? ("seit 1987" / "24h-Notdienst" / "direkt nach Hause")
+   Beispiele die FUNKTIONIEREN: "Badezimmer-Renovierung in ${ort} — fertig wie versprochen." / "Heizung kaputt? ${ort} ruft an, wir kommen." / "Zahnarzt in ${ort} ohne Wartezeit."
+✓ hero_subheadline: Der stärkste Grund JETZT anzurufen — nicht in einer Woche. Konkret, kein Versprechen das jeder macht.
 ✓ Services: 4-5 Sätze pro Leistung. Satz 1: Was ist es konkret? Satz 2: Wie fühlt es sich an? Satz 3: Was ändert sich für den ${patientOrKunde === "Patienten" ? "Patienten" : "Kunden"} danach? Satz 4: Was macht es hier besonders?
 ✓ Benefits: Echte Differenzierer, keine Selbstverständlichkeiten. "Pünktlichkeit" ist keine Differenzierung. "Abendtermine bis 20 Uhr" schon.
 ✓ About: Eine GESCHICHTE — wann, warum, wie. Was das Unternehmen antreibt. Was sie anders machen als alle anderen.
@@ -272,9 +277,9 @@ Antworte AUSSCHLIESSLICH mit einem einzigen validen JSON-Objekt. Kein erklärend
   "meta_title": "string (exakt 52-58 Zeichen)",
   "meta_description": "string (exakt 145-155 Zeichen, endet mit Handlungsaufforderung)",
   "hero_badge": "string (konkretes Vertrauenssignal, z.B. 'Seit 1998 in ${ort}' oder Bewertungshinweis)",
-  "hero_headline": "string (max. 7 Wörter, ${ort} integriert, ehrlich und konkret)",
-  "hero_subheadline": "string (max. 25 Wörter, stärkster Nutzen für ${patientOrKunde})",
-  "hero_detail": "string (1-2 Sätze ergänzende Information direkt unter dem Hero — was sie im ersten Gespräch erwartet)",
+  "hero_headline": "string (KLARHEITSTEST: Ein fremder Mensch muss in 2 Sekunden verstehen WAS das Unternehmen tut und WO. Schreibe es so als würdest du jemandem auf der Straße sagen was du machst — direkt, nicht poetisch. FALSCH: 'Wärme und Wasser perfekt gemacht' | RICHTIG: 'Sanitär & Heizung in ${ort} — seit 1987' oder 'Neue Wärmepumpe in ${ort}? Wir bauen sie.' Max. 8 Wörter. Kein Marketing-Speak.)",
+  "hero_subheadline": "string (Beantwortet: Warum genau DIESES Unternehmen und nicht den Wettbewerber? Konkret, max. 20 Wörter. Kein 'Ihr zuverlässiger Partner'.)",
+  "hero_detail": "string (1 konkreter Satz: Was passiert wenn ich jetzt anrufe? z.B. 'Kostenloser Vor-Ort-Termin innerhalb von 48h — auch samstags.')",
   "cta_text": "string (primärer CTA — handlungsauslösend, branchenspezifisch)",
   "cta_secondary": "string (sekundärer CTA — sanfter, für Zögernde)",
   "services": [
