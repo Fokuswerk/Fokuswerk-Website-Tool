@@ -27,15 +27,24 @@ function toSlug(v: string) {
 const inp = "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400/20";
 const lbl = "block text-sm font-medium text-gray-800 mb-1.5";
 
-export default function SiteForm() {
+interface InitialValues {
+  company_name?: string;
+  industry?: string;
+  website?: string;
+  phone?: string;
+  city?: string;
+  address?: string;
+}
+
+export default function SiteForm({ initialValues }: { initialValues?: InitialValues }) {
   const router = useRouter();
 
-  const [companyName, setCompanyName]     = useState("");
-  const [industry, setIndustry]           = useState("");
-  const [slug, setSlug]                   = useState("");
-  const [oldWebsiteUrl, setOldWebsiteUrl] = useState("");
-  const [phone, setPhone]                 = useState("");
-  const [city, setCity]                   = useState("");
+  const [companyName, setCompanyName]     = useState(initialValues?.company_name ?? "");
+  const [industry, setIndustry]           = useState(initialValues?.industry ?? "");
+  const [slug, setSlug]                   = useState(initialValues?.company_name ? toSlug(initialValues.company_name) : "");
+  const [oldWebsiteUrl, setOldWebsiteUrl] = useState(initialValues?.website ?? "");
+  const [phone, setPhone]                 = useState(initialValues?.phone ?? "");
+  const [city, setCity]                   = useState(initialValues?.city ?? initialValues?.address ?? "");
   const [notes, setNotes]                 = useState("");
   const [primaryColor, setPrimaryColor]   = useState("#2563eb");
   const template: SiteTemplate           = TEMPLATE;
