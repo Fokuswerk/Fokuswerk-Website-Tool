@@ -217,11 +217,10 @@ export default function SiteForm({ initialValues }: { initialValues?: InitialVal
           address:         (scrapedCtx?.address as string) || (city ? city : null),
           primary_color:   primaryColor,
           logo_url:        (scrapedCtx?.logo_url as string) || null,
-          // Echte Google-Fotos des Unternehmens — Foto 0 = Hero, Foto 1 = About
-          hero_image_url:  Array.isArray(scrapedCtx?.google_photos) && (scrapedCtx.google_photos as string[]).length > 0
-            ? (scrapedCtx.google_photos as string[])[0] : null,
-          about_image_url: Array.isArray(scrapedCtx?.google_photos) && (scrapedCtx.google_photos as string[]).length > 1
-            ? (scrapedCtx.google_photos as string[])[1] : null,
+          // Keine automatischen Google-Fotos — falscher Place-Match möglich.
+          // Bilder werden manuell vom Kunden hochgeladen oder bleiben Unsplash-Fallback.
+          hero_image_url:  null,
+          about_image_url: null,
           template,
           status:          "Entwurf",
           hero_headline:    data.hero_headline    ?? "",

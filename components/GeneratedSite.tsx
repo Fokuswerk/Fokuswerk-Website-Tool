@@ -22,18 +22,23 @@ function useReveal() {
 // ─── Industry-matched hero image ─────────────────────────────────────────────
 function getHeroImage(industry: string): string {
   const q = (industry || "").toLowerCase();
-  if (q.match(/zahn|dental|arzt|praxis|klinik/)) return "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1920&q=85";
+  if (q.match(/zahn|dental|arzt|praxis|klinik/))    return "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1920&q=85";
   if (q.match(/restaurant|gastro|café|cafe|küche|catering/)) return "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1920&q=85";
-  if (q.match(/handwerk|bau|sanitär|elektro|maler|dachdeck/)) return "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1920&q=85";
-  if (q.match(/friseur|beauty|kosmetik|haar|spa|wellness/)) return "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1920&q=85";
-  if (q.match(/immobilien|makler/)) return "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1920&q=85";
+  if (q.match(/sanitär|heizung|wärmepumpe|rohr|klempner/))   return "https://images.unsplash.com/photo-1581092334651-ddf19d979f6f?auto=format&fit=crop&w=1920&q=85";
+  if (q.match(/handwerk|bau|elektro|maler|dachdeck/))        return "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1920&q=85";
+  if (q.match(/fahrschule|führerschein|fahren/))             return "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=1920&q=85";
+  if (q.match(/friseur|beauty|kosmetik|haar|spa|wellness/))  return "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1920&q=85";
+  if (q.match(/immobilien|makler/))   return "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1920&q=85";
   if (q.match(/fitness|sport|gym|yoga/)) return "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=85";
-  if (q.match(/anwalt|recht|kanzlei/)) return "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1920&q=85";
+  if (q.match(/anwalt|recht|kanzlei/))  return "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=1920&q=85";
   if (q.match(/steuer|finanz|buchhalter/)) return "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1920&q=85";
-  if (q.match(/auto|kfz|werkstatt/)) return "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1920&q=85";
+  if (q.match(/auto|kfz|werkstatt/))    return "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1920&q=85";
   if (q.match(/physio|therapie|gesundheit/)) return "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1920&q=85";
-  if (q.match(/garten|landschaft/)) return "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=1920&q=85";
-  if (q.match(/reinigung/)) return "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1920&q=85";
+  if (q.match(/garten|landschaft/))     return "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=1920&q=85";
+  if (q.match(/reinigung/))             return "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1920&q=85";
+  if (q.match(/tierarzt|tier|vet/))     return "https://images.unsplash.com/photo-1581888227599-779811939961?auto=format&fit=crop&w=1920&q=85";
+  if (q.match(/optiker|brillen/))       return "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?auto=format&fit=crop&w=1920&q=85";
+  if (q.match(/hotel|pension|unterkunft/)) return "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1920&q=85";
   return "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1920&q=85";
 }
 
@@ -41,11 +46,24 @@ function getAboutImage(industry: string): string {
   const q = (industry || "").toLowerCase();
   if (q.match(/zahn|dental|arzt|praxis/)) return "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=900&q=85";
   if (q.match(/restaurant|gastro|café|cafe/)) return "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=900&q=85";
-  if (q.match(/handwerk|bau/)) return "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=85";
-  if (q.match(/friseur|beauty/)) return "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=900&q=85";
-  if (q.match(/fitness|sport/)) return "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=900&q=85";
-  if (q.match(/anwalt|recht/)) return "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=900&q=85";
+  if (q.match(/sanitär|heizung|wärmepumpe/)) return "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=900&q=85";
+  if (q.match(/handwerk|bau/))           return "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=85";
+  if (q.match(/fahrschule|führerschein/)) return "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=900&q=85";
+  if (q.match(/friseur|beauty/))         return "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=900&q=85";
+  if (q.match(/fitness|sport/))          return "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=900&q=85";
+  if (q.match(/anwalt|recht/))           return "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=900&q=85";
+  if (q.match(/auto|kfz/))              return "https://images.unsplash.com/photo-1615906655593-ad0386982a0f?auto=format&fit=crop&w=900&q=85";
   return "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=900&q=85";
+}
+
+// ─── Sicherer Bild-Selektor — Google-Proxy-URLs werden ignoriert ─────────────
+// Verhindert dass falsche Google Place Photos von alten generierten Sites
+// angezeigt werden. /api/place-photo URLs = potenziell falscher Eintrag → Fallback.
+function getSafeImageUrl(stored: string | null | undefined, industry: string, type: "hero" | "about" = "hero"): string {
+  if (stored && !stored.includes("/api/place-photo") && !stored.includes("place-photo")) {
+    return stored; // Manuell hochgeladenes Bild → immer verwenden
+  }
+  return type === "about" ? getAboutImage(industry) : getHeroImage(industry);
 }
 
 // Stable number from a slug string — used to rotate images so each site looks different
@@ -84,7 +102,19 @@ function getGalleryImages(industry: string, seed = 0): string[] {
     "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=800&q=80",
     "https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?auto=format&fit=crop&w=800&q=80",
   ];
-  else if (q.match(/handwerk|bau|sanitär|elektro|maler|dachdeck/)) imgs = [
+  else if (q.match(/sanitär|heizung|wärmepumpe|rohr|klempner/)) imgs = [
+    "https://images.unsplash.com/photo-1581092334651-ddf19d979f6f?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80",
+  ];
+  else if (q.match(/fahrschule|führerschein|fahren/)) imgs = [
+    "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1615906655593-ad0386982a0f?auto=format&fit=crop&w=800&q=80",
+  ];
+  else if (q.match(/handwerk|bau|elektro|maler|dachdeck/)) imgs = [
     "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80",
     "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80",
     "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=800&q=80",
@@ -522,7 +552,7 @@ function PremiumHero({ site, color, ai, stats }: TplProps) {
   return (
     <section id="hero" className="relative flex min-h-[85vh] flex-col justify-center overflow-hidden" aria-label="Hero">
       <div className="absolute inset-0" aria-hidden="true">
-        <img src={site.hero_image_url || getHeroImage(site.industry)} alt="" className="h-full w-full object-cover" fetchPriority="high" />
+        <img src={getSafeImageUrl(site.hero_image_url, site.industry)} alt="" className="h-full w-full object-cover" fetchPriority="high" />
         {/* Centered vignette: darker edges, lighter center-ish for text legibility */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/40" />
         <div className="absolute inset-0 bg-black/25" />
@@ -715,7 +745,7 @@ function PremiumAbout({ site, color, ai }: { site: Site; color: string; ai: AICo
         <div className="grid grid-cols-1 lg:grid-cols-5">
           <div className="relative min-h-[360px] lg:col-span-3 lg:min-h-[560px]">
             <img
-              src={site.about_image_url || getAboutImage(site.industry || "")}
+              src={getSafeImageUrl(site.about_image_url, site.industry || "", "about")}
               alt={`Team ${site.company_name}`}
               className="h-full w-full object-cover"
               loading="lazy"
