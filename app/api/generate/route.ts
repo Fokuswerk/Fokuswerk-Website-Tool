@@ -5,20 +5,112 @@ import type { ServiceItem, BenefitItem, StatItem, TestimonialItem, TeamMemberIte
 
 export const maxDuration = 300; // Vercel Pro: bis zu 300s erlaubt
 
-// ─── Pexels Bildsuche ────────────────────────────────────────────────────────
+// ─── Pexels: Industry → Suchbegriff Mapping ─────────────────────────────────
 
-async function searchPexels(query: string, count = 1): Promise<string[]> {
+const INDUSTRY_HERO_QUERIES: Record<string, string> = {
+  zahnarzt:     "modern dental clinic interior bright clean professional",
+  dental:       "modern dental clinic interior bright clean professional",
+  sanitär:      "modern bathroom renovation professional plumber",
+  klempner:     "plumber professional bathroom installation modern",
+  heizung:      "modern heating system installation professional",
+  elektriker:   "professional electrician modern home installation",
+  elektro:      "professional electrician modern installation",
+  maler:        "professional painter bright fresh interior renovation",
+  friseur:      "modern hair salon interior stylish professional",
+  kosmetik:     "modern beauty salon interior professional clean",
+  physiother:   "bright modern physiotherapy practice professional",
+  masseur:      "wellness massage modern clean professional studio",
+  optiker:      "modern optical store interior professional eyewear",
+  apotheke:     "modern pharmacy interior professional clean bright",
+  arzt:         "modern medical practice interior bright professional",
+  tierarzt:     "modern veterinary clinic interior professional clean",
+  rechtsanw:    "modern law office interior professional elegant",
+  steuerber:    "modern office interior professional business",
+  architekt:    "modern architecture office interior professional",
+  immobilien:   "modern real estate office interior professional",
+  restaurant:   "modern restaurant interior elegant ambiance",
+  bäcker:       "artisan bakery interior warm professional",
+  café:         "modern café interior cozy professional design",
+  fitness:      "modern gym interior professional equipment bright",
+  reinigung:    "professional cleaning service modern home spotless",
+  garten:       "professional landscaping garden beautiful design",
+  dachdecker:   "professional roofing modern house exterior",
+  schreiner:    "professional woodworking carpentry modern workshop",
+  kfz:          "modern car workshop professional garage interior",
+  auto:         "modern car dealership showroom professional",
+};
+
+function getPexelsHeroQuery(industry: string): string {
+  const q = (industry || "").toLowerCase();
+  for (const [key, query] of Object.entries(INDUSTRY_HERO_QUERIES)) {
+    if (q.includes(key)) return query;
+  }
+  return `professional ${industry} business modern interior`;
+}
+
+const SERVICE_QUERY_MAP: Record<string, string> = {
+  // Zahnarzt
+  "prophylaxe":         "dental hygiene teeth cleaning professional",
+  "zahnreinigung":      "dental cleaning professional hygiene",
+  "implantologie":      "dental implant modern clinic professional",
+  "zahnersatz":         "dental prosthetics modern professional",
+  "bleaching":          "teeth whitening dental professional bright",
+  "kieferorthopädie":   "orthodontics dental braces modern clinic",
+  "angstpatienten":     "calm dental clinic relaxing professional",
+  // Sanitär
+  "badezimmer":         "modern bathroom renovation interior design",
+  "bad":                "modern bathroom interior design luxury",
+  "heizung":            "modern heating system professional installation",
+  "sanitär":            "professional plumbing installation modern",
+  "rohrleitung":        "professional pipe installation plumbing",
+  "notfall":            "emergency professional service fast",
+  // Elektriker
+  "elektroinstallation":"professional electrical installation modern home",
+  "solar":              "solar panel installation modern roof professional",
+  "smart home":         "smart home technology modern interior professional",
+  "beleuchtung":        "modern interior lighting design professional",
+  // Maler
+  "innenmalerarbeiten": "professional interior painting bright fresh walls",
+  "fassade":            "professional exterior painting house facade",
+  "tapezieren":         "professional wallpapering interior design modern",
+  // Friseur
+  "haarschnitt":        "professional haircut modern salon styling",
+  "färben":             "professional hair coloring salon modern",
+  "styling":            "professional hair styling modern salon",
+  // Allgemein
+  "beratung":           "professional business consultation modern office",
+  "reparatur":          "professional repair service modern workshop",
+  "wartung":            "professional maintenance service modern",
+  "montage":            "professional installation service modern",
+  "reinigung":          "professional cleaning service spotless modern",
+};
+
+function getPexelsServiceQuery(serviceTitle: string, industry: string): string {
+  const t = serviceTitle.toLowerCase();
+  for (const [key, query] of Object.entries(SERVICE_QUERY_MAP)) {
+    if (t.includes(key)) return query;
+  }
+  return `professional ${serviceTitle} ${industry} service modern`;
+}
+
+// ─── Pexels API ───────────────────────────────────────────────────────────────
+
+async function searchPexels(query: string, count = 5): Promise<string[]> {
   const key = process.env.PEXELS_API_KEY;
   if (!key) return [];
   try {
     const q = encodeURIComponent(query);
     const res = await fetch(
       `https://api.pexels.com/v1/search?query=${q}&per_page=${count}&orientation=landscape&size=large`,
-      { headers: { Authorization: key }, signal: AbortSignal.timeout(6000) }
+      { headers: { Authorization: key }, signal: AbortSignal.timeout(8000) }
     );
     if (!res.ok) return [];
-    const data = await res.json() as { photos?: Array<{ src: { large2x: string; large: string } }> };
-    return (data.photos ?? []).map(p => p.src.large2x || p.src.large);
+    const data = await res.json() as {
+      photos?: Array<{ width: number; height: number; src: { original: string; large2x: string; large: string } }>
+    };
+    // Bevorzuge breiteste Fotos (beste Hero-Proportionen)
+    const sorted = (data.photos ?? []).sort((a, b) => b.width - a.width);
+    return sorted.map(p => p.src.original || p.src.large2x || p.src.large);
   } catch { return []; }
 }
 
@@ -684,12 +776,11 @@ Schreibe keine Felder die bereits gut sind neu.`;
     // ── Pexels Bilder parallel laden ──────────────────────────────────────────
     const needsHero    = !google_photos || google_photos.length === 0;
     const serviceCount = Math.min(services_detailed.length, 6);
-    const industryHint = `${industry} ${isMedical ? "Praxis" : "Betrieb"} Deutschland`;
 
     const [pexelsHeroArr, ...pexelsServiceArrays] = await Promise.all([
-      needsHero ? searchPexels(industryHint, 1) : Promise.resolve([] as string[]),
+      needsHero ? searchPexels(getPexelsHeroQuery(industry), 5) : Promise.resolve([] as string[]),
       ...services_detailed.slice(0, serviceCount).map(s =>
-        searchPexels(`${s.title} ${industry}`, 1)
+        searchPexels(getPexelsServiceQuery(s.title, industry), 3)
       ),
     ]);
 
