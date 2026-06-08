@@ -5,6 +5,23 @@ import type { ServiceItem, BenefitItem, StatItem, TestimonialItem, TeamMemberIte
 
 export const maxDuration = 300; // Vercel Pro: bis zu 300s erlaubt
 
+// ─── Pexels Bildsuche ────────────────────────────────────────────────────────
+
+async function searchPexels(query: string, count = 1): Promise<string[]> {
+  const key = process.env.PEXELS_API_KEY;
+  if (!key) return [];
+  try {
+    const q = encodeURIComponent(query);
+    const res = await fetch(
+      `https://api.pexels.com/v1/search?query=${q}&per_page=${count}&orientation=landscape&size=large`,
+      { headers: { Authorization: key }, signal: AbortSignal.timeout(6000) }
+    );
+    if (!res.ok) return [];
+    const data = await res.json() as { photos?: Array<{ src: { large2x: string; large: string } }> };
+    return (data.photos ?? []).map(p => p.src.large2x || p.src.large);
+  } catch { return []; }
+}
+
 // ─── Robuster JSON-Parser ────────────────────────────────────────────────────
 
 function parseJSON(raw: string): Record<string, unknown> {
@@ -664,10 +681,23 @@ Schreibe keine Felder die bereits gut sind neu.`;
       template,
     });
 
-    // Bestes Google-Foto als Hero-Hintergrundbild
+    // ── Pexels Bilder parallel laden ──────────────────────────────────────────
+    const needsHero    = !google_photos || google_photos.length === 0;
+    const serviceCount = Math.min(services_detailed.length, 6);
+    const industryHint = `${industry} ${isMedical ? "Praxis" : "Betrieb"} Deutschland`;
+
+    const [pexelsHeroArr, ...pexelsServiceArrays] = await Promise.all([
+      needsHero ? searchPexels(industryHint, 1) : Promise.resolve([] as string[]),
+      ...services_detailed.slice(0, serviceCount).map(s =>
+        searchPexels(`${s.title} ${industry}`, 1)
+      ),
+    ]);
+
     const heroImageUrl = (google_photos && google_photos.length > 0)
       ? google_photos[0]
-      : null;
+      : (pexelsHeroArr[0] ?? null);
+
+    const pexelsServiceImages = pexelsServiceArrays.map(arr => arr[0] ?? "").filter(Boolean);
 
     return NextResponse.json({
       hero_image_url:   heroImageUrl,
@@ -689,6 +719,7 @@ Schreibe keine Felder die bereits gut sind neu.`;
         hero_detail,
         cta_secondary:        finalData.cta_secondary,
         services_detailed,
+        service_images: pexelsServiceImages.length > 0 ? pexelsServiceImages : undefined,
         benefits_detailed,
         stats:                stats.length > 0 ? stats : undefined,
         about_headline:       (finalData.about_headline as string) || `Über ${company_name}`,
