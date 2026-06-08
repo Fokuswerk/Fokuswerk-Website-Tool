@@ -20,8 +20,6 @@ const STATUS_CONFIG = {
   verloren:          { label: "Verloren",        color: "bg-red-50 text-red-500" },
 };
 
-// ─── Saved Lead Type ──────────────────────────────────────────────────────────
-
 interface SavedLead {
   id: string;
   company_name: string;
@@ -43,7 +41,7 @@ interface SavedLead {
   created_at: string;
 }
 
-// ─── Search Result Row ────────────────────────────────────────────────────────
+// ─── Score Badge ──────────────────────────────────────────────────────────────
 
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null) return null;
@@ -52,10 +50,10 @@ function ScoreBadge({ score }: { score: number | null }) {
   return <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${color}`}>{label}</span>;
 }
 
+// ─── Search Result Row ────────────────────────────────────────────────────────
+
 function SearchResultRow({
-  result,
-  onSave,
-  saving,
+  result, onSave, saving,
 }: {
   result: LeadResult & { quality?: WebsiteQuality | null; price?: PriceEstimate | null; checking?: boolean };
   onSave: (r: typeof result) => void;
@@ -151,6 +149,18 @@ function SavedLeadRow({ lead, onStatusChange }: { lead: SavedLead; onStatusChang
   );
 }
 
+// ─── Stat Card ────────────────────────────────────────────────────────────────
+
+function StatCard({ label, value, sub, color = "text-gray-900" }: { label: string; value: string | number; sub?: string; color?: string }) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
+      <p className={`text-2xl font-bold tabular-nums ${color}`}>{value}</p>
+      <p className="mt-0.5 text-xs font-medium text-gray-500">{label}</p>
+      {sub && <p className="mt-1 text-[11px] text-gray-400">{sub}</p>}
+    </div>
+  );
+}
+
 // ─── Haupt-Page ───────────────────────────────────────────────────────────────
 
 export default function LeadsPage() {
@@ -163,35 +173,25 @@ export default function LeadsPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("alle");
 
-  // ── Gespeicherte Leads laden ───────────────────────────────────────────────
   useEffect(() => {
     fetch("/api/leads").then(r => r.json()).then(d => setSavedLeads(d.leads ?? []));
   }, []);
 
-  // ── Suche ─────────────────────────────────────────────────────────────────
   async function search(e?: React.FormEvent) {
     e?.preventDefault();
     if (!query.trim()) return;
     setSearching(true);
     setSearchError(null);
     setResults([]);
-
     try {
       const params = new URLSearchParams({ q: query });
       if (city.trim()) params.set("city", city.trim());
       const res = await fetch(`/api/leads-search?${params}`);
       const data = await res.json() as { results?: LeadResult[]; error?: string };
       if (data.error) throw new Error(data.error);
-
-      const found = (data.results ?? []).filter(r =>
-        r.website || r.phone // Nur Leads mit Website oder Telefon
-      );
+      const found = (data.results ?? []).filter(r => r.website || r.phone);
       setResults(found.map(r => ({ ...r, checking: !!r.website })));
-
-      // Website-Qualität + Preis parallel prüfen
-      for (const lead of found) {
-        checkLeadQuality(lead);
-      }
+      for (const lead of found) checkLeadQuality(lead);
     } catch (err) {
       setSearchError((err as Error).message);
     } finally {
@@ -204,26 +204,19 @@ export default function LeadsPage() {
     try {
       const [qualityRes, priceRes] = await Promise.allSettled([
         fetch("/api/website-quality", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url: lead.website }),
         }).then(r => r.json()) as Promise<WebsiteQuality>,
         fetch("/api/lead-price", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            company_name: lead.name,
-            industry: lead.industry,
-            city: lead.city,
-            google_rating: lead.rating,
-            google_rating_count: lead.rating_count,
+            company_name: lead.name, industry: lead.industry, city: lead.city,
+            google_rating: lead.rating, google_rating_count: lead.rating_count,
           }),
         }).then(r => r.json()) as Promise<PriceEstimate>,
       ]);
-
       const quality = qualityRes.status === "fulfilled" ? qualityRes.value : null;
       const price   = priceRes.status  === "fulfilled" ? priceRes.value  : null;
-
       setResults(prev => prev.map(r =>
         r.place_id === lead.place_id ? { ...r, quality, price, checking: false } : r
       ));
@@ -234,7 +227,6 @@ export default function LeadsPage() {
     }
   }
 
-  // ── Lead speichern ────────────────────────────────────────────────────────
   async function saveLead(result: typeof results[0]) {
     setSavingId(result.place_id);
     try {
@@ -275,7 +267,6 @@ export default function LeadsPage() {
     }
   }
 
-  // ── Status ändern ─────────────────────────────────────────────────────────
   async function changeStatus(id: string, status: string) {
     setSavedLeads(prev => prev.map(l => l.id === id ? { ...l, status: status as SavedLead["status"] } : l));
     await fetch(`/api/leads/${id}`, {
@@ -289,115 +280,123 @@ export default function LeadsPage() {
     ? savedLeads
     : savedLeads.filter(l => l.status === statusFilter);
 
-  const pipeline = {
-    gesamt:      savedLeads.length,
-    aktiv:       savedLeads.filter(l => !["gewonnen","verloren"].includes(l.status)).length,
-    gewonnen:    savedLeads.filter(l => l.status === "gewonnen").length,
-    revenue:     savedLeads.filter(l => l.sale_price).reduce((sum, l) => sum + (l.sale_price ?? 0), 0),
-  };
+  const gewonnen   = savedLeads.filter(l => l.status === "gewonnen");
+  const revenue    = gewonnen.reduce((s, l) => s + (l.sale_price ?? 0), 0);
+  const avgRevenue = gewonnen.length > 0 ? Math.round(revenue / gewonnen.length) : 0;
 
   return (
     <div className="min-h-screen bg-[#f7f8fa]">
+      {/* ── Header ── */}
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-screen-xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="text-gray-400 hover:text-gray-700 transition">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gray-900 text-xs font-black text-white">W</div>
+            <span className="text-base font-bold text-gray-900">Website Tool</span>
+          </div>
+          <nav className="flex items-center gap-1">
+            <Link href="/dashboard/pipeline"
+              className="rounded-lg px-3 py-2 text-sm text-gray-500 transition hover:bg-gray-100 hover:text-gray-800">
+              Pipeline
             </Link>
-            <div>
-              <h1 className="text-base font-bold text-gray-900">Lead-Pipeline</h1>
-              <p className="text-xs text-gray-400">Betriebe mit schlechten Websites finden + qualifizieren</p>
-            </div>
-          </div>
-          {/* KPIs */}
-          <div className="hidden sm:flex items-center gap-6 text-xs">
-            <div className="text-center"><p className="text-lg font-bold text-gray-900">{pipeline.gesamt}</p><p className="text-gray-400">Leads</p></div>
-            <div className="text-center"><p className="text-lg font-bold text-blue-600">{pipeline.aktiv}</p><p className="text-gray-400">Aktiv</p></div>
-            <div className="text-center"><p className="text-lg font-bold text-green-600">{pipeline.gewonnen}</p><p className="text-gray-400">Gewonnen</p></div>
-            {pipeline.revenue > 0 && <div className="text-center"><p className="text-lg font-bold text-green-700">{pipeline.revenue.toLocaleString("de")}€</p><p className="text-gray-400">Umsatz</p></div>}
-          </div>
+            <Link href="/dashboard/legal"
+              className="rounded-lg px-3 py-2 text-sm text-gray-500 transition hover:bg-gray-100 hover:text-gray-800">
+              Rechtliches
+            </Link>
+            <Link href="/dashboard/new"
+              className="ml-2 inline-flex items-center gap-2 rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-700">
+              <span className="text-base leading-none">+</span> Neue Website
+            </Link>
+          </nav>
         </div>
       </header>
 
-      <main className="mx-auto max-w-screen-xl px-6 py-8 grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <main className="mx-auto max-w-screen-xl px-6 py-8 space-y-6">
 
-        {/* ── LINKE SPALTE: Suche ── */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-1 font-semibold text-gray-900 text-sm">Betriebe finden</h2>
-            <p className="mb-4 text-xs text-gray-400">Google Places + Gelbe Seiten · Website-Qualität wird automatisch geprüft</p>
-
-            <form onSubmit={search} className="space-y-2">
-              <input
-                type="text" value={query} onChange={e => setQuery(e.target.value)}
-                placeholder="Branche (Zahnarzt, Sanitär, Friseur…)"
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm placeholder:text-gray-400 focus:bg-white focus:border-gray-400 focus:outline-none"
-              />
-              <input
-                type="text" value={city} onChange={e => setCity(e.target.value)}
-                placeholder="Stadt / Region"
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm placeholder:text-gray-400 focus:bg-white focus:border-gray-400 focus:outline-none"
-              />
-              <button
-                type="submit" disabled={searching || !query.trim()}
-                className="w-full rounded-xl bg-gray-900 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:opacity-50"
-              >
-                {searching ? "Suche läuft…" : "Betriebe suchen"}
-              </button>
-            </form>
-
-            {searchError && <p className="mt-3 text-xs text-red-600">{searchError}</p>}
-          </div>
-
-          {/* Suchergebnisse */}
-          {results.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs text-gray-500 px-1">{results.length} Ergebnisse · 🔥 = schlechte Website = guter Lead</p>
-              {results
-                .sort((a, b) => (b.quality?.score ?? 0) - (a.quality?.score ?? 0))
-                .map(r => (
-                  <SearchResultRow
-                    key={r.place_id}
-                    result={r}
-                    onSave={saveLead}
-                    saving={savingId === r.place_id}
-                  />
-                ))}
-            </div>
-          )}
+        {/* ── Stats ── */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatCard label="Leads gesamt"      value={savedLeads.length} color="text-gray-900" />
+          <StatCard label="Aktiv"             value={savedLeads.filter(l => !["gewonnen","verloren"].includes(l.status)).length} color="text-blue-600" />
+          <StatCard label="Verkauft"          value={gewonnen.length}   color="text-green-600"
+            sub={revenue > 0 ? `${revenue.toLocaleString("de")}€ gesamt` : undefined} />
+          <StatCard label="Ø Verkaufspreis"
+            value={avgRevenue > 0 ? `${avgRevenue.toLocaleString("de")}€` : "—"}
+            color={avgRevenue > 0 ? "text-green-700" : "text-gray-400"}
+            sub={gewonnen.length > 0 ? `aus ${gewonnen.length} Abschlüssen` : "Noch kein Abschluss"} />
         </div>
 
-        {/* ── RECHTE SPALTE: Pipeline ── */}
-        <div className="lg:col-span-3 space-y-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            {["alle", ...Object.keys(STATUS_CONFIG)].map(s => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                  statusFilter === s ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-500 hover:border-gray-400"
-                }`}
-              >
-                {s === "alle" ? `Alle (${savedLeads.length})` : `${STATUS_CONFIG[s as keyof typeof STATUS_CONFIG]?.label} (${savedLeads.filter(l => l.status === s).length})`}
-              </button>
-            ))}
+        {/* ── Haupt-Grid ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+          {/* ── LINKE SPALTE: Suche ── */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="mb-1 font-semibold text-gray-900 text-sm">Betriebe finden</h2>
+              <p className="mb-4 text-xs text-gray-400">Google Places + Gelbe Seiten · Website-Qualität wird automatisch geprüft</p>
+              <form onSubmit={search} className="space-y-2">
+                <input
+                  type="text" value={query} onChange={e => setQuery(e.target.value)}
+                  placeholder="Branche (Zahnarzt, Sanitär, Friseur…)"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm placeholder:text-gray-400 focus:bg-white focus:border-gray-400 focus:outline-none"
+                />
+                <input
+                  type="text" value={city} onChange={e => setCity(e.target.value)}
+                  placeholder="Stadt / Region"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm placeholder:text-gray-400 focus:bg-white focus:border-gray-400 focus:outline-none"
+                />
+                <button
+                  type="submit" disabled={searching || !query.trim()}
+                  className="w-full rounded-xl bg-gray-900 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:opacity-50"
+                >
+                  {searching ? "Suche läuft…" : "Betriebe suchen"}
+                </button>
+              </form>
+              {searchError && <p className="mt-3 text-xs text-red-600">{searchError}</p>}
+            </div>
+
+            {results.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500 px-1">{results.length} Ergebnisse · 🔥 = schlechte Website = guter Lead</p>
+                {results
+                  .sort((a, b) => (b.quality?.score ?? 0) - (a.quality?.score ?? 0))
+                  .map(r => (
+                    <SearchResultRow key={r.place_id} result={r} onSave={saveLead} saving={savingId === r.place_id} />
+                  ))}
+              </div>
+            )}
           </div>
 
-          {filteredLeads.length === 0 ? (
-            <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
-              <p className="text-sm font-medium text-gray-500">
-                {savedLeads.length === 0
-                  ? "Suche nach Betrieben und speichere die besten Leads hier"
-                  : `Keine Leads mit Status "${statusFilter}"`}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {filteredLeads.map(lead => (
-                <SavedLeadRow key={lead.id} lead={lead} onStatusChange={changeStatus} />
+          {/* ── RECHTE SPALTE: Gespeicherte Leads ── */}
+          <div className="lg:col-span-3 space-y-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              {["alle", ...Object.keys(STATUS_CONFIG)].map(s => (
+                <button key={s} onClick={() => setStatusFilter(s)}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                    statusFilter === s ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-500 hover:border-gray-400"
+                  }`}
+                >
+                  {s === "alle"
+                    ? `Alle (${savedLeads.length})`
+                    : `${STATUS_CONFIG[s as keyof typeof STATUS_CONFIG]?.label} (${savedLeads.filter(l => l.status === s).length})`}
+                </button>
               ))}
             </div>
-          )}
+
+            {filteredLeads.length === 0 ? (
+              <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-12 text-center">
+                <p className="text-sm font-medium text-gray-500">
+                  {savedLeads.length === 0
+                    ? "Suche nach Betrieben und speichere die besten Leads hier"
+                    : `Keine Leads mit Status "${statusFilter}"`}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredLeads.map(lead => (
+                  <SavedLeadRow key={lead.id} lead={lead} onStatusChange={changeStatus} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>

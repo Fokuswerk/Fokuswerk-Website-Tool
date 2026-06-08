@@ -3,6 +3,8 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import SiteEditCms from "@/components/SiteEditCms";
+import type { Site } from "@/lib/types";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,6 +61,8 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const [genStep, setGenStep] = useState(0); // 0=idle 1=scraping 2=generating 3=saving
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
   const [siteId, setSiteId] = useState<string | null>(null);
+  const [siteData, setSiteData] = useState<Site | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/leads/${id}`)
@@ -68,8 +72,14 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
         setNotes(d.lead?.call_notes ?? "");
         setSalePrice(d.lead?.sale_price?.toString() ?? "");
         setSiteSlug(d.lead?.sites?.slug ?? null);
-        setSiteId(d.lead?.sites?.id ?? null);
+        const sid = d.lead?.sites?.id ?? null;
+        setSiteId(sid);
         setLoading(false);
+        if (sid) {
+          const { supabase } = await import("@/lib/supabaseClient");
+          const { data: site } = await supabase.from("sites").select("*").eq("id", sid).single();
+          if (site) setSiteData(site as Site);
+        }
       });
   }, [id]);
 
@@ -219,6 +229,10 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
       if (dbErr || !site) throw new Error(dbErr?.message || "Fehler beim Speichern");
 
       setSiteSlug(site.slug);
+      setSiteId(site.id);
+      const { supabase: sb } = await import("@/lib/supabaseClient");
+      const { data: fullSite } = await sb.from("sites").select("*").eq("id", site.id).single();
+      if (fullSite) setSiteData(fullSite as Site);
       await patch({ generated_site_id: site.id, status: "demo_erstellt" });
 
     } catch (err) {
@@ -249,8 +263,9 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
       {/* Header */}
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-6 py-4">
-          <Link href="/dashboard/leads" className="text-gray-400 hover:text-gray-700 transition">
+          <Link href="/dashboard/leads" className="flex items-center gap-2 text-gray-400 hover:text-gray-700 transition">
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+            <span className="text-sm font-medium hidden sm:inline">Leads</span>
           </Link>
           <div className="flex-1">
             <div className="flex items-center gap-3 flex-wrap">
@@ -379,6 +394,44 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-3">
                   <p className="mb-1 text-[10px] font-semibold text-gray-400 uppercase">Empfohlene Headline-Richtung</p>
                   <p className="text-xs text-indigo-800 font-medium">{String(dna.recommended_hero_angle)}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Eingebetteter Website-Editor */}
+          {siteData && (
+            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setEditorOpen(o => !o)}
+                className="flex w-full items-center justify-between px-6 py-4 text-left hover:bg-gray-50/60 transition"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">✏️</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Website bearbeiten</p>
+                    <p className="text-xs text-gray-400">{siteData.hero_headline || "Demo-Website anpassen"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <a
+                    href={`/site/${siteData.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition"
+                  >
+                    Vorschau ↗
+                  </a>
+                  <span className={`text-xs font-medium transition ${editorOpen ? "text-gray-400" : "text-blue-600"}`}>
+                    {editorOpen ? "Schließen ✕" : "Öffnen →"}
+                  </span>
+                </div>
+              </button>
+              {editorOpen && (
+                <div className="border-t border-gray-100 px-6 py-6">
+                  <SiteEditCms site={siteData} />
                 </div>
               )}
             </div>
