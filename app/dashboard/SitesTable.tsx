@@ -138,17 +138,22 @@ export default function SitesTable({ sites }: { sites: Site[] }) {
 
                   {/* Demo link */}
                   <td className="px-5 py-4">
-                    <div className="flex items-center gap-2">
-                      <CopyLinkButton slug={site.slug} />
-                      <a
-                        href={`/site/${site.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`${site.company_name} öffnen`}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-400 transition hover:border-gray-300 hover:bg-gray-100 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2"
-                      >
-                        <ExternalIcon />
-                      </a>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <CopyLinkButton slug={site.slug} />
+                        <a
+                          href={`/site/${site.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`${site.company_name} öffnen`}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-400 transition hover:border-gray-300 hover:bg-gray-100 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2"
+                        >
+                          <ExternalIcon />
+                        </a>
+                      </div>
+                      <span className="text-[10px] text-gray-300 font-mono truncate max-w-[160px]">
+                        /site/{site.slug}
+                      </span>
                     </div>
                   </td>
 

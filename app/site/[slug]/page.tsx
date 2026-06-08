@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabaseClient";
 import GeneratedSite from "@/components/GeneratedSite";
+import AdminBar from "@/components/AdminBar";
 import type { Site } from "@/lib/types";
 
 interface Props { params: Promise<{ slug: string }> }
@@ -46,5 +47,13 @@ export default async function SitePage({ params }: Props) {
   const { slug } = await params;
   const site = await getSite(slug);
   if (!site) notFound();
-  return <GeneratedSite site={site} />;
+  return (
+    <>
+      <AdminBar slug={slug} companyName={site.company_name} />
+      {/* Abstand damit Admin-Bar die Website nicht überdeckt */}
+      <div style={{ paddingTop: "40px" }}>
+        <GeneratedSite site={site} />
+      </div>
+    </>
+  );
 }
