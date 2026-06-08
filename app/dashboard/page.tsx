@@ -54,6 +54,12 @@ export default async function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <Link
+              href="/dashboard/leads"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-100 hover:text-gray-800"
+            >
+              Leads
+            </Link>
+            <Link
               href="/dashboard/legal"
               className="rounded-lg px-3 py-2 text-sm text-gray-500 transition hover:bg-gray-100 hover:text-gray-800"
             >
