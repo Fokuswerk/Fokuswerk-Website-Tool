@@ -566,7 +566,7 @@ function PremiumHero({ site, color, ai, stats }: TplProps) {
           </div>
         )}
 
-        <h1 className="anim-fade-up anim-delay-100 mb-6 max-w-3xl text-5xl font-bold leading-[1.08] tracking-tight text-white sm:text-6xl lg:text-7xl">
+        <h1 className="anim-fade-up anim-delay-100 mb-6 max-w-3xl text-5xl font-bold leading-[1.08] tracking-tight text-white sm:text-6xl lg:text-7xl" style={{ textWrap: "balance" } as React.CSSProperties}>
           {site.hero_headline || site.company_name}
         </h1>
 
@@ -723,7 +723,7 @@ function GalleryStrip({ industry, seed = 0, className = "" }: { industry: string
       {imgs.map((src, i) => (
         <div
           key={i}
-          className={`h-44 flex-1 overflow-hidden rounded-2xl sm:h-56 ${i === 0 ? "hidden sm:block" : ""} ${i === 3 ? "hidden lg:block" : ""}`}
+          className={`h-44 flex-1 overflow-hidden rounded-2xl sm:h-56 ${i === 0 ? "hidden md:block" : ""} ${i === 3 ? "hidden xl:block" : ""}`}
         >
           <img
             src={src}
@@ -2397,7 +2397,7 @@ function ArztModernHero({ site, color, ai, stats }: TplProps) {
             </span>
           ))}
         </div>
-        <h1 className="anim-fade-up anim-delay-100 mb-6 max-w-3xl text-5xl font-bold leading-[1.08] tracking-tight text-white sm:text-6xl lg:text-7xl">
+        <h1 className="anim-fade-up anim-delay-100 mb-6 max-w-3xl text-5xl font-bold leading-[1.08] tracking-tight text-white sm:text-6xl lg:text-7xl" style={{ textWrap: "balance" } as React.CSSProperties}>
           {site.hero_headline || site.company_name}
         </h1>
         <p className="anim-fade-up anim-delay-200 mb-10 max-w-xl text-xl leading-relaxed text-white/80">

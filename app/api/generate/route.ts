@@ -563,19 +563,93 @@ export async function POST(req: NextRequest) {
     const cta_section_headline = KARRIERE_PATTERN.test(ctaHeadlineRaw) ? undefined : (ctaHeadlineRaw || undefined);
     const cta_section_text     = KARRIERE_PATTERN.test(ctaTextRaw)     ? undefined : (ctaTextRaw     || undefined);
 
-    // ── Quality Score ───────────────────────────────────────────────────────
+    // ── Quality Loop: Nachbesserung wenn Score < 90 ─────────────────────────
+    // Nur Content-Felder werden nachgebessert (keine Datenlücken die der User füllen muss)
 
-    const qualityResult = calculateQualityScore({
+    async function refineContent(currentData: Record<string, unknown>, warnings: string[]): Promise<Record<string, unknown>> {
+      const contentWarnings = warnings.filter(w =>
+        !w.includes("Telefon") && !w.includes("Adresse") && !w.includes("Logo") &&
+        !w.includes("Öffnungszeiten") && !w.includes("Kontakt") && !w.includes("Kassen")
+      );
+      if (contentWarnings.length === 0) return currentData;
+
+      const refinePrompt = `Du hast gerade eine Website generiert. Der Qualitäts-Check hat folgende Schwächen gefunden:
+
+${contentWarnings.map((w, i) => `${i + 1}. ${w}`).join("\n")}
+
+Aktueller Stand:
+- hero_headline: "${currentData.hero_headline || ""}"
+- hero_subheadline: "${currentData.hero_subheadline || ""}"
+- about_text: "${((currentData.about_text as string) || "").slice(0, 200)}..."
+- FAQ-Anzahl: ${Array.isArray(currentData.faq_items) ? (currentData.faq_items as unknown[]).length : 0}
+- Process Steps: ${Array.isArray(currentData.process_steps) ? (currentData.process_steps as unknown[]).length : 0}
+- Services: ${Array.isArray(currentData.services) ? (currentData.services as unknown[]).length : 0}
+
+Verbessere NUR die schwachen Felder. Antworte mit einem JSON-Objekt das ausschließlich die geänderten Felder enthält.
+Schreibe keine Felder die bereits gut sind neu.`;
+
+      try {
+        const refineMsg = await client.messages.create({
+          model: "claude-opus-4-5",
+          max_tokens: 4000,
+          system: "Du bist ein Cheftexter. Antworte NUR mit validem JSON — kein Text davor oder danach.",
+          messages: [{ role: "user", content: refinePrompt }],
+        });
+        const refineText = refineMsg.content[0]?.type === "text" ? refineMsg.content[0].text : "{}";
+        const patch = parseJSON(refineText);
+        return { ...currentData, ...patch };
+      } catch {
+        return currentData;
+      }
+    }
+
+    // Erste Qualitätsprüfung vor dem Loop
+    const firstScore = calculateQualityScore({
       hero_headline:    (data.hero_headline as string) || "",
       hero_subheadline: (data.hero_subheadline as string) || "",
       about_text:       (data.about_text as string) || "",
       meta_title:       (data.meta_title as string) || "",
       meta_description: (data.meta_description as string) || "",
       services_detailed,
+      faq_items: Array.isArray(data.faq_items) ? (data.faq_items as FaqItem[]).filter(f => f.question && f.answer) : [],
+      process_steps: Array.isArray(data.process_steps) ? (data.process_steps as ProcessStep[]).filter(s => s.title) : [],
+      team_members: [],
+      local_seo_text: (data.local_seo_text as string) || "",
+      phone, email, address, logo_url, opening_hours, rating,
+      trust_signals: trust_signals || null,
+      has_real_scraped_services: hasRealScrapedServices,
+      city: location, company_name, template,
+    });
+
+    // Nachbessern wenn Score < 90 (max 1 Durchlauf — hält Laufzeit < 300s)
+    let refinedData = data;
+    if (firstScore.score < 90 && firstScore.warnings.length > 0) {
+      refinedData = await refineContent(data, firstScore.warnings);
+      // FAQ + Process Steps aus verbessertem Output neu laden
+      if (Array.isArray(refinedData.faq_items)) {
+        const refined = (refinedData.faq_items as FaqItem[]).filter(f => f.question && f.answer).slice(0, 8);
+        if (refined.length > faq_items.length) faq_items.splice(0, faq_items.length, ...refined);
+      }
+      if (Array.isArray(refinedData.process_steps)) {
+        const refined = (refinedData.process_steps as ProcessStep[]).filter(s => s.title).slice(0, 4);
+        if (refined.length > process_steps.length) process_steps.splice(0, process_steps.length, ...refined);
+      }
+    }
+    const finalData = refinedData;
+
+    // ── Quality Score ───────────────────────────────────────────────────────
+
+    const qualityResult = calculateQualityScore({
+      hero_headline:    (finalData.hero_headline as string) || "",
+      hero_subheadline: (finalData.hero_subheadline as string) || "",
+      about_text:       (finalData.about_text as string) || "",
+      meta_title:       (finalData.meta_title as string) || "",
+      meta_description: (finalData.meta_description as string) || "",
+      services_detailed,
       faq_items,
       process_steps,
       team_members:     team_members || [],
-      local_seo_text:   (data.local_seo_text as string) || "",
+      local_seo_text:   (finalData.local_seo_text as string) || "",
       phone:            phone || null,
       email:            email || null,
       address:          address || null,
@@ -590,41 +664,42 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({
-      meta_title:       (data.meta_title as string)       || `${company_name} — ${industry}`,
-      meta_description: (data.meta_description as string) || `${company_name}: Professionelle ${industry}-Leistungen. Jetzt anfragen!`,
-      hero_headline:    (data.hero_headline as string)    || company_name,
-      hero_subheadline: (data.hero_subheadline as string) || `Professionelle ${industry} — persönlich und zuverlässig.`,
-      cta_text:         (data.cta_text as string)         || (isMedical ? "Termin vereinbaren" : "Jetzt anfragen"),
-      about_text:       (data.about_text as string)       || `${company_name} steht für Qualität und persönliche Beratung.`,
+      meta_title:       (finalData.meta_title as string)       || `${company_name} — ${industry}`,
+      meta_description: (finalData.meta_description as string) || `${company_name}: Professionelle ${industry}-Leistungen. Jetzt anfragen!`,
+      hero_headline:    (finalData.hero_headline as string)    || company_name,
+      hero_subheadline: (finalData.hero_subheadline as string) || `Professionelle ${industry} — persönlich und zuverlässig.`,
+      cta_text:         (finalData.cta_text as string)         || (isMedical ? "Termin vereinbaren" : "Jetzt anfragen"),
+      about_text:       (finalData.about_text as string)       || `${company_name} steht für Qualität und persönliche Beratung.`,
       services:         services_detailed.map(s => s.title),
       benefits:         benefits_detailed.map(b => b.title),
       testimonials,
       auto_filled,
 
       ai_content: {
-        brand_positioning:    data.brand_positioning,
+        brand_positioning:    finalData.brand_positioning,
         brand_tone,
-        hero_badge:           data.hero_badge,
+        hero_badge:           finalData.hero_badge,
         hero_detail,
-        cta_secondary:        data.cta_secondary,
+        cta_secondary:        finalData.cta_secondary,
         services_detailed,
         benefits_detailed,
         stats:                stats.length > 0 ? stats : undefined,
-        about_headline:       (data.about_headline as string) || `Über ${company_name}`,
-        about_highlight:      data.about_highlight,
+        about_headline:       (finalData.about_headline as string) || `Über ${company_name}`,
+        about_highlight:      finalData.about_highlight,
         about_points:         about_points.length > 0 ? about_points : undefined,
-        trust_badge:          data.trust_badge,
+        trust_badge:          finalData.trust_badge,
         cta_section_headline: cta_section_headline,
         cta_section_text:     cta_section_text,
         faq_items:            faq_items.length > 0 ? faq_items : undefined,
         process_steps:        process_steps.length > 0 ? process_steps : undefined,
-        local_seo_text:       data.local_seo_text as string | undefined,
-        og_title:             data.og_title as string | undefined,
-        og_description:       data.og_description as string | undefined,
+        local_seo_text:       finalData.local_seo_text as string | undefined,
+        og_title:             finalData.og_title as string | undefined,
+        og_description:       finalData.og_description as string | undefined,
         ...(team_members && team_members.length > 0 ? { team_members } : {}),
         quality_score:    qualityResult.score,
         quality_warnings: qualityResult.warnings,
         quality_info:     qualityResult.info,
+        quality_improved: firstScore.score < qualityResult.score,
         data_sources: {
           services:      hasRealScrapedServices ? "scraped" : "derived",
           trust_signals: (trust_signals?.length ?? 0) > 0 ? "scraped" : "fallback",

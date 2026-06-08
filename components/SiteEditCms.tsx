@@ -187,15 +187,18 @@ function ImageUpload({
 // ── Hero section ─────────────────────────────────────────────────────────────
 
 function HeroSection({ site, editing, onEdit, onSave }: SectionProps) {
+  const ai = site.ai_content as AIContent | null;
   const [headline, setHeadline] = useState(site.hero_headline);
   const [subheadline, setSubheadline] = useState(site.hero_subheadline);
   const [ctaText, setCtaText] = useState(site.cta_text);
   const [heroImageUrl, setHeroImageUrl] = useState(site.hero_image_url ?? "");
+  const [heroBadge, setHeroBadge] = useState(ai?.hero_badge ?? "");
   const [saving, setSaving] = useState(false);
 
   async function save() {
     setSaving(true);
-    await onSave({ hero_headline: headline, hero_subheadline: subheadline, cta_text: ctaText, hero_image_url: heroImageUrl || null });
+    const newAi = { ...(site.ai_content as Record<string, unknown> || {}), hero_badge: heroBadge || undefined };
+    await onSave({ hero_headline: headline, hero_subheadline: subheadline, cta_text: ctaText, hero_image_url: heroImageUrl || null, ai_content: newAi });
     setSaving(false);
   }
 
@@ -211,6 +214,13 @@ function HeroSection({ site, editing, onEdit, onSave }: SectionProps) {
         <div>
           <label className={lbl}>Subheadline</label>
           <textarea rows={2} className={inp} value={subheadline} onChange={e => setSubheadline(e.target.value)} />
+        </div>
+        <div>
+          <label className={lbl}>
+            Vertrauens-Badge <span className="ml-1 text-[11px] text-gray-400">(z.B. "4,9★ bei Google · 127 Bewertungen")</span>
+          </label>
+          <input className={inp} value={heroBadge} onChange={e => setHeroBadge(e.target.value)}
+            placeholder="4,9★ bei Google · 127 Bewertungen" />
         </div>
         <div>
           <label className={lbl}>CTA-Button Text</label>

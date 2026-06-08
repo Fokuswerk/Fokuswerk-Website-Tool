@@ -8,15 +8,21 @@ import type { SiteTemplate } from "@/lib/types";
 // Ein einziges exzellentes Template — adaptiert sich automatisch nach Branche
 const TEMPLATE: SiteTemplate = "premium";
 
-const CREATE_STEPS = [
-  "Website wird analysiert…",
-  "Erster Entwurf wird erstellt…",
-  "SEO · Kunde · Berater · Marketing prüfen…",
-  "Experten-Feedback wird ausgewertet…",
-  "Inhalte werden finalisiert…",
-  "Qualitätscheck läuft…",
-  "Website wird gespeichert…",
+const CREATE_STEPS: Array<{ label: string; duration: number }> = [
+  { label: "Website wird analysiert…",              duration: 5  },
+  { label: "Unternehmens-DNA wird erkannt…",         duration: 10 },
+  { label: "Texte werden geschrieben…",              duration: 40 },
+  { label: "Qualität wird geprüft + verbessert…",   duration: 30 },
+  { label: "SEO & Struktur werden optimiert…",       duration: 10 },
+  { label: "Letzte Qualitätsprüfung läuft…",         duration: 10 },
+  { label: "Website wird gespeichert…",              duration: 5  },
 ];
+// Kumulierte Zeitpunkte für den Fortschrittsbalken
+const STEP_CUMULATIVE = CREATE_STEPS.reduce<number[]>((acc, s) => {
+  acc.push((acc[acc.length - 1] ?? 0) + s.duration);
+  return acc;
+}, []);
+const TOTAL_ESTIMATED_SECONDS = STEP_CUMULATIVE[STEP_CUMULATIVE.length - 1];
 
 function toSlug(v: string) {
   return v.toLowerCase()
@@ -83,6 +89,7 @@ export default function SiteForm({
 
   const [creating, setCreating] = useState(false);
   const [step, setStep]         = useState(0);
+  const [elapsed, setElapsed]   = useState(0);
   const [savedSlug, setSavedSlug] = useState<string | null>(null);
   const [savedId, setSavedId]     = useState<string | null>(null);
   const [error, setError]         = useState<string | null>(null);
@@ -145,8 +152,16 @@ export default function SiteForm({
     setCreating(true);
     setError(null);
     setStep(0);
+    setElapsed(0);
 
-    const stepTimer = setInterval(() => setStep(s => Math.min(s + 1, CREATE_STEPS.length - 2)), 2200);
+    // Zeitbasierter Fortschritt: tickt jede Sekunde, wechselt Step anhand kumulierter Dauer
+    const startTime = Date.now();
+    const stepTimer = setInterval(() => {
+      const secs = Math.floor((Date.now() - startTime) / 1000);
+      setElapsed(secs);
+      const newStep = STEP_CUMULATIVE.findIndex(t => t > secs);
+      setStep(newStep === -1 ? CREATE_STEPS.length - 2 : Math.min(newStep, CREATE_STEPS.length - 2));
+    }, 500);
 
     try {
       // Falls vom Lead-Flow bereits gescrapt → direkt nutzen, kein zweiter Scrape
@@ -496,19 +511,24 @@ export default function SiteForm({
 
       {/* Submit */}
       {creating ? (
-        <div className="flex items-center gap-4 rounded-2xl bg-gray-900 px-7 py-5">
-          <Spinner className="h-5 w-5 text-white" />
-          <div>
-            <p className="text-sm font-semibold text-white">{CREATE_STEPS[step]}</p>
-            <div className="mt-2 flex gap-1">
-              {CREATE_STEPS.map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-1 flex-1 rounded-full transition-all duration-500 ${i <= step ? "bg-white" : "bg-white/20"}`}
-                />
-              ))}
-            </div>
+        <div className="rounded-2xl bg-gray-900 px-7 py-5 space-y-3">
+          <div className="flex items-center gap-3">
+            <Spinner className="h-4 w-4 flex-shrink-0 text-white" />
+            <p className="text-sm font-semibold text-white">{CREATE_STEPS[step].label}</p>
+            <span className="ml-auto text-xs text-white/40 tabular-nums">
+              ~{Math.max(0, TOTAL_ESTIMATED_SECONDS - elapsed)}s
+            </span>
           </div>
+          {/* Echter Fortschrittsbalken */}
+          <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-white transition-all duration-500 ease-linear"
+              style={{ width: `${Math.min(99, (elapsed / TOTAL_ESTIMATED_SECONDS) * 100)}%` }}
+            />
+          </div>
+          <p className="text-[11px] text-white/40">
+            Schritt {Math.min(step + 1, CREATE_STEPS.length)} von {CREATE_STEPS.length}
+          </p>
         </div>
       ) : (
         <button
