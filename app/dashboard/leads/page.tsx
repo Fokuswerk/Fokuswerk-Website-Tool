@@ -166,6 +166,8 @@ function StatCard({ label, value, sub, color = "text-gray-900" }: { label: strin
 export default function LeadsPage() {
   const [query,   setQuery]   = useState("");
   const [city,    setCity]    = useState("");
+  const [citySuggestions, setCitySuggestions] = useState<{ label: string; description: string }[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [results, setResults] = useState<(LeadResult & { quality?: WebsiteQuality | null; price?: PriceEstimate | null; checking?: boolean })[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -176,6 +178,17 @@ export default function LeadsPage() {
   useEffect(() => {
     fetch("/api/leads").then(r => r.json()).then(d => setSavedLeads(d.leads ?? []));
   }, []);
+
+  useEffect(() => {
+    if (city.length < 2) { setCitySuggestions([]); return; }
+    const timer = setTimeout(async () => {
+      const res = await fetch(`/api/city-suggest?q=${encodeURIComponent(city)}`);
+      const data = await res.json() as { results: { label: string; description: string }[] };
+      setCitySuggestions(data.results ?? []);
+      setShowSuggestions(true);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [city]);
 
   async function search(e?: React.FormEvent) {
     e?.preventDefault();
@@ -338,11 +351,30 @@ export default function LeadsPage() {
                   placeholder="Branche (Zahnarzt, Sanitär, Friseur…)"
                   className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm placeholder:text-gray-400 focus:bg-white focus:border-gray-400 focus:outline-none"
                 />
-                <input
-                  type="text" value={city} onChange={e => setCity(e.target.value)}
-                  placeholder="Stadt / Region"
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm placeholder:text-gray-400 focus:bg-white focus:border-gray-400 focus:outline-none"
-                />
+                <div className="relative">
+                  <input
+                    type="text" value={city}
+                    onChange={e => { setCity(e.target.value); setShowSuggestions(true); }}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                    onFocus={() => citySuggestions.length > 0 && setShowSuggestions(true)}
+                    placeholder="Stadt oder PLZ"
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm placeholder:text-gray-400 focus:bg-white focus:border-gray-400 focus:outline-none"
+                  />
+                  {showSuggestions && citySuggestions.length > 0 && (
+                    <div className="absolute z-50 left-0 right-0 top-full mt-1 rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+                      {citySuggestions.map((s, i) => (
+                        <button
+                          key={i} type="button"
+                          onMouseDown={() => { setCity(s.label); setCitySuggestions([]); setShowSuggestions(false); }}
+                          className="flex w-full flex-col px-4 py-2.5 text-left hover:bg-gray-50 transition border-b border-gray-50 last:border-0"
+                        >
+                          <span className="text-sm font-medium text-gray-900">{s.label}</span>
+                          <span className="text-xs text-gray-400">{s.description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <button
                   type="submit" disabled={searching || !query.trim()}
                   className="w-full rounded-xl bg-gray-900 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:opacity-50"

@@ -417,6 +417,7 @@ export async function POST(req: NextRequest) {
     const google_reviews      = body.google_reviews as GoogleReviewInput[] | null | undefined;
     const google_rating       = body.google_rating as number | null | undefined;
     const google_rating_count = body.google_rating_count as number | null | undefined;
+    const google_photos       = body.google_photos as string[] | null | undefined;
     const company_dna         = body.company_dna as CompanyDNAInput | null | undefined;
 
     if (!company_name) {
@@ -663,7 +664,13 @@ Schreibe keine Felder die bereits gut sind neu.`;
       template,
     });
 
+    // Bestes Google-Foto als Hero-Hintergrundbild
+    const heroImageUrl = (google_photos && google_photos.length > 0)
+      ? google_photos[0]
+      : null;
+
     return NextResponse.json({
+      hero_image_url:   heroImageUrl,
       meta_title:       (finalData.meta_title as string)       || `${company_name} — ${industry}`,
       meta_description: (finalData.meta_description as string) || `${company_name}: Professionelle ${industry}-Leistungen. Jetzt anfragen!`,
       hero_headline:    (finalData.hero_headline as string)    || company_name,
