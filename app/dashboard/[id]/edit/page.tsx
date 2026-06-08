@@ -7,6 +7,7 @@ import type { Site } from "@/lib/types";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }
 
 async function getSite(id: string): Promise<Site | null> {
@@ -21,10 +22,14 @@ async function getSite(id: string): Promise<Site | null> {
 
 export const dynamic = "force-dynamic";
 
-export default async function EditSitePage({ params }: Props) {
+export default async function EditSitePage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { from } = await searchParams;
   const site = await getSite(id);
   if (!site) notFound();
+
+  const backHref = from ?? "/dashboard";
+  const backLabel = from?.startsWith("/dashboard/leads/") ? "← Zurück zum Lead" : undefined;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -32,11 +37,12 @@ export default async function EditSitePage({ params }: Props) {
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
           <div className="flex items-center gap-4">
             <Link
-              href="/dashboard"
-              className="text-gray-400 hover:text-gray-700 transition"
+              href={backHref}
+              className="text-gray-400 hover:text-gray-700 transition flex items-center gap-2"
               aria-label="Zurück"
             >
               <BackIcon />
+              {backLabel && <span className="text-sm font-medium text-gray-500">{backLabel}</span>}
             </Link>
             <div>
               <h1 className="text-xl font-bold text-gray-900">{site.company_name}</h1>

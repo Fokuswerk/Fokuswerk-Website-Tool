@@ -56,7 +56,9 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const [saving, setSaving] = useState(false);
   const [generatingDna, setGeneratingDna] = useState(false);
   const [generatingSite, setGeneratingSite] = useState(false);
+  const [genStep, setGenStep] = useState(0); // 0=idle 1=scraping 2=generating 3=saving
   const [siteSlug, setSiteSlug] = useState<string | null>(null);
+  const [siteId, setSiteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/leads/${id}`)
@@ -66,6 +68,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
         setNotes(d.lead?.call_notes ?? "");
         setSalePrice(d.lead?.sale_price?.toString() ?? "");
         setSiteSlug(d.lead?.sites?.slug ?? null);
+        setSiteId(d.lead?.sites?.id ?? null);
         setLoading(false);
       });
   }, [id]);
@@ -131,6 +134,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   async function generateDemoSite() {
     if (!lead) return;
     setGeneratingSite(true);
+    setGenStep(1);
     try {
       // Scrape + Generate
       let scrapedData: Record<string, unknown> = {};
@@ -142,6 +146,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
         if (sr.ok) scrapedData = await sr.json();
       }
 
+      setGenStep(2);
       const gr = await fetch("/api/generate", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -171,6 +176,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
       const genData = await gr.json() as Record<string, unknown>;
       if (!gr.ok) throw new Error((genData.error as string) || "Generierung fehlgeschlagen");
 
+      setGenStep(3);
       // Slug erstellen
       const baseSlug = lead.company_name.toLowerCase()
         .replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss")
@@ -219,6 +225,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
       alert((err as Error).message);
     } finally {
       setGeneratingSite(false);
+      setGenStep(0);
     }
   }
 
@@ -426,6 +433,14 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                     /site/{siteSlug}
                   </a>
                 </div>
+                {siteId && (
+                  <Link
+                    href={`/dashboard/${siteId}/edit?from=/dashboard/leads/${id}`}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 py-2.5 text-xs font-semibold text-white transition hover:bg-gray-700"
+                  >
+                    ✏️ Website bearbeiten
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(`${window.location.origin}/site/${siteSlug}`);
@@ -445,14 +460,49 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             ) : (
               <div className="space-y-3">
                 <p className="text-xs text-gray-400">Website für diesen Lead generieren und als Demo-Link versenden</p>
-                <button
-                  onClick={generateDemoSite}
-                  disabled={generatingSite}
-                  className="w-full rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white transition hover:bg-gray-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {generatingSite ? <><span className="animate-spin text-base">◌</span> Wird erstellt…</> : "✦ Demo-Website erstellen"}
-                </button>
-                {generatingSite && <p className="text-[11px] text-gray-400 text-center">Dauert ~30-60 Sekunden</p>}
+                {generatingSite ? (
+                  <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-3">
+                    {/* Schritte */}
+                    <div className="space-y-2">
+                      {[
+                        { step: 1, label: "Website analysieren" },
+                        { step: 2, label: "KI-Inhalte generieren" },
+                        { step: 3, label: "Website speichern" },
+                      ].map(({ step, label }) => (
+                        <div key={step} className="flex items-center gap-2">
+                          <div className={`h-4 w-4 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold transition-all ${
+                            genStep > step ? "bg-green-500 text-white" :
+                            genStep === step ? "bg-gray-900 text-white" :
+                            "bg-gray-200 text-gray-400"
+                          }`}>
+                            {genStep > step ? "✓" : step}
+                          </div>
+                          <span className={`text-xs transition-colors ${
+                            genStep > step ? "text-green-600 line-through" :
+                            genStep === step ? "text-gray-900 font-medium" :
+                            "text-gray-400"
+                          }`}>{label}</span>
+                          {genStep === step && <span className="text-gray-400 animate-pulse text-xs">…</span>}
+                        </div>
+                      ))}
+                    </div>
+                    {/* Fortschrittsbalken */}
+                    <div className="h-1.5 w-full rounded-full bg-gray-200 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gray-900 transition-all duration-700 ease-out"
+                        style={{ width: `${genStep === 1 ? 15 : genStep === 2 ? 50 : genStep === 3 ? 85 : 0}%` }}
+                      />
+                    </div>
+                    <p className="text-[11px] text-gray-400 text-center">Dauert ~30–60 Sekunden</p>
+                  </div>
+                ) : (
+                  <button
+                    onClick={generateDemoSite}
+                    className="w-full rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white transition hover:bg-gray-700 flex items-center justify-center gap-2"
+                  >
+                    ✦ Demo-Website erstellen
+                  </button>
+                )}
               </div>
             )}
           </div>
