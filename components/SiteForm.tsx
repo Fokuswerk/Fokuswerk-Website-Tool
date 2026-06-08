@@ -36,7 +36,33 @@ interface InitialValues {
   address?: string;
 }
 
-export default function SiteForm({ initialValues }: { initialValues?: InitialValues }) {
+interface CompanyDnaProps {
+  business_identity?: string;
+  brand_voice?: string;
+  tone_level?: string;
+  key_phrases?: string[];
+  communication_style?: string;
+  customer_language?: string[];
+  customer_top_praise?: string;
+  customer_pain_solved?: string;
+  unique_differentiators?: string[];
+  competitive_position?: string;
+  website_weaknesses?: string[];
+  biggest_opportunity?: string;
+  recommended_tone?: string;
+  recommended_hero_angle?: string;
+  target_audience_profile?: string;
+}
+
+export default function SiteForm({
+  initialValues,
+  companyDna,
+  scrapedContext,
+}: {
+  initialValues?: InitialValues;
+  companyDna?: CompanyDnaProps | null;
+  scrapedContext?: Record<string, unknown> | null;
+}) {
   const router = useRouter();
 
   const [companyName, setCompanyName]     = useState(initialValues?.company_name ?? "");
@@ -123,7 +149,13 @@ export default function SiteForm({ initialValues }: { initialValues?: InitialVal
     const stepTimer = setInterval(() => setStep(s => Math.min(s + 1, CREATE_STEPS.length - 2)), 2200);
 
     try {
-      if (oldWebsiteUrl && !scraped) await runScrape(oldWebsiteUrl);
+      // Falls vom Lead-Flow bereits gescrapt → direkt nutzen, kein zweiter Scrape
+      if (scrapedContext && !scrapedCtx) {
+        setScrapedCtx(scrapedContext);
+        setScraped(true);
+      } else if (oldWebsiteUrl && !scraped) {
+        await runScrape(oldWebsiteUrl);
+      }
 
       // Manuell eingegebene Infos als Kontext für die KI aufbauen
       const manualSummary = !oldWebsiteUrl && (phone || city || notes)
@@ -174,6 +206,8 @@ export default function SiteForm({ initialValues }: { initialValues?: InitialVal
           google_reviews:      scrapedCtx?.google_reviews  ?? null,
           google_rating:       scrapedCtx?.google_rating   ?? null,
           google_rating_count: scrapedCtx?.google_rating_count ?? null,
+          // Company DNA Analyse — tiefe Unternehmensanalyse als Fundament
+          company_dna:         companyDna ?? null,
         }),
       });
 

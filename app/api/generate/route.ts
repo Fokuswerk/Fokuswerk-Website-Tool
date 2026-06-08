@@ -53,6 +53,24 @@ function getFallbackServices(industry: string): ServiceItem[] {
 
 interface GoogleReviewInput { author_name: string; rating: number; text: string; relative_time_description?: string; }
 
+interface CompanyDNAInput {
+  business_identity?: string;
+  brand_voice?: string;
+  tone_level?: string;
+  key_phrases?: string[];
+  communication_style?: string;
+  customer_language?: string[];
+  customer_top_praise?: string;
+  customer_pain_solved?: string;
+  unique_differentiators?: string[];
+  competitive_position?: string;
+  website_weaknesses?: string[];
+  biggest_opportunity?: string;
+  recommended_tone?: string;
+  recommended_hero_angle?: string;
+  target_audience_profile?: string;
+}
+
 function buildPrompt(input: {
   company_name: string;
   industry: string;
@@ -75,6 +93,7 @@ function buildPrompt(input: {
   google_reviews?: GoogleReviewInput[] | null;
   google_rating?: number | null;
   google_rating_count?: number | null;
+  company_dna?: CompanyDNAInput | null;
 }): string {
 
   // ── Vorfilter: nur echte Leistungen durchlassen ──────────────────────────────
@@ -182,6 +201,28 @@ Analysiere diese Rezensionen sorgfältig:
 WICHTIG: Diese Rezensionen sind Gold — sie zeigen exakt was Neukunden überzeugt. Nutze sie, nicht erfinde sie.`;
 })()}
 
+${input.company_dna ? `
+══════════════════════════════════════════════════
+VORARBEIT — Tiefe Unternehmens-Analyse (bereits durchgeführt)
+══════════════════════════════════════════════════
+Diese Analyse wurde vor der Generierung erstellt. Nutze sie als festes Fundament.
+
+UNTERNEHMENS-IDENTITÄT: ${input.company_dna.business_identity ?? ""}
+MARKENSTIMME: ${input.company_dna.brand_voice ?? ""}
+TONALITÄT: ${input.company_dna.tone_level ?? ""} → empfohlen: ${input.company_dna.recommended_tone ?? ""}
+KOMMUNIKATIONSSTIL: ${input.company_dna.communication_style ?? ""}
+${input.company_dna.key_phrases?.length ? `IHRE EIGENEN SCHLÜSSELPHRASEN (diese verwenden!): ${input.company_dna.key_phrases.join(" · ")}` : ""}
+${input.company_dna.customer_language?.length ? `KUNDENSPRACHE (so beschreiben Kunden sie): ${input.company_dna.customer_language.join(" · ")}` : ""}
+WAS KUNDEN AM MEISTEN LOBEN: ${input.company_dna.customer_top_praise ?? ""}
+WELCHES PROBLEM LÖSEN SIE: ${input.company_dna.customer_pain_solved ?? ""}
+${input.company_dna.unique_differentiators?.length ? `ECHTE ALLEINSTELLUNGSMERKMALE: ${input.company_dna.unique_differentiators.join(" | ")}` : ""}
+ZIELGRUPPEN-PROFIL: ${input.company_dna.target_audience_profile ?? ""}
+SCHWÄCHEN DER AKTUELLEN PRÄSENZ: ${input.company_dna.website_weaknesses?.join(", ") ?? ""}
+GRÖSSTE CHANCE FÜR NEUE WEBSITE: ${input.company_dna.biggest_opportunity ?? ""}
+EMPFOHLENE HEADLINE-RICHTUNG: ${input.company_dna.recommended_hero_angle ?? ""}
+
+→ ALLES was du schreibst muss auf dieser Analyse basieren. Die Schlüsselphrasen gehören in den Text. Die Kundensprache prägt die Testimonials. Der Ton ist gesetzt.
+` : ""}
 ══════════════════════════════════════════════════
 STIMM-ANALYSE — Wie spricht dieses Unternehmen?
 ══════════════════════════════════════════════════
@@ -376,6 +417,7 @@ export async function POST(req: NextRequest) {
     const google_reviews      = body.google_reviews as GoogleReviewInput[] | null | undefined;
     const google_rating       = body.google_rating as number | null | undefined;
     const google_rating_count = body.google_rating_count as number | null | undefined;
+    const company_dna         = body.company_dna as CompanyDNAInput | null | undefined;
 
     if (!company_name) {
       return NextResponse.json({ error: "Unternehmensname fehlt" }, { status: 400 });
@@ -422,6 +464,7 @@ export async function POST(req: NextRequest) {
       google_reviews:      google_reviews      || null,
       google_rating:       google_rating       ?? null,
       google_rating_count: google_rating_count ?? null,
+      company_dna:         company_dna         || null,
     });
 
     // Streaming-Aufruf — hält Vercel-Verbindung am Leben während Opus generiert
