@@ -65,22 +65,23 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const [editorOpen, setEditorOpen] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/leads/${id}`)
-      .then(r => r.json())
-      .then(d => {
-        setLead(d.lead);
-        setNotes(d.lead?.call_notes ?? "");
-        setSalePrice(d.lead?.sale_price?.toString() ?? "");
-        setSiteSlug(d.lead?.sites?.slug ?? null);
-        const sid = d.lead?.sites?.id ?? null;
-        setSiteId(sid);
-        setLoading(false);
-        if (sid) {
-          const { supabase } = await import("@/lib/supabaseClient");
-          const { data: site } = await supabase.from("sites").select("*").eq("id", sid).single();
-          if (site) setSiteData(site as Site);
-        }
-      });
+    async function loadLead() {
+      const r = await fetch(`/api/leads/${id}`);
+      const d = await r.json();
+      setLead(d.lead);
+      setNotes(d.lead?.call_notes ?? "");
+      setSalePrice(d.lead?.sale_price?.toString() ?? "");
+      setSiteSlug(d.lead?.sites?.slug ?? null);
+      const sid = d.lead?.sites?.id ?? null;
+      setSiteId(sid);
+      setLoading(false);
+      if (sid) {
+        const { supabase } = await import("@/lib/supabaseClient");
+        const { data: site } = await supabase.from("sites").select("*").eq("id", sid).single();
+        if (site) setSiteData(site as Site);
+      }
+    }
+    loadLead();
   }, [id]);
 
   async function patch(updates: Partial<Lead>) {
