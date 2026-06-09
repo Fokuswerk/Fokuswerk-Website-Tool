@@ -54,6 +54,7 @@ export interface AIContent {
   cta_secondary?: string;
   services_detailed?: ServiceItem[];
   service_images?: string[];
+  google_photos?: string[];    // Echte Google Place Fotos — für Gallery-Bereiche
   benefits_detailed?: BenefitItem[];
   stats?: StatItem[];
   about_headline?: string;

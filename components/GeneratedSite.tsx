@@ -60,8 +60,9 @@ function getAboutImage(industry: string): string {
 // Verhindert dass falsche Google Place Photos von alten generierten Sites
 // angezeigt werden. /api/place-photo URLs = potenziell falscher Eintrag → Fallback.
 function getSafeImageUrl(stored: string | null | undefined, industry: string, type: "hero" | "about" = "hero"): string {
-  if (stored && !stored.includes("/api/place-photo") && !stored.includes("place-photo")) {
-    return stored; // Manuell hochgeladenes Bild → immer verwenden
+  // Pexels oder manuell hochgeladen → immer verwenden
+  if (stored && (stored.includes("pexels.com") || stored.includes("unsplash.com") || stored.startsWith("https://") && !stored.includes("/api/place-photo"))) {
+    return stored;
   }
   return type === "about" ? getAboutImage(industry) : getHeroImage(industry);
 }
@@ -165,6 +166,14 @@ function getDefaultServices(industry: string): ServiceItem[] {
     { title: "Kinderzahnheilkunde", description: "Einfühlsame Zahnbehandlung für Kinder in stressfreier Umgebung. Wir legen den Grundstein für lebenslang gesunde Zähne." },
     { title: "Bleaching & Ästhetik", description: "Professionelles Zahn-Bleaching für ein strahlendes Lächeln – sicher, schonend und mit nachhaltigen Ergebnissen." },
   ];
+  if (q.match(/auto|kfz|werkstatt|fahrzeug|reifen/)) return [
+    { title: "Inspektion & Wartung", description: "Regelmäßige Fahrzeuginspektionen nach Herstellervorgaben – wir prüfen alle sicherheitsrelevanten Bauteile und halten Ihr Fahrzeug in einwandfreiem Zustand." },
+    { title: "Ölwechsel & Service", description: "Fachgerechter Motorölwechsel mit Markenölen und Filteraustausch. Schnell, sauber und zu transparenten Festpreisen – ohne Terminwartezeit." },
+    { title: "Reifenservice & Einlagerung", description: "Professioneller Reifenwechsel, Auswuchten und sichere Einlagerung Ihrer Saisonreifen. Wir beraten Sie auch bei Neukauf und Felgenwahl." },
+    { title: "Bremsenservice", description: "Überprüfung und Austausch von Bremsbelägen, Bremsscheiben und Bremsflüssigkeit – für Ihre Sicherheit auf der Straße." },
+    { title: "Karosserie & Lackierung", description: "Professionelle Unfallinstandsetzung, Dellen- und Kratzerreparatur sowie hochwertige Lackarbeiten in Originalfarben Ihres Fahrzeugs." },
+    { title: "HU/AU Vorbereitung", description: "Gründliche Fahrzeugdiagnose zur Vorbereitung auf den TÜV oder die DEKRA. Wir beheben alle Mängel und begleiten Sie durch den gesamten Prozess." },
+  ];
   if (q.match(/handwerk|bau|sanitär|elektro|maler|dachdeck/)) return [
     { title: "Beratung & Planung", description: "Individuelle Vor-Ort-Beratung und professionelle Projektplanung mit transparenter Kostenübersicht – ohne versteckte Gebühren." },
     { title: "Fachgerechte Ausführung", description: "Alle Arbeiten werden von qualifizierten Fachkräften mit modernstem Werkzeug und geprüften Materialien ausgeführt." },
@@ -205,6 +214,15 @@ const DEFAULT_BENEFITS: BenefitItem[] = [
   { title: "Faire Preise", description: "Transparente Kostenstruktur ohne versteckte Gebühren. Qualität muss nicht teuer sein." },
   { title: "Schnelle Reaktion", description: "Kurze Reaktionszeiten und zeitnahe Umsetzung – wir wissen, dass Ihre Zeit wertvoll ist." },
 ];
+
+// Google Photos für Gallery — authentische Unternehmensbilder
+function getGalleryPool(ai: AIContent | null, industry: string, seed = 0): string[] {
+  const google = ai?.google_photos ?? [];
+  const stock  = getGalleryImages(industry, seed);
+  // Google Photos vorne, dann Stockfotos als Auffüllung
+  const combined = [...google, ...stock];
+  return combined.slice(0, Math.max(8, combined.length));
+}
 
 // Keine erfundenen Stats — nur echte Daten aus dem Scraper werden angezeigt
 function getDefaultStats(_template: string, _industry: string): StatItem[] {
@@ -1245,7 +1263,7 @@ function LocalTrust({ color }: { color: string }) {
 function LocalServices({ services, color, site }: { services: ServiceItem[]; color: string; site: Site }) {
   const ref = useReveal();
   const ai = site.ai_content as AIContent;
-  const autoImgs = getGalleryImages(site.industry || "", slugHash(site.slug));
+  const autoImgs = getGalleryPool(ai, site.industry || "", slugHash(site.slug));
   return (
     <section id="leistungen" className="bg-white py-20 sm:py-28" aria-labelledby="local-services-heading">
       <div ref={ref} className="reveal mx-auto max-w-7xl px-6">
@@ -1657,7 +1675,7 @@ function MinimalHero({ site, color, ai, stats }: TplProps) {
 function MinimalServices({ services, color, site }: { services: ServiceItem[]; color: string; site: Site }) {
   const ref = useReveal();
   const ai = site.ai_content as AIContent;
-  const autoImgs = getGalleryImages(site.industry || "", slugHash(site.slug));
+  const autoImgs = getGalleryPool(ai, site.industry || "", slugHash(site.slug));
   return (
     <section id="leistungen" className="border-t border-gray-100 bg-white py-16 sm:py-24" aria-labelledby="minimal-services-heading">
       <div ref={ref} className="reveal mx-auto max-w-6xl px-6">
@@ -2457,7 +2475,7 @@ function ArztModernStats({ stats }: { stats: StatItem[] }) {
 function ArztModernServices({ services, color, site }: { services: ServiceItem[]; color: string; site: Site }) {
   const ref = useReveal();
   const ai = site.ai_content as AIContent;
-  const autoImgs = getGalleryImages(site.industry || "", slugHash(site.slug));
+  const autoImgs = getGalleryPool(ai, site.industry || "", slugHash(site.slug));
   return (
     <section id="leistungen" className="bg-white py-20 sm:py-28" aria-labelledby="arzt-modern-services-heading">
       <div ref={ref} className="reveal mx-auto max-w-7xl px-6">
@@ -2815,7 +2833,7 @@ function HandwerkEmergency({ site, color }: { site: Site; color: string }) {
 function HandwerkServices({ services, color, site }: { services: ServiceItem[]; color: string; site: Site }) {
   const ref = useReveal();
   const ai = site.ai_content as AIContent;
-  const autoImgs = getGalleryImages(site.industry || "", slugHash(site.slug));
+  const autoImgs = getGalleryPool(ai, site.industry || "", slugHash(site.slug));
   return (
     <section id="leistungen" className="bg-white py-20 sm:py-28" aria-labelledby="handwerk-services-heading">
       <div ref={ref} className="reveal mx-auto max-w-7xl px-6">
@@ -2846,9 +2864,9 @@ function HandwerkServices({ services, color, site }: { services: ServiceItem[]; 
   );
 }
 
-function HandwerkGallery({ site }: { site: Site }) {
+function HandwerkGallery({ site, ai }: { site: Site; ai: AIContent | null }) {
   const ref = useReveal();
-  const imgs = getGalleryImages(site.industry || "", slugHash(site.slug));
+  const imgs = getGalleryPool(ai, site.industry || "", slugHash(site.slug));
   // Use 6 images — duplicate if needed
   const galleryImgs = imgs.length >= 6 ? imgs.slice(0, 6) : [...imgs, ...imgs, ...imgs].slice(0, 6);
   return (
@@ -3034,7 +3052,7 @@ function HandwerkTemplate(props: TplProps) {
       <HandwerkHero {...props} />
       <HandwerkEmergency site={site} color={color} />
       <HandwerkServices services={services} color={color} site={site} />
-      <HandwerkGallery site={site} />
+      <HandwerkGallery site={site} ai={ai} />
       {benefits.length > 0 && <HandwerkBenefits benefits={benefits} color={color} />}
       <HandwerkTestimonials color={color} site={site} />
       <HandwerkRecruitment color={color} />
@@ -3206,7 +3224,7 @@ function HandwerkLokalTrust({ color }: { color: string }) {
 function HandwerkLokalServices({ services, color, site }: { services: ServiceItem[]; color: string; site: Site }) {
   const ref = useReveal();
   const ai = site.ai_content as AIContent;
-  const autoImgs = getGalleryImages(site.industry || "", slugHash(site.slug));
+  const autoImgs = getGalleryPool(ai, site.industry || "", slugHash(site.slug));
   return (
     <section id="leistungen" className="bg-white py-20 sm:py-28" aria-labelledby="hw-lokal-services-heading">
       <div ref={ref} className="reveal mx-auto max-w-7xl px-6">
@@ -3278,9 +3296,9 @@ function HandwerkLokalGeschichte({ site, color, ai }: { site: Site; color: strin
   );
 }
 
-function HandwerkLokalGallery({ site }: { site: Site }) {
+function HandwerkLokalGallery({ site, ai }: { site: Site; ai: AIContent | null }) {
   const ref = useReveal();
-  const imgs = getGalleryImages(site.industry || "", slugHash(site.slug));
+  const imgs = getGalleryPool(ai, site.industry || "", slugHash(site.slug));
   const galleryImgs = imgs.length >= 4 ? imgs.slice(0, 4) : [...imgs, ...imgs].slice(0, 4);
   return (
     <section className="bg-white py-20 sm:py-28" aria-labelledby="hw-lokal-gallery-heading">
@@ -3451,7 +3469,7 @@ function HandwerkLokalTemplate(props: TplProps) {
       <HandwerkLokalTrust color={color} />
       <HandwerkLokalServices services={services} color={color} site={site} />
       <HandwerkLokalGeschichte site={site} color={color} ai={ai} />
-      <HandwerkLokalGallery site={site} />
+      <HandwerkLokalGallery site={site} ai={ai} />
       <HandwerkLokalTestimonials color={color} site={site} />
       <HandwerkLokalAusbildung site={site} color={color} />
       <HandwerkLokalContact site={site} color={color} />

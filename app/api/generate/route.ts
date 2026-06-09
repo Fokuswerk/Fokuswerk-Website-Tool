@@ -144,6 +144,14 @@ function getFallbackServices(industry: string): ServiceItem[] {
     { title: "Chronische Erkrankungen", description: "Langfristige Betreuung bei Diabetes, Bluthochdruck und mehr." },
     { title: "Labordiagnostik", description: "Blutuntersuchungen für eine präzise Diagnose." },
   ];
+  if (q.match(/auto|kfz|werkstatt|fahrzeug|reifen/)) return [
+    { title: "Inspektion & Wartung", description: "Fahrzeuginspektionen nach Herstellervorgaben — alle sicherheitsrelevanten Bauteile geprüft." },
+    { title: "Ölwechsel & Motorservice", description: "Fachgerechter Ölwechsel mit Markenölen und Filteraustausch zu Festpreisen." },
+    { title: "Reifenservice", description: "Reifenwechsel, Auswuchten und Einlagerung — für sichere Fahrt in jeder Saison." },
+    { title: "Bremsenservice", description: "Überprüfung und Austausch von Bremsbelägen und Scheiben für Ihre Sicherheit." },
+    { title: "HU/AU Vorbereitung", description: "Gründliche Diagnose und Mängelbeseitigung vor TÜV oder DEKRA-Prüfung." },
+    { title: "Karosserie & Lack", description: "Unfallinstandsetzung und Lackarbeiten in Originalfarben — wie neu." },
+  ];
   if (q.match(/handwerk|bau|sanitär|elektro|maler/)) return [
     { title: "Beratung & Planung", description: "Persönliche Beratung und professionelle Projektplanung." },
     { title: "Fachgerechte Ausführung", description: "Alle Arbeiten durch qualifizierte Fachkräfte." },
@@ -784,9 +792,8 @@ Schreibe keine Felder die bereits gut sind neu.`;
       ),
     ]);
 
-    const heroImageUrl = (google_photos && google_photos.length > 0)
-      ? google_photos[0]
-      : (pexelsHeroArr[0] ?? null);
+    // Hero immer Pexels (professionell) — Google Photos in Gallery
+    const heroImageUrl = pexelsHeroArr[0] ?? null;
 
     const pexelsServiceImages = pexelsServiceArrays.map(arr => arr[0] ?? "").filter(Boolean);
 
@@ -811,6 +818,7 @@ Schreibe keine Felder die bereits gut sind neu.`;
         cta_secondary:        finalData.cta_secondary,
         services_detailed,
         service_images: pexelsServiceImages.length > 0 ? pexelsServiceImages : undefined,
+        google_photos: (google_photos && google_photos.length > 0) ? google_photos : undefined,
         benefits_detailed,
         stats:                stats.length > 0 ? stats : undefined,
         about_headline:       (finalData.about_headline as string) || `Über ${company_name}`,
