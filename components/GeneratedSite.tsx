@@ -215,13 +215,16 @@ const DEFAULT_BENEFITS: BenefitItem[] = [
   { title: "Schnelle Reaktion", description: "Kurze Reaktionszeiten und zeitnahe Umsetzung – wir wissen, dass Ihre Zeit wertvoll ist." },
 ];
 
-// Google Photos für Gallery — authentische Unternehmensbilder
+// Gallery-Pool: Google Photos (authentisch) + Pexels Gallery (professionell) + Unsplash Fallback
 function getGalleryPool(ai: AIContent | null, industry: string, seed = 0): string[] {
-  const google = ai?.google_photos ?? [];
-  const stock  = getGalleryImages(industry, seed);
-  // Google Photos vorne, dann Stockfotos als Auffüllung
-  const combined = [...google, ...stock];
-  return combined.slice(0, Math.max(8, combined.length));
+  const google  = ai?.google_photos ?? [];    // echte Unternehmensfotos
+  const pexels  = ai?.gallery_images ?? [];   // Pexels-Bilder aus Generation
+  const stock   = getGalleryImages(industry, seed); // Unsplash als letzter Fallback
+  // Mischung: Google Photos + Pexels + Unsplash-Auffüllung
+  const combined = [...google, ...pexels, ...stock];
+  // Duplikate entfernen, max 8
+  const seen = new Set<string>();
+  return combined.filter(u => { if (seen.has(u)) return false; seen.add(u); return true; }).slice(0, 8);
 }
 
 // Keine erfundenen Stats — nur echte Daten aus dem Scraper werden angezeigt

@@ -55,6 +55,7 @@ export interface AIContent {
   services_detailed?: ServiceItem[];
   service_images?: string[];
   google_photos?: string[];    // Echte Google Place Fotos — für Gallery-Bereiche
+  gallery_images?: string[];   // Pexels-Bilder für Gallery (4-6 Stück)
   benefits_detailed?: BenefitItem[];
   stats?: StatItem[];
   about_headline?: string;

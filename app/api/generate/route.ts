@@ -106,11 +106,12 @@ async function searchPexels(query: string, count = 5): Promise<string[]> {
     );
     if (!res.ok) return [];
     const data = await res.json() as {
-      photos?: Array<{ width: number; height: number; src: { original: string; large2x: string; large: string } }>
+      photos?: Array<{ width: number; height: number; src: { original: string; large2x: string; large: string; landscape: string } }>
     };
     // Bevorzuge breiteste Fotos (beste Hero-Proportionen)
     const sorted = (data.photos ?? []).sort((a, b) => b.width - a.width);
-    return sorted.map(p => p.src.original || p.src.large2x || p.src.large);
+    // landscape-URL ist auf 1200×627 zugeschnitten — ideal für Hero-Hintergründe
+    return sorted.map(p => p.src.landscape || p.src.large2x || p.src.large);
   } catch { return []; }
 }
 
@@ -785,8 +786,12 @@ Schreibe keine Felder die bereits gut sind neu.`;
     const needsHero    = !google_photos || google_photos.length === 0;
     const serviceCount = Math.min(services_detailed.length, 6);
 
-    const [pexelsHeroArr, ...pexelsServiceArrays] = await Promise.all([
-      needsHero ? searchPexels(getPexelsHeroQuery(industry), 5) : Promise.resolve([] as string[]),
+    const heroQuery    = getPexelsHeroQuery(industry);
+    const galleryQuery = `${industry} professional workplace interior`;
+
+    const [pexelsHeroArr, pexelsGalleryArr, ...pexelsServiceArrays] = await Promise.all([
+      searchPexels(heroQuery, 5),
+      searchPexels(galleryQuery, 6),
       ...services_detailed.slice(0, serviceCount).map(s =>
         searchPexels(getPexelsServiceQuery(s.title, industry), 3)
       ),
@@ -817,8 +822,9 @@ Schreibe keine Felder die bereits gut sind neu.`;
         hero_detail,
         cta_secondary:        finalData.cta_secondary,
         services_detailed,
-        service_images: pexelsServiceImages.length > 0 ? pexelsServiceImages : undefined,
-        google_photos: (google_photos && google_photos.length > 0) ? google_photos : undefined,
+        service_images:  pexelsServiceImages.length > 0 ? pexelsServiceImages : undefined,
+        gallery_images:  pexelsGalleryArr.length > 0 ? pexelsGalleryArr : undefined,
+        google_photos:   (google_photos && google_photos.length > 0) ? google_photos : undefined,
         benefits_detailed,
         stats:                stats.length > 0 ? stats : undefined,
         about_headline:       (finalData.about_headline as string) || `Über ${company_name}`,

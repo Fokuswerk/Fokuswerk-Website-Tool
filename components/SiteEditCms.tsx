@@ -641,15 +641,17 @@ function RegenerateCard({ site }: { site: Site }) {
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Fehler");
       await supabase.from("sites").update({
-        hero_headline: data.hero_headline,
+        hero_headline:    data.hero_headline,
         hero_subheadline: data.hero_subheadline,
-        cta_text: data.cta_text,
-        services: data.services ?? [],
-        benefits: data.benefits ?? [],
-        about_text: data.about_text,
-        meta_title: data.meta_title,
+        cta_text:         data.cta_text,
+        services:         data.services ?? [],
+        benefits:         data.benefits ?? [],
+        about_text:       data.about_text,
+        meta_title:       data.meta_title,
         meta_description: data.meta_description,
-        ai_content: data.ai_content,
+        ai_content:       data.ai_content,
+        // Bilder immer mitaktualisieren
+        ...(data.hero_image_url ? { hero_image_url: data.hero_image_url } : {}),
       }).eq("id", site.id);
       setDone(true);
       router.refresh();
