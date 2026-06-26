@@ -167,9 +167,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ dna });
 
   } catch (err) {
-    return NextResponse.json(
-      { error: (err as Error).message || "Analyse fehlgeschlagen" },
-      { status: 500 }
-    );
+    const msg = (err as Error).message || "Analyse fehlgeschlagen";
+    console.error("[lead-analyze] Fehler:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
