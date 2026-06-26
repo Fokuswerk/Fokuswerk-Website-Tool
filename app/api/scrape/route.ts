@@ -619,11 +619,11 @@ export async function POST(req: NextRequest) {
     fetchWithApify(baseUrl.href),
   ]);
 
+  const safeHomeHtml = homeHtml ?? "";
+
   if (!safeHomeHtml && !apifyMarkdown) {
     return NextResponse.json({ error: "Website konnte nicht geladen werden." }, { status: 422 });
   }
-
-  const safeHomeHtml = safeHomeHtml ?? "";
   const origin = `${baseUrl.protocol}//${baseUrl.hostname}`;
 
   // ── Try sitemap.xml first — best way to discover all pages ──────────────────
