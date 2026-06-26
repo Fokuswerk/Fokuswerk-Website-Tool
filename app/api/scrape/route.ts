@@ -612,12 +612,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Ungültige URL" }, { status: 400 });
   }
 
-  // ── Fetch homepage ───────────────────────────────────────────────────────────
-  const homeHtml = await fetchPage(baseUrl.href, 12000);
-  if (!homeHtml) {
+  // ── Apify + Homepage parallel starten ───────────────────────────────────────
+  // Apify läuft IMMER parallel — gibt Markdown auch wenn HTML-Scraper gut funktioniert
+  const [homeHtml, apifyMarkdown] = await Promise.all([
+    fetchPage(baseUrl.href, 12000),
+    fetchWithApify(baseUrl.href),
+  ]);
+
+  if (!homeHtml && !apifyMarkdown) {
     return NextResponse.json({ error: "Website konnte nicht geladen werden." }, { status: 422 });
   }
 
+  const safeHomeHtml = homeHtml ?? "";
   const origin = `${baseUrl.protocol}//${baseUrl.hostname}`;
 
   // ── Try sitemap.xml first — best way to discover all pages ──────────────────
@@ -931,31 +937,21 @@ export async function POST(req: NextRequest) {
     .filter(p => !STRUCTURAL.test(p.title.trim()) && p.title.length > 3 && p.description.length > 20)
     .slice(0, 12);
 
-  // ── Apify Fallback: greift wenn Scrape zu wenig liefert ──────────────────────
-  // Trigger: < 3 Services UND < 300 Zeichen Beschreibung → JS-gerendertes Site vermutet
-  const sparseContent = rawServices.length < 3 && (description || "").length < 300 && !aboutText;
-  let apifyMarkdown: string | null = null;
+  // ── Apify-Ergebnisse immer mergen (läuft seit Anfang parallel) ───────────────
+  if (apifyMarkdown) {
+    const mdServices = extractMarkdownServices(apifyMarkdown);
+    const mdPairs    = extractMarkdownPairs(apifyMarkdown);
 
-  if (sparseContent) {
-    apifyMarkdown = await fetchWithApify(baseUrl.href);
-    if (apifyMarkdown) {
-      // Services aus Markdown extrahieren und mit vorhandenen mergen
-      const mdServices = extractMarkdownServices(apifyMarkdown);
-      const mdPairs    = extractMarkdownPairs(apifyMarkdown);
+    rawServices = [...new Set([...rawServices, ...mdServices])];
+    filteredPairs = [
+      ...filteredPairs,
+      ...mdPairs.filter(p => !filteredPairs.some(e => e.title === p.title)),
+    ].slice(0, 12);
 
-      // Merge: Apify-Daten ergänzen, nicht ersetzen
-      rawServices = [...new Set([...rawServices, ...mdServices])];
-      filteredPairs = [
-        ...filteredPairs,
-        ...mdPairs.filter(p => !filteredPairs.some(e => e.title === p.title)),
-      ].slice(0, 12);
-
-      // About-Text aus Markdown ziehen wenn noch keiner da
-      if (!aboutText) {
-        const plainText = markdownToText(apifyMarkdown);
-        const firstPara = plainText.split("\n\n").find(p => p.length > 80 && !/^(tel|fax|e-mail|email|öffnung|kontakt)/i.test(p));
-        if (firstPara) aboutText = firstPara.slice(0, 600);
-      }
+    if (!aboutText) {
+      const plainText = markdownToText(apifyMarkdown);
+      const firstPara = plainText.split("\n\n").find(p => p.length > 80 && !/^(tel|fax|e-mail|email|öffnung|kontakt)/i.test(p));
+      if (firstPara) aboutText = firstPara.slice(0, 600);
     }
   }
 

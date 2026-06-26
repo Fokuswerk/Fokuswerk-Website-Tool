@@ -134,8 +134,6 @@ export async function POST(req: NextRequest) {
   const { url } = await req.json() as { url?: string };
   if (!url) return NextResponse.json({ error: "URL fehlt" }, { status: 400 });
 
-  const hasSSL = url.startsWith("https://");
-
   try {
     const fullUrl = url.startsWith("http") ? url : `https://${url}`;
     const res = await fetch(fullUrl, {
@@ -146,6 +144,9 @@ export async function POST(req: NextRequest) {
       signal: AbortSignal.timeout(8_000),
       redirect: "follow",
     });
+
+    // SSL nach finalem Redirect prüfen (nicht nach Input-URL — die ist oft HTTP)
+    const hasSSL = res.url.startsWith("https://");
 
     const html = await res.text();
     const isMobile = /viewport/i.test(html) && /width=device-width/i.test(html);
