@@ -103,45 +103,34 @@ export default function NewSitePage() {
     setAnalyzing(true);
 
     try {
-      // 1. Website scrapen (falls vorhanden) — parallel zur DNA-Analyse
-      let scrapedData: Record<string, unknown> = {};
-      if (selected.website) {
-        try {
-          const scrapeRes = await fetch("/api/scrape", {
+      // Scrape + Analyse parallel — analyze braucht keine Scraped-Daten
+      const scrapePromise = selected.website
+        ? fetch("/api/scrape", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ url: selected.website, company_name: selected.name }),
-          });
-          if (scrapeRes.ok) scrapedData = await scrapeRes.json();
-        } catch { /* scrape optional */ }
-      }
-      setScraped(scrapedData);
+          }).then(r => r.ok ? r.json() : {}).catch(() => ({}))
+        : Promise.resolve({});
 
-      // 2. Company DNA Analyse
-      const analyzeRes = await fetch("/api/lead-analyze", {
+      const analyzePromise = fetch("/api/lead-analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          company_name:   selected.name,
-          industry:       selected.industry ?? "",
-          city:           selected.city,
-          website:        selected.website,
-          description:    scrapedData.description,
-          about_text:     scrapedData.about_text,
-          scraped_hero:   scrapedData.hero_text,
-          headings:       scrapedData.headings,
-          service_pairs:  scrapedData.service_pairs,
-          google_reviews: scrapedData.google_reviews,
-          google_rating:  (scrapedData.google_rating as number) ?? selected.rating,
-          google_rating_count: (scrapedData.google_rating_count as number) ?? selected.rating_count,
-          trust_signals:  scrapedData.trust_signals,
-          opening_hours:  scrapedData.opening_hours,
-          team_members:   scrapedData.team_members,
+          company_name:        selected.name,
+          industry:            selected.industry ?? "",
+          city:                selected.city,
+          website:             selected.website,
+          google_rating:       selected.rating,
+          google_rating_count: selected.rating_count,
         }),
       });
 
+      const [scrapedData, analyzeRes] = await Promise.all([scrapePromise, analyzePromise]);
+      setScraped(scrapedData as Record<string, unknown>);
+
       if (!analyzeRes.ok) throw new Error("Analyse fehlgeschlagen");
       const { dna: result } = await analyzeRes.json() as { dna: CompanyDNA };
+      if (!result) throw new Error("Analyse ohne Ergebnis");
       setDna(result);
 
     } catch (err) {
