@@ -111,32 +111,28 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     if (!lead) return;
     setGeneratingDna(true);
     try {
-      let scrapedData: Record<string, unknown> = {};
-      if (lead.website) {
-        const sr = await fetch("/api/scrape", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: lead.website, company_name: lead.company_name }),
-        });
-        if (sr.ok) scrapedData = await sr.json();
-      }
-
+      // Analyse braucht kein Website-Scraping — Lead-Daten reichen
+      // (Scraping läuft nur beim Website-Generieren, nicht hier)
       const ar = await fetch("/api/lead-analyze", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          company_name: lead.company_name, industry: lead.industry, city: lead.city,
-          website: lead.website, description: scrapedData.description,
-          about_text: scrapedData.about_text, scraped_hero: scrapedData.hero_text,
-          headings: scrapedData.headings, service_pairs: scrapedData.service_pairs,
-          google_reviews: scrapedData.google_reviews,
-          google_rating: scrapedData.google_rating ?? lead.google_rating,
-          google_rating_count: scrapedData.google_rating_count ?? lead.google_rating_count,
-          trust_signals: scrapedData.trust_signals,
+          company_name: lead.company_name,
+          industry:     lead.industry,
+          city:         lead.city,
+          website:      lead.website,
+          google_rating:       lead.google_rating,
+          google_rating_count: lead.google_rating_count,
         }),
       });
-      const { dna } = await ar.json();
-      await patch({ dna, status: "zu_kontaktieren" });
+      if (!ar.ok) {
+        const err = await ar.json() as { error?: string };
+        throw new Error(err.error || `Fehler ${ar.status}`);
+      }
+      const result = await ar.json() as { dna?: Record<string, unknown>; error?: string };
+      if (!result.dna) throw new Error(result.error || "Analyse hat kein Ergebnis geliefert");
+      await patch({ dna: result.dna, status: "zu_kontaktieren" });
     } catch (err) {
-      alert((err as Error).message);
+      alert("Analyse fehlgeschlagen: " + (err as Error).message);
     } finally {
       setGeneratingDna(false);
     }
