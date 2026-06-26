@@ -619,11 +619,11 @@ export async function POST(req: NextRequest) {
     fetchWithApify(baseUrl.href),
   ]);
 
-  if (!homeHtml && !apifyMarkdown) {
+  if (!safeHomeHtml && !apifyMarkdown) {
     return NextResponse.json({ error: "Website konnte nicht geladen werden." }, { status: 422 });
   }
 
-  const safeHomeHtml = homeHtml ?? "";
+  const safeHomeHtml = safeHomeHtml ?? "";
   const origin = `${baseUrl.protocol}//${baseUrl.hostname}`;
 
   // ── Try sitemap.xml first — best way to discover all pages ──────────────────
@@ -651,7 +651,7 @@ export async function POST(req: NextRequest) {
   const NAV_ABOUT_RE   = /über\s*uns|über\s*mich|team|praxis|kanzlei|unternehmen|wir\s*sind|about|die-praxis|praxisteam|wir-über|wir-stellen|wir-sind/i;
   const NAV_CONTACT_RE = /kontakt|contact|öffnungszeit|sprechzeit|anfahrt|erreichbarkeit/i;
 
-  const navLinks = [...homeHtml.matchAll(/<a[^>]+href=["']([^"'#?\s][^"'?\s]*)["'][^>]*>([\s\S]*?)<\/a>/gi)];
+  const navLinks = [...safeHomeHtml.matchAll(/<a[^>]+href=["']([^"'#?\s][^"'?\s]*)["'][^>]*>([\s\S]*?)<\/a>/gi)];
 
   const serviceUrls: string[] = [];
   const aboutUrls:   string[] = [];
@@ -734,11 +734,11 @@ export async function POST(req: NextRequest) {
   const contactHtmls = contactResults.map(r => r.status === "fulfilled" && r.value ? r.value : null).filter(Boolean) as string[];
 
   // ── Parse homepage ────────────────────────────────────────────────────────────
-  const ld = extractJsonLd(homeHtml);
+  const ld = extractJsonLd(safeHomeHtml);
 
   // Company name
-  const ogSiteName = extractMeta(homeHtml, "og:site_name");
-  const rawTitle   = homeHtml.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim() || null;
+  const ogSiteName = extractMeta(safeHomeHtml, "og:site_name");
+  const rawTitle   = safeHomeHtml.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim() || null;
   let title: string | null =
     ld.name ||
     (ogSiteName && !GENERIC_PAGE_NAMES.has(ogSiteName.toLowerCase()) ? ogSiteName : null) ||
@@ -748,29 +748,29 @@ export async function POST(req: NextRequest) {
   // Description
   const description =
     ld.description ||
-    extractMeta(homeHtml, "description") ||
-    extractMeta(homeHtml, "og:description") ||
+    extractMeta(safeHomeHtml, "description") ||
+    extractMeta(safeHomeHtml, "og:description") ||
     null;
 
   // H1
-  const h1Raw = homeHtml.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] || "";
+  const h1Raw = safeHomeHtml.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] || "";
   const h1    = stripHtml(h1Raw).slice(0, 150) || null;
 
   // Phone
   let phone: string | null = ld.telephone || null;
   if (!phone) {
-    for (const m of homeHtml.matchAll(/href=["']tel:([^"'\s]+)["']/gi)) {
+    for (const m of safeHomeHtml.matchAll(/href=["']tel:([^"'\s]+)["']/gi)) {
       const c = cleanPhone(decodeURIComponent(m[1]));
       if (c) { phone = c; break; }
     }
   }
   if (!phone) {
-    const pt = homeHtml.replace(/<[^>]+>/g, " ");
+    const pt = safeHomeHtml.replace(/<[^>]+>/g, " ");
     const lm = pt.match(/(?:Tel(?:efon)?\.?|Fon|Telefonnummer|Rufnummer)\s*[:.]?\s*((?:\+49|0)[0-9\s\-\(\)\/]{6,18})/i);
     if (lm?.[1]) phone = cleanPhone(lm[1]);
   }
   if (!phone) {
-    const pt = homeHtml.replace(/<[^>]+>/g, " ");
+    const pt = safeHomeHtml.replace(/<[^>]+>/g, " ");
     const im = pt.match(/(\+49\s?[\d\s\-\(\)\/]{6,16})/);
     if (im?.[1]) phone = cleanPhone(im[1]);
   }
@@ -791,13 +791,13 @@ export async function POST(req: NextRequest) {
   let email: string | null = null;
   if (ld.email && !SPAM_EMAILS.test(ld.email)) email = ld.email;
   if (!email) {
-    for (const m of homeHtml.matchAll(/href=["']mailto:([^"'\s?]+)["']/gi)) {
+    for (const m of safeHomeHtml.matchAll(/href=["']mailto:([^"'\s?]+)["']/gi)) {
       const c = m[1].trim().toLowerCase();
       if (c.includes("@") && !SPAM_EMAILS.test(c)) { email = c; break; }
     }
   }
   if (!email) {
-    const em = homeHtml.match(/\b([a-zA-Z0-9._%+\-]{2,40}@[a-zA-Z0-9.\-]{2,30}\.[a-zA-Z]{2,6})\b/);
+    const em = safeHomeHtml.match(/\b([a-zA-Z0-9._%+\-]{2,40}@[a-zA-Z0-9.\-]{2,30}\.[a-zA-Z]{2,6})\b/);
     if (em?.[1] && !SPAM_EMAILS.test(em[1])) email = em[1].toLowerCase();
   }
 
@@ -808,7 +808,7 @@ export async function POST(req: NextRequest) {
     address = parts.join(", ");
   }
   if (!address) {
-    const pt = homeHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const pt = safeHomeHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
     const sm = pt.match(/([A-ZÄÖÜ][a-zäöüß]+(?:straße|str\.|gasse|weg|allee|platz|ring|damm|chaussee|steig)\.?\s+\d+\s?[a-zA-Z]?)/i);
     const pm = pt.match(/\b(\d{5})\s+((?:[A-ZÄÖÜ][a-zA-ZäöüÄÖÜß\-]+)(?:\s+[a-zA-ZäöüÄÖÜß\-]+){0,2}?)(?=\s*(?:\d|,|;|\n|\r|Tel|Fax|E-Mail|Öffnung|Mo\.|Di\.|www\.|http|$))/);
     const plzStr = pm ? `${pm[1]} ${pm[2].trim()}` : null;
@@ -818,7 +818,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Primary color
-  const themeColor = extractPrimaryColor(homeHtml);
+  const themeColor = extractPrimaryColor(safeHomeHtml);
 
   // Logo
   let logoUrl: string | null = null;
@@ -832,22 +832,22 @@ export async function POST(req: NextRequest) {
       /<link[^>]+rel=["']apple-touch-icon(?:-precomposed)?["'][^>]+href=["']([^"'\s>]+)["']/i,
     ];
     for (const p of logoPatterns) {
-      const m = homeHtml.match(p);
+      const m = safeHomeHtml.match(p);
       if (m?.[1]) { logoUrl = resolveUrl(m[1], baseUrl) || null; if (logoUrl) break; }
     }
   }
 
   // OG image
-  const ogImage = extractMeta(homeHtml, "og:image") || null;
+  const ogImage = extractMeta(safeHomeHtml, "og:image") || null;
 
   // Headings from homepage — apply STRUCTURAL filter to avoid nav/admin headings in AI context
-  const h2Matches = [...homeHtml.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi)];
+  const h2Matches = [...safeHomeHtml.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi)];
   const headings = h2Matches
     .map(m => stripHtml(m[1]))
     .filter(h => h.length > 3 && h.length < 120 && !STRUCTURAL.test(h.trim()))
     .slice(0, 10);
 
-  const h3Matches = [...homeHtml.matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>/gi)];
+  const h3Matches = [...safeHomeHtml.matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>/gi)];
   const homeSubheadings = h3Matches
     .map(m => stripHtml(m[1]))
     .filter(h => h.length > 3 && h.length < 100 && !STRUCTURAL.test(h.trim()))
@@ -893,7 +893,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Also try homepage for team members
-  if (!teamMembers.length) teamMembers = extractTeamMembers(homeHtml);
+  if (!teamMembers.length) teamMembers = extractTeamMembers(safeHomeHtml);
   teamMembers = [...new Map(teamMembers.map(m => [m.name, m])).values()].slice(0, 6);
 
   // ── Opening hours (homepage + contact page) ───────────────────────────────────
@@ -905,7 +905,7 @@ export async function POST(req: NextRequest) {
   }
 
   // From homepage text
-  if (!openingHours) openingHours = extractOpeningHours(homeHtml);
+  if (!openingHours) openingHours = extractOpeningHours(safeHomeHtml);
 
   // From contact pages
   if (!openingHours) {
@@ -917,16 +917,16 @@ export async function POST(req: NextRequest) {
 
   // ── FAQ ───────────────────────────────────────────────────────────────────────
   let faqItems: FaqItem[] = ld.faqItems || [];
-  if (!faqItems.length) faqItems = extractFaq(homeHtml);
+  if (!faqItems.length) faqItems = extractFaq(safeHomeHtml);
 
   // ── Rating/social proof ───────────────────────────────────────────────────────
-  const rating = extractRating(homeHtml, ld);
+  const rating = extractRating(safeHomeHtml, ld);
 
   // ── Trust signals ─────────────────────────────────────────────────────────────
-  const trustSignals = extractTrustSignals(homeHtml, ld);
+  const trustSignals = extractTrustSignals(safeHomeHtml, ld);
 
   // ── Insurance info ────────────────────────────────────────────────────────────
-  const insuranceInfo = extractInsuranceInfo(homeHtml);
+  const insuranceInfo = extractInsuranceInfo(safeHomeHtml);
 
   // ── Deduplicate and filter service headings ───────────────────────────────────
   let rawServices = [...new Set([...homeSubheadings, ...allServiceHeadings])]
