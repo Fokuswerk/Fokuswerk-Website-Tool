@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -504,6 +504,80 @@ function isStructural(heading: string): boolean {
 // Legacy export für bestehende Aufrufe
 const STRUCTURAL = { test: (h: string) => isStructural(h) };
 
+// ─── Apify RAG Web Browser (Fallback für JS-heavy Sites) ─────────────────────
+
+interface ApifyResult { markdown?: string; text?: string; url?: string }
+
+async function fetchWithApify(url: string): Promise<string | null> {
+  const token = process.env.APIFY_API_TOKEN;
+  if (!token) return null;
+  try {
+    const res = await fetch(
+      `https://api.apify.com/v2/acts/apify~rag-web-browser/run-sync-get-dataset-items?token=${token}&timeout=45`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          startUrls: [{ url }],
+          maxCrawlPages: 1,
+          outputFormats: ["markdown"],
+          proxyConfiguration: { useApifyProxy: true },
+        }),
+        signal: AbortSignal.timeout(50_000),
+      }
+    );
+    if (!res.ok) return null;
+    const data = await res.json() as ApifyResult[];
+    return data[0]?.markdown || data[0]?.text || null;
+  } catch {
+    return null;
+  }
+}
+
+// Extrahiert Klartext aus Markdown (entfernt #, **, Links etc.)
+function markdownToText(md: string): string {
+  return md
+    .replace(/!\[.*?\]\(.*?\)/g, "")      // Bilder
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Links → Linktext
+    .replace(/#{1,6}\s*/g, "")             // Überschriften
+    .replace(/\*{1,2}([^*]+)\*{1,2}/g, "$1") // Fett/Kursiv
+    .replace(/`[^`]+`/g, "")              // Code
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+// Extrahiert Service-Überschriften aus Markdown
+function extractMarkdownServices(md: string): string[] {
+  const services: string[] = [];
+  const lines = md.split("\n");
+  for (const line of lines) {
+    const m = line.match(/^#{2,3}\s+(.+)$/);
+    if (m) {
+      const title = m[1].replace(/\*+/g, "").trim();
+      if (title.length > 3 && title.length < 100 && !STRUCTURAL.test(title)) {
+        services.push(title);
+      }
+    }
+  }
+  return [...new Set(services)].slice(0, 20);
+}
+
+// Extrahiert Content-Pairs aus Markdown (Überschrift + nachfolgender Text)
+function extractMarkdownPairs(md: string): ServicePair[] {
+  const pairs: ServicePair[] = [];
+  const blocks = md.split(/\n(?=#{2,3}\s)/);
+  for (const block of blocks) {
+    const headingMatch = block.match(/^#{2,3}\s+(.+)/);
+    if (!headingMatch) continue;
+    const title = headingMatch[1].replace(/\*+/g, "").trim();
+    if (title.length < 4 || title.length > 100 || STRUCTURAL.test(title)) continue;
+    const rest = block.replace(/^#{2,3}\s+.+\n?/, "").trim();
+    const description = markdownToText(rest).slice(0, 400);
+    if (description.length > 30) pairs.push({ title, description });
+  }
+  return pairs.slice(0, 12);
+}
+
 // ─── Fetch helper with timeout ────────────────────────────────────────────────
 
 async function fetchPage(url: string, timeoutMs = 6000): Promise<string | null> {
@@ -849,13 +923,41 @@ export async function POST(req: NextRequest) {
   const insuranceInfo = extractInsuranceInfo(homeHtml);
 
   // ── Deduplicate and filter service headings ───────────────────────────────────
-  const rawServices = [...new Set([...homeSubheadings, ...allServiceHeadings])]
+  let rawServices = [...new Set([...homeSubheadings, ...allServiceHeadings])]
     .filter(h => !STRUCTURAL.test(h.trim()) && h.length > 3 && h.length < 100);
 
   // Filter service pairs too
-  const filteredPairs = allServicePairs
+  let filteredPairs = allServicePairs
     .filter(p => !STRUCTURAL.test(p.title.trim()) && p.title.length > 3 && p.description.length > 20)
     .slice(0, 12);
+
+  // ── Apify Fallback: greift wenn Scrape zu wenig liefert ──────────────────────
+  // Trigger: < 3 Services UND < 300 Zeichen Beschreibung → JS-gerendertes Site vermutet
+  const sparseContent = rawServices.length < 3 && (description || "").length < 300 && !aboutText;
+  let apifyMarkdown: string | null = null;
+
+  if (sparseContent) {
+    apifyMarkdown = await fetchWithApify(baseUrl.href);
+    if (apifyMarkdown) {
+      // Services aus Markdown extrahieren und mit vorhandenen mergen
+      const mdServices = extractMarkdownServices(apifyMarkdown);
+      const mdPairs    = extractMarkdownPairs(apifyMarkdown);
+
+      // Merge: Apify-Daten ergänzen, nicht ersetzen
+      rawServices = [...new Set([...rawServices, ...mdServices])];
+      filteredPairs = [
+        ...filteredPairs,
+        ...mdPairs.filter(p => !filteredPairs.some(e => e.title === p.title)),
+      ].slice(0, 12);
+
+      // About-Text aus Markdown ziehen wenn noch keiner da
+      if (!aboutText) {
+        const plainText = markdownToText(apifyMarkdown);
+        const firstPara = plainText.split("\n\n").find(p => p.length > 80 && !/^(tel|fax|e-mail|email|öffnung|kontakt)/i.test(p));
+        if (firstPara) aboutText = firstPara.slice(0, 600);
+      }
+    }
+  }
 
   // ── Industry detection ────────────────────────────────────────────────────────
   const allText = [title, description, h1, ...headings.slice(0, 5), ...rawServices.slice(0, 8)].filter(Boolean).join(" ");
@@ -992,5 +1094,8 @@ export async function POST(req: NextRequest) {
     google_rating_count: googleRatingCount,
     google_place_id:     googlePlaceId,
     google_photos:       googlePhotoUrls.length > 0 ? googlePhotoUrls : null,
+
+    // Apify Fallback-Info
+    apify_used: !!apifyMarkdown,
   });
 }
