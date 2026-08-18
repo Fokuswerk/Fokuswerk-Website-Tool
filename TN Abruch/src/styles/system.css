@@ -1,0 +1,356 @@
+/* ==========================================================================
+   TN Abbruch — Designsystem
+   Idee: "Aufmaß". Die Seite ist als technisches Dokument gebaut.
+   Sichtbares Raster, Haarlinien statt Schatten, tabellarische Ziffern,
+   Positionsnummern wie in einem Leistungsverzeichnis. Radius global 0.
+   ========================================================================== */
+
+@layer reset, tokens, base, layout, components, utilities;
+
+/* ---------- Tokens ------------------------------------------------------- */
+@layer tokens {
+  :root {
+    /* Flächen — hell ist Betonstaub, nicht Weiß */
+    --dust:        #EDEAE4;
+    --dust-2:      #E3DFD8;
+    --paper:       #F7F5F1;
+    --ink:         #0B0C0E;
+    --ink-2:       #14161A;
+    --ink-3:       #1E2126;
+
+    /* Marke — gemessen aus dem Firmenlogo (#233B91), auf Kontrast gebracht */
+    --signal:      #2B4BC4;
+    --signal-deep: #1B3078;
+    --signal-lift: #6E8CF5;   /* Signal auf dunklem Grund, ≥ 4.5:1 auf --ink */
+
+    --steel:       #5A5E65;   /* >= 4.9:1 auf allen hellen Flaechen */
+    --steel-lift:  #9AA0A8;
+
+    /* Ausschließlich funktional: Schadstoffkennzeichnung, Fehlerzustände */
+    --warn:        #C13A22;
+    --warn-lift:   #F27B60;
+
+    /* Semantik hell (Standard) */
+    --bg:          var(--dust);
+    --bg-raised:   var(--paper);
+    --fg:          var(--ink);
+    --fg-muted:    var(--steel);
+    --accent:      var(--signal);
+    --rule:        color-mix(in oklab, var(--ink) 20%, transparent);
+    --rule-strong: color-mix(in oklab, var(--ink) 42%, transparent);
+    --selection:   color-mix(in oklab, var(--signal) 24%, transparent);
+
+    /* Raster */
+    --gutter:      1.5rem;
+    --edge:        1.5rem;
+    --measure:     64ch;
+    --maxw:        86rem;
+
+    /* Vertikaler Rhythmus */
+    --s-1: .25rem;  --s-2: .5rem;   --s-3: .75rem;  --s-4: 1rem;
+    --s-5: 1.5rem;  --s-6: 2rem;    --s-7: 3rem;    --s-8: 4rem;
+    --s-9: 6rem;    --s-10: 8rem;
+    --section: clamp(3.5rem, 7.5vw, 7rem);
+
+    /* Schrift */
+    --font-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    --font-text:    'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --font-mono:    'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    --t-mono:  0.7rem;
+    --t-sm:    0.875rem;
+    --t-base:  1.0625rem;
+    --t-lead:  clamp(1.125rem, 1.6vw, 1.375rem);
+    --t-h3:    clamp(1.25rem, 2.1vw, 1.75rem);
+    --t-h2:    clamp(1.8rem, 3.9vw, 3rem);
+    --t-h1:    clamp(2.35rem, 6vw, 4.75rem);
+    --t-mega:  clamp(2.75rem, 8.4vw, 7.25rem);
+
+    /* Bewegung — Masse: langer Auslauf, harter Stopp */
+    --ease-mass: cubic-bezier(.16, 1, .3, 1);
+    --dur-in:    520ms;
+    --dur-ui:    140ms;
+
+    color-scheme: light;
+  }
+
+  /* Dunkelzone — bewusst harter Wechsel, wie Weiß- zu Schwarzbereich */
+  .zone-dark {
+    --bg:          var(--ink);
+    --bg-raised:   var(--ink-2);
+    --fg:          var(--dust);
+    --fg-muted:    var(--steel-lift);
+    --accent:      var(--signal-lift);
+    --rule:        color-mix(in oklab, var(--dust) 20%, transparent);
+    --rule-strong: color-mix(in oklab, var(--dust) 44%, transparent);
+    --selection:   color-mix(in oklab, var(--signal-lift) 30%, transparent);
+    color-scheme: dark;
+  }
+}
+
+/* ---------- Reset -------------------------------------------------------- */
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; }
+  * { margin: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  img, picture, video, canvas, svg { display: block; max-width: 100%; }
+  input, button, textarea, select { font: inherit; color: inherit; }
+  p, h1, h2, h3, h4, li { overflow-wrap: break-word; }
+  ul[role='list'], ol[role='list'] { list-style: none; padding: 0; }
+
+  /* Radius ist global 0. Beton hat keine Rundungen. */
+  *, *::before, *::after { border-radius: 0; }
+}
+
+/* ---------- Basis -------------------------------------------------------- */
+@layer base {
+  /* Kein globales scroll-behavior: smooth. Sprunglinks sollen sofort springen —
+     sanft gescrollt wird nur dort, wo es im Skript ausdruecklich angefordert ist. */
+  html { scroll-padding-top: 6rem; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-text);
+    font-size: var(--t-base);
+    line-height: 1.62;
+    font-feature-settings: 'kern' 1, 'liga' 1;
+  }
+
+  ::selection { background: var(--selection); }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 0.98;
+    letter-spacing: -0.022em;
+    text-wrap: balance;
+    font-stretch: 100%;
+  }
+  h1 { font-size: var(--t-h1); }
+  h2 { font-size: var(--t-h2); }
+  h3 { font-size: var(--t-h3); line-height: 1.12; letter-spacing: -0.014em; }
+
+  a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22em; }
+
+  :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Tabellarische Ziffern überall dort, wo gemessen wird */
+  .num, time, td, .mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+}
+
+/* ---------- Layout ------------------------------------------------------- */
+@layer layout {
+  .wrap {
+    width: 100%;
+    max-width: var(--maxw);
+    margin-inline: auto;
+    padding-inline: var(--edge);
+  }
+  @media (min-width: 48rem)  { :root { --edge: 2rem; } }
+  @media (min-width: 64rem)  { :root { --edge: 3rem; } }
+
+  /* Sichtbare Konstruktion: Haarlinien am Contentrand laufen durch */
+  .ruled {
+    position: relative;
+  }
+  .ruled::before,
+  .ruled::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    width: 1px;
+    background: var(--rule);
+    pointer-events: none;
+  }
+  /* Auf die Contentkante ausgerichtet, auch wenn der Wrap zentriert laeuft */
+  .ruled::before { left:  max(var(--edge), (100% - var(--maxw)) / 2 + var(--edge)); }
+  .ruled::after  { right: max(var(--edge), (100% - var(--maxw)) / 2 + var(--edge)); }
+  @media (max-width: 47.99rem) { .ruled::before, .ruled::after { display: none; } }
+
+  .section {
+    padding-block: var(--section);
+    background: var(--bg);
+    color: var(--fg);
+  }
+  .section + .section { border-top: 1px solid var(--rule); }
+
+  .grid12 {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--gutter);
+  }
+  @media (min-width: 48rem) { .grid12 { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+  @media (min-width: 64rem) { .grid12 { grid-template-columns: repeat(12, minmax(0, 1fr)); } }
+
+  .prose { max-width: var(--measure); }
+  .prose > * + * { margin-top: var(--s-5); }
+  .prose h3 { margin-top: var(--s-7); }
+  .prose a { color: var(--accent); text-decoration: underline; }
+  .prose a:hover { text-decoration-thickness: 2px; }
+  .prose strong { font-weight: 600; }
+}
+
+/* ---------- Komponenten -------------------------------------------------- */
+@layer components {
+
+  /* Sektionsmarke: Positionsnummer + Kurzlabel, wie ein Registerreiter */
+  .marker {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-4);
+    padding-bottom: var(--s-4);
+    margin-bottom: var(--s-7);
+    border-bottom: 1px solid var(--rule-strong);
+    font-family: var(--font-mono);
+    font-size: var(--t-mono);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+  .marker__no { color: var(--accent); font-weight: 500; }
+  .marker__rest { margin-left: auto; text-align: right; letter-spacing: .1em; }
+
+  /* Buttons — Rahmen und Fläche, keine Schatten, keine Rundung */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-3);
+    min-height: 3rem;
+    padding: 0.8rem 1.5rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background-color var(--dur-ui) linear,
+                color var(--dur-ui) linear,
+                border-color var(--dur-ui) linear;
+  }
+  .btn--primary {
+    background: var(--accent);
+    color: var(--paper);
+    border-color: var(--accent);
+  }
+  .btn--primary:hover { background: var(--signal-deep); border-color: var(--signal-deep); }
+  .zone-dark .btn--primary { color: var(--ink); }
+  .zone-dark .btn--primary:hover { background: var(--paper); border-color: var(--paper); }
+
+  .btn--ghost {
+    background: transparent;
+    color: var(--fg);
+    border-color: var(--rule-strong);
+  }
+  .btn--ghost:hover { border-color: var(--fg); background: color-mix(in oklab, var(--fg) 6%, transparent); }
+
+  .btn__arrow { width: .75em; height: .75em; flex: none; }
+
+  /* Kennzahl — die Grundeinheit dieser Seite */
+  .figure {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+  }
+  .figure__value {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2.1rem, 5vw, 3.5rem);
+    line-height: .9;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    font-stretch: 112%;
+  }
+  .figure__unit {
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+    color: var(--accent);
+  }
+  .figure__label {
+    font-size: var(--t-sm);
+    color: var(--fg-muted);
+    max-width: 26ch;
+  }
+
+  /* Label in Mono — für Kleinteile, die nach Formular aussehen sollen */
+  .label {
+    font-family: var(--font-mono);
+    font-size: var(--t-mono);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  /* Datenzeile — Grundform für Referenzen, Nachweise, Fuhrpark */
+  .row {
+    display: grid;
+    gap: var(--s-2) var(--gutter);
+    padding-block: var(--s-5);
+    border-top: 1px solid var(--rule);
+    align-items: baseline;
+  }
+
+  .lead { font-size: var(--t-lead); line-height: 1.5; max-width: 52ch; }
+}
+
+/* ---------- Utilities ---------------------------------------------------- */
+@layer utilities {
+  .flow > * + * { margin-top: var(--s-5); }
+  .flow-lg > * + * { margin-top: var(--s-7); }
+  .visually-hidden {
+    position: absolute; width: 1px; height: 1px; padding: 0;
+    margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .skip-link {
+    position: absolute; top: 0; left: 0; z-index: 200;
+    padding: var(--s-3) var(--s-5); background: var(--signal); color: #fff;
+    transform: translateY(-105%);
+  }
+  .skip-link:focus { transform: translateY(0); }
+  .accent { color: var(--accent); }
+  .muted { color: var(--fg-muted); }
+  .nowrap { white-space: nowrap; }
+}
+
+/* ---------- Bewegung ----------------------------------------------------- */
+/* Masse: setzt sich langsam in Bewegung, kommt hart zum Stehen.
+   Ohne JS bleibt alles sichtbar — die Klasse wird erst per Script gesetzt. */
+@layer base {
+  html.js [data-rise] {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+    transition: opacity var(--dur-in) var(--ease-mass),
+                transform var(--dur-in) var(--ease-mass);
+    transition-delay: var(--rise-delay, 0ms);
+  }
+  html.js [data-rise].is-in {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html.js [data-rise] { opacity: 1; transform: none; transition: none; }
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@media print {
+  .site-header, .actionbar, .site-footer nav { display: none; }
+  .section { padding-block: 1.5rem; }
+  body { background: #fff; color: #000; }
+}

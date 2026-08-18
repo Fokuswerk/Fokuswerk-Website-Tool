@@ -1,0 +1,32 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    { "source": "/index.html", "destination": "/", "permanent": true },
+    { "source": "/unternehmen.html", "destination": "/unternehmen/", "permanent": true },
+    { "source": "/unternehmen/jobs.html", "destination": "/karriere/", "permanent": true },
+    { "source": "/unsere-leistungen.html", "destination": "/leistungen/", "permanent": true },
+    { "source": "/unsere-leistungen/abbrucharbeiten.html", "destination": "/leistungen/rueckbau-entkernung/", "permanent": true },
+    { "source": "/unsere-leistungen/schadstoffsanierung.html", "destination": "/leistungen/schadstoffsanierung/", "permanent": true },
+    { "source": "/unsere-leistungen/gartenarbeiten-und-winterdienst.html", "destination": "/", "permanent": true },
+    { "source": "/referenzen.html", "destination": "/referenzen/", "permanent": true },
+    { "source": "/wir-sponsern.html", "destination": "/unternehmen/", "permanent": true },
+    { "source": "/kontakt.html", "destination": "/kontakt/", "permanent": true },
+    { "source": "/impressum.html", "destination": "/impressum/", "permanent": true },
+    { "source": "/datenschutz.html", "destination": "/datenschutz/", "permanent": true }
+  ],
+  "headers": [
+    {
+      "source": "/fonts/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Permissions-Policy", "value": "geolocation=(), microphone=(), camera=(), interest-cohort=()" }
+      ]
+    }
+  ]
+}

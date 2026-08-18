@@ -1,0 +1,137 @@
+---
+import Logo from './Logo.astro';
+import { company, nav } from '~/data/company';
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer zone-dark">
+  <div class="wrap">
+    <div class="site-footer__top">
+      <div class="site-footer__brand">
+        <Logo />
+        <p class="site-footer__claim">
+          Rückbau und Schadstoffsanierung aus Delmenhorst.<br />
+          Seit {company.foundedYear} bundesweit im Einsatz.
+        </p>
+      </div>
+
+      <address class="site-footer__adr">
+        <span class="label">Betriebshof</span>
+        <p>
+          {company.legalName}<br />
+          {company.address.street}<br />
+          {company.address.postalCode} {company.address.city}
+        </p>
+      </address>
+
+      <div class="site-footer__contact">
+        <span class="label">Kontakt</span>
+        <a href={company.phoneHref} class="site-footer__phone num">{company.phone}</a>
+        <a href={`mailto:${company.email}`}>{company.email}</a>
+        <p class="muted num">Fax {company.fax}</p>
+      </div>
+
+      <nav class="site-footer__nav" aria-label="Fußzeilennavigation">
+        <span class="label">Übersicht</span>
+        <ul role="list">
+          <li><a href="/">Startseite</a></li>
+          {nav.map((i) => <li><a href={i.href}>{i.label}</a></li>)}
+          <li><a href="/kontakt/">Kontakt</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="site-footer__proof">
+      <p>
+        Zugelassen nach <strong>TRGS 519 Ziffer 2.7 Anlage 3</strong> · Sachkunde
+        <strong>TRGS 521</strong> · Präqualifiziert seit 2013, <strong>PQ-Nr. 010.053470</strong> ·
+        Mitglied im Abbruchverband Nord (AVN) und im Norddeutschen Asbest- und
+        Gefahrstoffsanierungsverband Nord e.V. (NAV)
+      </p>
+    </div>
+
+    <div class="site-footer__bottom">
+      <p class="muted">
+        © {year} {company.legalName}, Delmenhorst
+      </p>
+      <ul role="list" class="site-footer__legal">
+        <li><a href="/impressum/">Impressum</a></li>
+        <li><a href="/datenschutz/">Datenschutz</a></li>
+      </ul>
+    </div>
+
+    <p class="site-footer__note">
+      Hinweis: Der Bereich Gehwegreinigung und Winterdienst wurde im November 2021
+      verkauft und wird seitdem von der Bürgersteigreinigung Delmenhorst GmbH
+      weitergeführt, Telefon <a href="tel:+4942212837437" class="num">04221 283 7437</a>.
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--bg);
+    color: var(--fg);
+    padding-block: var(--s-9) calc(var(--s-7) + env(safe-area-inset-bottom) + 3.5rem);
+    font-size: var(--t-sm);
+  }
+  @media (min-width: 62rem) {
+    .site-footer { padding-bottom: var(--s-7); }
+  }
+
+  .site-footer__top {
+    display: grid;
+    gap: var(--s-7) var(--gutter);
+    padding-bottom: var(--s-7);
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 40rem) { .site-footer__top { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 64rem) { .site-footer__top { grid-template-columns: 1.6fr 1fr 1fr 1fr; } }
+
+  .site-footer__claim { margin-top: var(--s-4); color: var(--fg-muted); max-width: 32ch; }
+
+  .site-footer .label { display: block; margin-bottom: var(--s-3); }
+  address { font-style: normal; }
+
+  .site-footer__contact { display: flex; flex-direction: column; align-items: flex-start; gap: .1rem; }
+  /* Eigenstaendige Links brauchen eine Trefferflaeche, kein blosses Textmass. */
+  .site-footer__contact a, .site-footer__nav a, .site-footer__legal a {
+    display: inline-flex; align-items: center; min-height: 44px;
+  }
+  .site-footer__phone {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .site-footer a { text-decoration: none; }
+  .site-footer a:hover { color: var(--accent); text-decoration: underline; }
+
+  .site-footer__nav ul { display: grid; margin: 0; padding: 0; }
+
+  .site-footer__proof {
+    padding-block: var(--s-6);
+    border-bottom: 1px solid var(--rule);
+  }
+  .site-footer__proof p { max-width: 78ch; color: var(--fg-muted); line-height: 1.7; }
+  .site-footer__proof strong { color: var(--fg); font-weight: 500; }
+
+  .site-footer__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-4) var(--s-6);
+    align-items: baseline;
+    padding-top: var(--s-6);
+  }
+  .site-footer__legal { display: flex; gap: var(--s-5); margin: 0 0 0 auto; padding: 0; }
+
+  .site-footer__note {
+    margin-top: var(--s-6);
+    padding-top: var(--s-5);
+    border-top: 1px solid var(--rule);
+    font-size: .78rem;
+    color: var(--fg-muted);
+    max-width: 80ch;
+  }
+  .site-footer__note a { text-decoration: underline; }
+</style>

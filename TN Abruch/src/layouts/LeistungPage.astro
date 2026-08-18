@@ -1,0 +1,179 @@
+---
+import Base from '~/layouts/Base.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import SectionMarker from '~/components/SectionMarker.astro';
+import Cta from '~/components/Cta.astro';
+import { getCollection } from 'astro:content';
+
+export interface LeistungProps {
+  slug: string;
+  eyebrow: string;
+  h1: string;
+  lead: string;
+  seoTitle: string;
+  seoDescription: string;
+  serviceName: string;
+  facts: { value: string; label: string }[];
+  /** Fließtext-Abschnitt: Argumentation, nicht Aufzählung. */
+  argument: { heading: string; paragraphs: string[] };
+  /** Leistungsumfang als Datenliste. */
+  scope: { cat: string; items: string; note?: string }[];
+  /** Technische Ausstattung als Tabelle. */
+  specs?: { key: string; value: string }[];
+  specsHeading?: string;
+  /** Referenzkategorie für die Belegliste. */
+  refCategory?: 'schadstoff' | 'entkernung' | 'demontage' | 'beton';
+  ctaHeading: string;
+  ctaBody: string;
+}
+
+const p = Astro.props as LeistungProps;
+
+const breadcrumb = [
+  { name: 'Startseite', href: '/' },
+  { name: 'Leistungen', href: '/leistungen/' },
+  { name: p.eyebrow.split('—').pop()!.trim(), href: `/leistungen/${p.slug}/` },
+];
+
+const refs = p.refCategory
+  ? (await getCollection('referenzen'))
+      .map((r) => r.data)
+      .filter((r) => r.category.includes(p.refCategory!))
+      .sort((a, b) => b.year - a.year)
+  : [];
+---
+
+<Base
+  title={p.seoTitle}
+  description={p.seoDescription}
+  breadcrumb={breadcrumb}
+  schema={{
+    '@type': 'Service',
+    name: p.serviceName,
+    provider: { '@id': 'https://www.tn-abbruch.de/#organisation' },
+    areaServed: { '@type': 'Country', name: 'Deutschland' },
+  }}
+>
+  <PageHeader eyebrow={p.eyebrow} title={p.h1} lead={p.lead} facts={p.facts} breadcrumb={breadcrumb} />
+
+  <section class="section ruled">
+    <div class="wrap">
+      <SectionMarker no="01" label="Umfang" rest="Was dazugehört" />
+      <div class="lp-two">
+        <div class="prose">
+          <h2>{p.argument.heading}</h2>
+          {p.argument.paragraphs.map((t) => <p set:html={t} />)}
+        </div>
+        <ul class="lp-scope" role="list">
+          {p.scope.map((s) => (
+            <li>
+              <span class="lp-scope__cat label">{s.cat}</span>
+              <span class="lp-scope__items">{s.items}</span>
+              {s.note && <span class="lp-scope__note num">{s.note}</span>}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  {p.specs && (
+    <section class="section zone-dark ruled">
+      <div class="wrap">
+        <SectionMarker no="02" label="Technik" rest="Eigener Bestand" />
+        <div class="lp-two">
+          <h2 class="lp-specs__head">{p.specsHeading}</h2>
+          <dl class="lp-specs">
+            {p.specs.map((s) => (
+              <div><dt>{s.key}</dt><dd class="num">{s.value}</dd></div>
+            ))}
+          </dl>
+        </div>
+      </div>
+    </section>
+  )}
+
+  {refs.length > 0 && (
+    <section class="section ruled">
+      <div class="wrap">
+        <SectionMarker no={p.specs ? '03' : '02'} label="Belege" rest={`${refs.length} Projekte in dieser Leistung`} />
+        <h2 class="lp-ref__head">Wo wir das gemacht haben.</h2>
+        <ol class="lp-ref" role="list" data-rise-group>
+          {refs.slice(0, 8).map((r) => (
+            <li data-rise>
+              <span class="lp-ref__y num">{r.year}</span>
+              <span class="lp-ref__c">{r.client}</span>
+              <span class="lp-ref__s">{r.scope}</span>
+              {r.quantity && (
+                <span class="lp-ref__q">
+                  <span class="lp-ref__q-v num">{r.quantity.toLocaleString('de-DE')}</span>
+                  <span class="lp-ref__q-u num">{r.unit}</span>
+                </span>
+              )}
+            </li>
+          ))}
+        </ol>
+        <a href={`/referenzen/?filter=${p.refCategory}`} class="btn btn--ghost lp-ref__more">
+          Alle Referenzen
+          <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        </a>
+      </div>
+    </section>
+  )}
+
+  <slot />
+
+  <Cta service={p.serviceName} heading={p.ctaHeading} body={p.ctaBody} />
+</Base>
+
+<style is:global>
+  .lp-two { display: grid; gap: var(--s-8) var(--gutter); }
+  @media (min-width: 64rem) {
+    .lp-two { grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: var(--s-9); align-items: start; }
+  }
+
+  .lp-scope { margin: 0; border-top: 1px solid var(--rule-strong); }
+  .lp-scope li { display: grid; gap: var(--s-2); padding-block: var(--s-5); border-bottom: 1px solid var(--rule); }
+  .lp-scope__cat { color: var(--accent); }
+  .lp-scope__items { font-size: .9375rem; }
+  .lp-scope__note { font-size: .75rem; color: var(--fg-muted); }
+
+  .lp-specs__head { max-width: 16ch; }
+  .lp-specs { margin: 0; border-top: 1px solid var(--rule-strong); }
+  .lp-specs > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-1);
+    padding-block: var(--s-4);
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 30rem) {
+    .lp-specs > div { grid-template-columns: 10.5rem minmax(0, 1fr); gap: var(--s-4); }
+  }
+  .lp-specs dt { font-size: .8125rem; color: var(--fg-muted); }
+  .lp-specs dd { margin: 0; font-size: .875rem; }
+
+  .lp-ref__head { max-width: 22ch; margin-bottom: var(--s-6); }
+  .lp-ref { margin: 0; border-bottom: 1px solid var(--rule-strong); }
+  .lp-ref li {
+    display: grid;
+    grid-template-columns: 4rem minmax(0, 1fr);
+    gap: .15rem var(--s-4);
+    padding-block: var(--s-4);
+    border-top: 1px solid var(--rule);
+    align-items: baseline;
+  }
+  .lp-ref li:first-child { border-top-color: var(--rule-strong); }
+  @media (min-width: 60rem) {
+    .lp-ref li { grid-template-columns: 4.5rem minmax(0, 1fr) minmax(0, 1fr) 8.5rem; gap: var(--s-5); }
+  }
+  .lp-ref__y { color: var(--accent); font-size: var(--t-sm); }
+  .lp-ref__c { font-family: var(--font-display); font-weight: 600; font-size: 1.0625rem; letter-spacing: -.012em; }
+  .lp-ref__s { grid-column: 2; color: var(--fg-muted); font-size: .875rem; }
+  @media (min-width: 60rem) { .lp-ref__s { grid-column: auto; } }
+  .lp-ref__q { grid-column: 2; display: flex; align-items: baseline; gap: .35rem; }
+  @media (min-width: 60rem) { .lp-ref__q { grid-column: auto; justify-content: flex-end; } }
+  .lp-ref__q-v { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .lp-ref__q-u { font-size: .72rem; color: var(--fg-muted); flex: none; }
+  .lp-ref__more { margin-top: var(--s-6); }
+</style>

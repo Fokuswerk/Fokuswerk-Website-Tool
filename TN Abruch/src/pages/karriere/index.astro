@@ -1,0 +1,239 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import SectionMarker from '~/components/SectionMarker.astro';
+import { company } from '~/data/company';
+
+const jobs = (await getCollection('jobs')).sort((a, b) => a.data.order - b.data.order);
+const rendered = await Promise.all(
+  jobs.map(async (j) => ({ ...j, Content: (await render(j)).Content })),
+);
+
+const breadcrumb = [
+  { name: 'Startseite', href: '/' },
+  { name: 'Karriere', href: '/karriere/' },
+];
+
+const jobSchema = jobs.map((j) => ({
+  '@type': 'JobPosting',
+  title: j.data.title,
+  description: j.body?.trim() ?? j.data.title,
+  employmentType: 'FULL_TIME',
+  hiringOrganization: { '@id': 'https://www.tn-abbruch.de/#organisation' },
+  jobLocation: {
+    '@type': 'Place',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: company.address.street,
+      postalCode: company.address.postalCode,
+      addressLocality: company.address.city,
+      addressCountry: 'DE',
+    },
+  },
+  applicantLocationRequirements: { '@type': 'Country', name: 'Deutschland' },
+  directApply: false,
+}));
+---
+
+<Base
+  title="Karriere — offene Stellen bei TN Abbruch, Delmenhorst"
+  description="Offene Stellen bei TN Abbruch: Baufacharbeiter Abbruch, Schadstoffsanierung und Kernbohrung, Bauhelfer, LKW-Fahrer, Platz- und Gerätewart. Raum Delmenhorst."
+  breadcrumb={breadcrumb}
+  schema={jobSchema}
+>
+  <PageHeader
+    eyebrow="Karriere"
+    title="Sechs Stellen. Ein Team von zehn."
+    lead="Bei uns ist niemand eine Nummer im Bautagebuch — dafür sind wir zu klein. Was Sie stattdessen bekommen: Baustellen, auf denen es fachlich anspruchsvoll wird, und Kollegen, die das seit Jahren machen."
+    breadcrumb={breadcrumb}
+    facts={[
+      { value: String(jobs.length), label: 'offene Positionen' },
+      { value: String(company.teamSize), label: 'Personen im Team' },
+      { value: '3', label: 'Regionen: Delmenhorst, Bremen, Oldenburg' },
+      { value: 'DE', label: 'Montage bundesweit möglich' },
+    ]}
+  />
+
+  <!-- Ehrlicher Rahmen -->
+  <section class="section ruled">
+    <div class="wrap">
+      <SectionMarker no="01" label="Vorab" rest="Damit klar ist, worauf Sie sich einlassen" />
+
+      <div class="honest">
+        <div class="prose">
+          <h2>Was diese Arbeit ist — und was sie nicht ist.</h2>
+          <p>
+            Rückbau ist körperliche Arbeit. In der Schadstoffsanierung kommt Vollschutz
+            dazu: Einweganzug, Atemschutz, Schleuse rein und raus. Das ist anstrengend
+            und im Sommer unangenehm, und niemand sollte davon überrascht werden.
+          </p>
+          <p>
+            Dafür ist es Arbeit, bei der man am Feierabend sieht, was man gemacht hat.
+            Und sie ist anspruchsvoller, als es von außen aussieht: Wer Unterdruck hält,
+            Schleusen aufbaut und nach TRGS arbeitet, macht keinen Hilfsjob.
+          </p>
+        </div>
+
+        <ul class="honest__facts" role="list">
+          <li><span class="label">Einsatzgebiet</span><span>Überwiegend Delmenhorst, Bremen und Oldenburg. Da wir auch bundesweit Aufträge ausführen, kann es zu Tätigkeiten auf Montage kommen.</span></li>
+          <li><span class="label">Voraussetzungen</span><span>Führerschein Klasse B und Kenntnisse der deutschen Sprache sind notwendig.</span></li>
+          <li><span class="label">Teamgröße</span><span>Rund {company.teamSize} Personen. Die Wege sind kurz, die Zuständigkeit ist eindeutig.</span></li>
+          <li><span class="label">Bewerbung</span><span>Per E-Mail an <a href={`mailto:${company.email}`}>{company.email}</a>. Ein Lebenslauf reicht; Zeugnisse können nachgereicht werden.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stellen -->
+  <section class="section zone-dark ruled">
+    <div class="wrap">
+      <SectionMarker no="02" label="Offene Stellen" rest={`${jobs.length} Positionen`} />
+      <h2 class="jobs__head">Wen wir suchen.</h2>
+
+      <div class="jobs">
+        {rendered.map((j, i) => (
+          <details class="job" open={i === 0}>
+            <summary>
+              <span class="job__no num">{String(i + 1).padStart(2, '0')}</span>
+              <span class="job__t">
+                <span class="job__title">{j.data.title}</span>
+                <span class="job__meta label">{j.data.field}<span aria-hidden="true"> · </span>{j.data.type}</span>
+              </span>
+              <span class="job__sign" aria-hidden="true"></span>
+            </summary>
+            <div class="job__body">
+              <div class="job__text prose"><j.Content /></div>
+              <div class="job__req">
+                <span class="label">Voraussetzungen</span>
+                <ul role="list">
+                  {j.data.requirements.map((r) => <li>{r}</li>)}
+                </ul>
+                <a href={`mailto:${company.email}?subject=${encodeURIComponent('Bewerbung: ' + j.data.title)}`} class="btn btn--primary">
+                  Auf diese Stelle bewerben
+                </a>
+              </div>
+            </div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Bewerbung -->
+  <section class="section ruled">
+    <div class="wrap apply">
+      <div>
+        <SectionMarker no="03" label="Bewerbung" rest="Kurzer Weg" />
+        <h2>Rufen Sie an, wenn Ihnen Schreiben nicht liegt.</h2>
+        <p class="lead muted">
+          Wir brauchen kein Anschreiben und kein Deckblatt. Uns interessiert, was Sie
+          bisher gemacht haben und ab wann Sie können. Alles Weitere klären wir im
+          Gespräch auf dem Hof.
+        </p>
+      </div>
+
+      <div class="apply__box">
+        <span class="label">Ansprechpartner</span>
+        <a href={company.phoneHref} class="apply__phone num">{company.phone}</a>
+        <a href={`mailto:${company.email}`} class="apply__mail">{company.email}</a>
+        <p class="apply__adr">
+          {company.legalName}<br />
+          {company.address.street}<br />
+          {company.address.postalCode} {company.address.city}
+        </p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .honest { display: grid; gap: var(--s-8) var(--gutter); }
+  @media (min-width: 64rem) {
+    .honest { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-9); align-items: start; }
+  }
+  .honest__facts { margin: 0; border-top: 1px solid var(--rule-strong); }
+  .honest__facts li {
+    display: grid;
+    gap: var(--s-2);
+    padding-block: var(--s-4);
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 40rem) {
+    .honest__facts li { grid-template-columns: 9rem minmax(0, 1fr); gap: var(--s-4); }
+  }
+  .honest__facts span:last-child { font-size: .9375rem; }
+  .honest__facts a { color: var(--accent); }
+
+  .jobs__head { max-width: 16ch; margin-bottom: var(--s-6); }
+  .jobs { border-top: 1px solid var(--rule-strong); }
+  .job { border-bottom: 1px solid var(--rule); }
+  .job summary {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr) 1rem;
+    align-items: center;
+    gap: var(--s-4);
+    padding-block: var(--s-5);
+    cursor: pointer;
+    list-style: none;
+    min-height: 44px;
+  }
+  .job summary::-webkit-details-marker { display: none; }
+  .job__no { color: var(--accent); font-size: var(--t-sm); }
+  .job__t { display: flex; flex-direction: column; gap: .25rem; }
+  .job__title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.125rem, 2.4vw, 1.5rem);
+    letter-spacing: -.02em;
+    line-height: 1.1;
+  }
+  .job summary:hover .job__title { color: var(--accent); }
+  .job__meta { color: var(--fg-muted); }
+  .job__sign { position: relative; width: 14px; height: 14px; }
+  .job__sign::before, .job__sign::after {
+    content: ''; position: absolute; background: var(--accent);
+    transition: transform var(--dur-ui) linear;
+  }
+  .job__sign::before { inset: 6px 0; height: 2px; }
+  .job__sign::after { inset: 0 6px; width: 2px; }
+  .job[open] .job__sign::after { transform: scaleY(0); }
+
+  .job__body { display: grid; gap: var(--s-6); padding: 0 0 var(--s-6) 2.5rem; }
+  @media (min-width: 56rem) {
+    .job__body { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: var(--s-8); }
+  }
+  .job__text { color: var(--fg-muted); }
+  .job__req ul { display: grid; gap: .35rem; margin: var(--s-3) 0 var(--s-5); padding: 0; list-style: none; }
+  .job__req li { position: relative; padding-left: 1.1rem; font-size: .875rem; }
+  .job__req li::before {
+    content: ''; position: absolute; left: 0; top: .62em;
+    width: 7px; height: 1px; background: var(--accent);
+  }
+
+  .apply { display: grid; gap: var(--s-7) var(--gutter); }
+  @media (min-width: 60rem) {
+    .apply { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: var(--s-9); align-items: start; }
+  }
+  .apply .lead { margin-top: var(--s-5); }
+  .apply__box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-1);
+    padding: var(--s-6);
+    background: var(--paper);
+    border: 1px solid var(--rule-strong);
+  }
+  .apply__phone {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3.6vw, 2.125rem);
+    font-weight: 700;
+    letter-spacing: -.025em;
+    text-decoration: none;
+  }
+  .apply__phone:hover { color: var(--accent); }
+  .apply__mail { color: var(--accent); }
+  .apply__phone, .apply__mail { display: inline-flex; align-items: center; min-height: 44px; }
+  .apply__adr { margin-top: var(--s-3); font-size: .875rem; color: var(--fg-muted); }
+</style>

@@ -1,0 +1,123 @@
+---
+/**
+ * Schema einer Vier-Kammer-Personenschleuse mit Unterdruckhaltung.
+ * Gezeichnet statt fotografiert: In einem Schwarzbereich wird nicht fotografiert,
+ * und ein Schnitt erklaert den Ablauf ohnehin besser als jedes Stimmungsbild.
+ */
+---
+
+<figure class="schema">
+  <svg viewBox="0 0 720 260" role="img" aria-labelledby="schema-title schema-desc" class="schema__svg">
+    <title id="schema-title">Schnitt durch einen Schwarzbereich mit Vier-Kammer-Personenschleuse</title>
+    <desc id="schema-desc">
+      Vom Weißbereich führen vier Kammern in den Schwarzbereich: Umkleide rein,
+      Dusche, Umkleide raus und Schleusenkammer. Der Schwarzbereich steht unter
+      Unterdruck; ein Unterdruckhaltegerät saugt die Luft über einen Schwebstofffilter
+      ab, sodass die Luft immer vom sauberen in den belasteten Bereich strömt.
+    </desc>
+
+    <!-- Grundlinie -->
+    <line x1="16" y1="200" x2="704" y2="200" class="s-rule" />
+
+    <!-- Weißbereich -->
+    <rect x="16" y="72" width="120" height="128" class="s-clean" />
+    <text x="26" y="94" class="s-lab">WEISSBEREICH</text>
+    <text x="26" y="112" class="s-note">sauber, ohne Schutz</text>
+
+    <!-- Vier Kammern -->
+    <g class="s-locks">
+      <rect x="146" y="72" width="76" height="128" class="s-lock" />
+      <text x="184" y="192" class="s-num" text-anchor="middle">1</text>
+      <text x="184" y="112" class="s-lab-s" text-anchor="middle">Umkleide</text>
+      <text x="184" y="126" class="s-lab-s" text-anchor="middle">rein</text>
+
+      <rect x="228" y="72" width="76" height="128" class="s-lock" />
+      <text x="266" y="192" class="s-num" text-anchor="middle">2</text>
+      <text x="266" y="112" class="s-lab-s" text-anchor="middle">Dusche</text>
+
+      <rect x="310" y="72" width="76" height="128" class="s-lock" />
+      <text x="348" y="192" class="s-num" text-anchor="middle">3</text>
+      <text x="348" y="112" class="s-lab-s" text-anchor="middle">Umkleide</text>
+      <text x="348" y="126" class="s-lab-s" text-anchor="middle">raus</text>
+
+      <rect x="392" y="72" width="76" height="128" class="s-lock" />
+      <text x="430" y="192" class="s-num" text-anchor="middle">4</text>
+      <text x="430" y="112" class="s-lab-s" text-anchor="middle">Schleusen-</text>
+      <text x="430" y="126" class="s-lab-s" text-anchor="middle">kammer</text>
+    </g>
+
+    <!-- Schwarzbereich -->
+    <rect x="474" y="72" width="230" height="128" class="s-dirty" />
+    <text x="486" y="94" class="s-lab s-lab--warn">SCHWARZBEREICH</text>
+    <text x="486" y="112" class="s-note">Unterdruck, Vollschutz</text>
+    <text x="486" y="166" class="s-press">−20 Pa</text>
+
+    <!-- Luftstromrichtung -->
+    <g class="s-flow">
+      <line x1="60" y1="234" x2="620" y2="234" />
+      <path d="M612 228l10 6-10 6" />
+      <path d="M300 228l10 6-10 6" />
+      <path d="M170 228l10 6-10 6" />
+    </g>
+    <text x="60" y="252" class="s-note">Luft strömt immer vom sauberen in den belasteten Bereich</text>
+
+    <!-- Unterdruckhaltegerät -->
+    <rect x="612" y="24" width="92" height="34" class="s-uhg" />
+    <text x="658" y="45" class="s-lab-s" text-anchor="middle">UHG + H-Filter</text>
+    <path d="M600 72V41h12" class="s-pipe" />
+  </svg>
+
+  <figcaption class="schema__cap">
+    Prinzipschnitt: Vier-Kammer-Personenschleuse. Wir setzen 1- bis 4-Kammerschleusen
+    ein; die Kammerzahl richtet sich nach Material und Umfang der Arbeiten.
+  </figcaption>
+</figure>
+
+<style>
+  .schema { margin: 0; }
+  .schema__svg {
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--rule);
+    background: var(--bg-raised);
+  }
+  .schema__cap {
+    margin-top: var(--s-3);
+    font-size: .8125rem;
+    color: var(--fg-muted);
+    max-width: 60ch;
+  }
+
+  .s-rule { stroke: var(--rule-strong); stroke-width: 1; }
+  .s-clean { fill: none; stroke: var(--rule-strong); stroke-width: 1; }
+  .s-lock { fill: color-mix(in oklab, var(--accent) 7%, transparent); stroke: var(--rule-strong); stroke-width: 1; }
+  .s-dirty { fill: color-mix(in oklab, var(--warn) 10%, transparent); stroke: var(--warn); stroke-width: 1; }
+  .s-uhg { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+  .s-pipe { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+
+  .s-lab {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .14em;
+    fill: var(--fg);
+  }
+  .s-lab--warn { fill: var(--warn); }
+  .s-lab-s { font-family: var(--font-text); font-size: 11px; fill: var(--fg); }
+  .s-note { font-family: var(--font-text); font-size: 10px; fill: var(--fg-muted); }
+  .s-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    fill: var(--accent);
+  }
+  .s-press {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    fill: var(--warn);
+  }
+  .s-flow line, .s-flow path { stroke: var(--accent); stroke-width: 1.2; fill: none; }
+
+  .zone-dark .s-lab--warn, .zone-dark .s-press { fill: var(--warn-lift); }
+  .zone-dark .s-dirty { stroke: var(--warn-lift); fill: color-mix(in oklab, var(--warn-lift) 14%, transparent); }
+</style>

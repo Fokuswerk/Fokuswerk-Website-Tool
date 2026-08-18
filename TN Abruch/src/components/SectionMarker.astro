@@ -1,0 +1,14 @@
+---
+interface Props { no: string; label: string; rest?: string }
+const { no, label, rest } = Astro.props;
+---
+<p class="marker">
+  <span class="marker__no">{no}</span>
+  <span>{label}</span>
+  {rest && <span class="marker__rest">{rest}</span>}
+</p>
+
+<style>
+  /* Der Zusatz rechts ist ergaenzend. Auf schmalen Screens kostet er nur Zeilen. */
+  @media (max-width: 34rem) { .marker__rest { display: none; } }
+</style>

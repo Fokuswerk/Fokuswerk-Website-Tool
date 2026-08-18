@@ -1,0 +1,111 @@
+---
+/**
+ * Deckblatt für Unterseiten. Bewusst kein zweiter Hero:
+ * Kategorie, Titel, Kurzfassung und eine Datenleiste — wie das erste Blatt
+ * einer Leistungsbeschreibung.
+ */
+interface Props {
+  eyebrow: string;
+  title: string;
+  lead?: string;
+  facts?: { value: string; label: string }[];
+  breadcrumb?: { name: string; href: string }[];
+}
+const { eyebrow, title, lead, facts, breadcrumb } = Astro.props;
+---
+
+<section class="ph zone-dark">
+  <div class="wrap">
+    {breadcrumb && (
+      <nav class="ph__crumbs" aria-label="Brotkrumennavigation">
+        <ol role="list">
+          {breadcrumb.map((b, i) => (
+            <li>
+              {i < breadcrumb.length - 1
+                ? <a href={b.href}>{b.name}</a>
+                : <span aria-current="page">{b.name}</span>}
+            </li>
+          ))}
+        </ol>
+      </nav>
+    )}
+
+    <p class="ph__eyebrow label">{eyebrow}</p>
+    <h1 class="ph__title">{title}</h1>
+    {lead && <p class="ph__lead">{lead}</p>}
+  </div>
+
+  {facts && (
+    <div class="ph__facts">
+      <div class="wrap ph__facts-grid">
+        {facts.map((f) => (
+          <div class="ph__fact">
+            <span class="ph__fact-v num">{f.value}</span>
+            <span class="ph__fact-l">{f.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+</section>
+
+<style>
+  .ph {
+    background: var(--bg);
+    color: var(--fg);
+    padding-top: calc(4.25rem + var(--s-8));
+  }
+  @media (min-width: 62rem) { .ph { padding-top: calc(4.25rem + var(--s-9)); } }
+
+  .ph__crumbs { margin-bottom: var(--s-6); }
+  .ph__crumbs ol { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+  .ph__crumbs li {
+    font-family: var(--font-mono);
+    font-size: var(--t-mono);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+  .ph__crumbs li + li::before { content: '/'; margin-right: .5rem; opacity: .55; }
+  .ph__crumbs a { display: inline-flex; align-items: center; min-height: 32px; text-decoration: none; }
+  .ph__crumbs a:hover { color: var(--accent); text-decoration: underline; }
+  .ph__crumbs [aria-current] { color: var(--fg); }
+
+  .ph__eyebrow { color: var(--accent); margin-bottom: var(--s-4); }
+  .ph__title { font-size: var(--t-h1); font-stretch: 104%; max-width: 20ch; }
+  .ph__lead {
+    margin-top: var(--s-5);
+    max-width: 56ch;
+    font-size: var(--t-lead);
+    line-height: 1.5;
+    color: color-mix(in oklab, currentColor 76%, transparent);
+    padding-bottom: var(--s-8);
+  }
+  .ph:not(:has(.ph__facts)) .ph__lead { padding-bottom: var(--s-9); }
+
+  .ph__facts { border-top: 1px solid var(--rule); }
+  .ph__facts-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
+  @media (min-width: 48rem) { .ph__facts-grid { grid-template-columns: repeat(4, 1fr); } }
+
+  .ph__fact {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    padding: var(--s-5) var(--s-4) var(--s-5) var(--s-4);
+    border-left: 1px solid var(--rule);
+  }
+  .ph__fact:first-child { border-left: 0; padding-left: 0; }
+  @media (max-width: 47.99rem) {
+    .ph__fact:nth-child(3) { border-left: 0; padding-left: 0; }
+    .ph__fact:nth-child(-n+2) { border-bottom: 1px solid var(--rule); }
+  }
+  .ph__fact-v {
+    font-family: var(--font-display);
+    font-size: clamp(1.35rem, 3.2vw, 2rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .ph__fact-l { font-size: .78rem; color: var(--fg-muted); line-height: 1.35; }
+</style>

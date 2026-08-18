@@ -1,0 +1,337 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import SectionMarker from '~/components/SectionMarker.astro';
+import SchleusenSchema from '~/components/SchleusenSchema.astro';
+import Cta from '~/components/Cta.astro';
+import ppeImg from '~/assets/schadstoffsanierung-3x2.jpg';
+
+const refs = (await getCollection('referenzen'))
+  .map((r) => r.data)
+  .filter((r) => r.category.includes('schadstoff'))
+  .sort((a, b) => b.year - a.year);
+
+const breadcrumb = [
+  { name: 'Startseite', href: '/' },
+  { name: 'Leistungen', href: '/leistungen/' },
+  { name: 'Schadstoffsanierung', href: '/leistungen/schadstoffsanierung/' },
+];
+
+const faq = [
+  {
+    q: 'Woran erkenne ich, ob mein Gebäude Asbest enthält?',
+    a: 'Sicher nur durch Probenahme und Laboranalyse. Ein starker Hinweis ist das Baujahr: Asbest war in Deutschland bis 1993 zugelassen und in sehr vielen Produkten verbaut — Bodenbelägen und deren Kleber, Fensterkitt, Brandschutzverkleidungen, Lüftungskanälen, Dachplatten, Nachtspeicheröfen. Bei Gebäuden aus dieser Zeit gehört die Erkundung vor den Rückbau.',
+  },
+  {
+    q: 'Was ist der Unterschied zwischen fest- und weichgebundenem Asbest?',
+    a: 'Festgebundene Produkte wie Faserzementplatten binden die Fasern in einer harten Matrix; sie setzen bei sachgerechtem Umgang vergleichsweise wenig frei. Weichgebundene Produkte — Spritzasbest, Leichtbauplatten, Asbestpappen — haben einen hohen Faseranteil und eine geringe Bindung. Sie gelten als deutlich gefährlicher und dürfen nur von Betrieben mit der Zulassung nach TRGS 519 Ziffer 2.7 Anlage 3 saniert werden. Wir haben diese Zulassung.',
+  },
+  {
+    q: 'Wir haben bereits ein Schadstoffgutachten. Was brauchen Sie noch?',
+    a: 'Das Gutachten mit Probenahmeplan und Analyseergebnissen, Grundrisse oder Bestandspläne und eine Angabe zu Zugänglichkeit und Termin. Damit lässt sich in der Regel ohne Ortstermin ein belastbares Angebot rechnen.',
+  },
+  {
+    q: 'Wie lange dauert eine Sanierung?',
+    a: 'Das hängt weniger an der Fläche als an Material, Schutzmaßnahme und Freimessung. Die Einrichtung des Schwarzbereichs, die Standzeit der Unterdruckhaltung und die Freimessung am Ende sind feste Größen, die auch bei kleinen Flächen anfallen. Wir nennen im Angebot eine realistische Bauzeit, keine Wunschzahl.',
+  },
+  {
+    q: 'Was passiert mit dem ausgebauten Material?',
+    a: 'Es wird staubdicht verpackt, gekennzeichnet und über zugelassene Wege entsorgt. Sie erhalten die Entsorgungsnachweise — die brauchen Sie für Ihre eigene Dokumentation, spätestens beim Verkauf oder bei der nächsten Baumaßnahme.',
+  },
+  {
+    q: 'Arbeiten Sie auch im laufenden Betrieb?',
+    a: 'Ja. Ein großer Teil unserer Referenzen — Sparkassen, Schulen, Krankenhäuser, Kasernen — sind Objekte, in denen nebenan weitergearbeitet wurde. Der Schwarzbereich wird dann so geschnitten, dass Nutzung und Sanierung sich nicht berühren.',
+  },
+];
+---
+
+<Base
+  title="Asbestsanierung & KMF-Sanierung — TN Abbruch, Delmenhorst"
+  description="Asbestsanierung nach TRGS 519 einschließlich weichgebundener Produkte (Ziffer 2.7 Anlage 3) und KMF-Sanierung nach TRGS 521. Eigene Unterdruckanlagen, 1- bis 4-Kammerschleusen, UHG-Geräte 500 bis 12.500 cbm. Bremen, Oldenburg, Delmenhorst und bundesweit."
+  breadcrumb={breadcrumb}
+  schema={{
+    '@type': 'Service',
+    name: 'Schadstoffsanierung: Asbest und künstliche Mineralfasern',
+    serviceType: 'Asbestsanierung',
+    provider: { '@id': 'https://www.tn-abbruch.de/#organisation' },
+    areaServed: { '@type': 'Country', name: 'Deutschland' },
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Schadstoffsanierung',
+      itemListElement: [
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Ausbau weichgebundener Asbestprodukte nach TRGS 519' } },
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Ausbau festgebundener Asbestprodukte nach TRGS 519' } },
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Ausbau künstlicher Mineralfasern nach TRGS 521' } },
+      ],
+    },
+  }}
+>
+  <PageHeader
+    eyebrow="Leistung 01 — Schadstoffsanierung"
+    title="Asbest und KMF raus, bevor irgendetwas anderes passiert."
+    lead="Wir bauen weich- und festgebundene Asbestprodukte nach TRGS 519 aus und sanieren künstliche Mineralfasern nach TRGS 521 — mit eigener Unterdrucktechnik und Personal mit Sachkundenachweis."
+    breadcrumb={breadcrumb}
+    facts={[
+      { value: '2.7', label: 'Anlage 3 — Zulassung weichgebunden' },
+      { value: '521', label: 'TRGS für KMF-Sanierung' },
+      { value: '12.500', label: 'cbm UHG-Kapazität' },
+      { value: '1–4', label: 'Kammerschleusen im Bestand' },
+    ]}
+  />
+
+  <!-- Was genau wir ausbauen -->
+  <section class="section ruled">
+    <div class="wrap">
+      <SectionMarker no="01" label="Umfang" rest="Was wir ausbauen" />
+
+      <div class="two">
+        <div class="prose">
+          <h2>Nicht jeder Betrieb darf an jedes Material.</h2>
+          <p>
+            Das deutsche Asbestrecht unterscheidet scharf zwischen den Produktgruppen.
+            Für festgebundene Produkte und Arbeiten geringen Umfangs reicht eine
+            Grundqualifikation. Für weichgebundene Produkte — Spritzasbest,
+            Leichtbauplatten, Asbestpappen — verlangt die TRGS 519 die Zulassung nach
+            Ziffer 2.7 Anlage 3.
+          </p>
+          <p>
+            Diese Zulassung besitzen wir. Für Sie heißt das: Wenn im laufenden Projekt
+            ein weichgebundenes Material auftaucht, muss der Auftrag nicht neu vergeben
+            werden.
+          </p>
+        </div>
+
+        <ul class="scope" role="list">
+          <li>
+            <span class="scope__cat label">Asbest, weichgebunden</span>
+            <span class="scope__list">Spritzasbest · Leichtbauplatten · Asbestpappen · Dichtungen und Schnüre</span>
+            <span class="scope__reg num">TRGS 519, Ziffer 2.7 Anlage 3</span>
+          </li>
+          <li>
+            <span class="scope__cat label">Asbest, festgebunden</span>
+            <span class="scope__list">Faserzementplatten · Bodenbeläge und Kleber · Fensterkitt · Lüftungskanäle · Nachtspeicheröfen</span>
+            <span class="scope__reg num">TRGS 519</span>
+          </li>
+          <li>
+            <span class="scope__cat label">Künstliche Mineralfasern</span>
+            <span class="scope__list">Alte Mineralwolle-Dämmungen in Dach, Fassade, Decke und Technik</span>
+            <span class="scope__reg num">TRGS 521</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Verfahren -->
+  <section class="section zone-dark ruled">
+    <div class="wrap">
+      <SectionMarker no="02" label="Verfahren" rest="Schwarzbereich, Unterdruck, Freimessung" />
+
+      <div class="proc">
+        <div class="prose">
+          <h2>Der Unterdruck ist die eigentliche Leistung.</h2>
+          <p>
+            Fasern lassen sich nicht sehen. Ob eine Sanierung sauber war, entscheidet
+            sich nicht am Ausbau, sondern an der Abschottung: Der Arbeitsbereich steht
+            unter Unterdruck, die Luft strömt kontrolliert von außen nach innen und
+            verlässt den Bereich nur über einen Schwebstofffilter.
+          </p>
+          <p>
+            Unterdruckanlagen und Materialschleusen gehören zu unserem eigenen Bestand.
+            Unsere UHG-Geräte decken Bereiche von {' '}
+            <strong>500 bis 12.500 cbm</strong> ab, die Personenschleusen sind je nach
+            Arbeit als 1- bis 4-Kammer-Ausführung im Einsatz.
+          </p>
+        </div>
+
+        <SchleusenSchema />
+      </div>
+    </div>
+  </section>
+
+  <!-- Ablauf -->
+  <section class="section ruled">
+    <div class="wrap">
+      <SectionMarker no="03" label="Ablauf" rest="Von der Anfrage bis zur Freigabe" />
+      <h2 class="run__head">Sechs Schritte, in dieser Reihenfolge.</h2>
+
+      <ol class="run" role="list" data-rise-group>
+        <li data-rise><span class="run__no num">01</span><h3>Erkundung und Gutachten</h3><p>Probenahme und Analyse durch ein akkreditiertes Labor. Liegt bereits ein Gutachten vor, steigen wir hier ein.</p></li>
+        <li data-rise><span class="run__no num">02</span><h3>Arbeitsplan und Anzeige</h3><p>Verfahren, Schutzmaßnahmen und Entsorgungsweg werden festgelegt und die Arbeiten bei der zuständigen Behörde angezeigt.</p></li>
+        <li data-rise><span class="run__no num">03</span><h3>Einrichtung Schwarzbereich</h3><p>Abschottung, Unterdruckhaltung, Personen- und Materialschleuse. Erst wenn der Unterdruck steht, geht jemand hinein.</p></li>
+        <li data-rise><span class="run__no num">04</span><h3>Ausbau</h3><p>Vollschutz, faserarme Arbeitsverfahren, laufende Kontrolle der Abschottung.</p></li>
+        <li data-rise><span class="run__no num">05</span><h3>Verpackung und Entsorgung</h3><p>Staubdichte Verpackung, Kennzeichnung, Abtransport über zugelassene Wege. Sie erhalten die Nachweise.</p></li>
+        <li data-rise><span class="run__no num">06</span><h3>Feinreinigung und Freimessung</h3><p>Reinigung des Bereichs, Freimessung, Rückgabe. Danach kann der Rückbau oder Ausbau ohne Einschränkung weiterlaufen.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Bild + Referenzen -->
+  <section class="section ruled">
+    <div class="wrap">
+      <div class="evid">
+        <figure class="evid__fig">
+          <Image src={ppeImg} alt="Zwei Mitarbeiter von TN Abbruch in Einweg-Schutzanzügen und mit Atemschutz füllen ausgebaute Mineralwolle in einen nach TRGS 521 gekennzeichneten Entsorgungssack." widths={[600, 1000, 1477]} sizes="(min-width: 60rem) 52vw, 100vw" format="avif" quality={72} loading="lazy" />
+          <figcaption class="label">KMF-Ausbau, Verpackung nach TRGS 521</figcaption>
+        </figure>
+
+        <div class="evid__text">
+          <SectionMarker no="04" label="Belege" rest={`${refs.length} Sanierungsprojekte`} />
+          <h2>Wo wir das gemacht haben.</h2>
+          <ul class="evid__list" role="list">
+            {refs.slice(0, 7).map((r) => (
+              <li>
+                <span class="num evid__y">{r.year}</span>
+                <span class="evid__c">{r.client}</span>
+                <span class="evid__s">{r.scope}</span>
+              </li>
+            ))}
+          </ul>
+          <a href="/referenzen/?filter=schadstoff" class="btn btn--ghost">
+            Alle Sanierungsprojekte
+            <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section ruled">
+    <div class="wrap">
+      <SectionMarker no="05" label="Häufige Fragen" rest="Vor der Anfrage" />
+      <h2 class="faq__head">Was Auftraggeber uns zuerst fragen.</h2>
+
+      <div class="faq">
+        {faq.map((f, i) => (
+          <details class="faq__item" name="faq" open={i === 0}>
+            <summary>
+              <span class="faq__q">{f.q}</span>
+              <span class="faq__sign" aria-hidden="true"></span>
+            </summary>
+            <div class="faq__a"><p>{f.a}</p></div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Cta
+    service="Schadstoffsanierung"
+    heading="Schicken Sie uns das Gutachten."
+    body="Mit Analyseergebnissen und Bestandsplänen können wir meist ohne Ortstermin rechnen. Liegt noch kein Gutachten vor, sagen wir Ihnen, was Sie beauftragen müssen."
+  />
+</Base>
+
+<script type="application/ld+json" is:inline set:html={JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    { '@type': 'Question', name: 'Woran erkenne ich, ob mein Gebäude Asbest enthält?', acceptedAnswer: { '@type': 'Answer', text: 'Sicher nur durch Probenahme und Laboranalyse. Ein starker Hinweis ist das Baujahr: Asbest war in Deutschland bis 1993 zugelassen und in sehr vielen Produkten verbaut.' } },
+    { '@type': 'Question', name: 'Was ist der Unterschied zwischen fest- und weichgebundenem Asbest?', acceptedAnswer: { '@type': 'Answer', text: 'Weichgebundene Produkte wie Spritzasbest, Leichtbauplatten und Asbestpappen haben einen hohen Faseranteil und dürfen nur von Betrieben mit der Zulassung nach TRGS 519 Ziffer 2.7 Anlage 3 saniert werden.' } },
+    { '@type': 'Question', name: 'Was passiert mit dem ausgebauten Material?', acceptedAnswer: { '@type': 'Answer', text: 'Es wird staubdicht verpackt, gekennzeichnet und über zugelassene Wege entsorgt. Der Auftraggeber erhält die Entsorgungsnachweise.' } },
+  ],
+})} />
+
+<style>
+  .two { display: grid; gap: var(--s-8) var(--gutter); }
+  @media (min-width: 64rem) {
+    .two { grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: var(--s-9); align-items: start; }
+  }
+
+  .scope { margin: 0; border-top: 1px solid var(--rule-strong); }
+  .scope li {
+    display: grid;
+    gap: var(--s-2);
+    padding-block: var(--s-5);
+    border-bottom: 1px solid var(--rule);
+  }
+  .scope__cat { color: var(--accent); }
+  .scope__list { font-size: .9375rem; }
+  .scope__reg { font-size: .75rem; color: var(--fg-muted); }
+
+  .proc { display: grid; gap: var(--s-8) var(--gutter); }
+  @media (min-width: 68rem) {
+    .proc { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: var(--s-9); align-items: start; }
+  }
+  .proc .prose { color: var(--fg-muted); }
+  .proc .prose h2 { color: var(--fg); }
+  .proc .prose strong { color: var(--fg); }
+
+  .run__head { max-width: 20ch; margin-bottom: var(--s-7); }
+  .run { display: grid; gap: 0; margin: 0; border-top: 1px solid var(--rule-strong); }
+  @media (min-width: 52rem) { .run { grid-template-columns: repeat(2, 1fr); column-gap: var(--s-8); } }
+  @media (min-width: 76rem) { .run { grid-template-columns: repeat(3, 1fr); } }
+  .run li {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    gap: var(--s-2) var(--s-4);
+    padding-block: var(--s-5);
+    border-bottom: 1px solid var(--rule);
+  }
+  .run__no { grid-row: span 2; color: var(--accent); font-size: var(--t-sm); padding-top: .2rem; }
+  .run h3 { font-size: 1.0625rem; }
+  .run p { color: var(--fg-muted); font-size: .9375rem; }
+
+  .evid { display: grid; gap: var(--s-8) var(--gutter); }
+  @media (min-width: 64rem) {
+    .evid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-9); align-items: start; }
+  }
+  .evid__fig { margin: 0; }
+  .evid__fig :global(img) { width: 100%; height: auto; border: 1px solid var(--rule); }
+  .evid__fig figcaption { margin-top: var(--s-3); color: var(--fg-muted); }
+  .evid__list { margin: var(--s-6) 0 var(--s-6); border-top: 1px solid var(--rule-strong); }
+  .evid__list li {
+    display: grid;
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    gap: .15rem var(--s-4);
+    padding-block: var(--s-3);
+    border-bottom: 1px solid var(--rule);
+  }
+  .evid__y { grid-row: span 2; color: var(--accent); font-size: var(--t-sm); }
+  .evid__c { font-weight: 600; font-size: .9375rem; }
+  .evid__s { font-size: .8125rem; color: var(--fg-muted); }
+
+  .faq__head { max-width: 20ch; margin-bottom: var(--s-7); }
+  .faq { border-top: 1px solid var(--rule-strong); max-width: 62rem; }
+  .faq__item { border-bottom: 1px solid var(--rule); }
+  .faq__item summary {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--s-5);
+    padding-block: var(--s-5);
+    cursor: pointer;
+    list-style: none;
+    min-height: 44px;
+  }
+  .faq__item summary::-webkit-details-marker { display: none; }
+  .faq__q {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1rem, 1.8vw, 1.1875rem);
+    letter-spacing: -.012em;
+    max-width: 46ch;
+  }
+  .faq__item summary:hover .faq__q { color: var(--accent); }
+  .faq__sign {
+    position: relative;
+    flex: none;
+    width: 14px;
+    height: 14px;
+    margin-top: .35rem;
+  }
+  .faq__sign::before, .faq__sign::after {
+    content: '';
+    position: absolute;
+    background: var(--accent);
+    transition: transform var(--dur-ui) linear;
+  }
+  .faq__sign::before { inset: 6px 0 6px 0; height: 2px; }
+  .faq__sign::after { inset: 0 6px 0 6px; width: 2px; }
+  .faq__item[open] .faq__sign::after { transform: scaleY(0); }
+  .faq__a { padding-bottom: var(--s-6); }
+  .faq__a p { max-width: 66ch; color: var(--fg-muted); }
+</style>

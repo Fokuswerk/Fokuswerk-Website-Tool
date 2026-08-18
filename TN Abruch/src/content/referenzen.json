@@ -1,0 +1,210 @@
+[
+  {
+    "slug": "markt-oldenburg-2020",
+    "year": 2020,
+    "client": "Markt 4–5, Oldenburg",
+    "scope": "Schadstoffsanierung und Entkernung",
+    "category": ["schadstoff", "entkernung"],
+    "sector": "Innenstadt / Geschäftshaus",
+    "region": "Oldenburg"
+  },
+  {
+    "slug": "gewoba-2019",
+    "year": 2019,
+    "client": "GEWOBA",
+    "scope": "Entkernung",
+    "quantity": 7500,
+    "unit": "m²",
+    "category": ["entkernung"],
+    "sector": "Wohnungswirtschaft",
+    "region": "Bremen"
+  },
+  {
+    "slug": "hochschule-technik-bremen-2018",
+    "year": 2018,
+    "client": "Hochschule für Technik Bremen",
+    "scope": "Demontagearbeiten und KMF-Sanierung",
+    "category": ["schadstoff", "demontage"],
+    "sector": "Hochschule",
+    "region": "Bremen"
+  },
+  {
+    "slug": "bima-scharnhorst-kaserne-2017",
+    "year": 2017,
+    "client": "BIMA, Scharnhorst-Kaserne",
+    "scope": "Demontagearbeiten und Asbestsanierung",
+    "category": ["schadstoff", "demontage"],
+    "sector": "Bundesliegenschaft",
+    "region": "bundesweit"
+  },
+  {
+    "slug": "lesum-zentrum-ii-2016",
+    "year": 2016,
+    "client": "Lesum Zentrum II, Umbau Sparkasse",
+    "scope": "Entkernung und Asbestsanierung",
+    "category": ["schadstoff", "entkernung"],
+    "sector": "Bank / Einzelhandel",
+    "region": "Bremen"
+  },
+  {
+    "slug": "oberschule-doerpen-2015",
+    "year": 2015,
+    "client": "Oberschule Dörpen",
+    "scope": "Asbestsanierung, Demontage der Fassade",
+    "category": ["schadstoff", "demontage"],
+    "sector": "Schule",
+    "region": "Emsland"
+  },
+  {
+    "slug": "landessparkasse-oldenburg-2013",
+    "year": 2013,
+    "client": "Landessparkasse zu Oldenburg",
+    "scope": "Entkernung und Asbestsanierung",
+    "category": ["schadstoff", "entkernung"],
+    "sector": "Bank",
+    "region": "Oldenburg"
+  },
+  {
+    "slug": "rathaus-dietzenbach-2010",
+    "year": 2010,
+    "client": "Rathaus Dietzenbach",
+    "scope": "Entkernung",
+    "quantity": 21000,
+    "unit": "cbm",
+    "category": ["entkernung"],
+    "sector": "Öffentliche Verwaltung",
+    "region": "Hessen"
+  },
+  {
+    "slug": "haus-der-buergerschaft-2009",
+    "year": 2009,
+    "client": "Haus der Bürgerschaft",
+    "scope": "Entkernung",
+    "quantity": 7000,
+    "unit": "cbm",
+    "category": ["entkernung"],
+    "sector": "Parlamentsgebäude",
+    "region": "Bremen"
+  },
+  {
+    "slug": "ekz-raunheim-2009",
+    "year": 2009,
+    "client": "EKZ Raunheim",
+    "scope": "Entkernung",
+    "quantity": 48000,
+    "unit": "cbm",
+    "category": ["entkernung"],
+    "sector": "Einkaufszentrum",
+    "region": "Hessen"
+  },
+  {
+    "slug": "schule-lilienthal-2008",
+    "year": 2008,
+    "client": "Schule Lilienthal",
+    "scope": "Entkernung",
+    "quantity": 20000,
+    "unit": "cbm",
+    "category": ["entkernung"],
+    "sector": "Schule",
+    "region": "Bremen / Umland"
+  },
+  {
+    "slug": "eads-airbus-bremen-2007",
+    "year": 2007,
+    "client": "EADS Airbus Bremen",
+    "scope": "Demontage Aluminium-Fassade",
+    "quantity": 2000,
+    "unit": "qm",
+    "category": ["demontage"],
+    "sector": "Luftfahrtindustrie",
+    "region": "Bremen"
+  },
+  {
+    "slug": "nordstrasse-duesseldorf-2006",
+    "year": 2006,
+    "client": "Nordstr. Düsseldorf",
+    "scope": "Entkernung",
+    "quantity": 20000,
+    "unit": "cbm",
+    "category": ["entkernung"],
+    "sector": "Bürogebäude",
+    "region": "Nordrhein-Westfalen"
+  },
+  {
+    "slug": "deutsche-flugsicherung-2005",
+    "year": 2005,
+    "client": "Deutsche Flugsicherung",
+    "scope": "Aufnahme Fußbodenfliesen",
+    "quantity": 1500,
+    "unit": "qm",
+    "category": ["schadstoff"],
+    "sector": "Infrastruktur / Flugsicherung",
+    "region": "bundesweit"
+  },
+  {
+    "slug": "zkh-links-der-weser-2003",
+    "year": 2003,
+    "client": "ZKH Links der Weser",
+    "scope": "Entkernung",
+    "quantity": 10000,
+    "unit": "cbm",
+    "category": ["entkernung"],
+    "sector": "Krankenhaus",
+    "region": "Bremen"
+  },
+  {
+    "slug": "mercedes-benz-2002",
+    "year": 2002,
+    "client": "Mercedes-Benz",
+    "scope": "Decken und Böden",
+    "quantity": 4000,
+    "unit": "qm",
+    "category": ["demontage"],
+    "sector": "Automobilindustrie",
+    "region": "bundesweit"
+  },
+  {
+    "slug": "hochschule-fuer-technik-2001",
+    "year": 2001,
+    "client": "Hochschule für Technik",
+    "scope": "Entkernung",
+    "quantity": 62500,
+    "unit": "cbm",
+    "category": ["entkernung"],
+    "sector": "Hochschule",
+    "region": "Bremen"
+  },
+  {
+    "slug": "kaserne-muenster-2000",
+    "year": 2000,
+    "client": "Kaserne Münster",
+    "scope": "Entkernung",
+    "quantity": 5000,
+    "unit": "cbm",
+    "category": ["entkernung"],
+    "sector": "Bundeswehrliegenschaft",
+    "region": "Nordrhein-Westfalen"
+  },
+  {
+    "slug": "kaserne-schleswig-holstein-1999",
+    "year": 1999,
+    "client": "Kaserne Schleswig-Holstein",
+    "scope": "Betonabbruch",
+    "quantity": 800,
+    "unit": "cbm",
+    "category": ["beton"],
+    "sector": "Bundeswehrliegenschaft",
+    "region": "Schleswig-Holstein"
+  },
+  {
+    "slug": "einkaufscentrum-kiel-1998",
+    "year": 1998,
+    "client": "Einkaufscentrum Kiel",
+    "scope": "Entkernung",
+    "quantity": 12500,
+    "unit": "cbm",
+    "category": ["entkernung"],
+    "sector": "Einkaufszentrum",
+    "region": "Schleswig-Holstein"
+  }
+]

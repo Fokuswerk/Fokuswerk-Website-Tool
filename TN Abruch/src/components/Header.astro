@@ -1,0 +1,337 @@
+---
+import Logo from './Logo.astro';
+import { company, nav } from '~/data/company';
+
+const path = Astro.url.pathname;
+const isActive = (href: string) => path === href || (href !== '/' && path.startsWith(href));
+---
+
+<header class="site-header" data-header>
+  <div class="site-header__bar wrap">
+    <a href="/" class="site-header__brand" aria-label={`${company.brandName} — zur Startseite`}>
+      <Logo />
+    </a>
+
+    <nav class="nav-desktop" aria-label="Hauptnavigation">
+      <ul role="list">
+        {nav.map((item) => (
+          <li class={item.children ? 'has-sub' : ''}>
+            {item.children ? (
+              <>
+                <button
+                  type="button"
+                  class="nav-desktop__link"
+                  aria-expanded="false"
+                  aria-controls="nav-leistungen"
+                  data-submenu-trigger
+                  data-current={isActive(item.href) ? 'true' : undefined}
+                >
+                  {item.label}
+                  <svg class="nav-desktop__chev" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+                </button>
+                <div class="submenu" id="nav-leistungen" hidden>
+                  <ul role="list">
+                    <li>
+                      <a href={item.href} data-current={path === item.href ? 'true' : undefined}>
+                        <span class="submenu__label">Alle Leistungen</span>
+                        <span class="submenu__note">Übersicht</span>
+                      </a>
+                    </li>
+                    {item.children.map((c) => (
+                      <li>
+                        <a href={c.href} data-current={isActive(c.href) ? 'true' : undefined}>
+                          <span class="submenu__label">{c.label}</span>
+                          <span class="submenu__note">{c.note}</span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            ) : (
+              <a href={item.href} class="nav-desktop__link" data-current={isActive(item.href) ? 'true' : undefined}>
+                {item.label}
+              </a>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="site-header__actions">
+      <a href={company.phoneHref} class="site-header__phone num">{company.phone}</a>
+      <a href={company.phoneHref} class="site-header__call" aria-label={`Anrufen: ${company.phone}`}>
+        <svg viewBox="0 0 16 16" aria-hidden="true" width="17" height="17">
+          <path d="M4.2 1.8 6 4.4 4.6 6.2c.9 1.9 2.3 3.3 4.2 4.2l1.8-1.4 2.6 1.8-.4 2.4c-.1.5-.6.9-1.1.8C6.5 13.3 2.7 9.5 1.8 3.7c-.1-.5.3-1 .8-1.1l1.6-.8Z"
+            fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <a href="/kontakt/" class="btn btn--primary site-header__cta">Projekt anfragen</a>
+      <button type="button" class="menu-toggle" data-menu-toggle aria-expanded="false" aria-controls="mobile-menu">
+        <span class="menu-toggle__bars" aria-hidden="true"><i></i><i></i></span>
+        <span class="menu-toggle__text">Menü</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-menu zone-dark" id="mobile-menu" hidden data-mobile-menu>
+    <nav class="mobile-menu__inner wrap" aria-label="Hauptnavigation mobil">
+      <ul role="list" class="mobile-menu__list">
+        {nav.map((item) => (
+          <>
+            <li>
+              <a href={item.href} data-current={isActive(item.href) ? 'true' : undefined}>
+                {item.label}
+              </a>
+            </li>
+            {item.children?.map((c) => (
+              <li class="mobile-menu__sub">
+                <a href={c.href} data-current={isActive(c.href) ? 'true' : undefined}>
+                  {c.label}<span class="mobile-menu__note">{c.note}</span>
+                </a>
+              </li>
+            ))}
+          </>
+        ))}
+      </ul>
+      <div class="mobile-menu__foot">
+        <a href={company.phoneHref} class="mobile-menu__phone num">{company.phone}</a>
+        <a href={`mailto:${company.email}`} class="mobile-menu__mail">{company.email}</a>
+        <a href="/kontakt/" class="btn btn--primary">Projekt anfragen</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: color-mix(in oklab, var(--dust) 88%, transparent);
+    backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .site-header__bar {
+    display: flex;
+    align-items: center;
+    gap: var(--s-5);
+    min-height: 4.25rem;
+  }
+  .site-header__brand {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-right: .5rem;
+    text-decoration: none;
+    flex: none;
+  }
+
+  /* --- Desktop-Navigation --- */
+  .nav-desktop { display: none; margin-left: auto; }
+  .nav-desktop > ul { display: flex; align-items: center; gap: var(--s-2); list-style: none; padding: 0; margin: 0; }
+  .nav-desktop li { position: relative; }
+  .nav-desktop__link {
+    display: inline-flex;
+    align-items: center;
+    gap: .4em;
+    padding: .55rem .75rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: .9rem;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--fg);
+    transition: color var(--dur-ui) linear;
+  }
+  .nav-desktop__link:hover { color: var(--accent); }
+  .nav-desktop__link[data-current] { color: var(--accent); }
+  .nav-desktop__link[data-current]::after {
+    content: '';
+    position: absolute;
+    left: .75rem; right: .75rem; bottom: -1px;
+    height: 2px;
+    background: var(--accent);
+  }
+  .nav-desktop__chev { width: 10px; height: 6px; transition: transform var(--dur-ui) linear; }
+  [aria-expanded='true'] .nav-desktop__chev { transform: rotate(180deg); }
+
+  .submenu {
+    position: absolute;
+    top: calc(100% + 1px);
+    left: 0;
+    min-width: 20rem;
+    background: var(--paper);
+    border: 1px solid var(--rule-strong);
+    border-top-color: var(--accent);
+    border-top-width: 2px;
+    padding: var(--s-2);
+  }
+  .submenu ul { list-style: none; margin: 0; padding: 0; }
+  .submenu a {
+    display: flex;
+    flex-direction: column;
+    gap: .1rem;
+    padding: .65rem .75rem;
+    text-decoration: none;
+    transition: background-color var(--dur-ui) linear;
+  }
+  .submenu a:hover { background: color-mix(in oklab, var(--signal) 9%, transparent); }
+  .submenu a[data-current] { background: color-mix(in oklab, var(--signal) 12%, transparent); }
+  .submenu__label { font-family: var(--font-display); font-weight: 600; font-size: .9rem; }
+  .submenu__note {
+    font-family: var(--font-mono);
+    font-size: var(--t-mono);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  /* --- Aktionen rechts --- */
+  .site-header__actions { display: flex; align-items: center; gap: var(--s-4); margin-left: auto; }
+  .site-header__phone { display: none; font-size: .875rem; font-weight: 500; text-decoration: none; }
+  .site-header__phone:hover { color: var(--accent); }
+  .site-header__cta { display: none; min-height: 2.6rem; padding: .55rem 1.1rem; }
+
+  /* Auf Mobil ersetzt ein Anrufknopf die ausgeschriebene Nummer.
+     Beschriftet über aria-label — kein unbeschriftetes Icon. */
+  .site-header__call {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-right: -.25rem;
+    border: 1px solid var(--rule-strong);
+    transition: background-color var(--dur-ui) linear, border-color var(--dur-ui) linear;
+  }
+  .site-header__call:hover { border-color: var(--fg); background: color-mix(in oklab, var(--ink) 6%, transparent); }
+
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    min-height: 44px;
+    padding: .5rem .25rem .5rem .5rem;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: var(--t-mono);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+  .menu-toggle__bars { display: block; width: 22px; }
+  .menu-toggle__bars i {
+    display: block;
+    height: 2px;
+    background: currentColor;
+    transition: transform 200ms var(--ease-mass), opacity 120ms linear;
+  }
+  .menu-toggle__bars i + i { margin-top: 5px; }
+  [aria-expanded='true'] .menu-toggle__bars i:first-child { transform: translateY(3.5px) rotate(45deg); }
+  [aria-expanded='true'] .menu-toggle__bars i:last-child { transform: translateY(-3.5px) rotate(-45deg); }
+
+  /* --- Mobiles Vollbildpanel --- */
+  .mobile-menu {
+    position: fixed;
+    inset: 4.25rem 0 0;
+    background: var(--bg);
+    color: var(--fg);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-block: var(--s-6) calc(var(--s-8) + env(safe-area-inset-bottom));
+  }
+  .mobile-menu[hidden] { display: none; }
+  .mobile-menu__list { margin: 0; padding: 0; }
+  .mobile-menu__list > li > a {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--s-4);
+    padding: .9rem 0;
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: -.02em;
+    text-decoration: none;
+  }
+  .mobile-menu__list > li > a[data-current] { color: var(--accent); }
+  .mobile-menu__sub > a {
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+    padding-left: var(--s-5) !important;
+    color: var(--fg-muted);
+  }
+  .mobile-menu__note {
+    font-family: var(--font-mono);
+    font-size: var(--t-mono);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    opacity: .7;
+  }
+  .mobile-menu__foot { display: grid; gap: var(--s-4); margin-top: var(--s-7); }
+  .mobile-menu__phone { font-size: 1.75rem; font-weight: 500; text-decoration: none; }
+  .mobile-menu__mail { color: var(--fg-muted); text-decoration: none; word-break: break-all; }
+
+  @media (min-width: 62rem) {
+    .nav-desktop { display: block; }
+    .site-header__phone, .site-header__cta { display: inline-flex; }
+    .menu-toggle, .site-header__call { display: none; }
+    .mobile-menu { display: none !important; }
+  }
+</style>
+
+<script>
+  const header = document.querySelector<HTMLElement>('[data-header]');
+  const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+  const panel = document.querySelector<HTMLElement>('[data-mobile-menu]');
+
+  if (toggle && panel) {
+    const setOpen = (open: boolean) => {
+      toggle.setAttribute('aria-expanded', String(open));
+      panel.hidden = !open;
+      document.documentElement.style.overflow = open ? 'hidden' : '';
+      toggle.querySelector('.menu-toggle__text')!.textContent = open ? 'Schließen' : 'Menü';
+    };
+    toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+    panel.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('a')) setOpen(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') { setOpen(false); toggle.focus(); }
+    });
+    // Beim Wechsel auf Desktop-Breite aufräumen
+    matchMedia('(min-width: 62rem)').addEventListener('change', (e) => { if (e.matches) setOpen(false); });
+  }
+
+  // Untermenü: klickgesteuert, damit es auch auf Touch bedienbar ist
+  const subTrigger = document.querySelector<HTMLButtonElement>('[data-submenu-trigger]');
+  const submenu = document.getElementById('nav-leistungen');
+  if (subTrigger && submenu) {
+    const setSub = (open: boolean) => {
+      subTrigger.setAttribute('aria-expanded', String(open));
+      submenu.hidden = !open;
+    };
+    subTrigger.addEventListener('click', () => setSub(subTrigger.getAttribute('aria-expanded') !== 'true'));
+    document.addEventListener('click', (e) => {
+      if (!submenu.hidden && !submenu.contains(e.target as Node) && e.target !== subTrigger
+          && !subTrigger.contains(e.target as Node)) setSub(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !submenu.hidden) { setSub(false); subTrigger.focus(); }
+    });
+    submenu.addEventListener('focusout', (e) => {
+      if (!submenu.contains(e.relatedTarget as Node) && e.relatedTarget !== subTrigger) setSub(false);
+    });
+  }
+
+  // Kopfzeile verdichtet sich nach dem ersten Scroll
+  if (header) {
+    const onScroll = () => header.classList.toggle('is-scrolled', window.scrollY > 8);
+    onScroll();
+    addEventListener('scroll', onScroll, { passive: true });
+  }
+</script>

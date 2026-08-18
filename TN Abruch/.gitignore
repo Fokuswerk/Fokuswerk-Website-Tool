@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.astro/
+_research/
+.DS_Store
+.vercel/
+qa/shots/

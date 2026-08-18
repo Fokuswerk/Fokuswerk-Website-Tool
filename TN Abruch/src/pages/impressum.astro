@@ -1,0 +1,163 @@
+---
+import Base from '~/layouts/Base.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import { company } from '~/data/company';
+
+const breadcrumb = [
+  { name: 'Startseite', href: '/' },
+  { name: 'Impressum', href: '/impressum/' },
+];
+---
+
+<Base
+  title="Impressum — TN Abbruch eGbR"
+  description="Impressum und Anbieterkennzeichnung der TN-Abbruchunternehmen eGbR, Mackenstedter Str. 21, 27755 Delmenhorst."
+  breadcrumb={breadcrumb}
+  noindex
+>
+  <PageHeader eyebrow="Rechtliches" title="Impressum" breadcrumb={breadcrumb} />
+
+  <section class="section ruled">
+    <div class="wrap legal">
+      <div class="legal__body prose">
+        <h2>Angaben gemäß § 5 DDG</h2>
+        <p>
+          {company.legalName}<br />
+          {company.address.street}<br />
+          {company.address.postalCode} {company.address.city}
+        </p>
+        <p>
+          Registernummer: <span class="num">{company.register.number}</span><br />
+          Registergericht: {company.register.court}
+        </p>
+        <p>
+          Vertreten durch die Gesellschafter:<br />
+          {company.partners.map((p) => <>{p}<br /></>)}
+        </p>
+
+        <h3>Kontakt</h3>
+        <p>
+          Telefon: <a href={company.phoneHref} class="num">{company.phone}</a><br />
+          Telefax: <span class="num">{company.fax}</span><br />
+          E-Mail: <a href={`mailto:${company.email}`}>{company.email}</a>
+        </p>
+
+        <h3>Umsatzsteuer-Identifikationsnummer</h3>
+        <p>
+          Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:<br />
+          <span class="num">{company.vatId}</span>
+        </p>
+
+        <h3>Angaben zur Berufshaftpflichtversicherung</h3>
+        <p>
+          Name und Sitz des Versicherers:<br />
+          {company.insurer.name}<br />
+          {company.insurer.address}
+        </p>
+        <p>Geltungsraum der Versicherung: {company.insurer.scope}</p>
+
+        <h3>Streitschlichtung</h3>
+        <p>
+          Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS)
+          bereit: <a href="https://ec.europa.eu/consumers/odr" rel="noopener noreferrer" target="_blank">ec.europa.eu/consumers/odr</a>.
+          Unsere E-Mail-Adresse finden Sie oben im Impressum.
+        </p>
+        <p>
+          Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer
+          Verbraucherschlichtungsstelle teilzunehmen.
+        </p>
+
+        <h3>Haftung für Inhalte</h3>
+        <p>
+          Als Diensteanbieter sind wir gemäß § 7 Abs. 1 DDG für eigene Inhalte auf diesen
+          Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 DDG sind
+          wir als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte
+          fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine
+          rechtswidrige Tätigkeit hinweisen.
+        </p>
+        <p>
+          Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach
+          den allgemeinen Gesetzen bleiben hiervon unberührt. Eine diesbezügliche Haftung
+          ist jedoch erst ab dem Zeitpunkt der Kenntnis einer konkreten Rechtsverletzung
+          möglich. Bei Bekanntwerden von entsprechenden Rechtsverletzungen werden wir diese
+          Inhalte umgehend entfernen.
+        </p>
+
+        <h3>Haftung für Links</h3>
+        <p>
+          Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir
+          keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine
+          Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige
+          Anbieter oder Betreiber der Seiten verantwortlich. Die verlinkten Seiten wurden
+          zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft. Rechtswidrige
+          Inhalte waren zum Zeitpunkt der Verlinkung nicht erkennbar.
+        </p>
+        <p>
+          Eine permanente inhaltliche Kontrolle der verlinkten Seiten ist ohne konkrete
+          Anhaltspunkte einer Rechtsverletzung nicht zumutbar. Bei Bekanntwerden von
+          Rechtsverletzungen werden wir derartige Links umgehend entfernen.
+        </p>
+
+        <h3>Urheberrecht</h3>
+        <p>
+          Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten
+          unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung,
+          Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes
+          bedürfen der schriftlichen Zustimmung des jeweiligen Autors beziehungsweise
+          Erstellers.
+        </p>
+        <p>
+          Downloads und Kopien dieser Seite sind nur für den privaten, nicht kommerziellen
+          Gebrauch gestattet. Soweit die Inhalte auf dieser Seite nicht vom Betreiber
+          erstellt wurden, werden die Urheberrechte Dritter beachtet. Insbesondere werden
+          Inhalte Dritter als solche gekennzeichnet. Sollten Sie trotzdem auf eine
+          Urheberrechtsverletzung aufmerksam werden, bitten wir um einen entsprechenden
+          Hinweis. Bei Bekanntwerden von Rechtsverletzungen werden wir derartige Inhalte
+          umgehend entfernen.
+        </p>
+
+        <h3>Bildnachweis</h3>
+        <p>
+          Fotografien des Betriebshofs, des Fuhrparks und der Sanierungsarbeiten:
+          eigenes Bildmaterial der {company.legalName}. Die abstrakte Materialaufnahme
+          (Beton und Bewehrung) im Abschnitt „Wenn der Fund kommt" ist eine
+          KI-generierte Materialstudie und zeigt kein Projekt des Unternehmens. Logos
+          der Präqualifikation und der Fachverbände: jeweilige Rechteinhaber.
+        </p>
+      </div>
+
+      <aside class="legal__aside">
+        <span class="label">Kurzfassung</span>
+        <dl>
+          <div><dt>Firma</dt><dd>{company.legalName}</dd></div>
+          <div><dt>Anschrift</dt><dd>{company.address.street}, {company.address.postalCode} {company.address.city}</dd></div>
+          <div><dt>Register</dt><dd class="num">{company.register.number}</dd></div>
+          <div><dt>USt-IdNr.</dt><dd class="num">{company.vatId}</dd></div>
+          <div><dt>Telefon</dt><dd class="num">{company.phone}</dd></div>
+          <div><dt>E-Mail</dt><dd>{company.email}</dd></div>
+        </dl>
+      </aside>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .legal { display: grid; gap: var(--s-8) var(--gutter); }
+  @media (min-width: 64rem) {
+    .legal { grid-template-columns: minmax(0, 1fr) 20rem; gap: var(--s-9); align-items: start; }
+  }
+  .legal__body h2 { font-size: var(--t-h3); }
+  .legal__body h3 { font-size: 1.125rem; }
+  .legal__body p { font-size: .9375rem; color: var(--fg-muted); }
+  .legal__body a { color: var(--accent); }
+
+  .legal__aside { padding: var(--s-5); border: 1px solid var(--rule-strong); position: sticky; top: 6rem; }
+  .legal__aside dl { margin: var(--s-4) 0 0; }
+  .legal__aside > dl > div {
+    display: grid; gap: .2rem;
+    padding-block: var(--s-3);
+    border-bottom: 1px solid var(--rule);
+  }
+  .legal__aside dt { font-size: .75rem; color: var(--fg-muted); }
+  .legal__aside dd { margin: 0; font-size: .875rem; }
+</style>

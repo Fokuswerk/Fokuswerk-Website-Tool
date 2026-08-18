@@ -1,0 +1,215 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import SectionMarker from '~/components/SectionMarker.astro';
+import Cta from '~/components/Cta.astro';
+import { fleet } from '~/data/company';
+
+const refs = (await getCollection('referenzen')).map((r) => r.data);
+const count = (c: string) => refs.filter((r) => r.category.includes(c as any)).length;
+
+const breadcrumb = [
+  { name: 'Startseite', href: '/' },
+  { name: 'Leistungen', href: '/leistungen/' },
+];
+
+const services = [
+  {
+    no: '01',
+    href: '/leistungen/schadstoffsanierung/',
+    title: 'Schadstoffsanierung',
+    kicker: 'Asbest & KMF',
+    body: 'Ausbau weich- und festgebundener Asbestprodukte nach TRGS 519, künstliche Mineralfasern nach TRGS 521. Unterdruckhaltung, Personen- und Materialschleusen aus eigenem Bestand.',
+    bullets: ['Zulassung Ziffer 2.7 Anlage 3', '1- bis 4-Kammerschleusen', 'UHG 500 bis 12.500 cbm', 'Freimessung und Entsorgungsnachweis'],
+    refs: count('schadstoff'),
+  },
+  {
+    no: '02',
+    href: '/leistungen/rueckbau-entkernung/',
+    title: 'Rückbau & Entkernung',
+    kicker: 'Hand bis Industriegröße',
+    body: 'Alles herausnehmen, was nicht trägt: Ausbau, Technik, Estriche, Verkleidungen, Trennwände. Dazu Handabbruch, Maschinenabbruch und Demontage einzelner Bauteile.',
+    bullets: ['Referenzen bis 62.500 cbm', 'Bagger 1 t bis 18,5 t', 'Fassaden- und Anlagendemontage', 'auch im laufenden Betrieb'],
+    refs: count('entkernung') + count('demontage'),
+  },
+  {
+    no: '03',
+    href: '/leistungen/beton-bohren-saegen/',
+    title: 'Beton, Bohren & Sägen',
+    kicker: 'Kernbohrung & Trennschnitt',
+    body: 'Erschütterungsarme Trennverfahren für Durchbrüche und Öffnungen im Bestand, Balkonabbruch und Betonabbruch.',
+    bullets: ['Kernbohrungen', 'Wand- und Bodensägen', 'Balkonabbruch', 'Trennschnitte vor dem Rückbau'],
+    refs: count('beton'),
+  },
+  {
+    no: '04',
+    href: '/leistungen/entsorgung-container/',
+    title: 'Entsorgung & Container',
+    kicker: '2 bis 36 cbm',
+    body: 'Eigene Containerfahrzeuge, Behälter in allen gängigen Größen, getrennte Erfassung der Fraktionen und Entsorgung mit Nachweis.',
+    bullets: ['Mulden ab 2 cbm', 'Abrollcontainer bis 36 cbm', 'Bauschutt, Holz, Gips, Aushub', 'Asbest und KMF in zugelassenen Gebinden'],
+    refs: 0,
+  },
+];
+---
+
+<Base
+  title="Leistungen — TN Abbruch, Delmenhorst"
+  description="Vier Bereiche aus einer Hand: Asbest- und KMF-Sanierung nach TRGS 519 und 521, Entkernung und Rückbau, Kernbohrung und Betonsägen, Container und Entsorgung."
+  breadcrumb={breadcrumb}
+>
+  <PageHeader
+    eyebrow="Leistungen"
+    title="Vier Gewerke, die auf derselben Baustelle gebraucht werden."
+    lead="Ein Rückbauprojekt zerfällt fast nie in ein einzelnes Gewerk. Entkernung stößt auf Asbest, Asbest verlangt Abschottung, Abschottung braucht Öffnungen, und alles zusammen muss in Behälter. Wir decken die Kette vollständig ab."
+    breadcrumb={breadcrumb}
+    facts={[
+      { value: '20', label: 'dokumentierte Projekte' },
+      { value: '2.7', label: 'Anlage 3 — höchste Asbest-Stufe' },
+      { value: '9', label: 'Bagger und Radlader' },
+      { value: '36', label: 'cbm größter Container' },
+    ]}
+  />
+
+  <section class="section ruled">
+    <div class="wrap">
+      <SectionMarker no="01" label="Übersicht" rest="Vier Bereiche" />
+
+      <ul class="cards" role="list" data-rise-group>
+        {services.map((s) => (
+          <li class="card" data-rise>
+            <a href={s.href} class="card__link">
+              <span class="card__no num">{s.no}</span>
+              <span class="card__kicker label">{s.kicker}</span>
+              <h2 class="card__title">{s.title}</h2>
+              <p class="card__body">{s.body}</p>
+              <ul class="card__bullets" role="list">
+                {s.bullets.map((b) => <li>{b}</li>)}
+              </ul>
+              <span class="card__foot">
+                {s.refs > 0 && <span class="card__refs num">{s.refs} Referenzen</span>}
+                <span class="card__more">
+                  Ansehen
+                  <svg viewBox="0 0 12 12" aria-hidden="true" width="12" height="12"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+                </span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section zone-dark ruled">
+    <div class="wrap chain">
+      <div>
+        <SectionMarker no="02" label="Zusammenspiel" rest="Warum die Kette zählt" />
+        <h2>Die teuerste Stelle im Rückbau ist die Schnittstelle.</h2>
+        <p class="lead">
+          Wenn Entkernung, Sanierung und Entsorgung bei drei Firmen liegen, entstehen
+          Wartezeiten, an denen niemand schuld ist: Der Sanierer kann nicht anfangen,
+          weil der Bereich noch nicht frei ist. Der Container kommt nicht, weil die
+          Fraktion noch nicht steht. Der Rückbau ruht, weil das Gutachten fehlt.
+        </p>
+        <p class="muted">
+          Wir übernehmen die Kette komplett — und wenn während des Rückbaus ein Fund
+          auftaucht, ist der Betrieb, der ihn beseitigen darf, ohnehin schon vor Ort.
+        </p>
+      </div>
+
+      <dl class="chain__specs">
+        <div><dt>Bagger</dt><dd class="num">{fleet.excavators.join(' · ')}</dd></div>
+        <div><dt>Radlader</dt><dd class="num">{fleet.loaders.join(' · ')}</dd></div>
+        <div><dt>Containerfahrzeuge</dt><dd class="num">{fleet.containerVehicles}</dd></div>
+        <div><dt>Behältergrößen</dt><dd class="num">{fleet.containerRange}</dd></div>
+        <div><dt>Schleusen</dt><dd>{fleet.airlocks}</dd></div>
+        <div><dt>UHG-Geräte</dt><dd class="num">{fleet.uhg}</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <Cta
+    heading="Welche Gewerke braucht Ihr Projekt?"
+    body="Wenn Sie es selbst noch nicht sicher zuordnen können, ist das kein Problem — beschreiben Sie das Objekt, wir sagen Ihnen, was ansteht."
+  />
+</Base>
+
+<style>
+  .cards { display: grid; gap: 1px; margin: 0; background: var(--rule-strong); border: 1px solid var(--rule-strong); }
+  @media (min-width: 56rem) { .cards { grid-template-columns: repeat(2, 1fr); } }
+
+  .card { background: var(--bg); }
+  .card__link {
+    display: grid;
+    gap: var(--s-3);
+    height: 100%;
+    padding: var(--s-6);
+    text-decoration: none;
+    transition: background-color var(--dur-ui) linear;
+  }
+  @media (min-width: 56rem) { .card__link { padding: var(--s-7); } }
+  .card__link:hover { background: var(--paper); }
+
+  .card__no { color: var(--accent); font-size: var(--t-sm); }
+  .card__kicker { color: var(--fg-muted); }
+  .card__title { font-size: clamp(1.4rem, 3vw, 1.875rem); letter-spacing: -.025em; }
+  .card__body { color: var(--fg-muted); font-size: .9375rem; max-width: 46ch; }
+
+  .card__bullets { display: grid; gap: .3rem; margin: var(--s-3) 0 0; padding: 0; list-style: none; }
+  .card__bullets li {
+    position: relative;
+    padding-left: 1.1rem;
+    font-size: .875rem;
+  }
+  .card__bullets li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: .62em;
+    width: 7px; height: 1px;
+    background: var(--accent);
+  }
+
+  .card__foot {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--s-4);
+    margin-top: auto;
+    padding-top: var(--s-5);
+    border-top: 1px solid var(--rule);
+    align-self: end;
+  }
+  .card__refs { font-size: var(--t-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-muted); }
+  .card__more {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    margin-left: auto;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: .875rem;
+    color: var(--accent);
+  }
+  .card__link:hover .card__more svg { transform: translateX(3px); transition: transform var(--dur-ui) linear; }
+
+  .chain { display: grid; gap: var(--s-8) var(--gutter); }
+  @media (min-width: 64rem) {
+    .chain { grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: var(--s-9); align-items: start; }
+  }
+  .chain .lead { margin-top: var(--s-5); color: var(--fg-muted); }
+  .chain > div > p:last-of-type { margin-top: var(--s-4); font-size: .9375rem; }
+  .chain__specs { margin: 0; border-top: 1px solid var(--rule-strong); }
+  .chain__specs > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-1);
+    padding-block: var(--s-4);
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 30rem) {
+    .chain__specs > div { grid-template-columns: 10.5rem minmax(0, 1fr); gap: var(--s-4); }
+  }
+  .chain__specs dt { font-size: .8125rem; color: var(--fg-muted); }
+  .chain__specs dd { margin: 0; font-size: .875rem; }
+</style>

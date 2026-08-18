@@ -1,0 +1,761 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import SectionMarker from '~/components/SectionMarker.astro';
+import Cta from '~/components/Cta.astro';
+import { company, credentials, fleet, yearsActive } from '~/data/company';
+
+import heroImg from '~/assets/fuhrpark-hero.jpg';
+import ppeImg from '~/assets/schadstoffsanierung-hoch.jpg';
+import materialImg from '~/assets/material-beton-bewehrung.jpg';
+import yardImg from '~/assets/fuhrpark-16x9.jpg';
+import pqLogo from '~/assets/logo-pq-vob.png';
+import avnLogo from '~/assets/logo-avn.png';
+import navLogo from '~/assets/logo-nav.png';
+
+const refs = (await getCollection('referenzen')).map((r) => r.data).sort((a, b) => b.year - a.year);
+const highlights = [
+  'hochschule-fuer-technik-2001',
+  'ekz-raunheim-2009',
+  'rathaus-dietzenbach-2010',
+  'eads-airbus-bremen-2007',
+  'haus-der-buergerschaft-2009',
+  'gewoba-2019',
+].map((s) => refs.find((r) => r.slug === s)!);
+
+const largest = Math.max(...refs.filter((r) => r.unit === 'cbm').map((r) => r.quantity ?? 0));
+
+const services = [
+  {
+    no: '01',
+    href: '/leistungen/schadstoffsanierung/',
+    title: 'Schadstoffsanierung',
+    kicker: 'Asbest & KMF',
+    body: 'Ausbau weich- und festgebundener Asbestprodukte nach TRGS 519, künstliche Mineralfasern nach TRGS 521. Unterdruckhaltung mit eigenen Anlagen.',
+    figure: '12.500',
+    figureUnit: 'cbm UHG-Kapazität',
+  },
+  {
+    no: '02',
+    href: '/leistungen/rueckbau-entkernung/',
+    title: 'Rückbau & Entkernung',
+    kicker: 'Hand bis Industriegröße',
+    body: 'Entkernung, Handabbruch, Maschinenabbruch, Demontage. Vom einzelnen Balkon bis zum kompletten Gebäudeinnenleben.',
+    figure: '18,5',
+    figureUnit: 't größter Bagger',
+  },
+  {
+    no: '03',
+    href: '/leistungen/beton-bohren-saegen/',
+    title: 'Beton, Bohren & Sägen',
+    kicker: 'Kernbohrung & Trennschnitt',
+    body: 'Kernbohrungen, Wand- und Bodensägen, Balkonabbruch. Öffnungen im Bestand, wo Abbruch mit dem Meißel nicht in Frage kommt.',
+    figure: '1997',
+    figureUnit: 'seit dem Gründungsjahr',
+  },
+  {
+    no: '04',
+    href: '/leistungen/entsorgung-container/',
+    title: 'Entsorgung & Container',
+    kicker: '2 bis 36 cbm',
+    body: 'Eigene Containerfahrzeuge, Behälter von der Mulde bis zum 36-cbm-Container, getrennte Entsorgung und Recycling.',
+    figure: '2–36',
+    figureUnit: 'cbm Behältergrößen',
+  },
+];
+---
+
+<Base
+  title="TN Abbruch — Rückbau und Schadstoffsanierung, Delmenhorst"
+  description="Entkernung, Rückbau und Asbestsanierung seit 1997. Zugelassen nach TRGS 519 Ziffer 2.7 Anlage 3 — einschließlich weichgebundener Produkte. Delmenhorst bei Bremen."
+>
+  <!-- ══ HERO ═══════════════════════════════════════════════════════════ -->
+  <section class="hero zone-dark">
+    <div class="hero__media" data-hero-media>
+      <Image
+        src={heroImg}
+        alt="Betriebshof von TN Abbruch in Delmenhorst: Kettenbagger, Mercedes-Containerfahrzeuge, Baumaschinen, Abrollcontainer und Servicefahrzeuge in einer Reihe aufgestellt, davor Mitarbeiter des Unternehmens."
+        widths={[760, 1200, 1711]}
+        sizes="100vw"
+        loading="eager"
+        fetchpriority="high"
+        format="avif"
+        quality={72}
+      />
+    </div>
+
+    <div class="hero__body wrap">
+      <p class="hero__kicker label">
+        Delmenhorst bei Bremen<span aria-hidden="true"> · </span>seit {company.foundedYear}<span aria-hidden="true"> · </span>bundesweit
+      </p>
+
+      <h1 class="hero__head"><span>Rückbau unter</span> <span>Auflagen.</span></h1>
+
+      <p class="hero__lead">
+        Wir entkernen und sanieren Gebäude, in denen Asbest oder künstliche Mineralfasern
+        verbaut sind. Zugelassen nach <strong>TRGS 519 Ziffer 2.7 Anlage 3</strong> —
+        einschließlich weichgebundener Produkte.
+      </p>
+
+      <div class="hero__actions">
+        <a href="/kontakt/" class="btn btn--primary">
+          Projekt anfragen
+          <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        </a>
+        <a href="/leistungen/schadstoffsanierung/" class="btn btn--ghost">Schadstoffsanierung</a>
+      </div>
+    </div>
+
+    <div class="hero__data">
+      <div class="wrap hero__data-grid">
+        <div class="hero__stat">
+          <span class="hero__stat-v num"><span data-count={yearsActive}>{yearsActive}</span></span>
+          <span class="hero__stat-l">Jahre im Rückbau</span>
+        </div>
+        <div class="hero__stat">
+          <span class="hero__stat-v num"><span data-count={refs.length}>{refs.length}</span></span>
+          <span class="hero__stat-l">dokumentierte Projekte</span>
+        </div>
+        <div class="hero__stat">
+          <span class="hero__stat-v num"><span data-count={largest}>{largest.toLocaleString('de-DE')}</span></span>
+          <span class="hero__stat-l">cbm größte Entkernung</span>
+        </div>
+        <div class="hero__stat">
+          <span class="hero__stat-v num">2013</span>
+          <span class="hero__stat-l">präqualifiziert seit</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 01 NACHWEISE ═══════════════════════════════════════════════════ -->
+  <section class="section ruled" id="nachweise">
+    <div class="wrap">
+      <SectionMarker no="01" label="Nachweise" rest="Zulassung · Präqualifikation · Verbände" />
+
+      <div class="proof__head">
+        <h2>Drei Zeilen, die im<br />Vergabeverfahren entscheiden.</h2>
+        <p class="lead muted">
+          Im Rückbau wird nicht nach Sympathie vergeben, sondern nach Nachweisen. Diese
+          hier sind prüfbar — Nummer für Nummer.
+        </p>
+      </div>
+
+      <ol class="proof" role="list" data-rise-group>
+        {credentials.map((c, i) => (
+          <li class="proof__item" data-rise>
+            <span class="proof__no num">{String(i + 1).padStart(2, '0')}</span>
+            <div class="proof__main">
+              <h3>{c.title}</h3>
+              <p class="proof__body">{c.body}</p>
+            </div>
+            <span class="proof__tag num">{c.proof}</span>
+          </li>
+        ))}
+      </ol>
+
+      <div class="proof__marks">
+        <Image src={pqLogo} alt="Siegel Präqualifikation Bau nach VOB, Registernummer 010.053470" widths={[200, 400]} sizes="90px" />
+        <Image src={avnLogo} alt="Logo Abbruchverband Nord e.V." widths={[240, 480]} sizes="150px" />
+        <Image src={navLogo} alt="Logo Norddeutscher Asbest- und Gefahrstoffsanierungsverband Nord e.V." widths={[200, 400]} sizes="110px" />
+        <p class="proof__marks-note">
+          Verbandsmitgliedschaften und Präqualifikation. Die PQ-Nummer ist über die
+          Präqualifikationsliste des Vereins für die Präqualifikation von Bauunternehmen
+          nachprüfbar.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 02 LEISTUNGEN ══════════════════════════════════════════════════ -->
+  <section class="section ruled" id="leistungen">
+    <div class="wrap">
+      <SectionMarker no="02" label="Leistungen" rest="Vier Gewerke, ein Betriebshof" />
+
+      <div class="svc__head">
+        <h2>Was wir machen —<br />und was nicht.</h2>
+        <p class="lead muted">
+          Kein Neubau, kein Tiefbau, kein Erdbau. Wir sind auf den Weg zurück
+          spezialisiert: Gebäude leerräumen, Schadstoffe herausholen, Material trennen.
+        </p>
+      </div>
+
+      <ul class="svc" role="list" data-rise-group>
+        {services.map((s) => (
+          <li class="svc__item" data-rise>
+            <a href={s.href} class="svc__link">
+              <span class="svc__no num">{s.no}</span>
+              <span class="svc__title">
+                <span class="svc__kicker label">{s.kicker}</span>
+                <span class="svc__name">{s.title}</span>
+              </span>
+              <span class="svc__body">{s.body}</span>
+              <span class="svc__fig">
+                <span class="svc__fig-v num">{s.figure}</span>
+                <span class="svc__fig-l">{s.figureUnit}</span>
+              </span>
+              <svg class="svc__arrow" viewBox="0 0 14 14" aria-hidden="true"><path d="M1 7h11M8 2.5 12.5 7 8 11.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ 03 DER FUND ════════════════════════════════════════════════════ -->
+  <section class="section find zone-dark" id="fund">
+    <div class="find__bg" aria-hidden="true">
+      <Image src={materialImg} alt="" widths={[900, 1400, 2000]} sizes="100vw" format="avif" quality={55} loading="lazy" />
+    </div>
+
+    <div class="wrap find__inner">
+      <SectionMarker no="03" label="Ernstfall" rest="Gefahrstoffverordnung" />
+
+      <div class="find__grid">
+        <div class="find__text">
+          <h2>Wenn der Fund kommt.</h2>
+          <p class="lead">
+            Der Rückbau läuft, die Wand ist offen — und darunter liegt etwas, das im
+            Gutachten nicht stand. Ab diesem Moment ist die Baustelle keine Baustelle
+            mehr, sondern ein Gefahrstoffbereich.
+          </p>
+          <p class="find__note">
+            Die novellierte Gefahrstoffverordnung hat die Anforderungen an solche
+            Situationen verschärft. Für Bauherren heißt das vor allem eines: Der Fehler
+            danach ist teurer als die Erkundung davor. Wir sind der Betrieb, der auch die
+            Fälle übernimmt, bei denen andere abgeben müssen.
+          </p>
+          <a href="/leistungen/schadstoffsanierung/" class="btn btn--ghost">
+            Ablauf der Sanierung
+            <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+          </a>
+        </div>
+
+        <ol class="steps" role="list" data-rise-group>
+          <li class="steps__item" data-rise>
+            <span class="steps__no num">A</span>
+            <h3>Arbeiten einstellen</h3>
+            <p>Bereich sichern, niemand arbeitet weiter. Bei Verdacht gilt der Stoff als Gefahrstoff, bis das Gegenteil belegt ist.</p>
+          </li>
+          <li class="steps__item" data-rise>
+            <span class="steps__no num">B</span>
+            <h3>Feststellen, was da liegt</h3>
+            <p>Probenahme und Analyse durch ein akkreditiertes Labor. Erst das Ergebnis entscheidet über Verfahren und Schutzstufe.</p>
+          </li>
+          <li class="steps__item" data-rise>
+            <span class="steps__no num">C</span>
+            <h3>Schwarzbereich einrichten</h3>
+            <p>Abschottung, Unterdruckhaltung, Personen- und Materialschleuse. Bei uns 1- bis 4-Kammerschleusen, UHG-Geräte von {fleet.uhg}.</p>
+          </li>
+          <li class="steps__item" data-rise>
+            <span class="steps__no num">D</span>
+            <h3>Ausbauen, messen, freigeben</h3>
+            <p>Ausbau, Verpackung nach TRGS, Entsorgung mit Nachweis. Freimessung, dann Rückgabe des Bereichs — und der Rückbau läuft weiter.</p>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 04 REFERENZEN ══════════════════════════════════════════════════ -->
+  <section class="section ruled" id="referenzen">
+    <div class="wrap">
+      <SectionMarker no="04" label="Auftragsbuch" rest={`${refs[refs.length - 1].year}–${refs[0].year}`} />
+
+      <div class="ref__head">
+        <h2>Das Auftragsbuch,<br />nicht die Bildergalerie.</h2>
+        <p class="lead muted">
+          Auf Rückbaubaustellen wird selten fotografiert — im Schwarzbereich schon gar
+          nicht. Was bleibt, sind Auftraggeber, Leistung und Menge. Sechs von {refs.length}.
+        </p>
+      </div>
+
+      <ol class="ref" role="list" data-rise-group>
+        {highlights.map((r) => (
+          <li class="ref__item" data-rise>
+            <span class="ref__year num">{r.year}</span>
+            <span class="ref__client">
+              <span class="ref__name">{r.client}</span>
+              <span class="ref__sector label">{r.sector}</span>
+            </span>
+            <span class="ref__scope">{r.scope}</span>
+            {r.quantity
+              ? <span class="ref__qty"><span class="ref__qty-v num">{r.quantity.toLocaleString('de-DE')}</span><span class="ref__qty-u num">{r.unit}</span></span>
+              : <span class="ref__qty ref__qty--none" aria-hidden="true">—</span>}
+          </li>
+        ))}
+      </ol>
+
+      <a href="/referenzen/" class="btn btn--ghost ref__more">
+        Alle {refs.length} Projekte
+        <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- ══ 05 BETRIEBSHOF ═════════════════════════════════════════════════ -->
+  <section class="section yard zone-dark" id="betriebshof">
+    <div class="wrap">
+      <SectionMarker no="05" label="Betriebshof" rest="Mackenstedter Str. 21, Delmenhorst" />
+      <h2 class="yard__head">Alles steht auf dem eigenen Hof.</h2>
+    </div>
+
+    <figure class="yard__fig">
+      <Image src={yardImg} alt="Aufgereihter Fuhrpark von TN Abbruch auf dem Betriebshof in Delmenhorst: Kettenbagger, Mobilbagger, Containerfahrzeuge, Transporter und Abrollcontainer nebeneinander." widths={[760, 1200, 1600, 1139]} sizes="100vw" format="avif" quality={72} loading="lazy" />
+      <figcaption class="wrap label">Betriebshof Delmenhorst, aufgenommen 2020</figcaption>
+    </figure>
+
+    <div class="wrap yard__grid">
+      <div class="yard__text">
+        <p class="lead">
+          Wer Geräte mietet, ist von Verfügbarkeiten abhängig. Bagger, Radlader,
+          Containerfahrzeuge, Unterdruckanlagen und Schleusen gehören uns — das ist der
+          Grund, warum ein Team von {company.teamSize} Leuten Mengen bewegt, die man hier
+          nicht erwartet.
+        </p>
+        <a href="/unternehmen/" class="btn btn--ghost">
+          Über das Unternehmen
+          <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        </a>
+      </div>
+
+      <dl class="yard__specs">
+        <div><dt>Bagger</dt><dd class="num">{fleet.excavators.join(' · ')}</dd></div>
+        <div><dt>Radlader</dt><dd class="num">{fleet.loaders.join(' · ')}</dd></div>
+        <div><dt>Containerfahrzeuge</dt><dd class="num">{fleet.containerVehicles}</dd></div>
+        <div><dt>Behältergrößen</dt><dd class="num">{fleet.containerRange}</dd></div>
+        <div><dt>Schleusen</dt><dd>{fleet.airlocks}</dd></div>
+        <div><dt>UHG-Geräte</dt><dd class="num">{fleet.uhg}</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ══ 06 SCHADSTOFF-QUERVERWEIS ══════════════════════════════════════ -->
+  <section class="section ruled" id="schwarzbereich">
+    <div class="wrap black__grid">
+      <figure class="black__fig">
+        <Image src={ppeImg} alt="Zwei Mitarbeiter von TN Abbruch in weißer Einweg-Schutzkleidung mit Atemschutzmasken verpacken ausgebaute Mineralwolle in einen gekennzeichneten KMF-Sack nach TRGS 521." widths={[500, 800, 996]} sizes="(min-width: 60rem) 40vw, 100vw" format="avif" quality={72} loading="lazy" />
+        <figcaption class="label">KMF-Ausbau, Verpackung nach TRGS 521</figcaption>
+      </figure>
+
+      <div class="black__text">
+        <SectionMarker no="06" label="Schwarzbereich" />
+        <h2>Zwei Anzüge, vier Wände<br />und keine Faser zu viel.</h2>
+        <p class="lead muted">
+          Schadstoffsanierung ist kein Kraftakt, sondern eine Disziplinfrage:
+          Abschottung dicht, Unterdruck gehalten, Schleuse in der richtigen Reihenfolge
+          durchlaufen, Material korrekt verpackt und deklariert.
+        </p>
+        <p class="muted">
+          Unsere Mitarbeiter im Sanierungsbereich haben den Sachkundenachweis nach
+          TRGS 519 und TRGS 521. Die Präqualifikation für Asbestsanierungsarbeiten
+          besteht seit {2013}.
+        </p>
+        <a href="/leistungen/schadstoffsanierung/" class="btn btn--ghost">
+          Schadstoffsanierung im Detail
+          <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <Cta
+    heading="Sagen Sie uns, was zurückgebaut werden soll."
+    body="Ein Anruf reicht für die erste Einschätzung. Für ein Angebot brauchen wir Objekt, Umfang und — falls vorhanden — das Schadstoffgutachten."
+  />
+
+  <!-- ══ 07 KARRIERE ════════════════════════════════════════════════════ -->
+  <section class="jobs-strip">
+    <div class="wrap jobs-strip__inner">
+      <p class="label">Wir stellen ein</p>
+      <p class="jobs-strip__text">
+        Baufacharbeiter für Abbruch, Schadstoffsanierung und Kernbohrungen, Bauhelfer,
+        einen LKW-Fahrer und einen Platz- und Gerätewart.
+      </p>
+      <a href="/karriere/" class="jobs-strip__link">
+        Offene Stellen
+        <svg viewBox="0 0 12 12" aria-hidden="true" width="12" height="12"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      </a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ── Hero ───────────────────────────────────────────────────────────── */
+  .hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: min(82svh, 46rem);
+    background: var(--ink);
+    color: var(--dust);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .hero__media { position: absolute; inset: 0; z-index: -2; }
+  .hero__media :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 34% 58%;
+    opacity: .8;
+    filter: grayscale(.3) contrast(1.05);
+    transform: scale(var(--hero-scale, 1));
+    transform-origin: 50% 60%;
+    will-change: transform;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(to top, #0B0C0E 3%, rgba(11,12,14,.78) 48%, rgba(11,12,14,.24) 100%),
+      linear-gradient(100deg, rgba(11,12,14,.86) 0%, rgba(11,12,14,.55) 42%, rgba(11,12,14,.06) 78%);
+  }
+
+  .hero__body { padding-block: 7rem var(--s-7); }
+  @media (min-width: 48rem) { .hero__body { padding-block: 9rem var(--s-8); } }
+
+  /* Über dem Foto ist der Kontrast nicht messbar — deshalb bewusst hell. */
+  .hero__kicker { color: color-mix(in oklab, var(--dust) 84%, transparent); margin-bottom: var(--s-5); }
+
+  .hero__head {
+    font-size: var(--t-mega);
+    font-weight: 800;
+    font-stretch: 108%;
+    line-height: .88;
+    letter-spacing: -.035em;
+    max-width: 15ch;
+    text-wrap: initial;
+  }
+  .hero__head span { display: inline; }
+  @media (min-width: 34rem) { .hero__head span { display: block; } }
+  .hero__lead {
+    margin-top: var(--s-6);
+    max-width: 46ch;
+    font-size: var(--t-lead);
+    line-height: 1.5;
+    color: color-mix(in oklab, var(--dust) 78%, transparent);
+  }
+  .hero__lead strong { color: var(--dust); font-weight: 600; }
+
+  .hero__actions { display: flex; flex-wrap: wrap; gap: var(--s-4); margin-top: var(--s-7); }
+
+  .hero__data { border-top: 1px solid color-mix(in oklab, var(--dust) 20%, transparent); }
+  .hero__data-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0;
+  }
+  @media (min-width: 48rem) { .hero__data-grid { grid-template-columns: repeat(4, 1fr); } }
+
+  .hero__stat {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    padding: var(--s-5) var(--s-4) var(--s-5) 0;
+    border-left: 1px solid color-mix(in oklab, var(--dust) 20%, transparent);
+    padding-left: var(--s-4);
+  }
+  .hero__stat:first-child { border-left: 0; padding-left: 0; }
+  @media (max-width: 47.99rem) {
+    .hero__stat:nth-child(3) { border-left: 0; padding-left: 0; }
+    .hero__stat:nth-child(-n+2) { border-bottom: 1px solid color-mix(in oklab, var(--dust) 20%, transparent); }
+  }
+  .hero__stat-v {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 4.2vw, 2.6rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .hero__stat-l { font-size: .78rem; color: var(--steel-lift); line-height: 1.35; }
+
+  /* ── 01 Nachweise ───────────────────────────────────────────────────── */
+  .proof__head { display: grid; gap: var(--s-5); margin-bottom: var(--s-8); }
+  @media (min-width: 60rem) {
+    .proof__head { grid-template-columns: 1.15fr 1fr; gap: var(--s-9); align-items: end; }
+  }
+
+  .proof { margin: 0; padding: 0; border-bottom: 1px solid var(--rule); }
+  .proof__item {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: var(--s-2) var(--s-4);
+    padding-block: var(--s-6);
+    border-top: 1px solid var(--rule);
+    align-items: start;
+  }
+  @media (min-width: 60rem) {
+    .proof__item { grid-template-columns: 3rem minmax(0, 1fr) 18rem; gap: var(--s-6); align-items: baseline; }
+  }
+  .proof__no { color: var(--accent); font-size: var(--t-sm); padding-top: .2rem; }
+  .proof__main h3 { font-size: clamp(1.15rem, 2.2vw, 1.6rem); }
+  .proof__body { margin-top: var(--s-3); color: var(--fg-muted); max-width: 60ch; font-size: .9375rem; }
+  .proof__tag {
+    grid-column: 2;
+    font-size: var(--t-sm);
+    color: var(--accent);
+    border-left: 2px solid var(--accent);
+    padding-left: var(--s-4);
+  }
+  @media (min-width: 60rem) { .proof__tag { grid-column: 3; } }
+
+  .proof__marks {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-5) var(--s-6);
+    margin-top: var(--s-7);
+    padding: var(--s-6);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+  }
+  .proof__marks :global(img) {
+    width: auto;
+    height: 3.5rem;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+  }
+  .proof__marks :global(img:first-of-type) { height: 5rem; }
+  .proof__marks-note {
+    flex: 1 1 100%;
+    padding-top: var(--s-4);
+    border-top: 1px solid var(--rule);
+    font-size: .8125rem;
+    color: var(--fg-muted);
+    max-width: 72ch;
+  }
+
+  /* ── 02 Leistungen ──────────────────────────────────────────────────── */
+  .svc__head { display: grid; gap: var(--s-5); margin-bottom: var(--s-7); }
+  @media (min-width: 60rem) {
+    .svc__head { grid-template-columns: 1.15fr 1fr; gap: var(--s-9); align-items: end; }
+  }
+
+  .svc { margin: 0; padding: 0; border-bottom: 1px solid var(--rule-strong); }
+  .svc__item { border-top: 1px solid var(--rule); }
+  .svc__item:first-child { border-top-color: var(--rule-strong); }
+  .svc__link {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr auto;
+    gap: var(--s-3) var(--s-4);
+    padding-block: var(--s-6);
+    text-decoration: none;
+    transition: background-color var(--dur-ui) linear, padding-inline var(--dur-ui) linear;
+  }
+  .svc__link:hover { background: color-mix(in oklab, var(--signal) 7%, transparent); }
+  @media (min-width: 64rem) {
+    .svc__link {
+      grid-template-columns: 3rem 19.5rem minmax(0, 1fr) 11rem 1.5rem;
+      align-items: baseline;
+      gap: var(--s-6);
+      padding-block: var(--s-7);
+    }
+    .svc__link:hover { padding-inline: var(--s-4); }
+  }
+  .svc__no { color: var(--accent); font-size: var(--t-sm); }
+  .svc__title { display: flex; flex-direction: column; gap: .35rem; }
+  .svc__kicker { color: var(--fg-muted); }
+  .svc__name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.35rem, 3vw, 1.95rem);
+    letter-spacing: -.025em;
+    line-height: 1.04;
+    hyphens: none;
+    overflow-wrap: normal;
+  }
+  .svc__body { grid-column: 2 / -1; color: var(--fg-muted); font-size: .9375rem; max-width: 52ch; }
+  @media (min-width: 64rem) { .svc__body { grid-column: auto; } }
+  .svc__fig { grid-column: 2 / -1; display: flex; align-items: baseline; gap: .5rem; }
+  @media (min-width: 64rem) { .svc__fig { grid-column: auto; flex-direction: column; gap: .2rem; } }
+  .svc__fig-v {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .svc__fig-l { font-size: .75rem; color: var(--fg-muted); }
+  .svc__arrow { display: none; width: 14px; height: 14px; color: var(--accent); align-self: center; }
+  @media (min-width: 64rem) { .svc__arrow { display: block; } }
+  .svc__link:hover .svc__arrow { transform: translateX(3px); transition: transform var(--dur-ui) linear; }
+
+  /* ── 03 Der Fund ────────────────────────────────────────────────────── */
+  .find { position: relative; isolation: isolate; overflow: hidden; }
+  .find__bg { position: absolute; inset: 0; z-index: -2; }
+  .find__bg :global(img) { width: 100%; height: 100%; object-fit: cover; opacity: .16; }
+  .find::after {
+    content: ''; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(105deg, #0B0C0E 26%, rgba(11,12,14,.55) 100%);
+  }
+  .find__grid { display: grid; gap: var(--s-8) var(--gutter); }
+  @media (min-width: 64rem) {
+    .find__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: var(--s-9); }
+  }
+  .find__text .lead { margin-top: var(--s-5); }
+  .find__note { margin-top: var(--s-5); color: var(--fg-muted); max-width: 50ch; font-size: .9375rem; }
+  .find__text .btn { margin-top: var(--s-6); }
+
+  .steps { margin: 0; padding: 0; display: grid; gap: 0; }
+  .steps__item {
+    display: grid;
+    grid-template-columns: 2.25rem 1fr;
+    gap: var(--s-2) var(--s-4);
+    padding-block: var(--s-5);
+    border-top: 1px solid var(--rule);
+  }
+  .steps__item:last-child { border-bottom: 1px solid var(--rule); }
+  .steps__no {
+    grid-row: span 2;
+    color: var(--accent);
+    font-size: var(--t-sm);
+    letter-spacing: .1em;
+    padding-top: .2rem;
+  }
+  .steps__item h3 { font-size: 1.0625rem; letter-spacing: -.005em; }
+  .steps__item p { color: var(--fg-muted); font-size: .9375rem; max-width: 48ch; }
+
+  /* ── 04 Referenzen ──────────────────────────────────────────────────── */
+  .ref__head { display: grid; gap: var(--s-5); margin-bottom: var(--s-7); }
+  @media (min-width: 60rem) {
+    .ref__head { grid-template-columns: 1.15fr 1fr; gap: var(--s-9); align-items: end; }
+  }
+  .ref { margin: 0; padding: 0; border-bottom: 1px solid var(--rule-strong); }
+  .ref__item {
+    display: grid;
+    grid-template-columns: 4rem minmax(0, 1fr);
+    gap: var(--s-2) var(--s-4);
+    padding-block: var(--s-5);
+    border-top: 1px solid var(--rule);
+    align-items: baseline;
+  }
+  .ref__item:first-child { border-top-color: var(--rule-strong); }
+  @media (min-width: 60rem) {
+    .ref__item { grid-template-columns: 4.5rem minmax(0, 1.05fr) minmax(0, 1fr) 8.5rem; gap: var(--s-6); }
+  }
+  .ref__year { color: var(--accent); font-size: var(--t-sm); }
+  .ref__client { display: flex; flex-direction: column; gap: .2rem; }
+  .ref__name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.05rem, 2vw, 1.375rem);
+    letter-spacing: -.015em;
+  }
+  .ref__sector { color: var(--fg-muted); }
+  .ref__scope { grid-column: 2; color: var(--fg-muted); font-size: .9375rem; }
+  @media (min-width: 60rem) { .ref__scope { grid-column: auto; } }
+  .ref__qty { grid-column: 2; display: flex; align-items: baseline; gap: .4rem; }
+  @media (min-width: 60rem) {
+    .ref__qty { grid-column: auto; justify-content: flex-end; gap: .35rem; }
+  }
+  .ref__qty-v {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.25rem, 2.6vw, 1.75rem);
+    letter-spacing: -.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .ref__qty-u { font-size: .75rem; color: var(--fg-muted); flex: none; }
+  .ref__qty--none { color: var(--rule-strong); }
+  .ref__more { margin-top: var(--s-7); }
+
+  /* ── 05 Betriebshof ─────────────────────────────────────────────────── */
+  .yard { padding-bottom: 0; }
+  .yard__head { max-width: 18ch; }
+  .yard__fig { margin: var(--s-8) 0 0; }
+  .yard__fig :global(img) {
+    width: 100%;
+    height: clamp(15rem, 34vw, 27rem);
+    object-fit: cover;
+    object-position: 42% 55%;
+    border-block: 1px solid var(--rule);
+  }
+  .yard__fig figcaption { margin-top: var(--s-3); color: var(--fg-muted); }
+
+  .yard__grid { display: grid; gap: var(--s-7) var(--gutter); padding-block: var(--s-8) var(--section); }
+  @media (min-width: 60rem) {
+    .yard__grid { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: var(--s-9); align-items: start; }
+  }
+  .yard__text .lead { color: var(--fg-muted); }
+  .yard__text .btn { margin-top: var(--s-6); }
+  .yard__specs { margin: 0; border-top: 1px solid var(--rule-strong); }
+  .yard__specs > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-1);
+    padding-block: var(--s-4);
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 30rem) {
+    .yard__specs > div { grid-template-columns: 10.5rem minmax(0, 1fr); gap: var(--s-4); }
+  }
+  .yard__specs dt { font-size: .8125rem; color: var(--fg-muted); }
+  .yard__specs dd { margin: 0; font-size: .875rem; }
+
+  /* ── 06 Schwarzbereich ──────────────────────────────────────────────── */
+  .black__grid { display: grid; gap: var(--s-7) var(--gutter); }
+  @media (min-width: 60rem) {
+    .black__grid { grid-template-columns: minmax(0, .82fr) minmax(0, 1fr); gap: var(--s-9); align-items: center; }
+  }
+  .black__fig { margin: 0; }
+  .black__fig :global(img) { width: 100%; height: auto; border: 1px solid var(--rule); }
+  .black__fig figcaption { margin-top: var(--s-3); color: var(--fg-muted); }
+  .black__text h2 { margin-top: var(--s-2); }
+  .black__text .lead { margin-top: var(--s-5); }
+  .black__text > p:last-of-type { margin-top: var(--s-4); font-size: .9375rem; }
+  .black__text .btn { margin-top: var(--s-6); }
+
+  /* ── 07 Karriere-Streifen ───────────────────────────────────────────── */
+  .jobs-strip { background: var(--dust-2); border-top: 1px solid var(--rule); }
+  .jobs-strip__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--s-3) var(--s-6);
+    padding-block: var(--s-6);
+  }
+  .jobs-strip__text { flex: 1 1 24ch; font-size: .9375rem; }
+  .jobs-strip__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    gap: .5rem;
+    margin-left: auto;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: .9375rem;
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 2px solid currentColor;
+    padding-bottom: 2px;
+  }
+  .jobs-strip__link:hover { color: var(--signal-deep); }
+</style>
+
+<script>
+  // Hero: sehr langsamer Scale. Nur solange der Hero sichtbar ist.
+  const media = document.querySelector<HTMLElement>('[data-hero-media]');
+  const hero = media?.parentElement;
+  if (media && hero && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    let ticking = false;
+    const update = () => {
+      const p = Math.min(Math.max(-hero.getBoundingClientRect().top / hero.offsetHeight, 0), 1);
+      hero.style.setProperty('--hero-scale', String(1 + p * 0.06));
+      ticking = false;
+    };
+    const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) addEventListener('scroll', onScroll, { passive: true });
+      else removeEventListener('scroll', onScroll);
+    });
+    io.observe(hero);
+    update();
+  }
+</script>

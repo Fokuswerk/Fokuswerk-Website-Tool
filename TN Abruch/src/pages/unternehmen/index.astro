@@ -1,0 +1,304 @@
+---
+import { Image } from 'astro:assets';
+import Base from '~/layouts/Base.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import SectionMarker from '~/components/SectionMarker.astro';
+import Cta from '~/components/Cta.astro';
+import { company, credentials, fleet, wasteStreams, yearsActive } from '~/data/company';
+
+import yardImg from '~/assets/fuhrpark-panorama.jpg';
+import machinesImg from '~/assets/fuhrpark-maschinen.jpg';
+import pqLogo from '~/assets/logo-pq-vob.png';
+import avnLogo from '~/assets/logo-avn.png';
+import navLogo from '~/assets/logo-nav.png';
+
+const breadcrumb = [
+  { name: 'Startseite', href: '/' },
+  { name: 'Unternehmen', href: '/unternehmen/' },
+];
+
+const timeline = [
+  { year: '1997', title: 'Gründung in Bremen', body: 'Thomas Nowak und Thorsten Martens gründen das Unternehmen. Im Jahr darauf die erste dokumentierte Großentkernung: 12.500 cbm im Einkaufscentrum Kiel.' },
+  { year: '2000', title: 'Umzug nach Delmenhorst', body: 'Der Firmensitz wird in das Industriegebiet Delmenhorst verlegt — der Betriebshof, auf dem bis heute der gesamte Gerätebestand steht.' },
+  { year: '2001', title: 'Größtes Einzelprojekt', body: '62.500 cbm umbauter Raum entkernt an der Hochschule für Technik. Bis heute die größte Menge in unserer Projektdokumentation.' },
+  { year: '2013', title: 'Präqualifikation', body: 'Eintrag in die Präqualifikationsliste unter der Registernummer 010.053470 — für Abbruch- und Asbestsanierungsarbeiten.' },
+  { year: '2021', title: 'Konzentration auf den Rückbau', body: 'Die Bürgersteigreinigung Delmenhorst wird verkauft. Seitdem gilt die volle Kapazität dem Rückbau und der Schadstoffsanierung.' },
+  { year: 'heute', title: 'eGbR mit zehn Mitarbeitern', body: `Geführt von ${company.partners.join(' und ')}. Eingetragen beim ${company.register.court} unter ${company.register.number}.` },
+];
+---
+
+<Base
+  title="Unternehmen — TN Abbruch eGbR, Delmenhorst"
+  description="1997 in Bremen gegründet, seit 2000 in Delmenhorst. Rund 10 Mitarbeiter, eigener Gerätebestand, präqualifiziert seit 2013 unter PQ-Nr. 010.053470."
+  breadcrumb={breadcrumb}
+>
+  <PageHeader
+    eyebrow="Unternehmen"
+    title="Zehn Leute, ein Betriebshof, achtundzwanzig Jahre."
+    lead={`Gegründet ${company.foundedYear} in Bremen, seit ${company.relocatedYear} in Delmenhorst. Wir sind bewusst klein geblieben und stattdessen tief geworden: in einem Bereich, in dem die Zulassung mehr zählt als die Mitarbeiterzahl.`}
+    breadcrumb={breadcrumb}
+    facts={[
+      { value: String(company.foundedYear), label: 'gegründet in Bremen' },
+      { value: String(company.teamSize), label: 'Mitarbeiter' },
+      { value: String(yearsActive), label: 'Jahre im Rückbau' },
+      { value: 'DE', label: 'Einsatzgebiet bundesweit' },
+    ]}
+  />
+
+  <!-- Haltung -->
+  <section class="section ruled">
+    <div class="wrap">
+      <SectionMarker no="01" label="Haltung" rest="Warum klein und tief" />
+      <div class="pos">
+        <div class="prose">
+          <h2>Ein Rückbaubetrieb wächst nicht über die Zahl der Leute.</h2>
+          <p>
+            Es gibt größere Abbruchunternehmen im Nordwesten, und sie können Dinge, die
+            wir nicht können — Erdbau, Spezialtiefbau, Großgeräte. Wir haben uns anders
+            entschieden.
+          </p>
+          <p>
+            Der Bereich, in dem wir arbeiten, skaliert nicht über Maschinenpark, sondern
+            über Zulassung, Sachkunde und Disziplin. Ob eine Asbestsanierung sauber war,
+            entscheidet sich an der Abschottung und an der Frage, ob jemand die Schleuse
+            in der richtigen Reihenfolge durchlaufen hat. Dafür braucht es keine fünfzig
+            Leute, sondern Leute, die das seit Jahren machen.
+          </p>
+          <p>
+            Was daraus folgt, ist die Projektliste: Kasernen, Hochschulen, Krankenhäuser,
+            Rathäuser, Sparkassen, ein Parlamentsgebäude, ein Flugzeugwerk. Objekte, bei
+            denen die Vergabestelle vorher genau hinsieht.
+          </p>
+        </div>
+
+        <figure class="pos__fig">
+          <Image src={machinesImg} alt="Baumaschinen von TN Abbruch auf dem Betriebshof: Kettenbagger und Containerfahrzeuge mit Firmenbeschriftung." widths={[500, 718]} sizes="(min-width: 64rem) 38vw, 100vw" format="avif" quality={74} loading="lazy" />
+          <figcaption class="label">Betriebshof Delmenhorst</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Chronik -->
+  <section class="section zone-dark ruled">
+    <div class="wrap">
+      <SectionMarker no="02" label="Chronik" rest={`${company.foundedYear} bis heute`} />
+      <h2 class="chr__head">Was seitdem passiert ist.</h2>
+
+      <ol class="chr" role="list" data-rise-group>
+        {timeline.map((t) => (
+          <li data-rise>
+            <span class="chr__y num">{t.year}</span>
+            <div class="chr__b">
+              <h3>{t.title}</h3>
+              <p>{t.body}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- Nachweise -->
+  <section class="section ruled">
+    <div class="wrap">
+      <SectionMarker no="03" label="Nachweise" rest="Prüfbar" />
+      <h2 class="cred__head">Zulassungen, Mitgliedschaften, Nummern.</h2>
+
+      <div class="cred">
+        <ol class="cred__list" role="list">
+          {credentials.map((c, i) => (
+            <li>
+              <span class="cred__no num">{String(i + 1).padStart(2, '0')}</span>
+              <div>
+                <h3>{c.title}</h3>
+                <p>{c.body}</p>
+              </div>
+              <span class="cred__tag num">{c.proof}</span>
+            </li>
+          ))}
+        </ol>
+
+        <aside class="cred__side">
+          <div class="cred__marks">
+            <Image src={pqLogo} alt="Siegel Präqualifikation Bau nach VOB mit Registernummer 010.053470" widths={[200, 400]} sizes="88px" />
+            <Image src={avnLogo} alt="Logo Abbruchverband Nord e.V." widths={[240, 480]} sizes="140px" />
+            <Image src={navLogo} alt="Logo Norddeutscher Asbest- und Gefahrstoffsanierungsverband Nord e.V." widths={[200, 400]} sizes="110px" />
+          </div>
+          <dl class="cred__facts">
+            <div><dt>Rechtsform</dt><dd>eGbR</dd></div>
+            <div><dt>Register</dt><dd class="num">{company.register.number}, {company.register.court}</dd></div>
+            <div><dt>Gesellschafter</dt><dd>{company.partners.join(', ')}</dd></div>
+            <div><dt>USt-IdNr.</dt><dd class="num">{company.vatId}</dd></div>
+            <div><dt>Betriebshaftpflicht</dt><dd>{company.insurer.name}</dd></div>
+          </dl>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fuhrpark -->
+  <section class="section ruled fleet">
+    <div class="wrap">
+      <SectionMarker no="04" label="Gerätebestand" rest="Alles im Eigentum" />
+      <h2 class="fleet__head">Was auf dem Hof steht.</h2>
+    </div>
+
+    <figure class="fleet__fig">
+      <Image src={yardImg} alt="Panorama des Betriebshofs von TN Abbruch in Delmenhorst mit aufgereihten Baumaschinen, Containerfahrzeugen, Transportern und Abrollcontainern." widths={[760, 1200, 1495]} sizes="100vw" format="avif" quality={74} loading="lazy" />
+      <figcaption class="wrap label">Betriebshof Delmenhorst, aufgenommen 2020</figcaption>
+    </figure>
+
+    <div class="wrap fleet__grid">
+      <dl class="fleet__specs">
+        <div><dt>Bagger</dt><dd class="num">{fleet.excavators.join(' · ')}</dd></div>
+        <div><dt>Radlader</dt><dd class="num">{fleet.loaders.join(' · ')}</dd></div>
+        <div><dt>Containerfahrzeuge</dt><dd class="num">{fleet.containerVehicles}</dd></div>
+        <div><dt>Behältergrößen</dt><dd class="num">{fleet.containerRange}</dd></div>
+        <div><dt>Personenschleusen</dt><dd>{fleet.airlocks}</dd></div>
+        <div><dt>Unterdruckhaltung</dt><dd class="num">{fleet.uhg}</dd></div>
+        <div><dt>Materialschleusen</dt><dd>im Bestand</dd></div>
+      </dl>
+
+      <div class="fleet__waste">
+        <span class="label">Entsorgungsfraktionen</span>
+        <ul role="list">
+          {wasteStreams.map((w) => <li>{w}</li>)}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sponsoring -->
+  <section class="section zone-dark ruled">
+    <div class="wrap spon">
+      <div>
+        <SectionMarker no="05" label="Region" rest="Seit 2019" />
+        <h2>Wir sponsern die 5e.</h2>
+      </div>
+      <p class="lead">
+        Seit 2019 unterstützen wir die Jugendmannschaft 5e des FC Bremen Huchting.
+        Kein Kommunikationsprogramm, sondern die Sorte Engagement, die ein Betrieb aus
+        der Region gegenüber seiner Region hat.
+      </p>
+    </div>
+  </section>
+
+  <Cta
+    heading="Sprechen Sie mit uns, bevor Sie ausschreiben."
+    body="Bei ungeklärter Schadstofflage lohnt ein Gespräch vor dem Leistungsverzeichnis — es erspart Nachträge, die niemand eingeplant hat."
+  />
+</Base>
+
+<style>
+  .pos { display: grid; gap: var(--s-8) var(--gutter); }
+  @media (min-width: 64rem) {
+    .pos { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: var(--s-9); align-items: start; }
+  }
+  .pos__fig { margin: 0; }
+  .pos__fig :global(img) { width: 100%; height: auto; border: 1px solid var(--rule); }
+  .pos__fig figcaption { margin-top: var(--s-3); color: var(--fg-muted); }
+
+  .chr__head { max-width: 20ch; margin-bottom: var(--s-7); }
+  .chr { margin: 0; border-top: 1px solid var(--rule-strong); }
+  .chr li {
+    display: grid;
+    grid-template-columns: 5rem minmax(0, 1fr);
+    gap: var(--s-2) var(--s-5);
+    padding-block: var(--s-5);
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 48rem) { .chr li { grid-template-columns: 7rem minmax(0, 1fr); } }
+  .chr__y {
+    color: var(--accent);
+    font-size: clamp(1rem, 2.2vw, 1.25rem);
+    font-weight: 500;
+  }
+  .chr__b h3 { font-size: 1.125rem; }
+  .chr__b p { margin-top: .4rem; color: var(--fg-muted); font-size: .9375rem; max-width: 62ch; }
+
+  .cred__head { max-width: 22ch; margin-bottom: var(--s-7); }
+  .cred { display: grid; gap: var(--s-8) var(--gutter); }
+  @media (min-width: 68rem) {
+    .cred { grid-template-columns: minmax(0, 1.35fr) minmax(0, .65fr); gap: var(--s-9); align-items: start; }
+  }
+  .cred__list { margin: 0; border-top: 1px solid var(--rule-strong); }
+  .cred__list li {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    gap: var(--s-2) var(--s-4);
+    padding-block: var(--s-5);
+    border-bottom: 1px solid var(--rule);
+  }
+  .cred__no { color: var(--accent); font-size: var(--t-sm); padding-top: .2rem; }
+  .cred__list h3 { font-size: 1.0625rem; }
+  .cred__list p { margin-top: .4rem; color: var(--fg-muted); font-size: .9375rem; max-width: 58ch; }
+  .cred__tag {
+    grid-column: 2;
+    font-size: .75rem;
+    color: var(--accent);
+    border-left: 2px solid var(--accent);
+    padding-left: var(--s-3);
+  }
+
+  .cred__side { display: grid; gap: var(--s-6); align-content: start; }
+  @media (min-width: 68rem) { .cred__side { position: sticky; top: 6rem; } }
+  .cred__marks {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s-5) var(--s-7);
+    padding: var(--s-5);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+  }
+  .cred__marks :global(img) { width: auto; height: 3.25rem; object-fit: contain; mix-blend-mode: multiply; }
+  .cred__marks :global(img:first-of-type) { height: 4.5rem; }
+  .cred__facts { margin: 0; border-top: 1px solid var(--rule-strong); }
+  .cred__facts > div {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr);
+    gap: var(--s-3);
+    padding-block: var(--s-3);
+    border-bottom: 1px solid var(--rule);
+  }
+  .cred__facts dt { font-size: .8125rem; color: var(--fg-muted); }
+  .cred__facts dd { margin: 0; font-size: .8125rem; }
+
+  .fleet { padding-bottom: 0; }
+  .fleet__head { max-width: 16ch; }
+  .fleet__fig { margin: var(--s-7) 0 0; }
+  .fleet__fig :global(img) {
+    width: 100%;
+    height: clamp(13rem, 30vw, 24rem);
+    object-fit: cover;
+    object-position: 40% 55%;
+    border-block: 1px solid var(--rule);
+  }
+  .fleet__fig figcaption { margin-top: var(--s-3); color: var(--fg-muted); }
+  .fleet__grid { display: grid; gap: var(--s-7) var(--gutter); padding-block: var(--s-7) var(--section); }
+  @media (min-width: 60rem) { .fleet__grid { grid-template-columns: minmax(0, 1.4fr) minmax(0, .6fr); gap: var(--s-8); align-items: start; } }
+  .fleet__specs { margin: 0; border-top: 1px solid var(--rule-strong); }
+  .fleet__specs > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-1);
+    padding-block: var(--s-4);
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 30rem) {
+    .fleet__specs > div { grid-template-columns: 10.5rem minmax(0, 1fr); gap: var(--s-4); }
+  }
+  .fleet__specs dt { font-size: .8125rem; color: var(--fg-muted); }
+  .fleet__specs dd { margin: 0; font-size: .875rem; }
+  .fleet__waste ul { display: grid; gap: .4rem; margin: var(--s-4) 0 0; padding: 0; list-style: none; }
+  .fleet__waste li { position: relative; padding-left: 1.1rem; font-size: .875rem; }
+  .fleet__waste li::before {
+    content: ''; position: absolute; left: 0; top: .62em;
+    width: 7px; height: 1px; background: var(--accent);
+  }
+
+  .spon { display: grid; gap: var(--s-5) var(--gutter); }
+  @media (min-width: 60rem) { .spon { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-9); align-items: end; } }
+  .spon .lead { color: var(--fg-muted); }
+</style>

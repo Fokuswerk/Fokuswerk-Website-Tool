@@ -1,0 +1,57 @@
+---
+import Base from '~/layouts/Base.astro';
+import { company, nav } from '~/data/company';
+---
+
+<Base title="Seite nicht gefunden — TN Abbruch" description="Diese Seite existiert nicht." noindex>
+  <section class="nf zone-dark">
+    <div class="wrap">
+      <p class="label nf__code">Fehler 404</p>
+      <h1>Diese Seite wurde zurückgebaut.</h1>
+      <p class="lead">
+        Der Link stimmt nicht mehr oder die Seite gibt es nicht. Hier die Wege, die
+        sicher funktionieren:
+      </p>
+
+      <ul class="nf__nav" role="list">
+        <li><a href="/">Startseite</a></li>
+        {nav.map((i) => <li><a href={i.href}>{i.label}</a></li>)}
+        <li><a href="/kontakt/">Kontakt</a></li>
+      </ul>
+
+      <p class="nf__call">
+        Oder direkt anrufen: <a href={company.phoneHref} class="num">{company.phone}</a>
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf {
+    background: var(--bg);
+    color: var(--fg);
+    min-height: 74svh;
+    padding-block: calc(4.25rem + var(--s-9)) var(--s-9);
+    display: flex;
+    align-items: center;
+  }
+  .nf__code { color: var(--accent); margin-bottom: var(--s-4); }
+  .nf h1 { font-size: var(--t-h1); max-width: 18ch; }
+  .nf .lead { margin-top: var(--s-5); color: var(--fg-muted); }
+  .nf__nav {
+    display: grid; gap: 0; margin: var(--s-7) 0 0; padding: 0;
+    list-style: none; border-top: 1px solid var(--rule); max-width: 34rem;
+  }
+  .nf__nav li { border-bottom: 1px solid var(--rule); }
+  .nf__nav a {
+    display: block;
+    padding-block: var(--s-4);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.25rem;
+    text-decoration: none;
+  }
+  .nf__nav a:hover { color: var(--accent); }
+  .nf__call { margin-top: var(--s-6); }
+  .nf__call a { color: var(--accent); font-weight: 500; }
+</style>

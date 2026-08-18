@@ -1,0 +1,675 @@
+---
+import Base from '~/layouts/Base.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import SectionMarker from '~/components/SectionMarker.astro';
+import { company } from '~/data/company';
+
+const breadcrumb = [
+  { name: 'Startseite', href: '/' },
+  { name: 'Kontakt', href: '/kontakt/' },
+];
+
+const leistungen = [
+  'Schadstoffsanierung',
+  'Rückbau und Entkernung',
+  'Beton, Bohren und Sägen',
+  'Entsorgung und Container',
+  'Weiß ich noch nicht',
+];
+
+const objektarten = [
+  'Wohngebäude',
+  'Gewerbe- oder Bürogebäude',
+  'Industrie- oder Hallenbau',
+  'Öffentliches Gebäude',
+  'Einzelnes Bauteil',
+  'Sonstiges',
+];
+---
+
+<Base
+  title="Kontakt & Projektanfrage — TN Abbruch, Delmenhorst"
+  description="Projektanfrage an TN Abbruch: Rückbau, Entkernung, Asbest- und KMF-Sanierung, Container. Telefon 04221 80 25 61, info@tn-abbruch.de, Mackenstedter Str. 21, 27755 Delmenhorst."
+  breadcrumb={breadcrumb}
+  schema={{
+    '@type': 'ContactPage',
+    name: 'Kontakt TN Abbruch',
+    mainEntity: { '@id': 'https://www.tn-abbruch.de/#organisation' },
+  }}
+>
+  <PageHeader
+    eyebrow="Kontakt"
+    title="Der schnellste Weg zum Angebot ist ein Anruf."
+    lead="Das Formular unten stellt genau die Fragen, die wir sonst am Telefon stellen müssten. Je vollständiger die Antworten, desto schneller kommt die Kalkulation — Pflichtfelder sind aber nur Name und ein Rückweg."
+    breadcrumb={breadcrumb}
+  />
+
+  <!-- Direktwege zuerst -->
+  <section class="section ruled">
+    <div class="wrap">
+      <SectionMarker no="01" label="Direkt" rest="Ohne Formular" />
+
+      <div class="direct">
+        <a href={company.phoneHref} class="direct__card direct__card--main">
+          <span class="label">Telefon</span>
+          <span class="direct__big num">{company.phone}</span>
+          <span class="direct__note">Für alles, was sich in fünf Minuten klären lässt.</span>
+        </a>
+
+        <a href={`mailto:${company.email}`} class="direct__card">
+          <span class="label">E-Mail</span>
+          <span class="direct__mid">{company.email}</span>
+          <span class="direct__note">Gutachten, Pläne und Leistungsverzeichnisse gern direkt im Anhang.</span>
+        </a>
+
+        <div class="direct__card">
+          <span class="label">Betriebshof</span>
+          <address class="direct__mid">
+            {company.legalName}<br />
+            {company.address.street}<br />
+            {company.address.postalCode} {company.address.city}
+          </address>
+          <span class="direct__note num">Fax {company.fax}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Anfrageformular -->
+  <section class="section zone-dark ruled" id="anfrage">
+    <div class="wrap">
+      <SectionMarker no="02" label="Projektanfrage" rest="Drei Schritte" />
+
+      <div class="fw">
+        <form
+          class="form"
+          id="anfrage-form"
+          method="post"
+          action="/api/anfrage"
+          novalidate
+          data-wizard
+        >
+          <!-- Fortschritt -->
+          <ol class="steps-bar" role="list" data-steps-bar aria-hidden="true">
+            <li data-step-dot="1" class="is-active"><span class="num">1</span> Projekt</li>
+            <li data-step-dot="2"><span class="num">2</span> Umfang</li>
+            <li data-step-dot="3"><span class="num">3</span> Kontakt</li>
+          </ol>
+
+          <!-- Schritt 1 -->
+          <fieldset class="fs" data-step="1">
+            <legend class="fs__legend"><span class="num">01</span> Worum geht es?</legend>
+
+            <div class="field">
+              <span class="field__label" id="lab-leistung">Welche Leistung brauchen Sie?</span>
+              <p class="field__hint">Mehrfachauswahl möglich.</p>
+              <div class="choices" role="group" aria-labelledby="lab-leistung">
+                {leistungen.map((l) => (
+                  <label class="choice">
+                    <input type="checkbox" name="leistung" value={l} />
+                    <span>{l}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="objektart">Was für ein Objekt ist es?</label>
+              <select id="objektart" name="objektart">
+                <option value="">Bitte wählen</option>
+                {objektarten.map((o) => <option value={o}>{o}</option>)}
+              </select>
+            </div>
+
+            <div class="field field--split">
+              <div>
+                <label class="field__label" for="ort">Ort oder Postleitzahl</label>
+                <input type="text" id="ort" name="ort" autocomplete="address-level2" inputmode="text" />
+              </div>
+              <div>
+                <label class="field__label" for="baujahr">Baujahr, wenn bekannt</label>
+                <input type="text" id="baujahr" name="baujahr" inputmode="numeric" placeholder="z. B. 1974" />
+                <p class="field__hint">Vor 1993 gebaut? Dann ist Asbest ein Thema.</p>
+              </div>
+            </div>
+
+            <div class="fs__nav">
+              <button type="button" class="btn btn--primary" data-next>
+                Weiter
+                <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              </button>
+            </div>
+          </fieldset>
+
+          <!-- Schritt 2 -->
+          <fieldset class="fs" data-step="2">
+            <legend class="fs__legend"><span class="num">02</span> Wie groß ist die Sache?</legend>
+
+            <div class="field field--split">
+              <div>
+                <label class="field__label" for="menge">Fläche oder Volumen</label>
+                <input type="text" id="menge" name="menge" placeholder="z. B. 800 qm oder 3.500 cbm" />
+              </div>
+              <div>
+                <label class="field__label" for="zeitraum">Wunschzeitraum</label>
+                <input type="text" id="zeitraum" name="zeitraum" placeholder="z. B. ab KW 12 oder Frühjahr 2027" />
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="field__label" id="lab-schadstoff">Besteht Verdacht auf Schadstoffe?</span>
+              <div class="choices choices--radio" role="radiogroup" aria-labelledby="lab-schadstoff">
+                <label class="choice"><input type="radio" name="schadstoff" value="Ja, bekannt" /><span>Ja, bekannt</span></label>
+                <label class="choice"><input type="radio" name="schadstoff" value="Vermutlich" /><span>Vermutlich</span></label>
+                <label class="choice"><input type="radio" name="schadstoff" value="Nein" /><span>Nein</span></label>
+                <label class="choice"><input type="radio" name="schadstoff" value="Unklar" /><span>Unklar</span></label>
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="field__label" id="lab-gutachten">Liegt ein Schadstoffgutachten vor?</span>
+              <div class="choices choices--radio" role="radiogroup" aria-labelledby="lab-gutachten">
+                <label class="choice"><input type="radio" name="gutachten" value="Ja" /><span>Ja</span></label>
+                <label class="choice"><input type="radio" name="gutachten" value="Nein" /><span>Nein</span></label>
+                <label class="choice"><input type="radio" name="gutachten" value="In Auftrag" /><span>In Auftrag</span></label>
+              </div>
+              <p class="field__hint">
+                Kein Gutachten? Kein Problem — wir sagen Ihnen, was Sie beauftragen müssen.
+              </p>
+            </div>
+
+            <div class="fs__nav">
+              <button type="button" class="btn btn--ghost" data-prev>Zurück</button>
+              <button type="button" class="btn btn--primary" data-next>
+                Weiter
+                <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              </button>
+            </div>
+          </fieldset>
+
+          <!-- Schritt 3 -->
+          <fieldset class="fs" data-step="3">
+            <legend class="fs__legend"><span class="num">03</span> Wer sind Sie?</legend>
+
+            <div class="field field--split">
+              <div>
+                <label class="field__label" for="name">Name <span class="req">*</span></label>
+                <input type="text" id="name" name="name" autocomplete="name" required aria-describedby="err-name" />
+                <p class="field__err" id="err-name" hidden></p>
+              </div>
+              <div>
+                <label class="field__label" for="firma">Firma</label>
+                <input type="text" id="firma" name="firma" autocomplete="organization" />
+              </div>
+            </div>
+
+            <div class="field field--split">
+              <div>
+                <label class="field__label" for="telefon">Telefon</label>
+                <input type="tel" id="telefon" name="telefon" autocomplete="tel" inputmode="tel" aria-describedby="err-kontakt" />
+              </div>
+              <div>
+                <label class="field__label" for="email">E-Mail</label>
+                <input type="email" id="email" name="email" autocomplete="email" inputmode="email" aria-describedby="err-kontakt" />
+              </div>
+              <p class="field__err field__err--wide" id="err-kontakt" hidden></p>
+              <p class="field__hint field__hint--wide">Telefon oder E-Mail — eines von beiden brauchen wir.</p>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="nachricht">Worauf sollen wir besonders achten?</label>
+              <textarea id="nachricht" name="nachricht" rows="4" placeholder="Zugänglichkeit, laufender Betrieb, Termindruck, Besonderheiten am Objekt …"></textarea>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="dateien">Unterlagen anhängen</label>
+              <input type="file" id="dateien" name="dateien" multiple accept=".pdf,.jpg,.jpeg,.png,.heic,.doc,.docx,.xls,.xlsx" />
+              <p class="field__hint">Gutachten, Pläne, Leistungsverzeichnis, Fotos. Zusammen bis 15 MB.</p>
+            </div>
+
+            <div class="field field--consent">
+              <label class="consent">
+                <input type="checkbox" name="einwilligung" required aria-describedby="err-consent" />
+                <span>
+                  Ich bin damit einverstanden, dass meine Angaben zur Bearbeitung dieser
+                  Anfrage verarbeitet werden. Einzelheiten in der
+                  <a href="/datenschutz/">Datenschutzerklärung</a>.
+                </span>
+              </label>
+              <p class="field__err" id="err-consent" hidden></p>
+            </div>
+
+            <!-- Spamfalle, für Menschen unsichtbar -->
+            <div class="hp" aria-hidden="true">
+              <label for="webseite">Webseite (bitte freilassen)</label>
+              <input type="text" id="webseite" name="webseite" tabindex="-1" autocomplete="off" />
+            </div>
+
+            <div class="fs__nav">
+              <button type="button" class="btn btn--ghost" data-prev>Zurück</button>
+              <button type="submit" class="btn btn--primary">
+                Anfrage senden
+                <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              </button>
+            </div>
+
+            <p class="form__fallback">
+              Formular macht Probleme? Schreiben Sie einfach an
+              <a href={`mailto:${company.email}`}>{company.email}</a> oder rufen Sie an:
+              <a href={company.phoneHref} class="num">{company.phone}</a>.
+            </p>
+          </fieldset>
+
+          <p class="form__status" role="status" data-form-status></p>
+        </form>
+
+        <aside class="aside">
+          <h2 class="aside__h">Was danach passiert</h2>
+          <ol class="aside__steps" role="list">
+            <li><span class="num">01</span><span>Wir melden uns telefonisch oder per E-Mail und klären, was noch fehlt.</span></li>
+            <li><span class="num">02</span><span>Bei klarer Faktenlage kalkulieren wir ohne Ortstermin. Sonst kommen wir vorbei.</span></li>
+            <li><span class="num">03</span><span>Sie bekommen ein Angebot mit Leistungsumfang, Bauzeit und Entsorgungswegen.</span></li>
+          </ol>
+
+          <div class="aside__box">
+            <span class="label">Für ein belastbares Angebot hilft uns</span>
+            <ul role="list">
+              <li>Objektadresse und Baujahr</li>
+              <li>Grundrisse oder Bestandspläne</li>
+              <li>Schadstoffgutachten mit Analyseergebnissen</li>
+              <li>Leistungsverzeichnis, falls vorhanden</li>
+              <li>Angaben zu Zugänglichkeit und laufendem Betrieb</li>
+            </ul>
+          </div>
+
+          <p class="aside__privacy">
+            Ihre Angaben werden ausschließlich zur Bearbeitung dieser Anfrage genutzt.
+            Diese Website setzt keine Cookies zu Analyse- oder Werbezwecken und lädt
+            keine Ressourcen von Dritten.
+          </p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- Anfahrt -->
+  <section class="section ruled">
+    <div class="wrap">
+      <SectionMarker no="03" label="Anfahrt" rest="Gewerbegebiet Delmenhorst" />
+      <div class="loc">
+        <div>
+          <h2>So finden Sie uns.</h2>
+          <p class="lead muted">
+            Der Betriebshof liegt im Industriegebiet an der Mackenstedter Straße, rund
+            zwanzig Autominuten südwestlich von Bremen und eine knappe halbe Stunde von
+            Oldenburg.
+          </p>
+          <p class="loc__links">
+            <a href="https://www.openstreetmap.org/?mlat=53.0355&mlon=8.6903#map=16/53.0355/8.6903" rel="noopener noreferrer" target="_blank">In OpenStreetMap öffnen</a>
+            <a href="https://www.google.com/maps/search/?api=1&query=Mackenstedter+Str.+21+27755+Delmenhorst" rel="noopener noreferrer" target="_blank">In Google Maps öffnen</a>
+          </p>
+          <p class="loc__note">
+            Beide Links öffnen einen externen Kartendienst in einem neuen Tab. Wir binden
+            keine Karte direkt ein, damit beim Aufruf dieser Seite keine Daten an Dritte
+            übertragen werden.
+          </p>
+        </div>
+
+        <address class="loc__adr">
+          <span class="label">Anschrift</span>
+          <p class="loc__adr-t">
+            {company.legalName}<br />
+            {company.address.street}<br />
+            {company.address.postalCode} {company.address.city}
+          </p>
+          <a href={company.phoneHref} class="num loc__phone">{company.phone}</a>
+          <a href={`mailto:${company.email}`}>{company.email}</a>
+        </address>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ── Direktwege ─────────────────────────────────────────────────────── */
+  .direct { display: grid; gap: 1px; background: var(--rule-strong); border: 1px solid var(--rule-strong); }
+  @media (min-width: 52rem) { .direct { grid-template-columns: repeat(3, 1fr); } }
+  .direct__card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    padding: var(--s-6);
+    background: var(--bg);
+    text-decoration: none;
+    transition: background-color var(--dur-ui) linear;
+  }
+  a.direct__card:hover { background: var(--paper); }
+  .direct__big {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3.6vw, 2.125rem);
+    font-weight: 700;
+    letter-spacing: -.03em;
+  }
+  .direct__mid {
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    font-style: normal;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+  a.direct__card:hover .direct__big, a.direct__card:hover .direct__mid { color: var(--accent); }
+  .direct__note { margin-top: auto; font-size: .8125rem; color: var(--fg-muted); }
+
+  /* ── Formular ───────────────────────────────────────────────────────── */
+  .fw { display: grid; gap: var(--s-8) var(--gutter); }
+  @media (min-width: 68rem) {
+    .fw { grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr); gap: var(--s-9); align-items: start; }
+  }
+
+  .steps-bar {
+    scroll-margin-top: 6rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2) var(--s-5);
+    margin: 0 0 var(--s-7);
+    padding-bottom: var(--s-4);
+    border-bottom: 1px solid var(--rule-strong);
+    list-style: none;
+  }
+  .steps-bar li {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .5rem;
+    font-family: var(--font-mono);
+    font-size: var(--t-mono);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+  .steps-bar li .num {
+    display: inline-grid;
+    place-items: center;
+    width: 1.5rem; height: 1.5rem;
+    border: 1px solid currentColor;
+    font-size: .68rem;
+  }
+  .steps-bar li.is-active { color: var(--accent); }
+  .steps-bar li.is-done { color: var(--fg); }
+
+  .fs { border: 0; padding: 0; margin: 0; }
+  .fs[hidden] { display: none; }
+  .fs__legend {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-4);
+    padding: 0 0 var(--s-6);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.375rem, 3vw, 1.875rem);
+    letter-spacing: -.025em;
+  }
+  .fs__legend .num { color: var(--accent); font-size: .875rem; }
+
+  .field { margin-bottom: var(--s-6); }
+  .field--split { display: grid; gap: var(--s-5); }
+  @media (min-width: 40rem) { .field--split { grid-template-columns: 1fr 1fr; } }
+
+  .field__label {
+    display: block;
+    margin-bottom: var(--s-2);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: .9375rem;
+  }
+  .req { color: var(--accent); }
+  .field__hint { margin-top: var(--s-2); font-size: .8125rem; color: var(--fg-muted); }
+  .field__hint--wide, .field__err--wide { grid-column: 1 / -1; margin-top: 0; }
+
+  .field__err {
+    margin-top: var(--s-2);
+    font-size: .8125rem;
+    color: var(--warn-lift);
+    display: flex;
+    align-items: baseline;
+    gap: .4rem;
+  }
+  .field__err::before { content: '▲'; font-size: .6em; }
+  .field__err[hidden] { display: none; }
+
+  input[type='text'], input[type='tel'], input[type='email'], select, textarea {
+    width: 100%;
+    padding: .75rem .875rem;
+    min-height: 3rem;
+    background: color-mix(in oklab, var(--dust) 8%, transparent);
+    border: 1px solid var(--rule-strong);
+    color: var(--fg);
+    font-size: 1rem;
+    transition: border-color var(--dur-ui) linear, background-color var(--dur-ui) linear;
+  }
+  textarea { min-height: 7rem; resize: vertical; }
+  input:hover, select:hover, textarea:hover { border-color: var(--fg); }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); outline-offset: 1px; }
+  input[aria-invalid='true'] { border-color: var(--warn-lift); }
+  ::placeholder { color: color-mix(in oklab, var(--fg-muted) 80%, transparent); }
+  input[type='file'] { padding: .7rem .875rem; font-size: .875rem; }
+  select {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                      linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position: calc(100% - 1.15rem) 1.3rem, calc(100% - .8rem) 1.3rem;
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 2.5rem;
+  }
+
+  .choices { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+  .choice {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    min-height: 44px;
+    padding: .55rem .9rem;
+    border: 1px solid var(--rule-strong);
+    cursor: pointer;
+    font-size: .9375rem;
+    transition: border-color var(--dur-ui) linear, background-color var(--dur-ui) linear;
+  }
+  .choice:hover { border-color: var(--fg); }
+  .choice input { width: 14px; height: 14px; accent-color: var(--signal-lift); flex: none; }
+  .choice:has(input:checked) {
+    border-color: var(--accent);
+    background: color-mix(in oklab, var(--signal-lift) 16%, transparent);
+  }
+  .choice:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .field--consent { padding-top: var(--s-2); }
+  .consent { display: flex; gap: var(--s-3); align-items: flex-start; font-size: .875rem; cursor: pointer; }
+  .consent input { margin-top: .25rem; width: 16px; height: 16px; accent-color: var(--signal-lift); flex: none; }
+  .consent a { color: var(--accent); }
+
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+  .fs__nav { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-7); }
+
+  .form__fallback { margin-top: var(--s-6); font-size: .8125rem; color: var(--fg-muted); }
+  .form__fallback a { color: var(--accent); }
+
+  .form__status { margin-top: var(--s-5); font-size: .9375rem; }
+  .form__status:empty { display: none; }
+  .form__status[data-tone='error'] { color: var(--warn-lift); }
+  .form__status[data-tone='ok'] { color: var(--accent); }
+
+  /* ── Seitenspalte ───────────────────────────────────────────────────── */
+  .aside { display: grid; gap: var(--s-6); align-content: start; }
+  .aside__h { font-size: 1.25rem; }
+  .aside__steps { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
+  .aside__steps li {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    gap: var(--s-3);
+    padding-block: var(--s-4);
+    border-bottom: 1px solid var(--rule);
+    font-size: .875rem;
+  }
+  .aside__steps .num { color: var(--accent); font-size: .75rem; }
+
+  .aside__box { padding: var(--s-5); border: 1px solid var(--rule-strong); }
+  .aside__box ul { display: grid; gap: .4rem; margin: var(--s-3) 0 0; padding: 0; list-style: none; }
+  .aside__box li { position: relative; padding-left: 1.1rem; font-size: .875rem; }
+  .aside__box li::before {
+    content: ''; position: absolute; left: 0; top: .62em;
+    width: 7px; height: 1px; background: var(--accent);
+  }
+  .aside__privacy { font-size: .78rem; color: var(--fg-muted); }
+
+  /* ── Anfahrt ────────────────────────────────────────────────────────── */
+  .loc { display: grid; gap: var(--s-7) var(--gutter); }
+  @media (min-width: 60rem) {
+    .loc { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: var(--s-9); align-items: start; }
+  }
+  .loc .lead { margin-top: var(--s-5); }
+  .loc__links { display: flex; flex-wrap: wrap; gap: var(--s-5); margin-top: var(--s-5); }
+  .loc__links a {
+    display: inline-flex; align-items: center; min-height: 44px;
+    color: var(--accent); font-weight: 500;
+  }
+  .loc__note { margin-top: var(--s-4); font-size: .8125rem; color: var(--fg-muted); max-width: 60ch; }
+  .loc__adr {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-1);
+    padding: var(--s-6);
+    background: var(--paper);
+    border: 1px solid var(--rule-strong);
+    font-style: normal;
+  }
+  .loc__adr a { display: inline-flex; align-items: center; min-height: 44px; }
+  .loc__adr-t { font-size: .9375rem; }
+  .loc__phone {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    text-decoration: none;
+  }
+  .loc__adr a:hover { color: var(--accent); }
+</style>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-wizard]');
+  if (form) {
+    const steps = [...form.querySelectorAll<HTMLFieldSetElement>('.fs')];
+    const dots = [...form.querySelectorAll<HTMLElement>('[data-step-dot]')];
+    const status = form.querySelector<HTMLElement>('[data-form-status]');
+    let current = 0;
+    let attempted = false;   // Live-Prüfung erst nach dem ersten Absendeversuch
+
+    const show = (i: number, moved = true) => {
+      current = i;
+      steps.forEach((s, n) => (s.hidden = n !== i));
+      dots.forEach((d, n) => {
+        d.classList.toggle('is-active', n === i);
+        d.classList.toggle('is-done', n < i);
+      });
+      if (!moved) return;
+
+      // Kein eigener Scroll: der Fokus auf das erste Feld holt es bei Bedarf
+      // von selbst ins Bild — sofort und nur so weit wie nötig.
+      steps[i].querySelector<HTMLElement>('input, select, textarea, button')?.focus();
+    };
+
+    const setError = (id: string, msg: string | null, field?: HTMLElement) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = msg ?? '';
+      el.hidden = !msg;
+      field?.setAttribute('aria-invalid', msg ? 'true' : 'false');
+    };
+
+    const validateLast = () => {
+      let ok = true;
+      const name = form.elements.namedItem('name') as HTMLInputElement;
+      const tel = form.elements.namedItem('telefon') as HTMLInputElement;
+      const mail = form.elements.namedItem('email') as HTMLInputElement;
+      const consent = form.elements.namedItem('einwilligung') as HTMLInputElement;
+
+      if (!name.value.trim()) { setError('err-name', 'Bitte tragen Sie Ihren Namen ein.', name); ok = false; }
+      else setError('err-name', null, name);
+
+      if (!tel.value.trim() && !mail.value.trim()) {
+        setError('err-kontakt', 'Wir brauchen eine Telefonnummer oder eine E-Mail-Adresse.', mail);
+        ok = false;
+      } else if (mail.value.trim() && !mail.checkValidity()) {
+        setError('err-kontakt', 'Diese E-Mail-Adresse sieht nicht vollständig aus.', mail);
+        ok = false;
+      } else setError('err-kontakt', null, mail);
+
+      if (!consent.checked) { setError('err-consent', 'Ohne diese Einwilligung dürfen wir die Anfrage nicht bearbeiten.'); ok = false; }
+      else setError('err-consent', null);
+
+      if (!ok) {
+        const target = form.querySelector<HTMLElement>('[aria-invalid="true"]')
+          ?? (consent.checked ? null : consent);
+        target?.focus();
+      }
+      return ok;
+    };
+
+    // Wizard-Modus erst aktivieren, wenn JS läuft. Ohne JS bleibt es ein langes Formular.
+    show(0, false);
+    form.querySelectorAll('[data-next]').forEach((b) =>
+      b.addEventListener('click', () => show(Math.min(current + 1, steps.length - 1))),
+    );
+    form.querySelectorAll('[data-prev]').forEach((b) =>
+      b.addEventListener('click', () => show(Math.max(current - 1, 0))),
+    );
+
+    // Fehler räumen sich beim Korrigieren auf — aber erst, nachdem einmal
+    // abgeschickt wurde. Sonst springen Meldungen ein, während jemand noch tippt,
+    // verschieben das Layout und schlucken den nächsten Klick.
+    ['name', 'telefon', 'email'].forEach((n) => {
+      const el = form.elements.namedItem(n) as HTMLInputElement;
+      el?.addEventListener('blur', () => { if (attempted) validateLast(); });
+    });
+    (form.elements.namedItem('einwilligung') as HTMLInputElement)
+      ?.addEventListener('change', () => { if (attempted) validateLast(); });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      attempted = true;
+      if (!validateLast()) return;
+
+      const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+      const original = submit.textContent;
+      submit.disabled = true;
+      submit.textContent = 'Wird gesendet …';
+      if (status) { status.textContent = ''; status.removeAttribute('data-tone'); }
+
+      try {
+        const res = await fetch(form.action, { method: 'POST', body: new FormData(form) });
+        if (!res.ok) throw new Error(String(res.status));
+        location.href = '/kontakt/danke/';
+      } catch {
+        if (status) {
+          status.dataset.tone = 'error';
+          status.innerHTML =
+            'Die Anfrage konnte gerade nicht übermittelt werden. Bitte rufen Sie an ' +
+            '(<a href="tel:+494221802561" class="num">04221 80 25 61</a>) oder schreiben Sie an ' +
+            '<a href="mailto:info@tn-abbruch.de">info@tn-abbruch.de</a>.';
+        }
+        submit.disabled = false;
+        submit.textContent = original;
+      }
+    });
+
+    // Leistung aus der URL vorbelegen (?leistung=Schadstoffsanierung)
+    const pre = new URL(location.href).searchParams.get('leistung');
+    if (pre) {
+      form.querySelectorAll<HTMLInputElement>('input[name="leistung"]').forEach((c) => {
+        if (c.value === pre) c.checked = true;
+      });
+    }
+  }
+</script>

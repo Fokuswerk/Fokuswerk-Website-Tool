@@ -1,0 +1,175 @@
+---
+import '~/styles/fonts.css';
+import '~/styles/system.css';
+import Header from '~/components/Header.astro';
+import Footer from '~/components/Footer.astro';
+import ActionBar from '~/components/ActionBar.astro';
+import { company } from '~/data/company';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Ohne führenden Slash-Pfad wird die aktuelle URL benutzt. */
+  canonical?: string;
+  image?: string;
+  noindex?: boolean;
+  schema?: Record<string, unknown> | Record<string, unknown>[];
+  breadcrumb?: { name: string; href: string }[];
+}
+
+const { title, description, canonical, image = '/og.jpg', noindex, schema, breadcrumb } = Astro.props;
+const site = Astro.site!;
+const url = new URL(canonical ?? Astro.url.pathname, site).href;
+const ogImage = new URL(image, site).href;
+const fullTitle = title.includes('TN Abbruch') ? title : `${title} — TN Abbruch, Delmenhorst`;
+
+const organisation = {
+  '@type': 'GeneralContractor',
+  '@id': `${site.origin}/#organisation`,
+  name: company.brandName,
+  legalName: company.legalName,
+  url: site.origin + '/',
+  telephone: company.phoneE164,
+  faxNumber: '+494221802562',
+  email: company.email,
+  foundingDate: String(company.foundedYear),
+  vatID: company.vatId,
+  numberOfEmployees: { '@type': 'QuantitativeValue', value: company.teamSize },
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: company.address.street,
+    postalCode: company.address.postalCode,
+    addressLocality: company.address.city,
+    addressCountry: company.address.country,
+  },
+  geo: { '@type': 'GeoCoordinates', latitude: company.address.lat, longitude: company.address.lon },
+  areaServed: { '@type': 'Country', name: 'Deutschland' },
+  knowsAbout: [
+    'Asbestsanierung nach TRGS 519',
+    'KMF-Sanierung nach TRGS 521',
+    'Entkernung',
+    'Rückbau',
+    'Kernbohrung',
+    'Containerdienst',
+  ],
+  hasCredential: [
+    { '@type': 'EducationalOccupationalCredential', credentialCategory: 'Zulassung',
+      name: 'TRGS 519 Ziffer 2.7 Anlage 3 — weichgebundener Asbest' },
+    { '@type': 'EducationalOccupationalCredential', credentialCategory: 'Präqualifikation',
+      name: 'Präqualifikation Bau, PQ-Nr. 010.053470' },
+  ],
+  memberOf: [
+    { '@type': 'Organization', name: 'Abbruchverband Nord e.V. (AVN)' },
+    { '@type': 'Organization', name: 'Norddeutscher Asbest- und Gefahrstoffsanierungsverband Nord e.V. (NAV)' },
+  ],
+};
+
+const graph: Record<string, unknown>[] = [
+  organisation,
+  { '@type': 'WebSite', '@id': `${site.origin}/#website`, url: site.origin + '/',
+    name: company.brandName, inLanguage: 'de-DE', publisher: { '@id': `${site.origin}/#organisation` } },
+];
+if (breadcrumb?.length) {
+  graph.push({
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumb.map((b, i) => ({
+      '@type': 'ListItem', position: i + 1, name: b.name, item: new URL(b.href, site).href,
+    })),
+  });
+}
+if (schema) graph.push(...(Array.isArray(schema) ? schema : [schema]));
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={url} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+
+    <link rel="preload" href="/fonts/archivo-400-800-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/ibm-plex-sans-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+
+    <meta name="theme-color" content="#0B0C0E" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:site_name" content={company.brandName} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <meta name="geo.region" content="DE-NI" />
+    <meta name="geo.placename" content="Delmenhorst" />
+
+    <script type="application/ld+json" set:html={JSON.stringify({ '@context': 'https://schema.org', '@graph': graph })} />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Zum Inhalt springen</a>
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    <ActionBar />
+
+    <script>
+      // Einlauf beim Scrollen. Ohne Beobachter bleibt alles sichtbar.
+      const rise = document.querySelectorAll<HTMLElement>('[data-rise]');
+      if (rise.length && 'IntersectionObserver' in window
+          && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach((e) => {
+            if (!e.isIntersecting) return;
+            e.target.classList.add('is-in');
+            io.unobserve(e.target);
+          });
+        }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+        rise.forEach((el, i) => {
+          // Gestaffelt, aber nur innerhalb einer Gruppe und höchstens sechsfach
+          const group = el.closest('[data-rise-group]');
+          if (group) {
+            const idx = [...group.querySelectorAll('[data-rise]')].indexOf(el);
+            el.style.setProperty('--rise-delay', `${Math.min(idx, 5) * 45}ms`);
+          }
+          io.observe(el);
+        });
+      } else {
+        rise.forEach((el) => el.classList.add('is-in'));
+      }
+
+      // Kennzahlen zählen einmal hoch, wenn sie ins Bild kommen.
+      const counters = document.querySelectorAll<HTMLElement>('[data-count]');
+      if (counters.length && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const fmt = new Intl.NumberFormat('de-DE');
+        const co = new IntersectionObserver((entries) => {
+          entries.forEach((e) => {
+            if (!e.isIntersecting) return;
+            const el = e.target as HTMLElement;
+            co.unobserve(el);
+            const target = Number(el.dataset.count);
+            const start = performance.now();
+            const dur = 1100;
+            const step = (now: number) => {
+              const p = Math.min((now - start) / dur, 1);
+              const eased = 1 - Math.pow(1 - p, 4);
+              el.textContent = fmt.format(Math.round(target * eased));
+              if (p < 1) requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+          });
+        }, { threshold: 0.4 });
+        counters.forEach((el) => co.observe(el));
+      }
+    </script>
+  </body>
+</html>

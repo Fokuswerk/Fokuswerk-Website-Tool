@@ -1,0 +1,44 @@
+---
+import LeistungPage from '~/layouts/LeistungPage.astro';
+import { wasteStreams } from '~/data/company';
+---
+
+<LeistungPage
+  slug="entsorgung-container"
+  eyebrow="Leistung 04 — Entsorgung & Container"
+  h1="Der Behälter steht, bevor die erste Wand fällt."
+  lead="Eigene Containerfahrzeuge, Behälter von der 2-cbm-Mulde bis zum 36-cbm-Container, getrennte Erfassung und Entsorgung der Fraktionen."
+  seoTitle="Container mieten & Entsorgung — TN Abbruch, Delmenhorst"
+  seoDescription="Container von 2 bis 36 cbm mit eigenen Containerfahrzeugen. Entsorgung von Bauschutt, Bodenaushub, Holz, Gips, Sperrmüll und Grünabfall. Delmenhorst, Bremen, Oldenburg."
+  serviceName="Containerdienst und Entsorgung"
+  facts={[
+    { value: '2–36', label: 'cbm Behältergrößen' },
+    { value: '2', label: 'eigene Containerfahrzeuge' },
+    { value: '6', label: 'getrennte Fraktionen' },
+    { value: '1997', label: 'seit dem Gründungsjahr' },
+  ]}
+  argument={{
+    heading: 'Entsorgung ist kein Anhängsel des Rückbaus.',
+    paragraphs: [
+      'Bei einer Entkernung ist die Frage nicht, ob das Material rauskommt, sondern wie schnell der volle Behälter durch einen leeren ersetzt wird. Steht kein Container bereit, steht die Kolonne. Deshalb fahren wir eigene Containerfahrzeuge, statt sie zu bestellen.',
+      'Der zweite Punkt ist die Trennung. Sortenrein erfasstes Material ist günstiger in der Entsorgung als ein gemischter Container — und bei Gips, Holz und Bauschutt ist die Trennung ohnehin vorgeschrieben. Wir stellen so viele Behälter, wie Fraktionen anfallen, und disponieren den Wechsel entlang des Baufortschritts.',
+      'Für Schadstoffe gelten eigene Wege: Asbest und KMF werden staubdicht verpackt, gekennzeichnet und über zugelassene Wege entsorgt. Die Nachweise gehen an Sie.',
+    ],
+  }}
+  scope={[
+    { cat: 'Behältergrößen', items: 'Von der 2-cbm-Mulde für beengte Grundstücke bis zum 36-cbm-Abrollcontainer', note: '2 bis 36 cbm' },
+    { cat: 'Fraktionen', items: wasteStreams.join(' · ') },
+    { cat: 'Schadstoffe', items: 'Asbest und KMF in zugelassenen Gebinden, Entsorgung mit Nachweis', note: 'TRGS 519 / TRGS 521' },
+    { cat: 'Recycling', items: 'Verwertung mineralischer Fraktionen im Auftrag des Bauherrn' },
+  ]}
+  specsHeading="Behälter und Fahrzeuge."
+  specs={[
+    { key: 'Mulden', value: '2 bis 10 cbm' },
+    { key: 'Abrollcontainer', value: 'bis 36 cbm' },
+    { key: 'Containerfahrzeuge', value: '2, im eigenen Bestand' },
+    { key: 'Radlader für Verladung', value: '1,5 t · 2,0 t · 6,0 t' },
+    { key: 'Einsatzgebiet', value: 'Delmenhorst · Bremen · Oldenburg' },
+  ]}
+  ctaHeading="Welche Größe brauchen Sie?"
+  ctaBody="Sagen Sie uns Material, geschätzte Menge und Stellplatz — dann nennen wir Behältergröße, Standzeit und Preis. Für Baustellen mit mehreren Fraktionen planen wir den Wechsel gleich mit."
+/>

@@ -1,0 +1,48 @@
+---
+/**
+ * Wortmarke als Live-Text in Archivo.
+ * Behält die Konstruktion des bestehenden Logos (TN dominant, ABBRUCH nachlaufend),
+ * ist aber gestochen scharf in jeder Größe und ohne zusätzliche Bytes.
+ */
+interface Props { size?: 'sm' | 'md'; class?: string }
+const { size = 'md', class: cls = '' } = Astro.props;
+---
+
+<span class:list={['logo', `logo--${size}`, cls]} aria-hidden="true">
+  <span class="logo__tn">TN</span><span class="logo__dash"></span><span class="logo__word">Abbruch</span>
+</span>
+
+<style>
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-display);
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--fg);
+  }
+  .logo__tn {
+    font-weight: 800;
+    font-stretch: 118%;
+    letter-spacing: -0.035em;
+    font-size: 1.5em;
+  }
+  .logo__dash {
+    width: 0.62em;
+    height: 3px;
+    margin-inline: 0.32em 0.3em;
+    background: var(--accent);
+    flex: none;
+  }
+  .logo__word {
+    font-weight: 600;
+    font-stretch: 104%;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 1em;
+    padding-top: 0.08em;
+  }
+  .logo--md { font-size: 1.0625rem; }
+  .logo--sm { font-size: 0.8125rem; }
+  .logo--sm .logo__dash { height: 2px; }
+</style>

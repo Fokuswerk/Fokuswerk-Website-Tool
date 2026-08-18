@@ -1,0 +1,259 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import PageHeader from '~/components/PageHeader.astro';
+import SectionMarker from '~/components/SectionMarker.astro';
+import Cta from '~/components/Cta.astro';
+
+const refs = (await getCollection('referenzen')).map((r) => r.data).sort((a, b) => b.year - a.year);
+
+const cbmTotal = refs.filter((r) => r.unit === 'cbm').reduce((s, r) => s + (r.quantity ?? 0), 0);
+const span = `${refs[refs.length - 1].year}–${refs[0].year}`;
+
+const filters = [
+  { id: 'alle', label: 'Alle', count: refs.length },
+  { id: 'schadstoff', label: 'Schadstoffsanierung', count: refs.filter((r) => r.category.includes('schadstoff')).length },
+  { id: 'entkernung', label: 'Entkernung', count: refs.filter((r) => r.category.includes('entkernung')).length },
+  { id: 'demontage', label: 'Demontage', count: refs.filter((r) => r.category.includes('demontage')).length },
+  { id: 'beton', label: 'Beton', count: refs.filter((r) => r.category.includes('beton')).length },
+];
+
+const breadcrumb = [
+  { name: 'Startseite', href: '/' },
+  { name: 'Referenzen', href: '/referenzen/' },
+];
+---
+
+<Base
+  title="Referenzen 1998–2020 — TN Abbruch, Delmenhorst"
+  description="20 dokumentierte Rückbau- und Sanierungsprojekte 1998–2020: EADS Airbus Bremen, Mercedes-Benz, Haus der Bürgerschaft, BIMA, GEWOBA — mit Leistung und Menge."
+  breadcrumb={breadcrumb}
+  schema={{
+    '@type': 'ItemList',
+    name: 'Referenzprojekte TN Abbruch',
+    numberOfItems: refs.length,
+    itemListElement: refs.map((r, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: `${r.client} — ${r.scope} (${r.year})`,
+    })),
+  }}
+>
+  <PageHeader
+    eyebrow="Referenzen"
+    title="Zwanzig Projekte, die wir belegen können."
+    lead="Auf Rückbaubaustellen wird selten fotografiert, im Schwarzbereich gar nicht. Was bleibt, ist die Aufstellung: Jahr, Auftraggeber, Leistung, Menge. Nachstehend vollständig — ohne Auswahl nach Schönheit."
+    breadcrumb={breadcrumb}
+    facts={[
+      { value: String(refs.length), label: 'dokumentierte Projekte' },
+      { value: span, label: 'Zeitraum' },
+      { value: cbmTotal.toLocaleString('de-DE'), label: 'cbm allein aus den Mengenangaben' },
+      { value: '62.500', label: 'cbm größtes Einzelprojekt' },
+    ]}
+  />
+
+  <section class="section ruled">
+    <div class="wrap">
+      <SectionMarker no="01" label="Auftragsbuch" rest="Maßstab der Balken: 62.500 cbm" />
+
+      <div class="filters" role="group" aria-label="Referenzen nach Leistung filtern">
+        {filters.map((f) => (
+          <button
+            type="button"
+            class="filters__btn"
+            data-filter={f.id}
+            aria-pressed={f.id === 'alle' ? 'true' : 'false'}
+          >
+            {f.label}<span class="filters__n num">{f.count}</span>
+          </button>
+        ))}
+      </div>
+
+      <p class="filters__status visually-hidden" role="status" data-filter-status></p>
+
+      <ol class="tl" role="list" data-ref-list>
+        {refs.map((r, i) => (
+          <li class="tl__item" data-cats={r.category.join(' ')}>
+            <div class="tl__year">
+              <span class="num">{r.year}</span>
+              {refs[i - 1]?.year === r.year && <span class="visually-hidden">gleiches Jahr</span>}
+            </div>
+
+            <div class="tl__main">
+              <h2 class="tl__client">{r.client}</h2>
+              <p class="tl__scope">{r.scope}</p>
+              <p class="tl__meta">
+                <span class="label">{r.sector}</span>
+                <span class="label tl__region">{r.region}</span>
+              </p>
+            </div>
+
+            <div class="tl__qty">
+              {r.quantity ? (
+                <>
+                  <span class="tl__qty-v num">{r.quantity.toLocaleString('de-DE')}</span>
+                  <span class="tl__qty-u num">{r.unit}</span>
+                </>
+              ) : (
+                <span class="tl__qty-none" title="Für dieses Projekt liegt keine Mengenangabe vor.">
+                  <span aria-hidden="true">—</span>
+                  <span class="visually-hidden">keine Mengenangabe dokumentiert</span>
+                </span>
+              )}
+            </div>
+
+            <div class="tl__bar" aria-hidden="true">
+              {r.quantity && r.unit === 'cbm' && (
+                <span style={`--w:${Math.max(1.5, (r.quantity / 62500) * 100)}%`}></span>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <p class="tl__foot">
+        Die Mengenangaben stammen aus unserer eigenen Projektdokumentation. „UR."
+        bezeichnet den umbauten Raum, „cbm" Kubikmeter, „qm" beziehungsweise „m²"
+        Quadratmeter.
+      </p>
+    </div>
+  </section>
+
+  <Cta
+    heading="Ihr Projekt gehört in diese Liste?"
+    body="Sagen Sie uns Objekt, Leistung und Zeitraum. Wenn wir es nicht können, sagen wir das auch — das spart Ihnen mehr Zeit als ein Angebot, das nicht hält."
+  />
+</Base>
+
+<style>
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+    margin-bottom: var(--s-6);
+  }
+  .filters__btn {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .5rem;
+    min-height: 44px;
+    padding: .55rem 1rem;
+    background: none;
+    border: 1px solid var(--rule-strong);
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: .875rem;
+    transition: background-color var(--dur-ui) linear, color var(--dur-ui) linear, border-color var(--dur-ui) linear;
+  }
+  .filters__btn:hover { border-color: var(--fg); }
+  .filters__btn[aria-pressed='true'] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--paper);
+  }
+  .filters__n { font-size: .72rem; color: var(--fg-muted); }
+  .filters__btn[aria-pressed='true'] .filters__n { color: color-mix(in oklab, var(--paper) 88%, var(--signal)); }
+
+  .tl { margin: 0; border-top: 1px solid var(--rule-strong); }
+  .tl__item {
+    display: grid;
+    grid-template-columns: 4rem minmax(0, 1fr);
+    gap: var(--s-3) var(--s-4);
+    padding-block: var(--s-5);
+    border-bottom: 1px solid var(--rule);
+    align-items: baseline;
+  }
+  .tl__item[hidden] { display: none; }
+  @media (min-width: 60rem) {
+    .tl__item {
+      grid-template-columns: 5rem minmax(0, 1.15fr) 9rem minmax(0, .6fr);
+      gap: var(--s-3) var(--s-6);
+      padding-block: var(--s-6);
+    }
+  }
+
+  .tl__year .num {
+    font-size: clamp(1.125rem, 2.4vw, 1.5rem);
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  .tl__client {
+    font-size: clamp(1.15rem, 2.6vw, 1.625rem);
+    letter-spacing: -.02em;
+    line-height: 1.06;
+  }
+  .tl__scope { margin-top: .35rem; color: var(--fg-muted); font-size: .9375rem; }
+  .tl__meta { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-4); margin-top: var(--s-3); }
+  .tl__region { color: var(--fg-muted); }
+
+  .tl__qty { grid-column: 2; display: flex; align-items: baseline; gap: .35rem; }
+  @media (min-width: 60rem) { .tl__qty { grid-column: auto; justify-content: flex-end; } }
+  .tl__qty-v {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    letter-spacing: -.035em;
+    font-variant-numeric: tabular-nums;
+  }
+  .tl__qty-u { font-size: .78rem; color: var(--fg-muted); flex: none; }
+  .tl__qty-none {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    color: var(--rule-strong);
+    cursor: help;
+  }
+
+  /* Mengenbalken: setzt die Projekte optisch ins Verhältnis.
+     Die Schiene läuft durch alle Zeilen — sie ist die Maßstabsachse. */
+  .tl__bar { display: none; }
+  @media (min-width: 60rem) {
+    .tl__bar {
+      display: block;
+      grid-column: 4;
+      align-self: center;
+      height: 3px;
+      background: var(--rule);
+    }
+  }
+  .tl__bar span {
+    display: block;
+    width: var(--w);
+    height: 100%;
+    background: var(--accent);
+  }
+
+  .tl__foot { margin-top: var(--s-6); font-size: .8125rem; color: var(--fg-muted); max-width: 70ch; }
+</style>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+  const items = document.querySelectorAll<HTMLElement>('[data-ref-list] > li');
+  const status = document.querySelector<HTMLElement>('[data-filter-status]');
+
+  const apply = (id: string, push = true) => {
+    let shown = 0;
+    items.forEach((li) => {
+      const match = id === 'alle' || (li.dataset.cats ?? '').split(' ').includes(id);
+      li.hidden = !match;
+      if (match) shown++;
+    });
+    buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === id)));
+    if (status) {
+      const label = [...buttons].find((b) => b.dataset.filter === id)?.textContent?.trim() ?? '';
+      status.textContent = `${shown} von ${items.length} Projekten — Filter: ${label}`;
+    }
+    if (push) {
+      const url = new URL(location.href);
+      if (id === 'alle') url.searchParams.delete('filter');
+      else url.searchParams.set('filter', id);
+      history.replaceState(null, '', url);
+    }
+  };
+
+  buttons.forEach((b) => b.addEventListener('click', () => apply(b.dataset.filter!)));
+
+  const initial = new URL(location.href).searchParams.get('filter');
+  if (initial && [...buttons].some((b) => b.dataset.filter === initial)) apply(initial, false);
+</script>

@@ -1,0 +1,59 @@
+---
+import { company } from '~/data/company';
+interface Props {
+  heading: string;
+  body: string;
+  /** Wird im Anfrageformular vorausgewählt. */
+  service?: string;
+}
+const { heading, body, service } = Astro.props;
+const href = service ? `/kontakt/?leistung=${encodeURIComponent(service)}` : '/kontakt/';
+---
+
+<section class="cta zone-dark">
+  <div class="wrap cta__inner">
+    <div class="cta__text">
+      <h2>{heading}</h2>
+      <p class="lead">{body}</p>
+    </div>
+    <div class="cta__actions">
+      <a href={href} class="btn btn--primary">
+        Projekt anfragen
+        <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      </a>
+      <a href={company.phoneHref} class="cta__phone num">{company.phone}</a>
+      <p class="cta__note">
+        Oder direkt per E-Mail an <a href={`mailto:${company.email}`}>{company.email}</a>.
+        Für ein belastbares Angebot brauchen wir Objektadresse, Baujahr, Leistungsumfang
+        und — falls vorhanden — das Schadstoffgutachten.
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta {
+    background: var(--bg);
+    color: var(--fg);
+    padding-block: var(--section);
+    border-top: 1px solid var(--rule);
+  }
+  .cta__inner { display: grid; gap: var(--s-7) var(--gutter); }
+  @media (min-width: 60rem) {
+    .cta__inner { grid-template-columns: 1.1fr 1fr; align-items: start; gap: var(--s-9); }
+  }
+  .cta h2 { font-size: var(--t-h2); }
+  .cta .lead { margin-top: var(--s-5); color: var(--fg-muted); }
+  .cta__actions { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-5); }
+  @media (min-width: 60rem) { .cta__actions { padding-top: .6rem; } }
+  .cta__phone {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -.02em;
+    text-decoration: none;
+  }
+  .cta__phone:hover { color: var(--accent); }
+  .cta__note { font-size: var(--t-sm); color: var(--fg-muted); max-width: 46ch; }
+  .cta__note a { color: var(--accent); }
+</style>
