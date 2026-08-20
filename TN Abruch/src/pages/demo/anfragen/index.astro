@@ -1,0 +1,106 @@
+---
+import DemoLayout from '~/layouts/DemoLayout.astro';
+import { demoLeads, LEAD_STATUS, STATUS_LABEL } from '~/data/demo-leads';
+
+const leads = [...demoLeads].sort((a, b) => b.eingang.localeCompare(a.eingang));
+const datum = (iso: string) => new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+const filter = [
+  { id: 'alle', label: 'Alle', count: leads.length },
+  ...LEAD_STATUS.map((s) => ({
+    id: s,
+    label: STATUS_LABEL[s],
+    count: leads.filter((l) => l.status === s).length,
+  })),
+];
+---
+
+<DemoLayout title="Projektanfragen" active="anfragen">
+  <div class="adm-title">
+    <h1>Projektanfragen</h1>
+    <p>
+      Jede Anfrage vollständig, wie das Formular sie erfasst hat: Leistung, Objekt, Ort,
+      Menge, Zeitraum, Schadstofflage, Gutachten, Anhänge. Der Status hält fest, wo die
+      Sache steht.
+    </p>
+  </div>
+
+  <div class="adm-filters" role="group" aria-label="Nach Status filtern">
+    {filter.map((f) => (
+      <button type="button" data-filter={f.id} aria-pressed={f.id === 'alle' ? 'true' : 'false'}>
+        {f.label}<span class="n">{f.count}</span>
+      </button>
+    ))}
+  </div>
+
+  <p class="visually-hidden" role="status" data-filter-status></p>
+
+  <div class="adm-tablewrap">
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th scope="col">Eingang</th>
+          <th scope="col">Leistung</th>
+          <th scope="col">Auftraggeber</th>
+          <th scope="col">Ort</th>
+          <th scope="col">Umfang</th>
+          <th scope="col">Schadstoff</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody data-lead-list>
+        {leads.map((l) => (
+          <tr data-status={l.status}>
+            <td class="adm-t-date">{datum(l.eingang)}<span class="adm-t-id">{l.id}</span></td>
+            <td>
+              <a href={`/demo/anfragen/${l.id}/`}>{l.leistung.join(' · ')}</a>
+              <span class="adm-t-sub">{l.objektart}</span>
+            </td>
+            <td>
+              {l.firma ?? l.name}
+              {l.firma && <span class="adm-t-sub">{l.name}</span>}
+            </td>
+            <td>{l.ort}</td>
+            <td>{l.menge ?? '—'}<span class="adm-t-sub">{l.zeitraum ?? ''}</span></td>
+            <td>{l.schadstoff}</td>
+            <td><span class="pill" data-s={l.status} data-status-for={l.id}>{STATUS_LABEL[l.status]}</span></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</DemoLayout>
+
+<script>
+  import { applyStoredStatus } from '~/scripts/demo-status';
+  import { STATUS_LABEL } from '~/data/demo-leads';
+
+  applyStoredStatus(STATUS_LABEL);
+
+  /* Filter — arbeitet auf data-status, das applyStoredStatus mitpflegt. */
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+  const rows = [...document.querySelectorAll<HTMLTableRowElement>('[data-lead-list] tr')];
+  const status = document.querySelector<HTMLElement>('[data-filter-status]');
+
+  const apply = (id: string, push = true) => {
+    buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === id)));
+    let shown = 0;
+    rows.forEach((r) => {
+      const match = id === 'alle' || r.dataset.status === id;
+      r.hidden = !match;
+      if (match) shown++;
+    });
+    if (status) status.textContent = `${shown} von ${rows.length} Anfragen sichtbar.`;
+    if (push) {
+      const url = new URL(location.href);
+      if (id === 'alle') url.searchParams.delete('status');
+      else url.searchParams.set('status', id);
+      history.replaceState(null, '', url);
+    }
+  };
+
+  buttons.forEach((b) => b.addEventListener('click', () => apply(b.dataset.filter!)));
+
+  const fromUrl = new URL(location.href).searchParams.get('status');
+  if (fromUrl && buttons.some((b) => b.dataset.filter === fromUrl)) apply(fromUrl, false);
+</script>

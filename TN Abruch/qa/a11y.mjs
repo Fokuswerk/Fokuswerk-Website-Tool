@@ -2,7 +2,11 @@ import { chromium } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
 const BASE = 'http://localhost:4321';
 const pages = ['/', '/leistungen/', '/leistungen/schadstoffsanierung/', '/referenzen/',
-  '/unternehmen/', '/karriere/', '/kontakt/', '/impressum/', '/datenschutz/', '/404'];
+  '/referenzen/markt-oldenburg-2020/', '/referenzen/rathaus-dietzenbach-2010/',
+  '/unternehmen/', '/karriere/', '/karriere/danke/', '/kontakt/', '/kontakt/danke/',
+  '/impressum/', '/datenschutz/', '/404',
+  // Demo-Backend: gehört nicht zur Website, muss aber bedienbar bleiben
+  '/demo/', '/demo/anfragen/', '/demo/anfragen/A-2026-0147/', '/demo/bewerbungen/', '/demo/inhalte/'];
 const b = await chromium.launch();
 let total = 0;
 for (const vp of [{ n: 'desktop', w: 1440, h: 900 }, { n: 'mobile', w: 390, h: 844 }]) {

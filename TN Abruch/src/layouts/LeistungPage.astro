@@ -3,7 +3,9 @@ import Base from '~/layouts/Base.astro';
 import PageHeader from '~/components/PageHeader.astro';
 import SectionMarker from '~/components/SectionMarker.astro';
 import Cta from '~/components/Cta.astro';
+import Band from '~/components/Band.astro';
 import { getCollection } from 'astro:content';
+import type { ImageMetadata } from 'astro';
 
 export interface LeistungProps {
   slug: string;
@@ -14,6 +16,14 @@ export interface LeistungProps {
   seoDescription: string;
   serviceName: string;
   facts: { value: string; label: string }[];
+  /** Materialaufnahme im Seitenkopf. */
+  headImage?: ImageMetadata;
+  headImageAlt?: string;
+  /** Bildband in der Seitenmitte. */
+  bandImage?: ImageMetadata;
+  bandAlt?: string;
+  bandClaim?: string;
+  bandNote?: string;
   /** Fließtext-Abschnitt: Argumentation, nicht Aufzählung. */
   argument: { heading: string; paragraphs: string[] };
   /** Leistungsumfang als Datenliste. */
@@ -54,7 +64,15 @@ const refs = p.refCategory
     areaServed: { '@type': 'Country', name: 'Deutschland' },
   }}
 >
-  <PageHeader eyebrow={p.eyebrow} title={p.h1} lead={p.lead} facts={p.facts} breadcrumb={breadcrumb} />
+  <PageHeader
+    eyebrow={p.eyebrow}
+    title={p.h1}
+    lead={p.lead}
+    facts={p.facts}
+    breadcrumb={breadcrumb}
+    image={p.headImage}
+    imageAlt={p.headImageAlt}
+  />
 
   <section class="section ruled">
     <div class="wrap">
@@ -76,6 +94,10 @@ const refs = p.refCategory
       </div>
     </div>
   </section>
+
+  {p.bandImage && p.bandClaim && (
+    <Band image={p.bandImage} alt={p.bandAlt} claim={p.bandClaim} note={p.bandNote} />
+  )}
 
   {p.specs && (
     <section class="section zone-dark ruled">
@@ -174,6 +196,6 @@ const refs = p.refCategory
   .lp-ref__q { grid-column: 2; display: flex; align-items: baseline; gap: .35rem; }
   @media (min-width: 60rem) { .lp-ref__q { grid-column: auto; justify-content: flex-end; } }
   .lp-ref__q-v { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-  .lp-ref__q-u { font-size: .72rem; color: var(--fg-muted); flex: none; }
+  .lp-ref__q-u { font-size: var(--t-xs); color: var(--fg-muted); flex: none; }
   .lp-ref__more { margin-top: var(--s-6); }
 </style>

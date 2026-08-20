@@ -1,0 +1,68 @@
+---
+import DemoLayout from '~/layouts/DemoLayout.astro';
+import { demoBewerbungen, BEWERBUNG_LABEL } from '~/data/demo-leads';
+
+const bewerbungen = [...demoBewerbungen].sort((a, b) => b.eingang.localeCompare(a.eingang));
+const datum = (iso: string) => new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+---
+
+<DemoLayout title="Bewerbungen" active="bewerbungen">
+  <div class="adm-title">
+    <h1>Bewerbungen</h1>
+    <p>
+      Was über die Kurzbewerbung hereinkommt. Bewusst wenige Felder — wer auf dem Bau
+      arbeitet, füllt kein Formular mit zwanzig Pflichtangaben aus. Für den Rückruf
+      reicht, was hier steht.
+    </p>
+  </div>
+
+  <div class="adm-tablewrap">
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th scope="col">Eingang</th>
+          <th scope="col">Position</th>
+          <th scope="col">Name</th>
+          <th scope="col">Erfahrung</th>
+          <th scope="col">Führerschein</th>
+          <th scope="col">Wohnort</th>
+          <th scope="col">Verfügbar</th>
+          <th scope="col">Telefon</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {bewerbungen.map((b) => (
+          <tr>
+            <td class="adm-t-date">{datum(b.eingang)}<span class="adm-t-id">{b.id}</span></td>
+            <td>
+              <strong>{b.position}</strong>
+              {b.lebenslauf && <span class="adm-t-sub">▣ {b.lebenslauf}</span>}
+            </td>
+            <td>{b.name}</td>
+            <td>{b.erfahrung}</td>
+            <td>{b.fuehrerschein.join(', ')}</td>
+            <td>{b.wohnort}</td>
+            <td>{b.verfuegbar}</td>
+            <td><a href={`tel:${b.telefon.replace(/\s/g, '')}`}>{b.telefon}</a></td>
+            <td><span class="pill" data-s={b.status} data-status-for={b.id}>{BEWERBUNG_LABEL[b.status]}</span></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="adm-note" style="margin-top: var(--s-7)">
+    <strong>Warum das zählt:</strong> Sechs offene Stellen bei zehn Mitarbeitern heißt, dass
+    Personal ein Engpass ist. Wer sich mit dem Handy in der Mittagspause bewirbt, bricht bei
+    einer PDF-Pflicht ab. Die Kurzbewerbung fragt Position, Erfahrung, Führerschein,
+    Wohnort und eine Telefonnummer ab — unter einer Minute. Der Lebenslauf ist freiwillig
+    und kann nachgereicht werden.
+  </p>
+</DemoLayout>
+
+<script>
+  import { applyStoredStatus } from '~/scripts/demo-status';
+  import { BEWERBUNG_LABEL } from '~/data/demo-leads';
+  applyStoredStatus(BEWERBUNG_LABEL);
+</script>

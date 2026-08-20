@@ -3,16 +3,34 @@ import { getCollection, render } from 'astro:content';
 import Base from '~/layouts/Base.astro';
 import PageHeader from '~/components/PageHeader.astro';
 import SectionMarker from '~/components/SectionMarker.astro';
+import Band from '~/components/Band.astro';
 import { company } from '~/data/company';
+import '~/styles/form.css';
+
+import phBand from '~/assets/material-handschuh-band.jpg';
+import bandImg from '~/assets/material-wandschnitt-band.jpg';
 
 const jobs = (await getCollection('jobs')).sort((a, b) => a.data.order - b.data.order);
+/* Erster Satz als Anreisser fuer die geschlossene Zeile. Ohne ihn stand in der
+   Liste nur der Stellentitel — sechsmal untereinander sah das gleich aus, und
+   wer nicht aufklappt, erfaehrt nichts ueber die Arbeit. */
+const teaser = (body: string) =>
+  body.trim().replace(/\s+/g, ' ').split(/(?<=\.)\s/)[0] ?? '';
+
 const rendered = await Promise.all(
-  jobs.map(async (j) => ({ ...j, Content: (await render(j)).Content })),
+  jobs.map(async (j) => ({ ...j, Content: (await render(j)).Content, teaser: teaser(j.body ?? '') })),
 );
 
 const breadcrumb = [
   { name: 'Startseite', href: '/' },
   { name: 'Karriere', href: '/karriere/' },
+];
+
+/* Auswahlliste der Kurzbewerbung: die offenen Stellen plus ein offener Weg für
+   alle, die sich nicht auf eine Position festlegen wollen. */
+const positionen = [
+  ...jobs.map((j) => ({ title: j.data.title, field: j.data.field })),
+  { title: 'Initiativbewerbung', field: 'Noch offen — wir finden den Platz im Gespräch' },
 ];
 
 const jobSchema = jobs.map((j) => ({
@@ -43,6 +61,8 @@ const jobSchema = jobs.map((j) => ({
   schema={jobSchema}
 >
   <PageHeader
+    image={phBand}
+    imageAlt="Materialaufnahme: abgetragener Lederhandschuh auf einer rostigen Stahlplatte."
     eyebrow="Karriere"
     title="Sechs Stellen. Ein Team von zehn."
     lead="Bei uns ist niemand eine Nummer im Bautagebuch — dafür sind wir zu klein. Was Sie stattdessen bekommen: Baustellen, auf denen es fachlich anspruchsvoll wird, und Kollegen, die das seit Jahren machen."
@@ -85,6 +105,12 @@ const jobSchema = jobs.map((j) => ({
     </div>
   </section>
 
+  <Band
+    image={bandImg}
+    claim="Wer bei uns anfängt, lernt das Gewerk — nicht einen Handgriff."
+    note="Angelernt wird auf der Baustelle, die Sachkunde nach TRGS holen wir nach. Wer bleiben will, kann hier bis zum Kolonnenführer kommen."
+  />
+
   <!-- Stellen -->
   <section class="section zone-dark ruled">
     <div class="wrap">
@@ -97,8 +123,9 @@ const jobSchema = jobs.map((j) => ({
             <summary>
               <span class="job__no num">{String(i + 1).padStart(2, '0')}</span>
               <span class="job__t">
-                <span class="job__title">{j.data.title}</span>
                 <span class="job__meta label">{j.data.field}<span aria-hidden="true"> · </span>{j.data.type}</span>
+                <span class="job__title">{j.data.title}</span>
+                {j.teaser && <span class="job__teaser">{j.teaser}</span>}
               </span>
               <span class="job__sign" aria-hidden="true"></span>
             </summary>
@@ -109,8 +136,9 @@ const jobSchema = jobs.map((j) => ({
                 <ul role="list">
                   {j.data.requirements.map((r) => <li>{r}</li>)}
                 </ul>
-                <a href={`mailto:${company.email}?subject=${encodeURIComponent('Bewerbung: ' + j.data.title)}`} class="btn btn--primary">
+                <a href="#bewerbung" class="btn btn--primary" data-apply={j.data.title}>
                   Auf diese Stelle bewerben
+                  <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1v9M2 6.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
                 </a>
               </div>
             </div>
@@ -120,28 +148,200 @@ const jobSchema = jobs.map((j) => ({
     </div>
   </section>
 
-  <!-- Bewerbung -->
-  <section class="section ruled">
-    <div class="wrap apply">
-      <div>
-        <SectionMarker no="03" label="Bewerbung" rest="Kurzer Weg" />
-        <h2>Rufen Sie an, wenn Ihnen Schreiben nicht liegt.</h2>
-        <p class="lead muted">
-          Wir brauchen kein Anschreiben und kein Deckblatt. Uns interessiert, was Sie
-          bisher gemacht haben und ab wann Sie können. Alles Weitere klären wir im
-          Gespräch auf dem Hof.
-        </p>
-      </div>
+  <!-- Kurzbewerbung -->
+  <section class="section ruled" id="bewerbung">
+    <div class="wrap">
+      <SectionMarker no="03" label="Kurzbewerbung" rest="Drei Schritte · unter einer Minute" />
 
-      <div class="apply__box">
-        <span class="label">Ansprechpartner</span>
-        <a href={company.phoneHref} class="apply__phone num">{company.phone}</a>
-        <a href={`mailto:${company.email}`} class="apply__mail">{company.email}</a>
-        <p class="apply__adr">
-          {company.legalName}<br />
-          {company.address.street}<br />
-          {company.address.postalCode} {company.address.city}
-        </p>
+      <div class="fw">
+        <form
+          class="form"
+          id="bewerbung-form"
+          method="post"
+          action="/api/bewerbung"
+          novalidate
+          data-wizard
+          data-done="/karriere/danke/"
+          data-preselect="position"
+        >
+          <ol class="steps-bar" role="list" data-steps-bar aria-hidden="true">
+            <li data-step-dot="1" class="is-active"><span class="num">1</span> Stelle</li>
+            <li data-step-dot="2"><span class="num">2</span> Zu Ihnen</li>
+            <li data-step-dot="3"><span class="num">3</span> Kontakt</li>
+          </ol>
+
+          <!-- Schritt 1 -->
+          <fieldset class="fs" data-step="1">
+            <legend class="fs__legend"><span class="num">01</span> Worauf bewerben Sie sich?</legend>
+
+            <div class="field">
+              <span class="field__label" id="lab-position">Position</span>
+              <div class="choices choices--stack" role="radiogroup" aria-labelledby="lab-position">
+                {positionen.map((pos) => (
+                  <label class="choice choice--block">
+                    <input type="radio" name="position" value={pos.title} />
+                    <span>
+                      <span class="choice__t">{pos.title}</span>
+                      <span class="choice__s">{pos.field}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div class="fs__nav">
+              <button type="button" class="btn btn--primary" data-next>
+                Weiter
+                <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              </button>
+            </div>
+          </fieldset>
+
+          <!-- Schritt 2 -->
+          <fieldset class="fs" data-step="2">
+            <legend class="fs__legend"><span class="num">02</span> Was bringen Sie mit?</legend>
+
+            <div class="field">
+              <span class="field__label" id="lab-erfahrung">Erfahrung im Bau oder Rückbau</span>
+              <div class="choices" role="radiogroup" aria-labelledby="lab-erfahrung">
+                <label class="choice"><input type="radio" name="erfahrung" value="Mehrere Jahre" /><span>Mehrere Jahre</span></label>
+                <label class="choice"><input type="radio" name="erfahrung" value="Etwas" /><span>Etwas</span></label>
+                <label class="choice"><input type="radio" name="erfahrung" value="Quereinsteiger" /><span>Quereinsteiger</span></label>
+              </div>
+              <p class="field__hint">Ohne Erfahrung ist kein Ausschlusskriterium — angelernt wird bei uns auf der Baustelle.</p>
+            </div>
+
+            <div class="field">
+              <span class="field__label" id="lab-fs">Führerschein</span>
+              <p class="field__hint">Mehrfachauswahl möglich.</p>
+              <div class="choices" role="group" aria-labelledby="lab-fs">
+                <label class="choice"><input type="checkbox" name="fuehrerschein" value="Klasse B" /><span>Klasse B</span></label>
+                <label class="choice"><input type="checkbox" name="fuehrerschein" value="Klasse C / CE" /><span>Klasse C / CE</span></label>
+                <label class="choice"><input type="checkbox" name="fuehrerschein" value="Baumaschinenschein" /><span>Baumaschinenschein</span></label>
+                <label class="choice"><input type="checkbox" name="fuehrerschein" value="Noch keiner" /><span>Noch keiner</span></label>
+              </div>
+            </div>
+
+            <div class="field field--split">
+              <div>
+                <label class="field__label" for="wohnort">Wohnort oder Postleitzahl</label>
+                <input type="text" id="wohnort" name="wohnort" autocomplete="address-level2" />
+              </div>
+              <div>
+                <label class="field__label" for="verfuegbar">Verfügbar ab</label>
+                <input type="text" id="verfuegbar" name="verfuegbar" placeholder="z. B. sofort oder ab 01.10." />
+              </div>
+            </div>
+
+            <div class="fs__nav">
+              <button type="button" class="btn btn--ghost" data-prev>Zurück</button>
+              <button type="button" class="btn btn--primary" data-next>
+                Weiter
+                <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              </button>
+            </div>
+          </fieldset>
+
+          <!-- Schritt 3 -->
+          <fieldset class="fs" data-step="3">
+            <legend class="fs__legend"><span class="num">03</span> Wie erreichen wir Sie?</legend>
+
+            <div class="field field--split">
+              <div>
+                <label class="field__label" for="name">Name <span class="req">*</span></label>
+                <input type="text" id="name" name="name" autocomplete="name" required aria-describedby="err-name" />
+                <p class="field__err" id="err-name" hidden></p>
+              </div>
+              <div>
+                <label class="field__label" for="telefon">Telefon</label>
+                <input type="tel" id="telefon" name="telefon" autocomplete="tel" inputmode="tel" aria-describedby="err-kontakt" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="email">E-Mail</label>
+              <input type="email" id="email" name="email" autocomplete="email" inputmode="email" aria-describedby="err-kontakt" />
+              <p class="field__err" id="err-kontakt" hidden></p>
+              <p class="field__hint">Telefon oder E-Mail — eines von beiden genügt. Wir melden uns meist telefonisch.</p>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="nachricht">Wollen Sie uns etwas dazu sagen?</label>
+              <textarea id="nachricht" name="nachricht" rows="3" placeholder="Was Sie bisher gemacht haben, wann Sie erreichbar sind …"></textarea>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="lebenslauf">Lebenslauf anhängen <span class="muted">(optional)</span></label>
+              <input type="file" id="lebenslauf" name="lebenslauf" accept=".pdf,.jpg,.jpeg,.png,.heic,.doc,.docx" />
+              <p class="field__hint">Bis 8 MB. Ein Foto vom Lebenslauf reicht uns auch. Zeugnisse können Sie nachreichen.</p>
+            </div>
+
+            <div class="field field--consent">
+              <label class="consent">
+                <input type="checkbox" name="einwilligung" required aria-describedby="err-consent" />
+                <span>
+                  Ich bin damit einverstanden, dass meine Angaben zur Bearbeitung dieser
+                  Bewerbung verarbeitet werden. Einzelheiten in der
+                  <a href="/datenschutz/">Datenschutzerklärung</a>.
+                </span>
+              </label>
+              <p class="field__err" id="err-consent" hidden></p>
+            </div>
+
+            <!-- Spamfalle, für Menschen unsichtbar -->
+            <div class="hp" aria-hidden="true">
+              <label for="webseite">Webseite (bitte freilassen)</label>
+              <input type="text" id="webseite" name="webseite" tabindex="-1" autocomplete="off" />
+            </div>
+
+            <div class="fs__nav">
+              <button type="button" class="btn btn--ghost" data-prev>Zurück</button>
+              <button type="submit" class="btn btn--primary">
+                Bewerbung abschicken
+                <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              </button>
+            </div>
+
+            <p class="form__fallback">
+              Lieber direkt? Rufen Sie an: <a href={company.phoneHref} class="num">{company.phone}</a>
+              oder schreiben Sie an <a href={`mailto:${company.email}`}>{company.email}</a>.
+            </p>
+          </fieldset>
+
+          <p class="form__status" role="status" data-form-status></p>
+        </form>
+
+        <aside class="aside">
+          <h2 class="aside__h">Rufen Sie an, wenn Ihnen Schreiben nicht liegt.</h2>
+          <p class="aside__intro">
+            Wir brauchen kein Anschreiben und kein Deckblatt. Uns interessiert, was Sie
+            bisher gemacht haben und ab wann Sie können. Alles Weitere klären wir im
+            Gespräch auf dem Hof.
+          </p>
+
+          <div class="apply__box">
+            <span class="label">Ansprechpartner</span>
+            <a href={company.phoneHref} class="apply__phone num">{company.phone}</a>
+            <a href={`mailto:${company.email}`} class="apply__mail">{company.email}</a>
+            <p class="apply__adr">
+              {company.legalName}<br />
+              {company.address.street}<br />
+              {company.address.postalCode} {company.address.city}
+            </p>
+          </div>
+
+          <ol class="aside__steps" role="list">
+            <li><span class="num">01</span><span>Wir melden uns — in der Regel telefonisch, meist innerhalb weniger Tage.</span></li>
+            <li><span class="num">02</span><span>Kennenlernen auf dem Betriebshof. Sie sehen die Maschinen und das Team.</span></li>
+            <li><span class="num">03</span><span>Passt es beidseitig, klären wir Eintritt und Vertrag.</span></li>
+          </ol>
+
+          <p class="aside__privacy">
+            Ihre Angaben werden ausschließlich für diese Bewerbung genutzt. Diese Website
+            setzt keine Cookies zu Analyse- oder Werbezwecken und lädt keine Ressourcen
+            von Dritten.
+          </p>
+        </aside>
       </div>
     </div>
   </section>
@@ -171,16 +371,25 @@ const jobSchema = jobs.map((j) => ({
   .job summary {
     display: grid;
     grid-template-columns: 2.5rem minmax(0, 1fr) 1rem;
-    align-items: center;
+    align-items: start;
     gap: var(--s-4);
     padding-block: var(--s-5);
     cursor: pointer;
     list-style: none;
     min-height: 44px;
   }
+  .job__no, .job__sign { margin-top: .35rem; }
   .job summary::-webkit-details-marker { display: none; }
   .job__no { color: var(--accent); font-size: var(--t-sm); }
-  .job__t { display: flex; flex-direction: column; gap: .25rem; }
+  .job__t { display: flex; flex-direction: column; gap: .3rem; }
+  .job__teaser {
+    margin-top: .2rem;
+    max-width: 62ch;
+    font-size: .9375rem;
+    color: var(--fg-muted);
+  }
+  /* Aufgeklappt steht der Satz gleich noch einmal im Fliesstext. */
+  .job[open] .job__teaser { display: none; }
   .job__title {
     font-family: var(--font-display);
     font-weight: 700;
@@ -211,11 +420,27 @@ const jobSchema = jobs.map((j) => ({
     width: 7px; height: 1px; background: var(--accent);
   }
 
-  .apply { display: grid; gap: var(--s-7) var(--gutter); }
-  @media (min-width: 60rem) {
-    .apply { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: var(--s-9); align-items: start; }
+  /* Formular links, Direktweg rechts — auf Mobil steht der Direktweg unten,
+     weil dort der Daumen schon im Formular ist. */
+  .fw { display: grid; gap: var(--s-8) var(--gutter); }
+  @media (min-width: 68rem) {
+    .fw { grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr); gap: var(--s-9); align-items: start; }
   }
-  .apply .lead { margin-top: var(--s-5); }
+
+  .aside { display: grid; gap: var(--s-6); align-content: start; }
+  .aside__h { font-size: clamp(1.25rem, 2.4vw, 1.6rem); }
+  .aside__intro { font-size: .9375rem; color: var(--fg-muted); }
+  .aside__steps { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
+  .aside__steps li {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    gap: var(--s-3);
+    padding-block: var(--s-4);
+    border-bottom: 1px solid var(--rule);
+    font-size: .875rem;
+  }
+  .aside__steps .num { color: var(--accent); font-size: .75rem; }
+  .aside__privacy { font-size: var(--t-xs); color: var(--fg-muted); }
   .apply__box {
     display: flex;
     flex-direction: column;
@@ -237,3 +462,22 @@ const jobSchema = jobs.map((j) => ({
   .apply__phone, .apply__mail { display: inline-flex; align-items: center; min-height: 44px; }
   .apply__adr { margin-top: var(--s-3); font-size: .875rem; color: var(--fg-muted); }
 </style>
+
+<script>
+  import { initWizard } from '~/scripts/wizard';
+  initWizard();
+
+  /* "Auf diese Stelle bewerben" springt in die Kurzbewerbung und wählt die
+     Position gleich aus — sonst müsste sie unten ein zweites Mal gesucht werden. */
+  document.querySelectorAll<HTMLAnchorElement>('[data-apply]').forEach((link) => {
+    link.addEventListener('click', () => {
+      const wanted = link.dataset.apply;
+      document.querySelectorAll<HTMLInputElement>('input[name="position"]').forEach((radio) => {
+        if (radio.value === wanted) {
+          radio.checked = true;
+          radio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+    });
+  });
+</script>

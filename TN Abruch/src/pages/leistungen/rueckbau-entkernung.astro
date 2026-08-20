@@ -1,14 +1,22 @@
 ---
 import LeistungPage from '~/layouts/LeistungPage.astro';
+import bandImage from '~/assets/material-bauschutt-band.jpg';
+import headImage from '~/assets/material-wandschnitt-band.jpg';
 ---
 
 <LeistungPage
   slug="rueckbau-entkernung"
   eyebrow="Leistung 02 — Rückbau & Entkernung"
-  h1="Ein Gebäude leerräumen, ohne es zu beschädigen."
-  lead="Entkernung, Handabbruch, Maschinenabbruch und Demontage — von einzelnen Bauteilen bis zum kompletten Innenleben eines Hochhauses. Die Tragstruktur bleibt stehen, alles andere kommt raus."
+  h1="Alles raus. Das Tragwerk bleibt."
+  lead="Wände, Böden, Decken, Leitungen — alles kommt heraus, bis nur noch das tragende Gerüst steht. Vom einzelnen Balkon bis zum Innenleben eines ganzen Hochhauses, von Hand oder mit der Maschine."
   seoTitle="Entkernung & Rückbau — TN Abbruch, Delmenhorst bei Bremen"
   seoDescription="Entkernung, Handabbruch, Maschinenabbruch und Demontage seit 1997. Referenzen bis 62.500 cbm. Bagger von 1 t bis 18,5 t, eigene Containerfahrzeuge. Delmenhorst, Bremen, Oldenburg und bundesweit."
+  headImage={headImage}
+  headImageAlt="Materialaufnahme: aufgerissene Kante einer entkernten Innenwand, Putz- und Estrichschichten im Schnitt."
+  bandImage={bandImage}
+  bandAlt="Materialaufnahme: sortierter Bauschutt aus Beton, Ziegel und Stahl, scharfe Bruchflächen im Schatten."
+  bandClaim="Getrennt schon auf der Baustelle, nicht erst auf der Deponie."
+  bandNote="Beton, Holz, Gips, Metall und Bauschutt gehen in eigene Behälter. Das senkt die Entsorgungskosten und macht die Nachweise sauber."
   serviceName="Rückbau und Entkernung"
   facts={[
     { value: '62.500', label: 'cbm größte Entkernung' },
@@ -17,7 +25,7 @@ import LeistungPage from '~/layouts/LeistungPage.astro';
     { value: '1997', label: 'seit dem Gründungsjahr' },
   ]}
   argument={{
-    heading: 'Entkernen ist Rückbau in der schwierigen Richtung.',
+    heading: 'Rückwärts bauen.',
     paragraphs: [
       'Ein Gebäude abreißen kann eine Maschine. Ein Gebäude entkernen heißt: alles herausnehmen, was nicht trägt — Ausbau, Technik, Estriche, Verkleidungen, Trennwände — und dabei nichts anfassen, was tragen muss. Das ist Handarbeit mit Maschinenunterstützung, nicht umgekehrt.',
       'Genau deshalb liegt der Schwerpunkt unserer Auftragshistorie hier. Von der <strong>Hochschule für Technik mit 62.500 cbm</strong> über das <strong>Einkaufszentrum Raunheim mit 48.000 cbm</strong> bis zum <strong>Rathaus Dietzenbach mit 21.000 cbm</strong> — das waren Objekte, in denen anschließend weitergebaut wurde.',

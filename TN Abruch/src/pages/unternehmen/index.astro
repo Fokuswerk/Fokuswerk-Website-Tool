@@ -12,6 +12,8 @@ import pqLogo from '~/assets/logo-pq-vob.png';
 import avnLogo from '~/assets/logo-avn.png';
 import navLogo from '~/assets/logo-nav.png';
 
+import phBand from '~/assets/fuhrpark-panorama.jpg';
+
 const breadcrumb = [
   { name: 'Startseite', href: '/' },
   { name: 'Unternehmen', href: '/unternehmen/' },
@@ -33,8 +35,10 @@ const timeline = [
   breadcrumb={breadcrumb}
 >
   <PageHeader
+    image={phBand}
+    imageAlt="Betriebshof von TN Abbruch in Delmenhorst: Kettenbagger, Containerfahrzeuge und Abrollcontainer nebeneinander."
     eyebrow="Unternehmen"
-    title="Zehn Leute, ein Betriebshof, achtundzwanzig Jahre."
+    title="Zehn Leute. Seit 1997."
     lead={`Gegründet ${company.foundedYear} in Bremen, seit ${company.relocatedYear} in Delmenhorst. Wir sind bewusst klein geblieben und stattdessen tief geworden: in einem Bereich, in dem die Zulassung mehr zählt als die Mitarbeiterzahl.`}
     breadcrumb={breadcrumb}
     facts={[
@@ -51,7 +55,7 @@ const timeline = [
       <SectionMarker no="01" label="Haltung" rest="Warum klein und tief" />
       <div class="pos">
         <div class="prose">
-          <h2>Ein Rückbaubetrieb wächst nicht über die Zahl der Leute.</h2>
+          <h2>Nicht die Zahl der Leute zählt.</h2>
           <p>
             Es gibt größere Abbruchunternehmen im Nordwesten, und sie können Dinge, die
             wir nicht können — Erdbau, Spezialtiefbau, Großgeräte. Wir haben uns anders
@@ -83,19 +87,29 @@ const timeline = [
   <section class="section zone-dark ruled">
     <div class="wrap">
       <SectionMarker no="02" label="Chronik" rest={`${company.foundedYear} bis heute`} />
-      <h2 class="chr__head">Was seitdem passiert ist.</h2>
 
-      <ol class="chr" role="list" data-rise-group>
-        {timeline.map((t) => (
-          <li data-rise>
-            <span class="chr__y num">{t.year}</span>
-            <div class="chr__b">
-              <h3>{t.title}</h3>
-              <p>{t.body}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
+      <div class="chr-wrap">
+        <div class="chr__head">
+          <h2>Was seitdem passiert ist.</h2>
+          <p class="chr__lead">
+            Sechs Daten, mehr gibt die Firmengeschichte nicht her — und mehr braucht
+            sie auch nicht. Gegründet in Bremen, verlegt nach Delmenhorst, seit 2013
+            präqualifiziert, seit 2021 ausschließlich Rückbau.
+          </p>
+        </div>
+
+        <ol class="chr" role="list" data-rise-group>
+          {timeline.map((t, i) => (
+            <li data-rise class:list={['chr__step', { 'chr__step--now': i === timeline.length - 1 }]}>
+              <span class="chr__y num">{t.year}</span>
+              <div class="chr__b">
+                <h3>{t.title}</h3>
+                <p>{t.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
     </div>
   </section>
 
@@ -103,7 +117,7 @@ const timeline = [
   <section class="section ruled">
     <div class="wrap">
       <SectionMarker no="03" label="Nachweise" rest="Prüfbar" />
-      <h2 class="cred__head">Zulassungen, Mitgliedschaften, Nummern.</h2>
+      <h2 class="cred__head">Unsere Nachweise.</h2>
 
       <div class="cred">
         <ol class="cred__list" role="list">
@@ -150,15 +164,34 @@ const timeline = [
     </figure>
 
     <div class="wrap fleet__grid">
-      <dl class="fleet__specs">
-        <div><dt>Bagger</dt><dd class="num">{fleet.excavators.join(' · ')}</dd></div>
-        <div><dt>Radlader</dt><dd class="num">{fleet.loaders.join(' · ')}</dd></div>
-        <div><dt>Containerfahrzeuge</dt><dd class="num">{fleet.containerVehicles}</dd></div>
-        <div><dt>Behältergrößen</dt><dd class="num">{fleet.containerRange}</dd></div>
-        <div><dt>Personenschleusen</dt><dd>{fleet.airlocks}</dd></div>
-        <div><dt>Unterdruckhaltung</dt><dd class="num">{fleet.uhg}</dd></div>
-        <div><dt>Materialschleusen</dt><dd>im Bestand</dd></div>
-      </dl>
+      <div class="fleet__main">
+        {/* Die Anzahl vorweg, die Groessen daneben: eine Aufzaehlung aus
+            Tonnagen sagte nicht, wie viele Geraete ueberhaupt dastehen. */}
+        <ul class="fleet__counts" role="list">
+          {[
+            { n: fleet.excavators.length, k: 'Bagger', sizes: fleet.excavators },
+            { n: fleet.loaders.length, k: 'Radlader', sizes: fleet.loaders },
+            { n: fleet.containerVehicles, k: 'Containerfahrzeuge', sizes: [] },
+          ].map((g) => (
+            <li>
+              <span class="fleet__n num" data-count={g.n}>{g.n}</span>
+              <span class="fleet__k">{g.k}</span>
+              {g.sizes.length > 0 && (
+                <ul class="fleet__chips" role="list">
+                  {g.sizes.map((t) => <li class="num">{t}</li>)}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+
+        <dl class="fleet__specs">
+          <div><dt>Behältergrößen</dt><dd class="num">{fleet.containerRange}</dd></div>
+          <div><dt>Personenschleusen</dt><dd>{fleet.airlocks}</dd></div>
+          <div><dt>Unterdruckhaltung</dt><dd class="num">{fleet.uhg}</dd></div>
+          <div><dt>Materialschleusen</dt><dd>im Bestand</dd></div>
+        </dl>
+      </div>
 
       <div class="fleet__waste">
         <span class="label">Entsorgungsfraktionen</span>
@@ -171,21 +204,36 @@ const timeline = [
 
   <!-- Sponsoring -->
   <section class="section zone-dark ruled">
-    <div class="wrap spon">
-      <div>
-        <SectionMarker no="05" label="Region" rest="Seit 2019" />
-        <h2>Wir sponsern die 5e.</h2>
+    <div class="wrap">
+      <SectionMarker no="05" label="Region" rest="Seit 2019" />
+
+      <div class="spon">
+        {/* Trikotnummer statt Textblock: der Abschnitt stand vorher als reine
+            Absichtserklaerung da und ging zwischen den Datenlisten unter. */}
+        <p class="spon__mark" aria-hidden="true">
+          <span class="spon__no">5e</span>
+          <span class="spon__club">FC Bremen Huchting</span>
+        </p>
+
+        <div class="spon__text">
+          <h2>Wir sponsern die 5e.</h2>
+          <p class="lead">
+            Seit 2019 unterstützen wir die Jugendmannschaft 5e des FC Bremen Huchting.
+            Kein Kommunikationsprogramm, sondern die Sorte Engagement, die ein Betrieb
+            aus der Region gegenüber seiner Region hat.
+          </p>
+          <dl class="spon__facts">
+            <div><dt>Verein</dt><dd>FC Bremen Huchting</dd></div>
+            <div><dt>Mannschaft</dt><dd>Jugend 5e</dd></div>
+            <div><dt>Seit</dt><dd class="num">2019</dd></div>
+          </dl>
+        </div>
       </div>
-      <p class="lead">
-        Seit 2019 unterstützen wir die Jugendmannschaft 5e des FC Bremen Huchting.
-        Kein Kommunikationsprogramm, sondern die Sorte Engagement, die ein Betrieb aus
-        der Region gegenüber seiner Region hat.
-      </p>
     </div>
   </section>
 
   <Cta
-    heading="Sprechen Sie mit uns, bevor Sie ausschreiben."
+    heading="Rufen Sie an, bevor Sie planen."
     body="Bei ungeklärter Schadstofflage lohnt ein Gespräch vor dem Leistungsverzeichnis — es erspart Nachträge, die niemand eingeplant hat."
   />
 </Base>
@@ -199,23 +247,74 @@ const timeline = [
   .pos__fig :global(img) { width: 100%; height: auto; border: 1px solid var(--rule); }
   .pos__fig figcaption { margin-top: var(--s-3); color: var(--fg-muted); }
 
-  .chr__head { max-width: 20ch; margin-bottom: var(--s-7); }
-  .chr { margin: 0; border-top: 1px solid var(--rule-strong); }
-  .chr li {
-    display: grid;
-    grid-template-columns: 5rem minmax(0, 1fr);
-    gap: var(--s-2) var(--s-5);
-    padding-block: var(--s-5);
-    border-bottom: 1px solid var(--rule);
+  /* Ueberschrift links stehen lassen, Chronik rechts: als volle Textbreite
+     stand rechts neben der Zeitleiste eine leere Haelfte. */
+  .chr-wrap { display: grid; gap: var(--s-7) var(--gutter); }
+  @media (min-width: 68rem) {
+    .chr-wrap { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: var(--s-9); align-items: start; }
+    .chr__head { position: sticky; top: 6rem; }
   }
-  @media (min-width: 48rem) { .chr li { grid-template-columns: 7rem minmax(0, 1fr); } }
+  .chr__head h2 { max-width: 16ch; }
+  .chr__lead { margin-top: var(--s-5); color: var(--fg-muted); font-size: .9375rem; max-width: 42ch; }
+
+  /* Die Chronik lief vorher als Tabelle mit Trennlinien durch und las sich wie
+     eine Fussnote. Jetzt haengt sie an einer Schiene: die Jahreszahl gross auf
+     der Linie, die letzte Marke im Signalton — dort steht der Betrieb heute. */
+  .chr { margin: 0; padding-left: 0; }
+  .chr__step {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-3);
+    padding: 0 0 var(--s-7) var(--s-6);
+    border-left: 1px solid var(--rule);
+  }
+  @media (min-width: 48rem) {
+    .chr__step {
+      grid-template-columns: 8.5rem minmax(0, 1fr);
+      gap: var(--s-6);
+      align-items: start;
+      padding-left: var(--s-7);
+    }
+  }
+  .chr__step:last-child { padding-bottom: 0; border-left-color: transparent; }
+
+  /* Marke auf der Schiene. Sitzt auf der Grundlinie der Jahreszahl. */
+  .chr__step::before {
+    content: '';
+    position: absolute;
+    left: -4.5px;
+    top: .5em;
+    width: 9px;
+    height: 9px;
+    background: var(--bg);
+    box-shadow: inset 0 0 0 2px var(--fg-muted);
+  }
+  /* Der letzte Eintrag traegt die Schiene selbst weiter, sonst bricht sie
+     oberhalb der Marke ab. */
+  .chr__step:last-child::after {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 0;
+    width: 1px;
+    height: calc(.5em + 4.5px);
+    background: var(--rule);
+  }
+  .chr__step--now::before {
+    background: var(--accent);
+    box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 4px color-mix(in oklab, var(--accent) 22%, transparent);
+  }
+
   .chr__y {
     color: var(--accent);
-    font-size: clamp(1rem, 2.2vw, 1.25rem);
+    font-size: clamp(1.375rem, 3.2vw, 2rem);
     font-weight: 500;
+    line-height: 1;
+    letter-spacing: -.02em;
   }
-  .chr__b h3 { font-size: 1.125rem; }
-  .chr__b p { margin-top: .4rem; color: var(--fg-muted); font-size: .9375rem; max-width: 62ch; }
+  .chr__b h3 { font-size: clamp(1.125rem, 1.9vw, 1.375rem); }
+  .chr__b p { margin-top: .5rem; color: var(--fg-muted); font-size: .9375rem; max-width: 62ch; }
 
   .cred__head { max-width: 22ch; margin-bottom: var(--s-7); }
   .cred { display: grid; gap: var(--s-8) var(--gutter); }
@@ -262,8 +361,8 @@ const timeline = [
     padding-block: var(--s-3);
     border-bottom: 1px solid var(--rule);
   }
-  .cred__facts dt { font-size: .8125rem; color: var(--fg-muted); }
-  .cred__facts dd { margin: 0; font-size: .8125rem; }
+  .cred__facts dt { font-size: var(--t-xs); color: var(--fg-muted); }
+  .cred__facts dd { margin: 0; font-size: var(--t-xs); }
 
   .fleet { padding-bottom: 0; }
   .fleet__head { max-width: 16ch; }
@@ -278,6 +377,46 @@ const timeline = [
   .fleet__fig figcaption { margin-top: var(--s-3); color: var(--fg-muted); }
   .fleet__grid { display: grid; gap: var(--s-7) var(--gutter); padding-block: var(--s-7) var(--section); }
   @media (min-width: 60rem) { .fleet__grid { grid-template-columns: minmax(0, 1.4fr) minmax(0, .6fr); gap: var(--s-8); align-items: start; } }
+  .fleet__main { display: grid; gap: var(--s-7); }
+
+  /* Stueckzahl gross, Tonnagen als Chips daneben. */
+  .fleet__counts {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--rule-strong);
+  }
+  @media (min-width: 44rem) {
+    .fleet__counts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gutter); }
+  }
+  .fleet__counts li {
+    display: grid;
+    align-content: start;
+    gap: var(--s-2);
+    padding-block: var(--s-5);
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 44rem) { .fleet__counts li { border-bottom: 0; } }
+  .fleet__n {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2.25rem, 5.5vw, 3.5rem);
+    line-height: .9;
+    letter-spacing: -.035em;
+    font-variant-numeric: tabular-nums;
+    font-stretch: 112%;
+  }
+  .fleet__k { font-size: var(--t-sm); color: var(--fg-muted); }
+  .fleet__chips { display: flex; flex-wrap: wrap; gap: .3rem; margin: var(--s-2) 0 0; padding: 0; list-style: none; }
+  .fleet__chips li {
+    padding: .2rem .5rem;
+    font-size: var(--t-mono);
+    color: var(--fg-muted);
+    border: 1px solid var(--rule);
+  }
+
   .fleet__specs { margin: 0; border-top: 1px solid var(--rule-strong); }
   .fleet__specs > div {
     display: grid;
@@ -289,7 +428,7 @@ const timeline = [
   @media (min-width: 30rem) {
     .fleet__specs > div { grid-template-columns: 10.5rem minmax(0, 1fr); gap: var(--s-4); }
   }
-  .fleet__specs dt { font-size: .8125rem; color: var(--fg-muted); }
+  .fleet__specs dt { font-size: var(--t-xs); color: var(--fg-muted); }
   .fleet__specs dd { margin: 0; font-size: .875rem; }
   .fleet__waste ul { display: grid; gap: .4rem; margin: var(--s-4) 0 0; padding: 0; list-style: none; }
   .fleet__waste li { position: relative; padding-left: 1.1rem; font-size: .875rem; }
@@ -298,7 +437,49 @@ const timeline = [
     width: 7px; height: 1px; background: var(--accent);
   }
 
-  .spon { display: grid; gap: var(--s-5) var(--gutter); }
-  @media (min-width: 60rem) { .spon { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-9); align-items: end; } }
-  .spon .lead { color: var(--fg-muted); }
+  .spon { display: grid; gap: var(--s-7) var(--gutter); align-items: start; }
+  @media (min-width: 56rem) {
+    .spon { grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: var(--s-9); }
+  }
+  .spon .lead { color: var(--fg-muted); margin-top: var(--s-5); }
+
+  /* Trikot: Nummer auf Signalflaeche, Vereinsname auf dem Saum. */
+  .spon__mark {
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: var(--s-3);
+    aspect-ratio: 4 / 5;
+    max-width: 15rem;
+    padding: var(--s-5);
+    background: var(--accent);
+    color: var(--ink);
+  }
+  .spon__no {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(4.5rem, 13vw, 7rem);
+    line-height: .82;
+    letter-spacing: -.05em;
+    font-stretch: 112%;
+  }
+  .spon__club {
+    font-family: var(--font-mono);
+    font-size: var(--t-mono);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--ink);
+  }
+
+  .spon__facts { margin: var(--s-7) 0 0; border-top: 1px solid var(--rule); max-width: 34rem; }
+  .spon__facts > div {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr);
+    gap: var(--s-3);
+    padding-block: var(--s-3);
+    border-bottom: 1px solid var(--rule);
+  }
+  .spon__facts dt { font-size: var(--t-xs); color: var(--fg-muted); }
+  .spon__facts dd { margin: 0; font-size: var(--t-xs); }
 </style>

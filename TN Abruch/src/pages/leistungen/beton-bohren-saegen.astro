@@ -1,14 +1,22 @@
 ---
 import LeistungPage from '~/layouts/LeistungPage.astro';
+import bandImage from '~/assets/material-wandschnitt-band.jpg';
+import headImage from '~/assets/material-kernbohrung-band.jpg';
 ---
 
 <LeistungPage
   slug="beton-bohren-saegen"
   eyebrow="Leistung 03 — Beton, Bohren & Sägen"
-  h1="Öffnungen im Bestand, ohne die Statik zu gefährden."
-  lead="Kernbohrungen, Wand- und Bodensägearbeiten, Balkonabbruch, Betonabbruch. Überall dort, wo mit Meißel und Abbruchhammer zu viel kaputtginge."
+  h1="Löcher in Beton. Ohne Erschütterung."
+  lead="Runde Löcher für Rohre und Leitungen, gerade Schnitte für Türen und Treppen, Balkone kontrolliert herunter. Überall dort, wo der Abbruchhammer zu viel kaputt machen würde."
   seoTitle="Kernbohrung & Betonsägen — TN Abbruch, Delmenhorst"
   seoDescription="Kernbohrungen, Wandsägen, Bodensägen, Balkonabbruch und Betonabbruch im Bestand. Erschütterungsarme Trennverfahren für Durchbrüche und Öffnungen. Delmenhorst, Bremen, Oldenburg."
+  headImage={headImage}
+  headImageAlt="Materialaufnahme: Kernbohrung durch Beton, saubere Schnittkante mit sichtbarem Zuschlagkorn."
+  bandImage={bandImage}
+  bandAlt="Materialaufnahme: aufgerissene Kante einer entkernten Innenwand, Putz- und Estrichschichten im Schnitt."
+  bandClaim="Der Schnitt entscheidet, was danach noch steht."
+  bandNote="Trennverfahren arbeiten erschütterungsarm. Im Bestand ist das der Unterschied zwischen einer Öffnung und einem Schaden im Nachbarbauteil."
   serviceName="Betonarbeiten, Kernbohrung und Sägen"
   facts={[
     { value: '800', label: 'cbm Betonabbruch, Referenz 1999' },

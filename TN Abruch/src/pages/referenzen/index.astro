@@ -5,10 +5,23 @@ import PageHeader from '~/components/PageHeader.astro';
 import SectionMarker from '~/components/SectionMarker.astro';
 import Cta from '~/components/Cta.astro';
 
+import phBand from '~/assets/material-schnurschlag-band.jpg';
+
 const refs = (await getCollection('referenzen')).map((r) => r.data).sort((a, b) => b.year - a.year);
 
 const cbmTotal = refs.filter((r) => r.unit === 'cbm').reduce((s, r) => s + (r.quantity ?? 0), 0);
 const span = `${refs[refs.length - 1].year}–${refs[0].year}`;
+
+/* Groessenvergleich. Flaechen und Rauminhalte lassen sich nicht gegeneinander
+   messen — deshalb zwei getrennte Skalen statt einer gemeinsamen. */
+const byUnit = (u: string) =>
+  refs.filter((r) => r.unit === u && r.quantity).sort((a, b) => (b.quantity ?? 0) - (a.quantity ?? 0));
+
+const cbmRefs = byUnit('cbm');
+const flaeche = [...byUnit('qm'), ...byUnit('m²')].sort((a, b) => (b.quantity ?? 0) - (a.quantity ?? 0));
+const cbmMax = cbmRefs[0].quantity!;
+const flMax = flaeche[0].quantity!;
+const ohneMenge = refs.filter((r) => !r.quantity).length;
 
 const filters = [
   { id: 'alle', label: 'Alle', count: refs.length },
@@ -17,6 +30,21 @@ const filters = [
   { id: 'demontage', label: 'Demontage', count: refs.filter((r) => r.category.includes('demontage')).length },
   { id: 'beton', label: 'Beton', count: refs.filter((r) => r.category.includes('beton')).length },
 ];
+
+/* Zweite Sortierung: erst alles mit Kubikmeterangabe, dann die Flaechen,
+   zuletzt was nicht dokumentiert ist — innerhalb der Gruppe absteigend.
+   Die Reihenfolge steht als CSS-order in der Zeile, damit die Umschaltung
+   ohne Umbau des DOM auskommt und auch ohne Skript eine gueltige Liste bleibt. */
+const unitRank = (u?: string) => (u === 'cbm' ? 0 : u ? 1 : 2);
+const mengeIndex = new Map(
+  [...refs]
+    .sort((a, b) =>
+      unitRank(a.unit) - unitRank(b.unit) ||
+      (b.quantity ?? 0) - (a.quantity ?? 0) ||
+      b.year - a.year,
+    )
+    .map((r, i) => [r.slug, i]),
+);
 
 const breadcrumb = [
   { name: 'Startseite', href: '/' },
@@ -40,6 +68,8 @@ const breadcrumb = [
   }}
 >
   <PageHeader
+    image={phBand}
+    imageAlt="Materialaufnahme: Schlagschnurlinie auf rohem Betonboden, feiner Staub entlang der Linie."
     eyebrow="Referenzen"
     title="Zwanzig Projekte, die wir belegen können."
     lead="Auf Rückbaubaustellen wird selten fotografiert, im Schwarzbereich gar nicht. Was bleibt, ist die Aufstellung: Jahr, Auftraggeber, Leistung, Menge. Nachstehend vollständig — ohne Auswahl nach Schönheit."
@@ -52,35 +82,129 @@ const breadcrumb = [
     ]}
   />
 
+  <!-- ══ 01 GRÖSSENVERGLEICH ═════════════════════════════════════════════ -->
   <section class="section ruled">
     <div class="wrap">
-      <SectionMarker no="01" label="Auftragsbuch" rest="Maßstab der Balken: 62.500 cbm" />
+      <SectionMarker no="01" label="Größenvergleich" rest={`Balken im Verhältnis zu ${cbmMax.toLocaleString('de-DE')} cbm`} />
 
-      <div class="filters" role="group" aria-label="Referenzen nach Leistung filtern">
-        {filters.map((f) => (
-          <button
-            type="button"
-            class="filters__btn"
-            data-filter={f.id}
-            aria-pressed={f.id === 'alle' ? 'true' : 'false'}
-          >
-            {f.label}<span class="filters__n num">{f.count}</span>
-          </button>
-        ))}
+      <div class="mb__head">
+        <h2>Was {cbmMax.toLocaleString('de-DE')} Kubikmeter heißt.</h2>
+        <p class="lead muted">
+          Zu {cbmRefs.length + flaeche.length} der {refs.length} Projekte liegt eine Menge in der
+          Projektdokumentation. Nebeneinandergestellt zeigt sich, was in diesem Gewerbe
+          „ein großer Auftrag“ bedeutet — und dass die Hochschule für Technik alles
+          andere um Längen schlägt.
+        </p>
+      </div>
+
+      <div class="mb">
+        <div class="mb__col">
+          <p class="mb__cap">
+            <span class="label">Umbauter Raum</span>
+            <span class="mb__cap-u num">cbm</span>
+          </p>
+
+          <ol class="mb__list" role="list" data-rise-group>
+            {cbmRefs.map((r, i) => (
+              <li class="mb__row" data-rise style={`--w:${((r.quantity! / cbmMax) * 100).toFixed(2)}%`}>
+                <a href={`/referenzen/${r.slug}/`} class="mb__link">
+                  <span class="mb__rank num">{String(i + 1).padStart(2, '0')}</span>
+                  <span class="mb__name">
+                    {r.client}
+                    <span class="mb__year num">{r.year}</span>
+                  </span>
+                  <span class="mb__track" aria-hidden="true"><span class="mb__fill"></span></span>
+                  <span class="mb__val num" data-count={r.quantity}>{r.quantity!.toLocaleString('de-DE')}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <div class="mb__col mb__col--flaeche">
+          <p class="mb__cap">
+            <span class="label">Fläche</span>
+            <span class="mb__cap-u num">qm / m²</span>
+          </p>
+
+          <ol class="mb__list" role="list" data-rise-group>
+            {flaeche.map((r, i) => (
+              <li class="mb__row" data-rise style={`--w:${((r.quantity! / flMax) * 100).toFixed(2)}%`}>
+                <a href={`/referenzen/${r.slug}/`} class="mb__link">
+                  <span class="mb__rank num">{String(i + 1).padStart(2, '0')}</span>
+                  <span class="mb__name">
+                    {r.client}
+                    <span class="mb__year num">{r.year}</span>
+                  </span>
+                  <span class="mb__track" aria-hidden="true"><span class="mb__fill"></span></span>
+                  <span class="mb__val num" data-count={r.quantity}>{r.quantity!.toLocaleString('de-DE')}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+
+          <p class="mb__note">
+            Getrennte Skalen: Kubikmeter umbauten Raum und Quadratmeter Fläche lassen
+            sich nicht gegeneinander messen. Zu {ohneMenge} älteren Projekten ist keine
+            Menge dokumentiert — sie stehen deshalb nur im Auftragsbuch.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 02 AUFTRAGSBUCH ═════════════════════════════════════════════════ -->
+  <section class="section zone-dark ruled">
+    <div class="wrap">
+      <SectionMarker no="02" label="Auftragsbuch" rest={`Vollständig · ${span}`} />
+
+      <div class="ctl">
+        <div class="ctl__group">
+          <span class="label ctl__lab" id="lab-filter">Leistung</span>
+          <div class="filters" role="group" aria-labelledby="lab-filter">
+            {filters.map((f) => (
+              <button
+                type="button"
+                class="filters__btn"
+                data-filter={f.id}
+                aria-pressed={f.id === 'alle' ? 'true' : 'false'}
+              >
+                {f.label}<span class="filters__n num">{f.count}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div class="ctl__group ctl__group--sort">
+          <span class="label ctl__lab" id="lab-sort">Sortierung</span>
+          <div class="filters" role="group" aria-labelledby="lab-sort">
+            <button type="button" class="filters__btn" data-sort="jahr" aria-pressed="true">Jahr</button>
+            <button type="button" class="filters__btn" data-sort="menge" aria-pressed="false">Menge</button>
+          </div>
+        </div>
       </div>
 
       <p class="filters__status visually-hidden" role="status" data-filter-status></p>
 
       <ol class="tl" role="list" data-ref-list>
         {refs.map((r, i) => (
-          <li class="tl__item" data-cats={r.category.join(' ')}>
+          <li
+            class="tl__item"
+            data-cats={r.category.join(' ')}
+            style={`--oj:${i}; --om:${mengeIndex.get(r.slug)}`}
+          >
             <div class="tl__year">
               <span class="num">{r.year}</span>
-              {refs[i - 1]?.year === r.year && <span class="visually-hidden">gleiches Jahr</span>}
             </div>
 
             <div class="tl__main">
-              <h2 class="tl__client">{r.client}</h2>
+              <h3 class="tl__client">
+                <a href={`/referenzen/${r.slug}/`} class="tl__link">
+                  {r.client}
+                  <span class="visually-hidden"> — Projektseite öffnen</span>
+                  <svg class="tl__go" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+                </a>
+              </h3>
               <p class="tl__scope">{r.scope}</p>
               <p class="tl__meta">
                 <span class="label">{r.sector}</span>
@@ -88,23 +212,21 @@ const breadcrumb = [
               </p>
             </div>
 
-            <div class="tl__qty">
+            {/* Die Mengenspalte bleibt in jeder Zeile besetzt. Wo nichts
+                dokumentiert ist, steht der Gedankenstrich — eine leere Spalte
+                sah nach Ladefehler aus, dreizehnmal „ohne Mengenangabe" nach
+                Entschuldigung. Fuer Screenreader steht der Hinweis im Text. */}
+            <div class="tl__amount">
               {r.quantity ? (
-                <>
+                <span class="tl__qty">
                   <span class="tl__qty-v num">{r.quantity.toLocaleString('de-DE')}</span>
                   <span class="tl__qty-u num">{r.unit}</span>
-                </>
-              ) : (
-                <span class="tl__qty-none" title="Für dieses Projekt liegt keine Mengenangabe vor.">
-                  <span aria-hidden="true">—</span>
-                  <span class="visually-hidden">keine Mengenangabe dokumentiert</span>
                 </span>
-              )}
-            </div>
-
-            <div class="tl__bar" aria-hidden="true">
-              {r.quantity && r.unit === 'cbm' && (
-                <span style={`--w:${Math.max(1.5, (r.quantity / 62500) * 100)}%`}></span>
+              ) : (
+                <>
+                  <span class="tl__none num" aria-hidden="true">—</span>
+                  <span class="visually-hidden">keine Mengenangabe dokumentiert</span>
+                </>
               )}
             </div>
           </li>
@@ -112,9 +234,11 @@ const breadcrumb = [
       </ol>
 
       <p class="tl__foot">
-        Die Mengenangaben stammen aus unserer eigenen Projektdokumentation. „UR."
-        bezeichnet den umbauten Raum, „cbm" Kubikmeter, „qm" beziehungsweise „m²"
-        Quadratmeter.
+        Jeder Auftraggeber führt zu einer Projektseite mit Eckdaten und Leistungsbild.
+        Die Mengen stammen aus unserer eigenen Projektdokumentation; „cbm“ bezeichnet
+        Kubikmeter umbauten Raum, „qm“ beziehungsweise „m²“ Quadratmeter. Nach Menge
+        sortiert stehen zuerst die Kubikmeterprojekte, dann die Flächen, zuletzt die
+        Projekte ohne dokumentierte Menge.
       </p>
     </div>
   </section>
@@ -126,12 +250,123 @@ const breadcrumb = [
 </Base>
 
 <style>
-  .filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--s-2);
-    margin-bottom: var(--s-6);
+  /* ══ Größenvergleich ════════════════════════════════════════════════════ */
+  .mb__head { display: grid; gap: var(--s-5); margin-bottom: var(--s-8); }
+  @media (min-width: 64rem) {
+    .mb__head {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--s-9);
+      align-items: end;
+    }
   }
+  .mb__head h2 { max-width: 16ch; }
+
+  .mb { display: grid; gap: var(--s-8) var(--s-9); }
+  @media (min-width: 68rem) {
+    .mb { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); }
+  }
+
+  .mb__cap {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--s-4);
+    padding-bottom: var(--s-3);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  .mb__cap-u { font-size: var(--t-mono); color: var(--accent); letter-spacing: .12em; }
+
+  .mb__list { margin: 0; }
+  .mb__row { border-bottom: 1px solid var(--rule); }
+
+  .mb__link {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: .35rem var(--s-4);
+    padding-block: var(--s-4);
+    text-decoration: none;
+    transition: color var(--dur-ui) linear;
+  }
+  .mb__rank { grid-column: 1; grid-row: 1 / span 2; font-size: var(--t-mono); color: var(--fg-muted); align-self: center; }
+  .mb__name {
+    grid-column: 2;
+    grid-row: 1;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(.9375rem, 1.5vw, 1.0625rem);
+    letter-spacing: -.012em;
+    line-height: 1.15;
+  }
+  .mb__year { margin-left: .5rem; font-size: var(--t-mono); color: var(--fg-muted); font-weight: 400; }
+  .mb__val {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.0625rem, 2.1vw, 1.375rem);
+    letter-spacing: -.03em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  /* Der Balken laeuft ueber die volle Breite unter Name und Wert — so bleibt
+     der Name lesbar und der Vergleich trotzdem ueber die ganze Spalte. */
+  .mb__track {
+    grid-column: 2 / -1;
+    grid-row: 2;
+    display: block;
+    height: 6px;
+    background: color-mix(in oklab, var(--fg) 12%, transparent);
+  }
+  .mb__fill {
+    display: block;
+    height: 100%;
+    width: var(--w);
+    background: var(--accent);
+    transform-origin: left center;
+  }
+
+  /* Ohne Skript stehen die Balken sofort auf Endbreite. Mit Skript fahren sie
+     aus, sobald die Zeile ins Bild kommt — gestaffelt ueber --rise-delay.
+     Skaliert statt Breite animiert: das laeuft im Compositor und laesst das
+     Layout der Zeile in Ruhe. */
+  :global(html.js) .mb__fill { transform: scaleX(0); }
+  :global(html.js) .mb__row.is-in .mb__fill {
+    transform: none;
+    transition: transform 820ms var(--ease-mass);
+    transition-delay: var(--rise-delay, 0ms);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(html.js) .mb__fill { transform: none; }
+  }
+
+  .mb__link:hover .mb__name,
+  .mb__link:focus-visible .mb__name { color: var(--accent); }
+  .mb__link:hover .mb__fill { background: var(--fg); }
+
+  .mb__note {
+    margin-top: var(--s-5);
+    font-size: var(--t-xs);
+    color: var(--fg-muted);
+    max-width: 46ch;
+  }
+  /* Die Flaechenspalte ist kuerzer als die Kubikmeterspalte. Die Fussnote
+     rutscht deshalb ans Spaltenende, statt eine Luecke offen zu lassen. */
+  @media (min-width: 68rem) {
+    .mb__col--flaeche { display: flex; flex-direction: column; }
+    .mb__col--flaeche .mb__note { margin-top: auto; padding-top: var(--s-7); }
+  }
+
+  /* ══ Steuerung ══════════════════════════════════════════════════════════ */
+  .ctl { display: grid; gap: var(--s-6) var(--s-8); margin-bottom: var(--s-7); }
+  @media (min-width: 56rem) {
+    .ctl { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+  }
+  .ctl__lab { display: block; margin-bottom: var(--s-3); }
+
+  .filters { display: flex; flex-wrap: wrap; gap: var(--s-2); }
   .filters__btn {
     display: inline-flex;
     align-items: baseline;
@@ -150,13 +385,46 @@ const breadcrumb = [
   .filters__btn[aria-pressed='true'] {
     background: var(--accent);
     border-color: var(--accent);
-    color: var(--paper);
+    color: var(--ink);
   }
-  .filters__n { font-size: .72rem; color: var(--fg-muted); }
-  .filters__btn[aria-pressed='true'] .filters__n { color: color-mix(in oklab, var(--paper) 88%, var(--signal)); }
+  .filters__n { font-size: var(--t-mono); color: var(--fg-muted); }
+  /* Kein aufgehelltes Ink auf der Signalflaeche: bei 11 px reisst der Kontrast
+     unter 4.5:1. Die Anzahl setzt sich ueber Schriftgrad und Mono ab. */
+  .filters__btn[aria-pressed='true'] .filters__n { color: var(--ink); }
 
-  .tl { margin: 0; border-top: 1px solid var(--rule-strong); }
+  /* ══ Auftragsbuch ═══════════════════════════════════════════════════════ */
+  .tl__link { text-decoration: none; }
+  .tl__go {
+    display: inline-block;
+    vertical-align: baseline;
+    width: .62em; height: .62em;
+    margin-left: .45em;
+    color: var(--accent);
+    opacity: 0;
+    transform: translateX(-.35em);
+    transition: opacity var(--dur-ui) linear, transform var(--dur-ui) linear;
+  }
+  .tl__item:hover .tl__go,
+  .tl__item:focus-within .tl__go { opacity: 1; transform: none; }
+  @media (hover: none) { .tl__go { opacity: .65; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .tl__go { transition: none; } }
+
+  .tl__item { transition: background-color var(--dur-ui) linear; }
+  .tl__item:hover { background: color-mix(in oklab, var(--accent) 10%, transparent); }
+  .tl__link::after { content: ''; position: absolute; inset: 0; }
+  .tl__item:hover .tl__client, .tl__item:focus-within .tl__client { color: var(--accent); }
+
+  /* Flex-Spalte statt Blockfluss: die Sortierung schaltet ueber CSS-order um,
+     ohne dass ein Skript die Zeilen im DOM umhaengt. */
+  .tl {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    border-top: 1px solid var(--rule-strong);
+  }
   .tl__item {
+    order: var(--oj);
+    position: relative;
     display: grid;
     grid-template-columns: 4rem minmax(0, 1fr);
     gap: var(--s-3) var(--s-4);
@@ -164,10 +432,11 @@ const breadcrumb = [
     border-bottom: 1px solid var(--rule);
     align-items: baseline;
   }
+  .tl--menge .tl__item { order: var(--om); }
   .tl__item[hidden] { display: none; }
   @media (min-width: 60rem) {
     .tl__item {
-      grid-template-columns: 5rem minmax(0, 1.15fr) 9rem minmax(0, .6fr);
+      grid-template-columns: 5rem minmax(0, 1.35fr) minmax(0, .65fr);
       gap: var(--s-3) var(--s-6);
       padding-block: var(--s-6);
     }
@@ -188,72 +457,78 @@ const breadcrumb = [
   .tl__meta { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-4); margin-top: var(--s-3); }
   .tl__region { color: var(--fg-muted); }
 
-  .tl__qty { grid-column: 2; display: flex; align-items: baseline; gap: .35rem; }
-  @media (min-width: 60rem) { .tl__qty { grid-column: auto; justify-content: flex-end; } }
+  .tl__amount { grid-column: 2; }
+  @media (min-width: 60rem) {
+    .tl__amount {
+      grid-column: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: var(--s-3);
+      align-self: center;
+    }
+  }
+  .tl__qty { display: flex; align-items: baseline; gap: .35rem; }
   .tl__qty-v {
     font-family: var(--font-display);
     font-weight: 700;
     font-size: clamp(1.4rem, 3vw, 2rem);
     letter-spacing: -.035em;
     font-variant-numeric: tabular-nums;
+    line-height: 1;
   }
-  .tl__qty-u { font-size: .78rem; color: var(--fg-muted); flex: none; }
-  .tl__qty-none {
-    font-family: var(--font-mono);
-    font-size: 1.25rem;
-    color: var(--rule-strong);
-    cursor: help;
-  }
+  .tl__qty-u { font-size: var(--t-xs); color: var(--fg-muted); flex: none; }
+  .tl__none { font-size: 1.25rem; color: color-mix(in oklab, var(--fg-muted) 55%, transparent); line-height: 1; }
 
-  /* Mengenbalken: setzt die Projekte optisch ins Verhältnis.
-     Die Schiene läuft durch alle Zeilen — sie ist die Maßstabsachse. */
-  .tl__bar { display: none; }
-  @media (min-width: 60rem) {
-    .tl__bar {
-      display: block;
-      grid-column: 4;
-      align-self: center;
-      height: 3px;
-      background: var(--rule);
-    }
-  }
-  .tl__bar span {
-    display: block;
-    width: var(--w);
-    height: 100%;
-    background: var(--accent);
-  }
-
-  .tl__foot { margin-top: var(--s-6); font-size: .8125rem; color: var(--fg-muted); max-width: 70ch; }
+  .tl__foot { margin-top: var(--s-6); font-size: var(--t-xs); color: var(--fg-muted); max-width: 70ch; }
 </style>
 
 <script>
-  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+  const list = document.querySelector<HTMLElement>('[data-ref-list]');
   const items = document.querySelectorAll<HTMLElement>('[data-ref-list] > li');
+  const filterBtns = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+  const sortBtns = document.querySelectorAll<HTMLButtonElement>('[data-sort]');
   const status = document.querySelector<HTMLElement>('[data-filter-status]');
 
-  const apply = (id: string, push = true) => {
+  let filter = 'alle';
+  let sort = 'jahr';
+
+  const sync = (push = true) => {
     let shown = 0;
     items.forEach((li) => {
-      const match = id === 'alle' || (li.dataset.cats ?? '').split(' ').includes(id);
+      const match = filter === 'alle' || (li.dataset.cats ?? '').split(' ').includes(filter);
       li.hidden = !match;
       if (match) shown++;
     });
-    buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === id)));
+
+    filterBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === filter)));
+    sortBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.sort === sort)));
+    list?.classList.toggle('tl--menge', sort === 'menge');
+
     if (status) {
-      const label = [...buttons].find((b) => b.dataset.filter === id)?.textContent?.trim() ?? '';
-      status.textContent = `${shown} von ${items.length} Projekten — Filter: ${label}`;
+      /* Nur der Knopftext ohne die angehaengte Anzahl — sonst liest der
+         Screenreader „Beton1". */
+      const btn = [...filterBtns].find((b) => b.dataset.filter === filter);
+      const label = btn?.firstChild?.textContent?.trim() ?? '';
+      const nach = sort === 'menge' ? 'Menge' : 'Jahr';
+      status.textContent = `${shown} von ${items.length} Projekten — Filter: ${label}, sortiert nach ${nach}`;
     }
+
     if (push) {
       const url = new URL(location.href);
-      if (id === 'alle') url.searchParams.delete('filter');
-      else url.searchParams.set('filter', id);
+      filter === 'alle' ? url.searchParams.delete('filter') : url.searchParams.set('filter', filter);
+      sort === 'jahr' ? url.searchParams.delete('sort') : url.searchParams.set('sort', sort);
       history.replaceState(null, '', url);
     }
   };
 
-  buttons.forEach((b) => b.addEventListener('click', () => apply(b.dataset.filter!)));
+  filterBtns.forEach((b) => b.addEventListener('click', () => { filter = b.dataset.filter!; sync(); }));
+  sortBtns.forEach((b) => b.addEventListener('click', () => { sort = b.dataset.sort!; sync(); }));
 
-  const initial = new URL(location.href).searchParams.get('filter');
-  if (initial && [...buttons].some((b) => b.dataset.filter === initial)) apply(initial, false);
+  const params = new URL(location.href).searchParams;
+  const f = params.get('filter');
+  const s = params.get('sort');
+  if (f && [...filterBtns].some((b) => b.dataset.filter === f)) filter = f;
+  if (s === 'menge') sort = 'menge';
+  if (filter !== 'alle' || sort !== 'jahr') sync(false);
 </script>

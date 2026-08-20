@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fokuswerk – Ad Creatives</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #F0F0F0;
+    font-family: 'Inter', sans-serif;
+    padding: 48px 32px;
+  }
+  .page-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 40px;
+  }
+  .grid {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .card-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .card-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #666;
+  }
+
+  /* ─── CREATIVE 01 – Video Reel (4:5 = 400×500px) ─── */
+  .c01 {
+    width: 400px;
+    height: 500px;
+    background: #111111;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 36px 32px;
+  }
+  .c01-bg-text {
+    position: absolute;
+    bottom: -20px;
+    right: -10px;
+    font-size: 160px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.04);
+    line-height: 1;
+    letter-spacing: -8px;
+    user-select: none;
+  }
+  .c01-logo {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+  }
+  .c01-hook {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 14px;
+  }
+  .c01-headline {
+    font-size: 38px;
+    font-weight: 900;
+    color: #FFFFFF;
+    line-height: 1.05;
+    letter-spacing: -1px;
+  }
+  .c01-headline em {
+    font-style: normal;
+    color: #FFFFFF;
+    opacity: 0.5;
+  }
+  .c01-divider {
+    width: 40px;
+    height: 2px;
+    background: #FFFFFF;
+    margin: 20px 0;
+    opacity: 0.3;
+  }
+  .c01-sub {
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.65;
+  }
+  .c01-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .c01-cta {
+    background: #FFFFFF;
+    color: #111111;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 12px 20px;
+  }
+  .c01-geo {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.05em;
+  }
+
+  /* ─── CREATIVE 02 – Static 1:1 mit Zahlen (400×400px) ─── */
+  .c02 {
+    width: 400px;
+    height: 400px;
+    background: #FFFFFF;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 32px;
+    border: 1px solid #E0E0E0;
+  }
+  .c02-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .c02-logo {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #111;
+  }
+  .c02-tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #FFF;
+    background: #111;
+    padding: 4px 10px;
+  }
+  .c02-stats {
+    display: flex;
+    gap: 24px;
+  }
+  .c02-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .c02-stat-num {
+    font-size: 32px;
+    font-weight: 900;
+    color: #111;
+    line-height: 1;
+    letter-spacing: -1.5px;
+  }
+  .c02-stat-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #888;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+  .c02-divider {
+    width: 100%;
+    height: 1px;
+    background: #EBEBEB;
+  }
+  .c02-headline {
+    font-size: 22px;
+    font-weight: 900;
+    color: #111;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+  }
+  .c02-sub {
+    font-size: 12px;
+    font-weight: 400;
+    color: #777;
+    line-height: 1.6;
+    margin-top: 8px;
+  }
+  .c02-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .c02-cta {
+    background: #111;
+    color: #FFF;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 11px 18px;
+  }
+  .c02-geo {
+    font-size: 11px;
+    color: #BBB;
+    font-weight: 500;
+  }
+
+  /* ─── CREATIVE 03 – Carousel Karte 1 (400×400px) ─── */
+  .c03 {
+    width: 400px;
+    height: 400px;
+    background: #111111;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 32px;
+  }
+  .c03-accent {
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px;
+    height: 100%;
+    background: #FFFFFF;
+    opacity: 0.15;
+  }
+  .c03-num {
+    font-size: 100px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.06);
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    line-height: 1;
+    letter-spacing: -5px;
+  }
+  .c03-logo {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+  }
+  .c03-middle {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .c03-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 12px;
+  }
+  .c03-headline {
+    font-size: 34px;
+    font-weight: 900;
+    color: #FFFFFF;
+    line-height: 1.08;
+    letter-spacing: -1px;
+  }
+  .c03-headline span {
+    color: rgba(255,255,255,0.35);
+  }
+  .c03-sub {
+    font-size: 13px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.65;
+    margin-top: 16px;
+    max-width: 300px;
+  }
+  .c03-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .c03-swipe {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .c03-swipe-arrow {
+    font-size: 16px;
+    color: rgba(255,255,255,0.5);
+  }
+  .c03-dots {
+    display: flex;
+    gap: 5px;
+  }
+  .c03-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+  }
+  .c03-dot.active {
+    background: #FFFFFF;
+    width: 16px;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+<div class="page-title">Fokuswerk — Ad Creatives · Beispiele</div>
+<div class="grid">
+
+  <!-- CREATIVE 01: Reel/Story Format 4:5 -->
+  <div class="card-wrap">
+    <div class="card-label">Creative 01 · Reel / Feed 4:5 · "Niemand kennt euch"</div>
+    <div class="c01">
+      <div class="c01-bg-text">FW</div>
+      <div class="c01-logo">Fokuswerk</div>
+      <div>
+        <div class="c01-hook">Für KMU in Oldenburg &amp; Bremen</div>
+        <div class="c01-headline">
+          Niemand<br>kennt euch —<br><em>obwohl ihr</em><br>gut seid.
+        </div>
+        <div class="c01-divider"></div>
+        <div class="c01-sub">
+          Das ist kein Kreativ-Problem.<br>
+          Das ist ein System-Problem.<br>
+          Wir lösen es.
+        </div>
+      </div>
+      <div class="c01-bottom">
+        <div class="c01-cta">Erstgespräch buchen</div>
+        <div class="c01-geo">fokuswerk.de</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATIVE 02: Static 1:1 mit echten Zahlen -->
+  <div class="card-wrap">
+    <div class="card-label">Creative 02 · Static 1:1 · Social Proof mit echten Zahlen</div>
+    <div class="c02">
+      <div class="c02-top">
+        <div class="c02-logo">Fokuswerk</div>
+        <div class="c02-tag">Kundenergebnis</div>
+      </div>
+      <div class="c02-stats">
+        <div class="c02-stat">
+          <div class="c02-stat-num">+957%</div>
+          <div class="c02-stat-label">Mehr<br>Reichweite</div>
+        </div>
+        <div class="c02-stat">
+          <div class="c02-stat-num">84K</div>
+          <div class="c02-stat-label">Views in<br>30 Tagen</div>
+        </div>
+        <div class="c02-stat">
+          <div class="c02-stat-num">5,0★</div>
+          <div class="c02-stat-label">Google-<br>Bewertung</div>
+        </div>
+      </div>
+      <div class="c02-divider"></div>
+      <div>
+        <div class="c02-headline">Mehr Kunden über<br>Social Media.<br>Mit System.</div>
+        <div class="c02-sub">Content-Strategie &amp; Produktion für KMU<br>in Oldenburg &amp; Bremen.</div>
+      </div>
+      <div class="c02-bottom">
+        <div class="c02-cta">Kostenloses Erstgespräch</div>
+        <div class="c02-geo">fokuswerk.de</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATIVE 03: Carousel Karte 1 -->
+  <div class="card-wrap">
+    <div class="card-label">Creative 03 · Carousel Karte 1 · "Konkurrenz überall"</div>
+    <div class="c03">
+      <div class="c03-accent"></div>
+      <div class="c03-num">01</div>
+      <div class="c03-logo">Fokuswerk</div>
+      <div class="c03-middle">
+        <div class="c03-eyebrow">Die unbequeme Wahrheit</div>
+        <div class="c03-headline">
+          Eure Konkurrenz<br>ist überall<br><span>auf Social Media.</span>
+        </div>
+        <div class="c03-sub">
+          Nicht weil die mehr Zeit haben —
+          sondern weil die ein System haben.<br>
+          Wischen für die Lösung →
+        </div>
+      </div>
+      <div class="c03-bottom">
+        <div class="c03-swipe">
+          <span>Weiter wischen</span>
+          <span class="c03-swipe-arrow">→</span>
+        </div>
+        <div class="c03-dots">
+          <div class="c03-dot active"></div>
+          <div class="c03-dot"></div>
+          <div class="c03-dot"></div>
+          <div class="c03-dot"></div>
+          <div class="c03-dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

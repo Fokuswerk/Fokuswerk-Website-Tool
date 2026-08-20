@@ -1,15 +1,23 @@
 ---
 import LeistungPage from '~/layouts/LeistungPage.astro';
+import bandImage from '~/assets/material-bauschutt-band.jpg';
+import headImage from '~/assets/fuhrpark-16x9.jpg';
 import { wasteStreams } from '~/data/company';
 ---
 
 <LeistungPage
   slug="entsorgung-container"
   eyebrow="Leistung 04 — Entsorgung & Container"
-  h1="Der Behälter steht, bevor die erste Wand fällt."
-  lead="Eigene Containerfahrzeuge, Behälter von der 2-cbm-Mulde bis zum 36-cbm-Container, getrennte Erfassung und Entsorgung der Fraktionen."
+  h1="Der Container steht, bevor es losgeht."
+  lead="Container in jeder Größe, von der kleinen Mulde bis zum 36-Kubikmeter-Behälter, gebracht mit eigenen Fahrzeugen. Wir trennen Beton, Metall und Holz gleich auf der Baustelle — das drückt die Entsorgungskosten spürbar."
   seoTitle="Container mieten & Entsorgung — TN Abbruch, Delmenhorst"
   seoDescription="Container von 2 bis 36 cbm mit eigenen Containerfahrzeugen. Entsorgung von Bauschutt, Bodenaushub, Holz, Gips, Sperrmüll und Grünabfall. Delmenhorst, Bremen, Oldenburg."
+  headImage={headImage}
+  headImageAlt="Containerfahrzeuge und Abrollcontainer von TN Abbruch auf dem Betriebshof in Delmenhorst."
+  bandImage={bandImage}
+  bandAlt="Materialaufnahme: sortierter Bauschutt aus Beton, Ziegel und Stahl, scharfe Bruchflächen im Schatten."
+  bandClaim="Zwei bis sechsunddreißig Kubikmeter, aus dem eigenen Bestand."
+  bandNote="Vom Mulden-Behälter für die Kernbohrung bis zum Abrollcontainer für die Entkernung. Asbest und KMF gehen in zugelassene Gebinde."
   serviceName="Containerdienst und Entsorgung"
   facts={[
     { value: '2–36', label: 'cbm Behältergrößen' },
@@ -18,7 +26,7 @@ import { wasteStreams } from '~/data/company';
     { value: '1997', label: 'seit dem Gründungsjahr' },
   ]}
   argument={{
-    heading: 'Entsorgung ist kein Anhängsel des Rückbaus.',
+    heading: 'Sauber trennen spart Geld.',
     paragraphs: [
       'Bei einer Entkernung ist die Frage nicht, ob das Material rauskommt, sondern wie schnell der volle Behälter durch einen leeren ersetzt wird. Steht kein Container bereit, steht die Kolonne. Deshalb fahren wir eigene Containerfahrzeuge, statt sie zu bestellen.',
       'Der zweite Punkt ist die Trennung. Sortenrein erfasstes Material ist günstiger in der Entsorgung als ein gemischter Container — und bei Gips, Holz und Bauschutt ist die Trennung ohnehin vorgeschrieben. Wir stellen so viele Behälter, wie Fraktionen anfallen, und disponieren den Wechsel entlang des Baufortschritts.',

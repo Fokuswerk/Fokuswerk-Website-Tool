@@ -21,16 +21,22 @@ Erzeugt und im Einsatz:
 |---|---|---|
 | `src/assets/material-beton-bewehrung.jpg` | *Extreme macro material study: fractured reinforced concrete edge, exposed rusted rebar* + Rahmen | Hintergrund der Sektion „Wenn der Fund kommt" |
 
-Noch offen — das Higgsfield-Guthaben war beim Bau aufgebraucht (0,10 Credits):
+Erzeugt am 20.08.2026, aufbereitet über `_research/prepare-material.py`
+(gleiche `grade()`-Funktion wie die Fotoserie), je als 21:9-Band und 3:2-Zuschnitt:
 
-| Slot | Prompt |
-|---|---|
-| Schadstoffsanierung, Sektionshintergrund | `Extreme macro: translucent polyethylene sheeting taped over a doorway, folds catching cool daylight, faint blue cast, sealed edge in focus` + Rahmen |
-| Rückbau & Entkernung, Sektionshintergrund | `Extreme macro: torn edge of a stripped interior wall, layered plaster and screed cross-section, dust hanging in a shaft of light` + Rahmen |
-| Beton, Bohren & Sägen | `Extreme macro: core-drilled hole through concrete, clean circular cut edge, water-cooled slurry residue, aggregate visible in the cut face` + Rahmen |
-| Entsorgung & Container | `Extreme macro: sorted demolition rubble, broken brick, concrete and steel fragments layered in shadow, sharp fracture surfaces` + Rahmen |
-| Karriere, Übergangsbild | `Extreme macro: worn leather work glove resting on rusted steel plate, texture of both surfaces sharp, cold light` + Rahmen |
-| Unternehmen, Übergangsbild | `Extreme macro: weathered steel container wall, layered paint and rust, riveted seam running diagonally` + Rahmen |
+| Datei | Prompt | Verwendung |
+|---|---|---|
+| `material-folie-*` | `Extreme macro close-up of thick translucent polyethylene containment sheeting stapled and taped over a rough concrete wall opening …` + Rahmen | Seitenkopf Schadstoffsanierung |
+| `material-wandschnitt-*` | `Extreme macro: torn edge of a stripped interior wall, layered plaster and screed cross-section, dust hanging in a shaft of light` + Rahmen | Seitenkopf Rückbau, Band Beton, Band Karriere |
+| `material-kernbohrung-*` | `Extreme macro: core-drilled hole through concrete, clean circular cut edge, water-cooled slurry residue, aggregate visible in the cut face` + Rahmen | Seitenkopf Beton, Bohren & Sägen |
+| `material-bauschutt-*` | `Extreme macro: sorted demolition rubble, broken brick, concrete and steel fragments layered in shadow, sharp fracture surfaces` + Rahmen | Seitenkopf Leistungen, Bänder Rückbau und Entsorgung |
+| `material-handschuh-*` | `Extreme macro: worn leather work glove resting on rusted steel plate, texture of both surfaces sharp, cold light` + Rahmen | Seitenkopf Karriere |
+| `material-container-*` | `Extreme macro: weathered steel container wall, layered paint and rust, riveted seam running diagonally` + Rahmen | Seitenkopf Kontakt |
+| `material-schnurschlag-*` | `Extreme macro: chalk snap line across a raw concrete floor, fine dust settled along the line, cold raking light` + Rahmen | Seitenkopf Referenzen |
+
+Die erste Fassung der Folienaufnahme las sich wie ein Fenster mit Vorhang. Der
+Prompt wurde um „no window, no glass" und die Beschreibung der Klebekante
+ergänzt und neu erzeugt; die verworfene Fassung liegt in `_research/ai/`.
 
 **Modell:** `z_image` (Higgsfield MCP), Seitenverhältnis 16:9 für Bänder, 4:5 für
 Hochformate. Nach der Erzeugung durch `_research/prepare-images.py` laufen lassen — die

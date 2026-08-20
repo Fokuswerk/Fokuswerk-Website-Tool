@@ -1,0 +1,549 @@
+---
+/**
+ * Interaktiver Rückbau — das Gebäude wird Phase für Phase abgetragen.
+ *
+ * Warum das hier steht und nicht noch ein Bild: Ein Rückbau ist eine Reihenfolge,
+ * und genau die versteht ein Bauherr selten. Erkundung, Schadstoffe raus,
+ * entkernen, abtragen, trennen. Wer das einmal durchklickt, weiß, wovon im
+ * Angebot die Rede ist — und sieht nebenbei, dass alle fünf Schritte aus einer
+ * Hand kommen.
+ *
+ * Technisch: ein einziges Inline-SVG, gesteuert über data-phase am Rahmen.
+ * Keine Bibliothek, keine Zeichenfläche, keine Bilddaten. Ohne JavaScript
+ * bleibt Phase 1 stehen und alle Beschreibungen sind lesbar.
+ */
+
+const phasen = [
+  {
+    no: '01',
+    key: 'bestand',
+    title: 'Bestand & Erkundung',
+    lead: 'Bevor irgendetwas fällt, muss klar sein, was verbaut ist.',
+    body:
+      'Wurde das Gebäude vor 1993 gebaut, muss man von Asbest ausgehen, bis das ' +
+      'Gegenteil geprüft ist. Diese Prüfung ist Sache des Bauherrn — so will es das ' +
+      'Gesetz. Ohne sie kann Ihnen niemand seriös sagen, was der Rückbau kostet. Sagen ' +
+      'Sie uns Bescheid: Wir erklären Ihnen, welches Gutachten Sie brauchen und wer es macht.',
+    href: '/kontakt/',
+    hrefLabel: 'Projekt anfragen',
+  },
+  {
+    no: '02',
+    key: 'sanierung',
+    title: 'Schadstoffsanierung',
+    lead: 'Erst kommen die Schadstoffe raus. Alles andere wartet.',
+    body:
+      'Der belastete Bereich wird luftdicht abgehängt und unter Unterdruck gesetzt — so ' +
+      'kommt keine Faser nach draußen. Rein und raus geht es nur durch eine Schleuse. ' +
+      'Das Material wird verpackt und mit Nachweis entsorgt, danach misst ein Labor die ' +
+      'Luft. Erst wenn die Werte stimmen, wird der Bereich wieder freigegeben. ' +
+      'Zugelassen sind wir für beides: Asbest und alte Mineralwolle.',
+    href: '/leistungen/schadstoffsanierung/',
+    hrefLabel: 'Schadstoffsanierung',
+  },
+  {
+    no: '03',
+    key: 'entkernung',
+    title: 'Entkernung',
+    lead: 'Alles raus, was nicht trägt.',
+    body:
+      'Trennwände, Böden, Decken, Verkleidungen, Leitungen und Rohre kommen heraus, bis ' +
+      'nur noch das tragende Skelett steht. Sieht nach Maschine aus, ist aber überwiegend ' +
+      'Handarbeit. Hier liegt unser Schwerpunkt — das größte Gebäude, das wir so ' +
+      'leergeräumt haben, hatte 62.500 Kubikmeter.',
+    href: '/leistungen/rueckbau-entkernung/',
+    hrefLabel: 'Rückbau & Entkernung',
+  },
+  {
+    no: '04',
+    key: 'rueckbau',
+    title: 'Rückbau',
+    lead: 'Jetzt kommt die Maschine — kontrolliert, nicht wahllos.',
+    body:
+      'Abtrag der Tragstruktur mit Bagger und Anbaugerät, Trennschnitte per Kernbohrung ' +
+      'und Säge, wo ein Bauteil kontrolliert fallen soll. Sechs Baggerklassen von 1 t ' +
+      'bis 18,5 t stehen auf dem eigenen Hof — in beengter Lage arbeitet die kleine, ' +
+      'nicht die verfügbare.',
+    href: '/leistungen/beton-bohren-saegen/',
+    hrefLabel: 'Beton, Bohren & Sägen',
+  },
+  {
+    no: '05',
+    key: 'entsorgung',
+    title: 'Entsorgung & Übergabe',
+    lead: 'Getrennt wird auf der Baustelle, nicht später.',
+    body:
+      'Beton, Metall, Holz und belastete Fraktionen werden bereits beim Rückbau ' +
+      'auseinandergehalten — das ist der Unterschied zwischen Verwertung und ' +
+      'Deponiekosten. Eigene Containerfahrzeuge, Behälter von 2 bis 36 cbm, ' +
+      'Entsorgung mit Nachweis. Zurück bleibt eine freie Fläche.',
+    href: '/leistungen/entsorgung-container/',
+    hrefLabel: 'Entsorgung & Container',
+  },
+];
+---
+
+<section class="rb zone-dark" data-rueckbau>
+  <div class="wrap">
+    <header class="rb__head">
+      <p class="label rb__eyebrow">Ablauf</p>
+      <h2>Zerlegen statt einreißen.</h2>
+      <p class="rb__intro">
+        Fünf Schritte, in dieser Reihenfolge. Klicken Sie sich durch — oder sehen Sie zu.
+      </p>
+    </header>
+
+    <div class="rb__stage">
+      <!-- Zeichnung -->
+      <div class="rb__viz">
+        <svg viewBox="180 44 700 500" class="rb__svg" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="rb-sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#14161A" />
+              <stop offset="100%" stop-color="#0B0C0E" />
+            </linearGradient>
+            <pattern id="rb-hatch" width="8" height="8" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="0" x2="0" y2="8" stroke="#6E8CF5" stroke-width="2.5" opacity=".55" />
+            </pattern>
+            <clipPath id="rb-clip"><rect x="180" y="44" width="700" height="500" /></clipPath>
+          </defs>
+
+          <rect x="180" y="44" width="700" height="500" fill="url(#rb-sky)" />
+
+          <g clip-path="url(#rb-clip)">
+            <!-- Geschosse, von oben nach unten abgetragen -->
+            <g class="rb-building">
+              <!-- Dach -->
+              <g class="rb-level" data-level="4">
+                <rect class="rb-slab" x="286" y="112" width="428" height="14" />
+                <rect class="rb-parapet" x="286" y="96" width="428" height="16" />
+              </g>
+
+              <!-- 3. OG -->
+              <g class="rb-level" data-level="3">
+                <rect class="rb-hazard" x="300" y="126" width="400" height="10" />
+                <g class="rb-facade">
+                  <rect x="300" y="136" width="90" height="70" />
+                  <rect x="404" y="136" width="90" height="70" />
+                  <rect x="508" y="136" width="90" height="70" />
+                  <rect x="612" y="136" width="88" height="70" />
+                </g>
+                <g class="rb-interior">
+                  <rect x="356" y="150" width="6" height="56" />
+                  <rect x="470" y="150" width="6" height="56" />
+                  <rect x="580" y="150" width="6" height="56" />
+                  <rect x="318" y="186" width="26" height="20" />
+                  <rect x="640" y="186" width="34" height="20" />
+                </g>
+                <rect class="rb-slab" x="286" y="206" width="428" height="14" />
+              </g>
+
+              <!-- 2. OG -->
+              <g class="rb-level" data-level="2">
+                <rect class="rb-hazard" x="300" y="220" width="400" height="10" />
+                <g class="rb-facade">
+                  <rect x="300" y="230" width="90" height="70" />
+                  <rect x="404" y="230" width="90" height="70" />
+                  <rect x="508" y="230" width="90" height="70" />
+                  <rect x="612" y="230" width="88" height="70" />
+                </g>
+                <g class="rb-interior">
+                  <rect x="392" y="244" width="6" height="56" />
+                  <rect x="506" y="244" width="6" height="56" />
+                  <rect x="614" y="244" width="6" height="56" />
+                  <rect x="318" y="280" width="34" height="20" />
+                  <rect x="540" y="280" width="26" height="20" />
+                </g>
+                <rect class="rb-slab" x="286" y="300" width="428" height="14" />
+              </g>
+
+              <!-- 1. OG -->
+              <g class="rb-level" data-level="1">
+                <rect class="rb-hazard" x="300" y="314" width="400" height="10" />
+                <g class="rb-facade">
+                  <rect x="300" y="324" width="90" height="70" />
+                  <rect x="404" y="324" width="90" height="70" />
+                  <rect x="508" y="324" width="90" height="70" />
+                  <rect x="612" y="324" width="88" height="70" />
+                </g>
+                <g class="rb-interior">
+                  <rect x="356" y="338" width="6" height="56" />
+                  <rect x="470" y="338" width="6" height="56" />
+                  <rect x="606" y="338" width="6" height="56" />
+                  <rect x="318" y="374" width="26" height="20" />
+                  <rect x="648" y="374" width="26" height="20" />
+                </g>
+                <rect class="rb-slab" x="286" y="394" width="428" height="14" />
+              </g>
+
+              <!-- EG -->
+              <g class="rb-level" data-level="0">
+                <rect class="rb-hazard" x="300" y="408" width="400" height="10" />
+                <g class="rb-facade">
+                  <rect x="300" y="418" width="90" height="84" />
+                  <rect x="404" y="418" width="90" height="84" />
+                  <rect x="508" y="418" width="90" height="84" />
+                  <rect x="612" y="418" width="88" height="84" />
+                </g>
+                <g class="rb-interior">
+                  <rect x="392" y="432" width="6" height="70" />
+                  <rect x="540" y="432" width="6" height="70" />
+                  <rect x="318" y="470" width="34" height="32" />
+                </g>
+                <rect class="rb-slab" x="286" y="502" width="428" height="18" />
+              </g>
+
+              <!-- Stützen: stehen, bis die Tragstruktur fällt -->
+              <g class="rb-columns">
+                <rect x="290" y="126" width="14" height="376" />
+                <rect x="393" y="126" width="14" height="376" />
+                <rect x="497" y="126" width="14" height="376" />
+                <rect x="601" y="126" width="14" height="376" />
+                <rect x="696" y="126" width="14" height="376" />
+              </g>
+            </g>
+
+            <!-- Einhausung: nur während der Sanierung -->
+            <g class="rb-containment">
+              <rect x="272" y="84" width="456" height="440" />
+              <rect class="rb-lock" x="728" y="392" width="74" height="132" />
+              <line x1="728" y1="436" x2="802" y2="436" />
+              <line x1="728" y1="480" x2="802" y2="480" />
+              <text x="765" y="382" class="rb-lock-t">SCHLEUSE</text>
+            </g>
+
+            <!-- Unterdruckhaltung: Schlauch nach draußen -->
+            <g class="rb-uhg">
+              <rect x="192" y="466" width="66" height="54" />
+              <circle cx="225" cy="493" r="15" />
+              <circle cx="225" cy="493" r="5" />
+              <path d="M258 486 H272" />
+              <text x="225" y="456" class="rb-lock-t">UHG</text>
+            </g>
+
+            <!-- Bagger: erscheint zum Rückbau -->
+            <g class="rb-machine">
+              <g class="rb-mach-body">
+                <rect x="742" y="470" width="104" height="30" rx="2" />
+                <rect x="752" y="500" width="86" height="20" rx="8" class="rb-track" />
+                <rect x="768" y="440" width="60" height="32" rx="2" />
+                <rect x="778" y="448" width="30" height="16" class="rb-cab" />
+              </g>
+              <g class="rb-arm">
+                <path d="M772 448 L700 372" />
+                <path d="M700 372 L742 336" />
+                <path d="M742 336 L726 316" />
+                <path class="rb-jaw" d="M726 316 l-16 -10 m16 10 l4 -20" />
+              </g>
+            </g>
+
+            <!-- Schutt: während des Rückbaus -->
+            <g class="rb-rubble">
+              <path d="M300 520 l34 -26 l30 22 l40 -34 l44 30 l34 -20 l42 28 l38 -18 l40 18 z" />
+              <path d="M262 520 l26 -14 l22 14 z" />
+              <path d="M676 520 l30 -18 l26 18 z" />
+            </g>
+
+            <!-- Getrennte Fraktionen: am Ende -->
+            <g class="rb-containers">
+              <g class="rb-cont" transform="translate(238,436) scale(1.3)">
+                <path d="M0 0 h132 l-12 62 h-108 z" />
+                <path class="rb-fill rb-fill--beton" d="M10 8 h112 l-5 26 h-102 z" />
+                <text x="66" y="-12" class="rb-cont-t">BETON</text>
+              </g>
+              <g class="rb-cont" transform="translate(430,436) scale(1.3)">
+                <path d="M0 0 h132 l-12 62 h-108 z" />
+                <path class="rb-fill rb-fill--metall" d="M10 8 h112 l-4 21 h-104 z" />
+                <text x="66" y="-12" class="rb-cont-t">METALL</text>
+              </g>
+              <g class="rb-cont" transform="translate(622,436) scale(1.3)">
+                <path d="M0 0 h132 l-12 62 h-108 z" />
+                <path class="rb-fill rb-fill--holz" d="M10 8 h112 l-6 31 h-100 z" />
+                <text x="66" y="-12" class="rb-cont-t">HOLZ</text>
+              </g>
+            </g>
+
+            <!-- Gelände -->
+            <line class="rb-ground" x1="0" y1="520" x2="1000" y2="520" />
+            <rect class="rb-plot" x="272" y="520" width="456" height="6" />
+          </g>
+        </svg>
+
+        <p class="rb__caption label" data-rb-caption>Bestand — vier Geschosse, Baujahr vor 1993</p>
+      </div>
+
+      <!-- Beschreibung -->
+      <div class="rb__panel">
+        <ol class="rb__steps" role="list">
+          {phasen.map((p, i) => (
+            <li>
+              <button
+                type="button"
+                class="rb__step"
+                data-rb-step={i}
+                aria-pressed={i === 0 ? 'true' : 'false'}
+              >
+                <span class="rb__step-no num">{p.no}</span>
+                <span class="rb__step-t">{p.title}</span>
+              </button>
+            </li>
+          ))}
+        </ol>
+
+        <div class="rb__texts" role="region" aria-live="polite">
+          {phasen.map((p, i) => (
+            <article class="rb__text" data-rb-text={i} hidden={i !== 0}>
+              <h3>{p.lead}</h3>
+              <p>{p.body}</p>
+              <a href={p.href} class="rb__link">
+                {p.hrefLabel}
+                <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              </a>
+            </article>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .rb {
+    background: var(--ink);
+    color: var(--dust);
+    padding-block: var(--section);
+    /* Bewusst clip statt hidden: hidden macht den Abschnitt zum Scrollcontainer
+       und damit haengt die mitlaufende Zeichnung auf Mobil nicht mehr. clip
+       schneidet nur ab, ohne einen Container aufzumachen. */
+    overflow-x: clip;
+  }
+
+  .rb__head { max-width: 44rem; margin-bottom: var(--s-9); }
+  .rb__eyebrow { color: var(--accent); margin-bottom: var(--s-5); }
+  .rb__head h2 { font-size: var(--t-h2); }
+  .rb__intro { margin-top: var(--s-5); font-size: var(--t-lead); color: var(--fg-muted); }
+
+  .rb__stage { display: grid; gap: var(--s-8) var(--gutter); align-items: start; }
+  @media (min-width: 68rem) {
+    .rb__stage { grid-template-columns: minmax(0, 1.45fr) minmax(0, .8fr); gap: var(--s-9); }
+  }
+
+  /* Einspaltig stehen die Schaltflaechen unter der Zeichnung. Wer dort tippt,
+     wuerde die Veraenderung oben ausserhalb des Bildes verpassen — deshalb
+     laeuft die Zeichnung mit. Fuer position:sticky muss der Rahmen hier
+     block sein: in einer Gitterzelle klebt nichts, die Zelle ist nur so hoch
+     wie ihr Inhalt. */
+  @media (max-width: 67.99rem) {
+    .rb__stage { display: block; }
+    .rb__viz {
+      position: sticky;
+      top: 4.25rem;
+      z-index: 1;
+      padding-bottom: var(--s-4);
+      background: var(--ink);
+    }
+    .rb__panel { margin-top: var(--s-7); }
+  }
+
+  .rb__svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    border: 1px solid color-mix(in oklab, var(--dust) 14%, transparent);
+  }
+  .rb__caption {
+    margin-top: var(--s-4);
+    color: var(--fg-muted);
+    transition: opacity var(--dur-ui) linear;
+  }
+
+  /* ── Schritte ─────────────────────────────────────────────────────────── */
+  .rb__steps { margin: 0 0 var(--s-7); padding: 0; list-style: none; display: grid; gap: 1px; }
+  .rb__step {
+    display: grid;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+    align-items: center;
+    gap: var(--s-3);
+    width: 100%;
+    min-height: 52px;
+    padding: var(--s-3) var(--s-4);
+    background: transparent;
+    border: 1px solid color-mix(in oklab, var(--dust) 14%, transparent);
+    color: var(--fg-muted);
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--dur-ui) linear, color var(--dur-ui) linear,
+                border-color var(--dur-ui) linear;
+  }
+  .rb__step:hover { color: var(--dust); border-color: color-mix(in oklab, var(--dust) 40%, transparent); }
+  .rb__step[aria-pressed='true'] {
+    background: color-mix(in oklab, var(--signal-lift) 14%, transparent);
+    border-color: var(--accent);
+    color: var(--dust);
+  }
+  .rb__step-no { font-size: .75rem; color: var(--accent); }
+  .rb__step-t { font-family: var(--font-display); font-weight: 600; font-size: .9375rem; }
+
+  .rb__text[hidden] { display: none; }
+  .rb__text h3 { font-size: var(--t-h3); max-width: 24ch; }
+  .rb__text p { margin-top: var(--s-4); font-size: .9375rem; color: var(--fg-muted); max-width: 46ch; }
+  .rb__link {
+    display: inline-flex; align-items: center; gap: var(--s-3);
+    min-height: 44px; margin-top: var(--s-5);
+    color: var(--accent); font-family: var(--font-display); font-weight: 600; font-size: .9375rem;
+    text-decoration: none;
+  }
+  .rb__link:hover { text-decoration: underline; }
+
+  /* ── Zeichnung: Grundzustand ──────────────────────────────────────────── */
+  .rb-neighbour rect { fill: #1A1D22; }
+  .rb-neighbour .rb-win-lit { fill: #2E3239; }
+
+  .rb-slab, .rb-parapet { fill: #565C65; }
+  .rb-columns rect { fill: #474D55; }
+  .rb-facade rect { fill: #262A30; stroke: #5C626B; stroke-width: 2; }
+  .rb-interior rect { fill: #6B717A; }
+  .rb-hazard { fill: url(#rb-hatch); opacity: 0; }
+  .rb-ground { stroke: #5A5E65; stroke-width: 2; }
+  .rb-plot { fill: #2A2E34; }
+
+  .rb-containment rect { fill: rgba(110,140,245,.07); stroke: #6E8CF5; stroke-width: 2; }
+  .rb-containment line { stroke: #6E8CF5; stroke-width: 1.5; opacity: .6; }
+  .rb-lock-t, .rb-cont-t {
+    fill: #9AA0A8; font-family: var(--font-mono); font-size: 13px;
+    letter-spacing: .14em; text-anchor: middle;
+  }
+  .rb-uhg rect { fill: #3C4149; }
+  .rb-uhg circle { fill: none; stroke: #6E8CF5; stroke-width: 2; }
+  .rb-uhg path { stroke: #6E8CF5; stroke-width: 3; fill: none; opacity: .7; }
+
+  .rb-machine .rb-mach-body rect { fill: #4A4F57; }
+  .rb-machine .rb-track { fill: #2A2E34; }
+  .rb-machine .rb-cab { fill: #6E8CF5; opacity: .5; }
+  .rb-machine .rb-arm path { stroke: #4A4F57; stroke-width: 13; fill: none; stroke-linecap: round; }
+  .rb-machine .rb-arm .rb-jaw { stroke-width: 8; }
+
+  .rb-rubble path { fill: #33373E; }
+  /* Der Behaelter selbst zuerst, die Fuellung danach — beide mit zwei Klassen,
+     damit die Fraktionsfarbe nicht von der allgemeineren Regel geschluckt wird. */
+  .rb-cont path { fill: #383D45; stroke: #6B717A; stroke-width: 1.5; }
+  .rb-cont .rb-fill { stroke: none; }
+  .rb-cont .rb-fill--beton { fill: #9298A1; }
+  .rb-cont .rb-fill--metall { fill: #6E8CF5; opacity: .92; }
+  .rb-cont .rb-fill--holz { fill: #A78B62; }
+
+  /* ── Übergänge ────────────────────────────────────────────────────────── */
+  .rb-level, .rb-facade, .rb-interior, .rb-columns, .rb-containment,
+  .rb-uhg, .rb-machine, .rb-rubble, .rb-containers, .rb-hazard {
+    transition: opacity 620ms var(--ease-mass), transform 620ms var(--ease-mass);
+  }
+  .rb-containment, .rb-uhg, .rb-machine, .rb-rubble, .rb-containers { opacity: 0; }
+  .rb-machine { transform: translateX(90px); }
+  .rb-containers { transform: translateY(14px); }
+
+  /* ── Phase 2: Schadstoffe ─────────────────────────────────────────────── */
+  [data-phase='1'] .rb-hazard { opacity: 1; }
+  [data-phase='1'] .rb-containment,
+  [data-phase='1'] .rb-uhg { opacity: 1; }
+
+  /* ── Phase 3: Entkernung ──────────────────────────────────────────────── */
+  [data-phase='2'] .rb-facade,
+  [data-phase='2'] .rb-interior { opacity: 0; }
+  [data-phase='2'] .rb-interior { transform: translateY(18px); }
+
+  /* ── Phase 4: Rückbau ─────────────────────────────────────────────────── */
+  [data-phase='3'] .rb-facade,
+  [data-phase='3'] .rb-interior { opacity: 0; }
+  [data-phase='3'] .rb-machine { opacity: 1; transform: translateX(0); }
+  [data-phase='3'] .rb-rubble { opacity: 1; }
+  [data-phase='3'] .rb-level[data-level='4'],
+  [data-phase='3'] .rb-level[data-level='3'] { opacity: 0; transform: translateY(-26px); }
+  [data-phase='3'] .rb-columns {
+    opacity: .5;
+    transform-box: fill-box;
+    transform-origin: bottom;
+    transform: scaleY(.58);
+  }
+
+  /* ── Phase 5: Entsorgung ──────────────────────────────────────────────── */
+  [data-phase='4'] .rb-building { opacity: 0; transform: translateY(20px); }
+  [data-phase='4'] .rb-containers { opacity: 1; transform: translateY(0); }
+  [data-phase='4'] .rb-rubble { opacity: .35; }
+
+  .rb-building { transition: opacity 620ms var(--ease-mass), transform 620ms var(--ease-mass); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rb-level, .rb-facade, .rb-interior, .rb-columns, .rb-containment, .rb-uhg,
+    .rb-machine, .rb-rubble, .rb-containers, .rb-hazard, .rb-building {
+      transition-duration: .01ms;
+    }
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-rueckbau]');
+  if (root) {
+    const steps = [...root.querySelectorAll<HTMLButtonElement>('[data-rb-step]')];
+    const texts = [...root.querySelectorAll<HTMLElement>('[data-rb-text]')];
+    const viz = root.querySelector<HTMLElement>('.rb__viz');
+    const caption = root.querySelector<HTMLElement>('[data-rb-caption]');
+
+    const captions = [
+      'Bestand — vier Geschosse, Baujahr vor 1993',
+      'Schwarzbereich unter Unterdruck, Schleuse an der Ostseite',
+      'Entkernt — es steht nur noch, was trägt',
+      'Abtrag von oben, Schutt bleibt getrennt',
+      'Freie Fläche, Material in Fraktionen',
+    ];
+
+    let phase = 0;
+    let timer: number | undefined;
+    let selbstlauf = true;
+
+    const setze = (i: number) => {
+      phase = i;
+      viz?.setAttribute('data-phase', String(i));
+      steps.forEach((b, n) => b.setAttribute('aria-pressed', String(n === i)));
+      texts.forEach((t, n) => (t.hidden = n !== i));
+      if (caption) caption.textContent = captions[i];
+    };
+
+    const anhalten = () => {
+      selbstlauf = false;
+      if (timer) window.clearInterval(timer);
+      timer = undefined;
+    };
+
+    steps.forEach((b, i) =>
+      b.addEventListener('click', () => {
+        anhalten();          // wer selbst steuert, will nicht weitergeschoben werden
+        setze(i);
+      }),
+    );
+
+    setze(0);
+
+    // Selbstlauf erst, wenn die Zeichnung im Bild ist — und nie bei
+    // reduzierter Bewegung: dort bleibt Phase 1 stehen, bis jemand klickt.
+    const ruhig = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!ruhig && viz) {
+      const beobachter = new IntersectionObserver(
+        (eintraege) => {
+          for (const e of eintraege) {
+            if (e.isIntersecting && selbstlauf && !timer) {
+              timer = window.setInterval(() => {
+                if (!selbstlauf) return;
+                setze((phase + 1) % steps.length);
+              }, 3400);
+            } else if (!e.isIntersecting && timer) {
+              window.clearInterval(timer);
+              timer = undefined;
+            }
+          }
+        },
+        { threshold: 0.45 },
+      );
+      beobachter.observe(viz);
+    }
+  }
+</script>

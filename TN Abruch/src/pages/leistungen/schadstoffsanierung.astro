@@ -7,6 +7,7 @@ import SectionMarker from '~/components/SectionMarker.astro';
 import SchleusenSchema from '~/components/SchleusenSchema.astro';
 import Cta from '~/components/Cta.astro';
 import ppeImg from '~/assets/schadstoffsanierung-3x2.jpg';
+import headImage from '~/assets/material-folie-band.jpg';
 
 const refs = (await getCollection('referenzen'))
   .map((r) => r.data)
@@ -69,9 +70,11 @@ const faq = [
   }}
 >
   <PageHeader
+    image={headImage}
+    imageAlt="Materialaufnahme: Abschottung aus lichtdurchlässiger Folie, mit breitem Klebeband an einer Betonwand abgedichtet."
     eyebrow="Leistung 01 — Schadstoffsanierung"
-    title="Asbest und KMF raus, bevor irgendetwas anderes passiert."
-    lead="Wir bauen weich- und festgebundene Asbestprodukte nach TRGS 519 aus und sanieren künstliche Mineralfasern nach TRGS 521 — mit eigener Unterdrucktechnik und Personal mit Sachkundenachweis."
+    title="Asbest sicher heraus."
+    lead="Asbest und alte Mineralwolle gehören zu den Stoffen, die man nicht einfach abreißen darf. Wir bauen sie aus — mit eigener Technik, geschultem Personal und den Zulassungen, die das Gesetz dafür verlangt. Auch für das kritischste Material."
     breadcrumb={breadcrumb}
     facts={[
       { value: '2.7', label: 'Anlage 3 — Zulassung weichgebunden' },
@@ -131,7 +134,7 @@ const faq = [
 
       <div class="proc">
         <div class="prose">
-          <h2>Der Unterdruck ist die eigentliche Leistung.</h2>
+          <h2>Die Luft ist das Entscheidende.</h2>
           <p>
             Fasern lassen sich nicht sehen. Ob eine Sanierung sauber war, entscheidet
             sich nicht am Ausbau, sondern an der Abschottung: Der Arbeitsbereich steht
@@ -292,7 +295,7 @@ const faq = [
   }
   .evid__y { grid-row: span 2; color: var(--accent); font-size: var(--t-sm); }
   .evid__c { font-weight: 600; font-size: .9375rem; }
-  .evid__s { font-size: .8125rem; color: var(--fg-muted); }
+  .evid__s { font-size: var(--t-xs); color: var(--fg-muted); }
 
   .faq__head { max-width: 20ch; margin-bottom: var(--s-7); }
   .faq { border-top: 1px solid var(--rule-strong); max-width: 62rem; }

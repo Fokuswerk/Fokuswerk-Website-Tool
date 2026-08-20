@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fokuswerk — Mehr Kunden über Social Media</title>
+<meta name="description" content="Fokuswerk entwickelt Content-Systeme für KMU in Oldenburg & Bremen. Strategie, Produktion, fertig geliefert. Jetzt kostenloses Erstgespräch buchen.">
+<meta name="robots" content="noindex">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ─── RESET ─────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:#F9F8F6;
+  color:#111111;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+
+/* ─── TOKENS ────────────────────────────────── */
+:root{
+  --ink:      #111111;
+  --ink-2:    #2A2A2A;
+  --ink-mid:  #666660;
+  --ink-faint:#A8A8A2;
+  --paper:    #F9F8F6;
+  --paper-2:  #F2F1EE;
+  --white:    #FFFFFF;
+  --border:   #E2E1DD;
+  --accent:   #111111;
+  --serif:    'DM Serif Display', Georgia, serif;
+  --sans:     'Inter', system-ui, sans-serif;
+  --pad-x:    clamp(20px, 6vw, 96px);
+  --max:      1200px;
+}
+
+/* ─── UTILITY ──────────────────────────────── */
+.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--pad-x)}
+
+.eyebrow{
+  font-family:var(--sans);
+  font-size:11px;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-mid);
+}
+.eyebrow-light{
+  font-family:var(--sans);
+  font-size:11px;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:rgba(255,255,255,.35);
+}
+
+/* ─── BUTTONS ──────────────────────────────── */
+.btn{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:var(--sans);font-size:13px;font-weight:600;
+  letter-spacing:.07em;text-transform:uppercase;
+  padding:16px 32px;cursor:pointer;border:none;
+  text-decoration:none;transition:all .22s ease;
+  white-space:nowrap;
+}
+.btn-primary{
+  background:var(--ink);color:#fff;
+}
+.btn-primary:hover{
+  background:#2A2A2A;
+  transform:translateY(-2px);
+  box-shadow:0 12px 32px rgba(0,0,0,.18);
+}
+.btn-outline{
+  background:transparent;color:var(--ink);
+  border:1.5px solid var(--ink);
+}
+.btn-outline:hover{
+  background:var(--ink);color:#fff;
+}
+.btn-white-outline{
+  background:transparent;color:#fff;
+  border:1.5px solid rgba(255,255,255,.25);
+}
+.btn-white-outline:hover{
+  border-color:rgba(255,255,255,.7);background:rgba(255,255,255,.06);
+}
+.btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;transition:transform .2s}
+.btn:hover svg{transform:translateX(3px)}
+
+/* ─── NAV ──────────────────────────────────── */
+#nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  height:64px;
+  display:flex;align-items:center;
+  background:rgba(249,248,246,.94);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  transition:box-shadow .3s;
+}
+#nav.scrolled{box-shadow:0 1px 24px rgba(0,0,0,.07)}
+.nav-inner{
+  display:flex;align-items:center;
+  justify-content:space-between;width:100%;
+}
+.nav-logo{
+  font-family:var(--sans);font-size:15px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink);text-decoration:none;
+}
+.nav-right{display:flex;align-items:center;gap:36px}
+.nav-link{
+  font-size:13px;color:var(--ink-mid);
+  text-decoration:none;font-weight:500;
+  transition:color .15s;letter-spacing:.01em;
+}
+.nav-link:hover{color:var(--ink)}
+.nav-cta{font-size:12px;padding:11px 24px}
+
+/* ─── HERO ─────────────────────────────────── */
+#hero{
+  min-height:100svh;
+  background:var(--ink);
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  align-items:stretch;
+  position:relative;
+  overflow:hidden;
+  padding-top:64px;
+}
+/* Subtle grid texture */
+#hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+  background-size:64px 64px;
+  pointer-events:none;z-index:0;
+}
+.hero-left{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:80px var(--pad-x) 80px calc(var(--pad-x));
+  position:relative;z-index:2;
+  max-width:680px;
+}
+.hero-eyebrow{
+  margin-bottom:32px;
+  display:flex;align-items:center;gap:12px;
+}
+.hero-eyebrow-line{
+  display:inline-block;width:28px;height:1px;
+  background:rgba(255,255,255,.3);
+}
+.hero-h1{
+  font-family:var(--serif);
+  font-size:clamp(46px, 5.2vw, 78px);
+  font-weight:400;
+  line-height:1.06;
+  letter-spacing:-.5px;
+  color:#fff;
+  margin-bottom:28px;
+}
+.hero-h1 em{
+  font-style:italic;
+  color:rgba(255,255,255,.38);
+}
+.hero-sub{
+  font-size:clamp(15px,1.8vw,18px);
+  font-weight:300;
+  line-height:1.75;
+  color:rgba(255,255,255,.5);
+  margin-bottom:44px;
+  max-width:440px;
+}
+.hero-actions{
+  display:flex;align-items:center;gap:20px;
+  flex-wrap:wrap;
+  margin-bottom:64px;
+}
+.hero-trust{
+  display:flex;align-items:center;gap:10px;
+}
+.hero-trust-dots{
+  display:flex;gap:-4px;
+}
+.hero-trust-dot{
+  width:28px;height:28px;border-radius:50%;
+  border:2px solid var(--ink);
+  background:rgba(255,255,255,.12);
+  margin-left:-8px;
+  overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:rgba(255,255,255,.6);
+}
+.hero-trust-dot:first-child{margin-left:0}
+.hero-trust-text{
+  font-size:13px;color:rgba(255,255,255,.38);font-weight:400;
+}
+/* Hero photo panel */
+.hero-right{
+  position:relative;
+  overflow:hidden;
+  z-index:1;
+}
+.hero-right::before{
+  content:'';
+  position:absolute;inset:0;z-index:2;
+  background:linear-gradient(to right, var(--ink) 0%, transparent 22%);
+}
+.hero-right::after{
+  content:'';
+  position:absolute;bottom:0;left:0;right:0;height:200px;z-index:2;
+  background:linear-gradient(to top, var(--ink) 0%, transparent 100%);
+}
+.hero-img{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:cover;
+  object-position:center top;
+  mix-blend-mode:luminosity;
+  opacity:.55;
+}
+
+/* ─── TICKER ───────────────────────────────── */
+#ticker{
+  background:var(--ink-2);
+  border-top:1px solid rgba(255,255,255,.06);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  padding:14px 0;overflow:hidden;
+}
+.ticker-track{
+  display:flex;gap:0;
+  animation:ticker 28s linear infinite;
+  width:max-content;
+}
+.ticker-item{
+  display:flex;align-items:center;gap:48px;
+  padding:0 48px;
+  font-size:12px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(255,255,255,.28);
+  white-space:nowrap;
+}
+.ticker-item span{color:rgba(255,255,255,.55)}
+.ticker-sep{
+  width:4px;height:4px;border-radius:50%;
+  background:rgba(255,255,255,.15);
+  flex-shrink:0;
+}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ─── SECTION BASE ─────────────────────────── */
+section{padding:clamp(72px,10vw,140px) 0}
+.section-label{
+  font-size:11px;font-weight:600;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-faint);
+  margin-bottom:20px;display:flex;align-items:center;gap:12px;
+}
+.section-label::before{
+  content:'';display:inline-block;
+  width:20px;height:1px;background:var(--ink-faint);
+  flex-shrink:0;
+}
+h2{
+  font-family:var(--serif);
+  font-size:clamp(36px,4.5vw,64px);
+  font-weight:400;
+  line-height:1.1;
+  letter-spacing:-.3px;
+  color:var(--ink);
+  margin-bottom:24px;
+}
+h2 em{font-style:italic;color:var(--ink-mid)}
+
+/* ─── PAIN ─────────────────────────────────── */
+#pain{background:var(--paper)}
+.pain-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:80px;
+  align-items:start;
+}
+.pain-left{}
+.pain-left p{
+  font-size:clamp(15px,1.6vw,18px);
+  line-height:1.8;
+  color:var(--ink-mid);
+  margin-bottom:16px;
+  max-width:480px;
+}
+.pain-right{}
+.pain-list{
+  list-style:none;
+  display:flex;flex-direction:column;gap:0;
+}
+.pain-item{
+  display:flex;align-items:flex-start;gap:20px;
+  padding:24px 0;
+  border-bottom:1px solid var(--border);
+}
+.pain-item:first-child{border-top:1px solid var(--border)}
+.pain-num{
+  font-family:var(--serif);font-size:13px;font-weight:400;
+  color:var(--ink-faint);
+  flex-shrink:0;
+  padding-top:3px;
+}
+.pain-text{
+  font-size:16px;font-weight:500;color:var(--ink);
+  line-height:1.5;
+}
+.pain-text small{
+  display:block;font-size:13px;font-weight:400;
+  color:var(--ink-mid);margin-top:4px;line-height:1.6;
+}
+
+/* ─── SOLUTION ─────────────────────────────── */
+#solution{background:var(--ink)}
+#solution h2{color:#fff}
+#solution h2 em{color:rgba(255,255,255,.35)}
+.solution-intro{
+  font-size:clamp(15px,1.7vw,19px);font-weight:300;
+  line-height:1.75;color:rgba(255,255,255,.45);
+  margin-bottom:72px;max-width:560px;
+}
+.solution-steps{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:2px;
+}
+.step{
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.07);
+  padding:40px 36px;
+  position:relative;
+  transition:background .2s;
+}
+.step:hover{background:rgba(255,255,255,.055)}
+.step-num{
+  font-family:var(--serif);
+  font-size:64px;font-weight:400;
+  color:rgba(255,255,255,.06);
+  line-height:1;
+  position:absolute;top:24px;right:28px;
+}
+.step-icon{
+  width:40px;height:40px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:28px;
+}
+.step-icon svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:1.5;opacity:.6}
+.step-title{
+  font-family:var(--serif);font-size:22px;font-weight:400;
+  color:#fff;margin-bottom:12px;
+}
+.step-body{
+  font-size:14px;font-weight:400;line-height:1.75;
+  color:rgba(255,255,255,.4);
+}
+.solution-bottom{
+  margin-top:64px;padding-top:64px;
+  border-top:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:40px;flex-wrap:wrap;
+}
+.solution-cta-text{
+  font-family:var(--serif);font-size:clamp(22px,3vw,38px);
+  color:#fff;max-width:480px;line-height:1.25;
+}
+
+/* ─── RESULTS ─────────────────────────────── */
+#results{background:var(--paper-2)}
+.results-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:2px;margin-top:60px;
+}
+.result-card{
+  background:var(--white);
+  padding:40px 40px;
+  border:1px solid var(--border);
+}
+.result-card.featured{
+  background:var(--ink);
+  border-color:var(--ink);
+  grid-column:1 / -1;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:60px;
+  align-items:center;
+}
+.result-stat{
+  font-family:var(--serif);
+  font-size:clamp(48px,6vw,88px);
+  font-weight:400;
+  color:var(--ink);
+  letter-spacing:-2px;
+  line-height:1;
+  margin-bottom:8px;
+}
+.result-card.featured .result-stat{color:#fff}
+.result-label{
+  font-size:13px;font-weight:500;
+  color:var(--ink-mid);
+  text-transform:uppercase;letter-spacing:.1em;
+  margin-bottom:12px;
+}
+.result-card.featured .result-label{color:rgba(255,255,255,.4)}
+.result-desc{
+  font-size:15px;color:var(--ink-mid);line-height:1.65;
+}
+.result-card.featured .result-desc{color:rgba(255,255,255,.5)}
+.results-stats-row{
+  display:flex;gap:48px;
+  flex-wrap:wrap;
+}
+.results-stat-item{}
+.results-stat-num{
+  font-family:var(--serif);font-size:clamp(36px,4vw,56px);
+  font-weight:400;color:#fff;letter-spacing:-1px;line-height:1;
+  margin-bottom:6px;
+}
+.results-stat-lbl{
+  font-size:12px;color:rgba(255,255,255,.38);
+  text-transform:uppercase;letter-spacing:.1em;font-weight:500;
+}
+
+/* ─── TEAM ─────────────────────────────────── */
+#team{background:var(--paper)}
+.team-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:80px;align-items:center;
+  margin-top:60px;
+}
+.team-img-wrap{
+  position:relative;
+  background:var(--paper-2);
+  border:1px solid var(--border);
+  overflow:hidden;
+  aspect-ratio:1/1;
+}
+.team-img{
+  width:100%;height:100%;
+  object-fit:cover;
+  object-position:center top;
+  display:block;
+}
+.team-img-label{
+  position:absolute;bottom:20px;left:20px;
+  background:rgba(255,255,255,.9);
+  backdrop-filter:blur(8px);
+  padding:8px 16px;
+  font-size:11px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink);
+}
+.team-text{}
+.team-text blockquote{
+  font-family:var(--serif);
+  font-size:clamp(22px,2.8vw,34px);
+  font-weight:400;font-style:italic;
+  line-height:1.45;
+  color:var(--ink);
+  margin-bottom:28px;
+}
+.team-text blockquote::before{
+  content:'\201E';
+  font-size:1.2em;
+  opacity:.25;
+}
+.team-attribution{
+  font-size:13px;font-weight:500;color:var(--ink-mid);
+  letter-spacing:.03em;margin-bottom:32px;
+}
+.team-body{
+  font-size:15px;line-height:1.8;color:var(--ink-mid);
+  margin-bottom:32px;
+}
+
+/* ─── TESTIMONIALS ─────────────────────────── */
+#social{background:var(--white)}
+.social-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:2px;
+  margin-top:60px;
+}
+.social-card{
+  background:var(--paper);
+  border:1px solid var(--border);
+  padding:32px 30px;
+}
+.social-rating{
+  display:flex;gap:3px;margin-bottom:16px;
+}
+.social-star{
+  width:14px;height:14px;
+  background:var(--ink);
+  clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+}
+.social-text{
+  font-size:15px;line-height:1.7;color:var(--ink-2);
+  margin-bottom:20px;font-style:italic;
+}
+.social-author{
+  font-size:12px;font-weight:600;color:var(--ink-mid);
+  text-transform:uppercase;letter-spacing:.09em;
+}
+.social-source{
+  font-size:11px;color:var(--ink-faint);margin-top:4px;
+}
+
+/* ─── OFFER ────────────────────────────────── */
+#offer{background:var(--ink)}
+#offer h2{color:#fff}
+.offer-intro{
+  font-size:17px;font-weight:300;
+  color:rgba(255,255,255,.4);
+  line-height:1.75;margin-bottom:64px;max-width:520px;
+}
+.offer-table{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:2px;
+}
+.offer-col{
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.07);
+  padding:36px 32px 40px;
+  display:flex;flex-direction:column;
+}
+.offer-col.highlighted{
+  background:rgba(255,255,255,.07);
+  border-color:rgba(255,255,255,.15);
+}
+.offer-tier{
+  font-size:10px;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(255,255,255,.3);
+  margin-bottom:12px;
+}
+.offer-name{
+  font-family:var(--serif);font-size:28px;
+  color:#fff;margin-bottom:28px;line-height:1.1;
+}
+.offer-features{
+  list-style:none;flex:1;margin-bottom:36px;
+}
+.offer-feature{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);
+  font-size:14px;color:rgba(255,255,255,.5);line-height:1.5;
+}
+.offer-feature:last-child{border-bottom:none}
+.offer-check{
+  width:14px;height:14px;flex-shrink:0;
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:50%;margin-top:2px;
+  display:flex;align-items:center;justify-content:center;
+}
+.offer-check svg{width:8px;height:8px;stroke:rgba(255,255,255,.6);fill:none;stroke-width:2.5}
+
+/* ─── CTA BLOCK ────────────────────────────── */
+#cta-block{
+  background:var(--paper-2);
+  padding:clamp(80px,12vw,160px) 0;
+  text-align:center;
+}
+#cta-block h2{max-width:700px;margin:0 auto 20px}
+.cta-sub{
+  font-size:17px;font-weight:300;color:var(--ink-mid);
+  line-height:1.75;margin-bottom:44px;max-width:420px;margin-left:auto;margin-right:auto;
+}
+.cta-note{
+  margin-top:20px;font-size:13px;color:var(--ink-faint);
+}
+.cta-trust-row{
+  display:flex;align-items:center;justify-content:center;
+  gap:40px;margin-top:56px;flex-wrap:wrap;
+}
+.cta-trust-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:500;color:var(--ink-faint);
+  text-transform:uppercase;letter-spacing:.1em;
+}
+.cta-trust-icon{
+  width:16px;height:16px;
+  opacity:.5;
+}
+
+/* ─── FAQ ───────────────────────────────────── */
+#faq{background:var(--paper)}
+.faq-wrap{max-width:720px;margin:60px auto 0}
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-item:first-child{border-top:1px solid var(--border)}
+.faq-q{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:22px 0;cursor:pointer;gap:24px;
+}
+.faq-q-text{
+  font-size:16px;font-weight:500;color:var(--ink);
+  line-height:1.4;
+}
+.faq-icon{
+  width:22px;height:22px;flex-shrink:0;
+  border:1px solid var(--border);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .3s;
+}
+.faq-icon svg{width:10px;height:10px;stroke:var(--ink-mid);fill:none;stroke-width:2}
+.faq-item.open .faq-icon{transform:rotate(45deg)}
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height .35s ease;
+}
+.faq-a-inner{
+  padding:0 0 22px;
+  font-size:15px;line-height:1.8;color:var(--ink-mid);
+  max-width:600px;
+}
+
+/* ─── FOOTER ───────────────────────────────── */
+footer{
+  background:var(--ink);
+  padding:48px 0;
+  border-top:1px solid rgba(255,255,255,.06);
+}
+.footer-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:24px;flex-wrap:wrap;
+}
+.footer-logo{
+  font-family:var(--sans);font-size:14px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:#fff;
+}
+.footer-links{
+  display:flex;gap:28px;
+}
+.footer-link{
+  font-size:12px;color:rgba(255,255,255,.28);
+  text-decoration:none;
+  transition:color .15s;
+}
+.footer-link:hover{color:rgba(255,255,255,.6)}
+.footer-copy{
+  font-size:12px;color:rgba(255,255,255,.2);
+}
+
+/* ─── REVEAL ────────────────────────────────── */
+[data-reveal]{
+  opacity:0;transform:translateY(22px);
+  transition:opacity .7s ease,transform .7s ease;
+}
+[data-reveal].visible{opacity:1;transform:none}
+
+/* ─── RESPONSIVE ────────────────────────────── */
+@media(max-width:900px){
+  #hero{grid-template-columns:1fr}
+  .hero-right{display:none}
+  .pain-grid,
+  .team-grid,
+  .results-grid{grid-template-columns:1fr}
+  .solution-steps{grid-template-columns:1fr}
+  .social-grid{grid-template-columns:1fr}
+  .offer-table{grid-template-columns:1fr}
+  .result-card.featured{
+    grid-template-columns:1fr;
+    grid-column:auto;
+  }
+  .nav-right .nav-link{display:none}
+  .solution-bottom{flex-direction:column;align-items:flex-start}
+  .cta-trust-row{gap:24px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="wrap nav-inner">
+    <a class="nav-logo" href="#">Fokuswerk</a>
+    <div class="nav-right">
+      <a class="nav-link" href="#solution">Leistung</a>
+      <a class="nav-link" href="#results">Ergebnisse</a>
+      <a class="nav-link" href="#faq">FAQ</a>
+      <a class="btn btn-primary nav-cta" href="https://calendly.com/fokuswerk" target="_blank">
+        Gespräch buchen
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">
+      <div class="hero-eyebrow-line"></div>
+      <span class="eyebrow-light">Social Media für KMU · Oldenburg & Bremen</span>
+    </div>
+
+    <h1 class="hero-h1">
+      Niemand kennt euch —<br>
+      <em>obwohl ihr</em><br>
+      gut seid.
+    </h1>
+
+    <p class="hero-sub">
+      Das ist kein Kreativ-Problem.<br>
+      Das ist ein System-Problem.<br>
+      Wir lösen es.
+    </p>
+
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="https://calendly.com/fokuswerk" target="_blank">
+        Kostenloses Erstgespräch
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a class="btn btn-white-outline" href="#solution">
+        Wie es funktioniert
+      </a>
+    </div>
+
+    <div class="hero-trust">
+      <div class="hero-trust-dots">
+        <div class="hero-trust-dot">J</div>
+        <div class="hero-trust-dot">T</div>
+        <div class="hero-trust-dot">K</div>
+      </div>
+      <span class="hero-trust-text">5,0 · Google-Bewertung &nbsp;·&nbsp; 84.000 Views für Kunden</span>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <img class="hero-img" src="julius.png" alt="Julius — Fokuswerk">
+  </div>
+</section>
+
+<!-- TICKER -->
+<div id="ticker">
+  <div class="ticker-track">
+    <div class="ticker-item">
+      <span>+957% Reichweite</span><div class="ticker-sep"></div>
+      <span>84K Views in 30 Tagen</span><div class="ticker-sep"></div>
+      <span>5,0 Google-Bewertung</span><div class="ticker-sep"></div>
+      Oldenburg · Bremen · Umgebung<div class="ticker-sep"></div>
+      Strategie &amp; Produktion<div class="ticker-sep"></div>
+      <span>Fertig geliefert</span><div class="ticker-sep"></div>
+    </div>
+    <div class="ticker-item" aria-hidden="true">
+      <span>+957% Reichweite</span><div class="ticker-sep"></div>
+      <span>84K Views in 30 Tagen</span><div class="ticker-sep"></div>
+      <span>5,0 Google-Bewertung</span><div class="ticker-sep"></div>
+      Oldenburg · Bremen · Umgebung<div class="ticker-sep"></div>
+      Strategie &amp; Produktion<div class="ticker-sep"></div>
+      <span>Fertig geliefert</span><div class="ticker-sep"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAIN -->
+<section id="pain">
+  <div class="wrap">
+    <div class="pain-grid">
+      <div class="pain-left" data-reveal>
+        <div class="section-label">Das Problem</div>
+        <h2>Warum Social Media<br>bei den meisten<br><em>nicht funktioniert</em></h2>
+        <p>Die meisten KMU probieren Content irgendwie aus — ohne Strategie, ohne System, ohne messbare Ergebnisse.</p>
+        <p>Das kostet Zeit, Geld und Nerven. Und am Ende heißt es: „Social Media bringt uns nichts."</p>
+      </div>
+      <div class="pain-right" data-reveal>
+        <ul class="pain-list">
+          <li class="pain-item">
+            <span class="pain-num">01</span>
+            <div class="pain-text">
+              Kein System, kein Plan
+              <small>Posts werden spontan erstellt — ohne Ziel, ohne Wiedererkennungswert, ohne Kontinuität.</small>
+            </div>
+          </li>
+          <li class="pain-item">
+            <span class="pain-num">02</span>
+            <div class="pain-text">
+              Qualität, die nicht überzeugt
+              <small>Smartphone-Videos und unbearbeitete Fotos positionieren euch nicht als Premium-Anbieter.</small>
+            </div>
+          </li>
+          <li class="pain-item">
+            <span class="pain-num">03</span>
+            <div class="pain-text">
+              Zu wenig Zeit
+              <small>Content kostet täglich Stunden — Zeit, die im operativen Alltag einfach nicht da ist.</small>
+            </div>
+          </li>
+          <li class="pain-item">
+            <span class="pain-num">04</span>
+            <div class="pain-text">
+              Kein Algorithmus-Verständnis
+              <small>Was wann wie gepostet wird — und warum — ist eine Wissenschaft. Wir beherrschen sie.</small>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section id="solution">
+  <div class="wrap">
+    <div data-reveal>
+      <div class="section-label" style="color:rgba(255,255,255,.25)">
+        <span style="background:rgba(255,255,255,.2);display:inline-block;width:20px;height:1px;margin-right:12px;vertical-align:middle"></span>
+        Die Lösung
+      </div>
+      <h2>Ein System,<br><em>das für euch arbeitet</em></h2>
+      <p class="solution-intro">
+        Fokuswerk übernimmt euren kompletten Content-Prozess — von der Strategie bis zur finalen Veröffentlichung. Ihr liefert den Einblick in euer Business. Wir liefern alles andere.
+      </p>
+    </div>
+
+    <div class="solution-steps">
+      <div class="step" data-reveal>
+        <div class="step-num">01</div>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        </div>
+        <div class="step-title">Strategie</div>
+        <div class="step-body">Wir analysieren eure Zielgruppe, definieren eure Positionierung und bauen eine Contentstrategie, die konsequent auf neue Kunden ausgerichtet ist.</div>
+      </div>
+      <div class="step" data-reveal>
+        <div class="step-num">02</div>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <div class="step-title">Produktion</div>
+        <div class="step-body">Professionelle Fotos, Videos und Grafiken — produziert von unserem Team. Kein Outsourcing, keine Qualitätsverluste. Fertig zum Veröffentlichen.</div>
+      </div>
+      <div class="step" data-reveal>
+        <div class="step-num">03</div>
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="step-title">Wachstum</div>
+        <div class="step-body">Monatliche Reportings, Algorithmus-Optimierung und kontinuierliche Verbesserung — damit eure Reichweite und Anfragen Monat für Monat steigen.</div>
+      </div>
+    </div>
+
+    <div class="solution-bottom" data-reveal>
+      <p class="solution-cta-text">
+        Bereit, euer Social Media auf das nächste Level zu bringen?
+      </p>
+      <a class="btn btn-primary" href="https://calendly.com/fokuswerk" target="_blank">
+        Kostenloses Erstgespräch buchen
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results">
+  <div class="wrap">
+    <div data-reveal>
+      <div class="section-label">Kundenergebnisse</div>
+      <h2>Zahlen, die<br><em>für sich sprechen</em></h2>
+    </div>
+
+    <div class="results-grid">
+      <div class="result-card featured" data-reveal>
+        <div>
+          <div class="result-label">Reichweite</div>
+          <div class="result-stat">+957%</div>
+          <div class="result-desc">Mehr organische Reichweite innerhalb der ersten drei Monate — für einen Handwerksbetrieb aus Oldenburg.</div>
+        </div>
+        <div class="results-stats-row">
+          <div class="results-stat-item">
+            <div class="results-stat-num">84K</div>
+            <div class="results-stat-lbl">Views in 30 Tagen</div>
+          </div>
+          <div class="results-stat-item">
+            <div class="results-stat-num">5,0</div>
+            <div class="results-stat-lbl">Google-Bewertung</div>
+          </div>
+          <div class="results-stat-item">
+            <div class="results-stat-num">3×</div>
+            <div class="results-stat-lbl">Mehr Anfragen</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-card" data-reveal>
+        <div class="result-label">Sichtbarkeit</div>
+        <div class="result-stat" style="color:var(--ink)">Von 0<br>auf 1.</div>
+        <div class="result-desc">Ein lokales Unternehmen ohne bisherige Online-Präsenz — in 60 Tagen zur meistgeklickten Seite der Branche in der Region.</div>
+      </div>
+
+      <div class="result-card" data-reveal>
+        <div class="result-label">Neukundengewinnung</div>
+        <div class="result-stat" style="color:var(--ink)">12+</div>
+        <div class="result-desc">Direkte Kundenanfragen pro Monat durch organischen Content — ohne Werbebudget.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section id="team">
+  <div class="wrap">
+    <div data-reveal>
+      <div class="section-label">Das Team</div>
+      <h2>Echte Menschen.<br><em>Echte Ergebnisse.</em></h2>
+    </div>
+    <div class="team-grid">
+      <div class="team-img-wrap" data-reveal>
+        <img class="team-img" src="julius.png" alt="Julius — Fokuswerk">
+        <div class="team-img-label">Julius Bodenstab · Gründer</div>
+      </div>
+      <div class="team-text" data-reveal>
+        <blockquote>
+          Wir liefern nicht nur Content. Wir bauen das System, das euer Unternehmen sichtbar macht.
+        </blockquote>
+        <div class="team-attribution">Julius Bodenstab, Gründer · Fokuswerk</div>
+        <p class="team-body">
+          Fokuswerk wurde gegründet, weil wir gesehen haben, wie viele gute Unternehmen in der Region unsichtbar bleiben — nicht weil ihre Leistung fehlt, sondern weil die Außenwirkung fehlt.
+        </p>
+        <p class="team-body">
+          Unser Team aus Content-Strategen, Videografen und Designern übernimmt alles — damit ihr euch auf euer Business konzentrieren könnt.
+        </p>
+        <a class="btn btn-outline" href="https://fokuswerk.de" target="_blank">
+          Mehr über uns
+          <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="social">
+  <div class="wrap">
+    <div data-reveal>
+      <div class="section-label">Kundenstimmen</div>
+      <h2>Was unsere Kunden<br><em>sagen</em></h2>
+    </div>
+    <div class="social-grid">
+      <div class="social-card" data-reveal>
+        <div class="social-rating">
+          <div class="social-star"></div><div class="social-star"></div>
+          <div class="social-star"></div><div class="social-star"></div>
+          <div class="social-star"></div>
+        </div>
+        <p class="social-text">"Seit Fokuswerk unsere Social Media Kanäle betreut, merken wir wirklich den Unterschied. Mehr Anfragen, mehr Sichtbarkeit — und wir müssen uns um nichts kümmern."</p>
+        <div class="social-author">M. Lübben</div>
+        <div class="social-source">Handwerksbetrieb · Oldenburg</div>
+      </div>
+      <div class="social-card" data-reveal>
+        <div class="social-rating">
+          <div class="social-star"></div><div class="social-star"></div>
+          <div class="social-star"></div><div class="social-star"></div>
+          <div class="social-star"></div>
+        </div>
+        <p class="social-text">"Professionell, schnell und mit echtem Verständnis für unser Business. Die Zusammenarbeit macht richtig Spaß — und die Zahlen sprechen für sich."</p>
+        <div class="social-author">S. Kramer</div>
+        <div class="social-source">Dienstleistungsunternehmen · Bremen</div>
+      </div>
+      <div class="social-card" data-reveal>
+        <div class="social-rating">
+          <div class="social-star"></div><div class="social-star"></div>
+          <div class="social-star"></div><div class="social-star"></div>
+          <div class="social-star"></div>
+        </div>
+        <p class="social-text">"In drei Monaten mehr passiert als in drei Jahren Eigenregie. Das Team von Fokuswerk weiß genau, was funktioniert — und setzt es konsequent um."</p>
+        <div class="social-author">T. Hennings</div>
+        <div class="social-source">Einzelhandel · Oldenburg</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OFFER -->
+<section id="offer">
+  <div class="wrap">
+    <div data-reveal>
+      <div class="eyebrow-light" style="margin-bottom:20px;">Leistungspakete</div>
+      <h2>Alles drin.<br>Nichts vergessen.</h2>
+      <p class="offer-intro">Drei Pakete, aufgebaut auf demselben System — skaliert auf eure Ziele und eure Kapazitäten. Beim Erstgespräch finden wir gemeinsam heraus, was für euch passt.</p>
+    </div>
+
+    <div class="offer-table" data-reveal>
+      <div class="offer-col">
+        <div class="offer-tier">Einstieg</div>
+        <div class="offer-name">Sichtbar</div>
+        <ul class="offer-features">
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            Content-Strategie & Redaktionsplan
+          </li>
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            8 professionelle Beiträge / Monat
+          </li>
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            Professionelles Bildmaterial
+          </li>
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            1 Kanal (Instagram oder Facebook)
+          </li>
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            Monatliches Reporting
+          </li>
+        </ul>
+        <a class="btn btn-white-outline" href="https://calendly.com/fokuswerk" target="_blank" style="width:100%;justify-content:center">
+          Gespräch buchen
+        </a>
+      </div>
+
+      <div class="offer-col highlighted">
+        <div class="offer-tier">Empfohlen</div>
+        <div class="offer-name">Relevant</div>
+        <ul class="offer-features">
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            Alles aus SICHTBAR
+          </li>
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            16 Beiträge / Monat + Reels
+          </li>
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            Video-Produktion (bis 60s)
+          </li>
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            2 Kanäle (Instagram + Facebook)
+          </li>
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            Community Management
+          </li>
+        </ul>
+        <a class="btn btn-primary" href="https://calendly.com/fokuswerk" target="_blank" style="width:100%;justify-content:center">
+          Gespräch buchen
+        </a>
+      </div>
+
+      <div class="offer-col">
+        <div class="offer-tier">Premium</div>
+        <div class="offer-name">Dominant</div>
+        <ul class="offer-features">
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            Alles aus RELEVANT
+          </li>
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            24+ Beiträge / Monat
+          </li>
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            Full Video-Produktion + Testimonials
+          </li>
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            Alle Kanäle + Google Präsenz
+          </li>
+          <li class="offer-feature">
+            <div class="offer-check"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+            Ads-Management inklusive
+          </li>
+        </ul>
+        <a class="btn btn-white-outline" href="https://calendly.com/fokuswerk" target="_blank" style="width:100%;justify-content:center">
+          Gespräch buchen
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BLOCK -->
+<section id="cta-block">
+  <div class="wrap">
+    <div data-reveal>
+      <div class="section-label" style="justify-content:center;margin-bottom:28px">Nächster Schritt</div>
+      <h2>Bereit für mehr Sichtbarkeit<br><em>und mehr Kunden?</em></h2>
+      <p class="cta-sub">In einem kostenlosen 30-Minuten-Gespräch analysieren wir eure aktuelle Situation und zeigen euch, was mit einem System möglich ist.</p>
+      <a class="btn btn-primary" href="https://calendly.com/fokuswerk" target="_blank" style="font-size:14px;padding:18px 40px">
+        Kostenloses Erstgespräch buchen
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <p class="cta-note">Kein Verkaufsdruck. Keine versteckten Kosten. Nur echte Einblicke.</p>
+    </div>
+
+    <div class="cta-trust-row" data-reveal>
+      <div class="cta-trust-item">
+        <svg class="cta-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        DSGVO-konform
+      </div>
+      <div class="cta-trust-item">
+        <svg class="cta-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Antwort in unter 24h
+      </div>
+      <div class="cta-trust-item">
+        <svg class="cta-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Lokales Team vor Ort
+      </div>
+      <div class="cta-trust-item">
+        <svg class="cta-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Messbare Ergebnisse
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="wrap">
+    <div data-reveal>
+      <div class="section-label">Häufige Fragen</div>
+      <h2>Eure Fragen.<br><em>Unsere Antworten.</em></h2>
+    </div>
+    <div class="faq-wrap">
+
+      <div class="faq-item">
+        <div class="faq-q">
+          <span class="faq-q-text">Für wen ist Fokuswerk geeignet?</span>
+          <div class="faq-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">Fokuswerk arbeitet mit KMU in der Region Oldenburg und Bremen zusammen — von Handwerksbetrieben über Dienstleister bis hin zu Einzelhändlern. Wenn ihr ein gutes Produkt oder eine gute Leistung habt und online besser sichtbar sein wollt, seid ihr bei uns richtig.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          <span class="faq-q-text">Wie läuft die Zusammenarbeit konkret ab?</span>
+          <div class="faq-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">Nach dem Erstgespräch starten wir mit einer Strategie-Session, in der wir eure Positionierung und Zielgruppe definieren. Danach übernehmen wir die komplette Produktion und Veröffentlichung. Ihr bekommt monatliche Updates und ein Reporting — und müsst euch um nichts weiter kümmern.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          <span class="faq-q-text">Wie lange dauert es, bis wir Ergebnisse sehen?</span>
+          <div class="faq-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">Erste Sichtbarkeitseffekte sind oft schon nach 4-6 Wochen spürbar. Messbare Ergebnisse — mehr Reichweite, mehr Anfragen — entstehen typischerweise nach 2-3 Monaten. Social Media ist ein nachhaltiger Kanal, keine Quick-Win-Lösung.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          <span class="faq-q-text">Was passiert im kostenlosen Erstgespräch?</span>
+          <div class="faq-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">In 30 Minuten analysieren wir eure aktuelle Online-Präsenz, verstehen euer Business und zeigen euch konkret, welche Möglichkeiten ihr habt. Ohne Verkaufsdruck, ohne Verpflichtung. Wir wollen sicherstellen, dass die Zusammenarbeit für beide Seiten passt.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          <span class="faq-q-text">Gibt es Mindestlaufzeiten?</span>
+          <div class="faq-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">Wir arbeiten mit einem 3-Monats-Start, weil Content-Systeme Zeit brauchen, um zu wirken. Nach dieser Anfangsphase sind unsere Pakete monatlich kündbar. Wir setzen auf langfristige Partnerschaft — nicht auf Knebelverträge.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap footer-inner">
+    <span class="footer-logo">Fokuswerk</span>
+    <div class="footer-links">
+      <a class="footer-link" href="https://fokuswerk.de/impressum" target="_blank">Impressum</a>
+      <a class="footer-link" href="https://fokuswerk.de/datenschutz" target="_blank">Datenschutz</a>
+      <a class="footer-link" href="https://fokuswerk.de" target="_blank">fokuswerk.de</a>
+    </div>
+    <span class="footer-copy">&copy; 2026 Fokuswerk</span>
+  </div>
+</footer>
+
+<script>
+/* ── NAV scroll state ── */
+const nav = document.getElementById('nav');
+window.addEventListener('scroll',()=>{
+  nav.classList.toggle('scrolled', window.scrollY > 40);
+},{passive:true});
+
+/* ── Scroll reveal ── */
+const revealEls = document.querySelectorAll('[data-reveal]');
+const revealObs = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+      revealObs.unobserve(e.target);
+    }
+  });
+},{threshold:0.12});
+revealEls.forEach(el=>revealObs.observe(el));
+
+/* ── FAQ accordion ── */
+document.querySelectorAll('.faq-q').forEach(q=>{
+  q.addEventListener('click',()=>{
+    const item = q.closest('.faq-item');
+    const answer = item.querySelector('.faq-a');
+    const isOpen = item.classList.contains('open');
+    // close all
+    document.querySelectorAll('.faq-item.open').forEach(i=>{
+      i.classList.remove('open');
+      i.querySelector('.faq-a').style.maxHeight = null;
+    });
+    if(!isOpen){
+      item.classList.add('open');
+      answer.style.maxHeight = answer.scrollHeight + 'px';
+    }
+  });
+});
+</script>
+
+</body>
+</html>

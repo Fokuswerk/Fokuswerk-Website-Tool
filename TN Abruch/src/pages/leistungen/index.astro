@@ -1,10 +1,18 @@
 ---
+import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import Base from '~/layouts/Base.astro';
 import PageHeader from '~/components/PageHeader.astro';
 import SectionMarker from '~/components/SectionMarker.astro';
 import Cta from '~/components/Cta.astro';
 import { fleet } from '~/data/company';
+
+import imgSanierung from '~/assets/schadstoffsanierung-hoch.jpg';
+import imgRueckbau from '~/assets/fuhrpark-maschinen.jpg';
+import imgBeton from '~/assets/material-beton-hoch.jpg';
+import imgContainer from '~/assets/fuhrpark-panorama.jpg';
+
+import phBand from '~/assets/material-bauschutt-band.jpg';
 
 const refs = (await getCollection('referenzen')).map((r) => r.data);
 const count = (c: string) => refs.filter((r) => r.category.includes(c as any)).length;
@@ -17,6 +25,8 @@ const breadcrumb = [
 const services = [
   {
     no: '01',
+    img: imgSanierung,
+    alt: 'Sanierungskraft in Vollschutz mit Atemschutzmaske im abgeschotteten Bereich.',
     href: '/leistungen/schadstoffsanierung/',
     title: 'Schadstoffsanierung',
     kicker: 'Asbest & KMF',
@@ -26,6 +36,8 @@ const services = [
   },
   {
     no: '02',
+    img: imgRueckbau,
+    alt: 'Kettenbagger und Containerfahrzeuge von TN Abbruch auf dem Betriebshof.',
     href: '/leistungen/rueckbau-entkernung/',
     title: 'Rückbau & Entkernung',
     kicker: 'Hand bis Industriegröße',
@@ -35,6 +47,8 @@ const services = [
   },
   {
     no: '03',
+    img: imgBeton,
+    alt: 'Bruchkante einer Stahlbetonwand mit freigelegten Bewehrungsstäben.',
     href: '/leistungen/beton-bohren-saegen/',
     title: 'Beton, Bohren & Sägen',
     kicker: 'Kernbohrung & Trennschnitt',
@@ -44,6 +58,8 @@ const services = [
   },
   {
     no: '04',
+    img: imgContainer,
+    alt: 'Abrollcontainer und Transportfahrzeuge, aufgereiht auf dem Betriebshof.',
     href: '/leistungen/entsorgung-container/',
     title: 'Entsorgung & Container',
     kicker: '2 bis 36 cbm',
@@ -60,9 +76,11 @@ const services = [
   breadcrumb={breadcrumb}
 >
   <PageHeader
+    image={phBand}
+    imageAlt="Materialaufnahme: sortierter Bauschutt aus Beton, Ziegel und Stahl, scharfe Bruchflächen im Schatten."
     eyebrow="Leistungen"
-    title="Vier Gewerke, die auf derselben Baustelle gebraucht werden."
-    lead="Ein Rückbauprojekt zerfällt fast nie in ein einzelnes Gewerk. Entkernung stößt auf Asbest, Asbest verlangt Abschottung, Abschottung braucht Öffnungen, und alles zusammen muss in Behälter. Wir decken die Kette vollständig ab."
+    title="Vier Arbeiten, eine Baustelle."
+    lead="Fast nie bleibt es bei einer Sache. Beim Leerräumen taucht Asbest auf, der Asbest muss abgeschottet werden, für die Abschottung braucht es Durchbrüche, und am Ende muss alles in Container. Wir machen alle vier Schritte selbst — Sie brauchen nur einen Ansprechpartner."
     breadcrumb={breadcrumb}
     facts={[
       { value: '20', label: 'dokumentierte Projekte' },
@@ -80,6 +98,11 @@ const services = [
         {services.map((s) => (
           <li class="card" data-rise>
             <a href={s.href} class="card__link">
+              {/* Bildband oben: die Karten waren reine Textbloecke und
+                  unterschieden sich nur durch die Ueberschrift. */}
+              <span class="card__media">
+                <Image src={s.img} alt={s.alt} widths={[420, 640, 860]} sizes="(min-width: 56rem) 44vw, 100vw" format="avif" quality={70} loading="lazy" />
+              </span>
               <span class="card__no num">{s.no}</span>
               <span class="card__kicker label">{s.kicker}</span>
               <h2 class="card__title">{s.title}</h2>
@@ -105,7 +128,7 @@ const services = [
     <div class="wrap chain">
       <div>
         <SectionMarker no="02" label="Zusammenspiel" rest="Warum die Kette zählt" />
-        <h2>Die teuerste Stelle im Rückbau ist die Schnittstelle.</h2>
+        <h2>Ein Ansprechpartner statt vier.</h2>
         <p class="lead">
           Wenn Entkernung, Sanierung und Entsorgung bei drei Firmen liegen, entstehen
           Wartezeiten, an denen niemand schuld ist: Der Sanierer kann nicht anfangen,
@@ -150,6 +173,29 @@ const services = [
   }
   @media (min-width: 56rem) { .card__link { padding: var(--s-7); } }
   .card__link:hover { background: var(--paper); }
+
+  /* Das Band laeuft bis an die Kartenkante — das Polster der Karte wird dafuer
+     zurueckgezogen. */
+  .card__media {
+    display: block;
+    margin: calc(var(--s-6) * -1) calc(var(--s-6) * -1) var(--s-4);
+    overflow: hidden;
+  }
+  @media (min-width: 56rem) {
+    .card__media { margin: calc(var(--s-7) * -1) calc(var(--s-7) * -1) var(--s-5); }
+  }
+  .card__media :global(img) {
+    width: 100%;
+    height: clamp(9rem, 16vw, 13rem);
+    object-fit: cover;
+    filter: saturate(.9);
+    transition: transform var(--dur-in) var(--ease-mass), filter var(--dur-ui) linear;
+  }
+  .card__link:hover .card__media :global(img) { transform: scale(1.03); filter: saturate(1); }
+  @media (prefers-reduced-motion: reduce) {
+    .card__media :global(img) { transition: none; }
+    .card__link:hover .card__media :global(img) { transform: none; }
+  }
 
   .card__no { color: var(--accent); font-size: var(--t-sm); }
   .card__kicker { color: var(--fg-muted); }

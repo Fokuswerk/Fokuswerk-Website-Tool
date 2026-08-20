@@ -164,3 +164,35 @@ Wird beim finalen Review gegen die fertige Seite gehalten:
 - [ ] Keine austauschbaren Headlines — jede muss einen Fakt enthalten
 - [ ] Jede Sektion hat eine eigene Bauform
 - [ ] Logo austauschen → Seite ergibt keinen Sinn mehr
+
+---
+
+## Revision — Designrichtung überarbeitet
+
+Die erste Fassung („Aufmaß": Seite als technisches Dokument, durchlaufende
+Haarlinien am Contentrand, Trennlinie zwischen jedem Abschnitt, enger
+Vertikalrhythmus, Hero auf 82 svh) wurde verworfen. Rückmeldung aus dem
+Projekt: wirkt gestaucht, das Hero-Bild zu klein, insgesamt zu nah an einer
+gewöhnlichen Handwerkerseite.
+
+**Was geändert wurde**
+
+| | vorher | jetzt |
+|---|---|---|
+| Hero | 82 svh, Bild als abgedunkelter Hintergrund, Motiv Betriebshof | volle Bildschirmhöhe, Motiv Beton mit freiliegender Bewehrung, Bild trägt die Fläche |
+| Abschnittsabstand | `clamp(3.5rem, 7.5vw, 7rem)` | `clamp(5.5rem, 10.5vw, 11rem)` |
+| Haarlinien am Contentrand | durchlaufend auf jedem Abschnitt | entfallen |
+| Trennlinie zwischen Abschnitten | ja | entfallen — Wechsel läuft über Flächenfarbe |
+| Schriftgrade H1/H2/Mega | bis 4,75 / 3 / 7,25 rem | bis 6 / 4,25 / 11 rem |
+| Leistungsübersicht | vierzeilige Datentabelle | vier große Bildkacheln, Kennzahl im Fuß |
+
+**Neu hinzugekommen: der interaktive Rückbau** (`src/components/Rueckbau.astro`).
+Ein Gebäude wird in fünf Phasen zerlegt — Erkundung, Schadstoffsanierung,
+Entkernung, Rückbau, Entsorgung. Inline-SVG, keine Bibliothek, läuft von selbst
+und lässt sich anklicken. Er erklärt die Reihenfolge eines Projekts und dient
+gleichzeitig als Einstieg in die vier Leistungsseiten.
+
+**Offen:** Das Bildmaterial bleibt der Engpass. Die vorhandenen Aufnahmen sind
+echt, aber knapp und niedrig aufgelöst (größte Datei 2000 px breit). Ein
+Bildgenerator stand nicht zur Verfügung. Die Shotlist weiter oben in diesem
+Dokument bleibt damit der wichtigste offene Punkt.

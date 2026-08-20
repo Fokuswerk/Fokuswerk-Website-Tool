@@ -74,24 +74,36 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
     </div>
   </div>
 
-  <div class="mobile-menu zone-dark" id="mobile-menu" hidden data-mobile-menu>
+</header>
+
+  <div class="mobile-menu zone-dark" id="mobile-menu" tabindex="-1" hidden data-mobile-menu>
     <nav class="mobile-menu__inner wrap" aria-label="Hauptnavigation mobil">
       <ul role="list" class="mobile-menu__list">
         {nav.map((item) => (
-          <>
-            <li>
-              <a href={item.href} data-current={isActive(item.href) ? 'true' : undefined}>
-                {item.label}
-              </a>
-            </li>
-            {item.children?.map((c) => (
-              <li class="mobile-menu__sub">
-                <a href={c.href} data-current={isActive(c.href) ? 'true' : undefined}>
-                  {c.label}<span class="mobile-menu__note">{c.note}</span>
-                </a>
-              </li>
-            ))}
-          </>
+          <li>
+            <a
+              class="mobile-menu__main"
+              href={item.href}
+              data-current={isActive(item.href) ? 'true' : undefined}
+            >
+              {item.label}
+            </a>
+
+            {item.children && (
+              /* Die Kurzbeschreibungen der Leistungen stehen hier bewusst nicht:
+                 auf Telefonbreite brechen sie zweizeilig um und machen aus vier
+                 Unterpunkten acht unruhige Zeilen. Sie bleiben im Desktopmenü. */
+              <ul role="list" class="mobile-menu__subs">
+                {item.children.map((c) => (
+                  <li>
+                    <a href={c.href} data-current={isActive(c.href) ? 'true' : undefined}>
+                      {c.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
         ))}
       </ul>
       <div class="mobile-menu__foot">
@@ -101,7 +113,7 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
       </div>
     </nav>
   </div>
-</header>
+
 
 <style>
   .site-header {
@@ -191,6 +203,16 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
 
   /* --- Aktionen rechts --- */
   .site-header__actions { display: flex; align-items: center; gap: var(--s-4); margin-left: auto; }
+  /* Auf sehr schmalen Geraeten weicht die Beschriftung des Menueknopfs — das
+     Symbol bleibt, der zugaengliche Name auch, nur sichtbar ist er nicht mehr. */
+  @media (max-width: 23.99rem) {
+    .site-header__actions { gap: var(--s-2); }
+    .menu-toggle__text {
+      position: absolute; width: 1px; height: 1px; padding: 0;
+      margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+    }
+    .menu-toggle { min-width: 44px; justify-content: center; padding-inline: .35rem; }
+  }
   .site-header__phone { display: none; font-size: .875rem; font-weight: 500; text-decoration: none; }
   .site-header__phone:hover { color: var(--accent); }
   .site-header__cta { display: none; min-height: 2.6rem; padding: .55rem 1.1rem; }
@@ -234,47 +256,79 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
   [aria-expanded='true'] .menu-toggle__bars i:last-child { transform: translateY(-3.5px) rotate(-45deg); }
 
   /* --- Mobiles Vollbildpanel --- */
+  /* Liegt bewusst ausserhalb von <header>: ein sticky Vorfahre wird zum
+     Bezugsrahmen fuer position:fixed, dann faellt das Panel auf Headerhoehe
+     zusammen. Ebene 95 — unter der Kopfzeile (100), ueber der Aktionsleiste (90). */
   .mobile-menu {
     position: fixed;
     inset: 4.25rem 0 0;
+    z-index: 95;
     background: var(--bg);
     color: var(--fg);
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding-block: var(--s-6) calc(var(--s-8) + env(safe-area-inset-bottom));
+    padding-block: var(--s-5) calc(var(--s-9) + env(safe-area-inset-bottom));
+    opacity: 0;
+    transform: translateY(-.75rem);
+    transition: opacity 200ms ease, transform 260ms var(--ease-mass);
   }
+  .mobile-menu.is-open { opacity: 1; transform: none; }
+  .mobile-menu:focus { outline: none; }
   .mobile-menu[hidden] { display: none; }
-  .mobile-menu__list { margin: 0; padding: 0; }
-  .mobile-menu__list > li > a {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--s-4);
-    padding: .9rem 0;
-    border-bottom: 1px solid var(--rule);
+
+  /* Waehrend das Menue offen ist, haelt der Rumpf die Scrollposition fest.
+     Die Kopfzeile wechselt dabei von sticky auf fixed — sonst wandert sie mit
+     dem versetzten Rumpf aus dem Bild. */
+  :global(html.menue-offen) { overflow: hidden; }
+  :global(html.menue-offen body) { position: fixed; width: 100%; overflow: hidden; }
+  :global(html.menue-offen) .site-header { position: fixed; top: 0; left: 0; right: 0; }
+  /* Der Anrufknopf weicht — im offenen Menue steht die Nummer gross drin,
+     und „Schliessen" braucht mehr Platz als „Menue". */
+  :global(html.menue-offen) .site-header__call { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mobile-menu { transition: none; }
+  }
+  .mobile-menu__list { margin: 0; padding: 0; list-style: none; }
+  /* Nur die Hauptpunkte bekommen eine Trennlinie. Vorher hatte jede der acht
+     Zeilen eine — das las sich wie eine Tabelle, nicht wie eine Navigation. */
+  .mobile-menu__list > li { border-bottom: 1px solid var(--rule); }
+
+  .mobile-menu__main {
+    display: block;
+    padding: .85rem 0;
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 1.5rem;
+    font-size: 1.375rem;
     letter-spacing: -.02em;
     text-decoration: none;
   }
-  .mobile-menu__list > li > a[data-current] { color: var(--accent); }
-  .mobile-menu__sub > a {
-    font-size: 1rem !important;
-    font-weight: 500 !important;
-    padding-left: var(--s-5) !important;
+  .mobile-menu__main[data-current] { color: var(--accent); }
+
+  /* Untergeordnet und ruhig: eingerückt, kleiner, ohne eigene Linien. */
+  .mobile-menu__subs {
+    margin: 0 0 var(--s-4);
+    padding: 0 0 0 var(--s-4);
+    list-style: none;
+    border-left: 1px solid var(--rule);
+  }
+  .mobile-menu__subs a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: .45rem 0;
+    font-size: 1rem;
     color: var(--fg-muted);
+    text-decoration: none;
   }
-  .mobile-menu__note {
-    font-family: var(--font-mono);
-    font-size: var(--t-mono);
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    opacity: .7;
-  }
+  .mobile-menu__subs a[data-current] { color: var(--accent); }
+
   .mobile-menu__foot { display: grid; gap: var(--s-4); margin-top: var(--s-7); }
   .mobile-menu__phone { font-size: 1.75rem; font-weight: 500; text-decoration: none; }
-  .mobile-menu__mail { color: var(--fg-muted); text-decoration: none; word-break: break-all; }
+  .mobile-menu__mail {
+    display: inline-flex; align-items: center; min-height: 44px;
+    color: var(--fg-muted); text-decoration: none; word-break: break-all;
+  }
 
   @media (min-width: 62rem) {
     .nav-desktop { display: block; }
@@ -290,21 +344,83 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
   const panel = document.querySelector<HTMLElement>('[data-mobile-menu]');
 
   if (toggle && panel) {
-    const setOpen = (open: boolean) => {
-      toggle.setAttribute('aria-expanded', String(open));
-      panel.hidden = !open;
-      document.documentElement.style.overflow = open ? 'hidden' : '';
-      toggle.querySelector('.menu-toggle__text')!.textContent = open ? 'Schließen' : 'Menü';
+    const ruhig = matchMedia('(prefers-reduced-motion: reduce)');
+    let scrollposition = 0;
+    let schliessZeit: number | undefined;
+
+    /**
+     * Scrollsperre, die die Position behält.
+     *
+     * Nur `overflow: hidden` auf <html> reicht nicht: der Browser klemmt die
+     * Scrollposition dabei ab, und nach dem Schließen landet man an einer
+     * anderen Stelle der Seite. Stattdessen wird der Rumpf festgesetzt und um
+     * die gemerkte Position nach oben versetzt — beim Schließen wird exakt
+     * dorthin zurückgesprungen.
+     */
+    const sperren = () => {
+      scrollposition = window.scrollY;
+      document.body.style.top = `-${scrollposition}px`;
+      document.documentElement.classList.add('menue-offen');
     };
+    const entsperren = () => {
+      document.documentElement.classList.remove('menue-offen');
+      document.body.style.top = '';
+      // Umbruch erzwingen: solange der Rumpf noch als festgesetzt gilt, ist das
+      // Dokument nur bildschirmhoch — ein scrollTo würde auf diesen Rest
+      // abgeklemmt und man landet an der falschen Stelle.
+      void document.body.offsetHeight;
+      window.scrollTo(0, scrollposition);
+    };
+
+    const setOpen = (open: boolean) => {
+      if (schliessZeit) { window.clearTimeout(schliessZeit); schliessZeit = undefined; }
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.querySelector('.menu-toggle__text')!.textContent = open ? 'Schließen' : 'Menü';
+
+      if (open) {
+        sperren();
+        panel.hidden = false;
+        // Erst im nächsten Bild einblenden, sonst gibt es keinen Übergang.
+        requestAnimationFrame(() => panel.classList.add('is-open'));
+        // Auf das Panel selbst, nicht auf den ersten Link: so liest der
+        // Screenreader den Bereich vor, und beim Antippen leuchtet kein
+        // einzelner Menuepunkt auf.
+        panel.focus({ preventScroll: true });
+      } else {
+        panel.classList.remove('is-open');
+        entsperren();
+        const zu = () => { panel.hidden = true; };
+        if (ruhig.matches) zu();
+        // Nach dem Ausblenden wirklich aus dem Baum nehmen — mit Zeitgeber als
+        // Rückfall, falls transitionend ausbleibt (etwa im Hintergrundtab).
+        else schliessZeit = window.setTimeout(zu, 280);
+      }
+    };
+
     toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
     panel.addEventListener('click', (e) => {
       if ((e.target as HTMLElement).closest('a')) setOpen(false);
     });
+
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') { setOpen(false); toggle.focus(); }
+      const offen = toggle.getAttribute('aria-expanded') === 'true';
+      if (!offen) return;
+
+      if (e.key === 'Escape') { setOpen(false); toggle.focus({ preventScroll: true }); return; }
+
+      // Tabulator im Panel halten, solange es offen ist.
+      if (e.key !== 'Tab') return;
+      const ziele = [toggle, ...panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')];
+      const erstes = ziele[0];
+      const letztes = ziele[ziele.length - 1];
+      if (e.shiftKey && document.activeElement === erstes) { e.preventDefault(); letztes.focus({ preventScroll: true }); }
+      else if (!e.shiftKey && document.activeElement === letztes) { e.preventDefault(); erstes.focus({ preventScroll: true }); }
     });
+
     // Beim Wechsel auf Desktop-Breite aufräumen
-    matchMedia('(min-width: 62rem)').addEventListener('change', (e) => { if (e.matches) setOpen(false); });
+    matchMedia('(min-width: 62rem)').addEventListener('change', (e) => {
+      if (e.matches && toggle.getAttribute('aria-expanded') === 'true') setOpen(false);
+    });
   }
 
   // Untermenü: klickgesteuert, damit es auch auf Touch bedienbar ist
@@ -321,7 +437,7 @@ const isActive = (href: string) => path === href || (href !== '/' && path.starts
           && !subTrigger.contains(e.target as Node)) setSub(false);
     });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !submenu.hidden) { setSub(false); subTrigger.focus(); }
+      if (e.key === 'Escape' && !submenu.hidden) { setSub(false); subTrigger.focus({ preventScroll: true }); }
     });
     submenu.addEventListener('focusout', (e) => {
       if (!submenu.contains(e.relatedTarget as Node) && e.relatedTarget !== subTrigger) setSub(false);

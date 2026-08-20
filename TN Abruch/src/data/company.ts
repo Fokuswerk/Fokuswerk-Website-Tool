@@ -51,47 +51,52 @@ export const yearsActive = new Date().getFullYear() - company.foundedYear;
  * `proof` ist der prüfbare Beleg, nicht ein Werbeversprechen.
  */
 export const credentials = [
+  /* Titel im Klartext, amtliche Bezeichnung daneben. Wer die Kuerzel kennt,
+     findet sie; wer sie nicht kennt, versteht trotzdem, worum es geht. */
   {
     id: 'trgs519',
     short: 'TRGS 519',
-    title: 'Zulassung nach TRGS 519, Ziffer 2.7 Anlage 3',
-    proof: 'einschließlich weichgebundener Asbestprodukte',
+    title: 'Auch den kritischsten Asbest dürfen wir anfassen',
+    proof: 'TRGS 519, Ziffer 2.7 Anlage 3',
     body:
-      'Die anspruchsvollste Zulassungsstufe im deutschen Asbestrecht. Sie berechtigt ' +
-      'auch zum Ausbau weichgebundener Asbestprodukte — Spritzasbest, Leichtbauplatten, ' +
-      'Asbestpappen. Betriebe ohne diese Ziffer müssen bei solchen Funden abgeben.',
+      'Asbest ist nicht gleich Asbest. Das lockere, faserige Material — Spritzasbest, ' +
+      'Leichtbauplatten, Asbestpappe — gilt als das gefährlichste, und dafür braucht ein ' +
+      'Betrieb die höchste Zulassungsstufe. Wir haben sie. Die meisten müssen bei einem ' +
+      'solchen Fund abgeben und jemand anderen holen.',
   },
   {
     id: 'pq',
     short: 'Präqualifikation',
-    title: 'Präqualifiziert seit 2013',
-    proof: 'PQ-Nr. 010.053470',
+    title: 'Für öffentliche Aufträge freigegeben',
+    proof: 'PQ-Nr. 010.053470, seit 2013',
     body:
-      'Eingetragen in der Präqualifikationsliste für den Bereich Abbruch und ' +
-      'Asbestsanierung. Öffentliche Auftraggeber können ohne Einzelnachweise vergeben.',
+      'Städte, Ämter, Schulen und Hochschulen dürfen nur an geprüfte Betriebe vergeben. ' +
+      'Wir stehen seit 2013 in der amtlichen Liste — das erspart bei jeder Ausschreibung ' +
+      'den Papierkrieg mit Einzelnachweisen.',
   },
   {
     id: 'trgs521',
     short: 'TRGS 521',
-    title: 'Sachkunde nach TRGS 521',
-    proof: 'künstliche Mineralfasern (KMF)',
+    title: 'Alte Mineralwolle ist unser zweites Thema',
+    proof: 'Sachkunde nach TRGS 521',
     body:
-      'Sachkundenachweis für Abbruch-, Sanierungs- und Instandhaltungsarbeiten an alten ' +
-      'Mineralwolle-Dämmungen. Betrifft nahezu jeden Bestandsbau vor 2000.',
+      'Dämmwolle, die vor dem Jahr 2000 eingebaut wurde, setzt beim Ausbau Fasern frei ' +
+      'und muss wie ein Gefahrstoff behandelt werden. Das betrifft fast jedes Gebäude aus ' +
+      'dieser Zeit — vom Dachboden bis zur Heizungsverkleidung.',
   },
   {
     id: 'avn',
     short: 'AVN',
     title: 'Mitglied im Abbruchverband Nord',
     proof: 'AVN',
-    body: 'Fachverband der norddeutschen Abbruchunternehmen.',
+    body: 'Der Fachverband der norddeutschen Abbruchunternehmen.',
   },
   {
     id: 'nav',
     short: 'NAV',
-    title: 'Mitglied im Asbest- und Gefahrstoffsanierungsverband Nord e.V.',
-    proof: 'NAV',
-    body: 'Norddeutscher Fachverband für Schadstoffsanierung.',
+    title: 'Mitglied im Fachverband für Schadstoffsanierung',
+    proof: 'NAV Nord e.V.',
+    body: 'Norddeutscher Asbest- und Gefahrstoffsanierungsverband e.V.',
   },
 ] as const;
 

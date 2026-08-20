@@ -1,0 +1,402 @@
+---
+/**
+ * Projektseite zu einer Referenz.
+ *
+ * Grundsatz: Was dokumentiert ist, steht hier — Jahr, Auftraggeber, Leistung,
+ * Menge, Objektart, Region. Was nicht dokumentiert ist, wird nicht erfunden,
+ * sondern als offen ausgewiesen. Die Einordnung rechnet ausschließlich mit den
+ * Zahlen, die in der Projektliste stehen.
+ */
+import { getCollection } from 'astro:content';
+import Base from '~/layouts/Base.astro';
+import SectionMarker from '~/components/SectionMarker.astro';
+import Cta from '~/components/Cta.astro';
+import { leistungsbilder, type Kategorie } from '~/data/leistungsbilder';
+
+export async function getStaticPaths() {
+  const refs = (await getCollection('referenzen')).map((r) => r.data);
+  return refs.map((ref) => ({ params: { slug: ref.slug }, props: { ref, refs } }));
+}
+
+const { ref, refs } = Astro.props;
+
+const fmt = (n: number) => n.toLocaleString('de-DE');
+
+/* Einordnung — rein rechnerisch aus der Projektliste. */
+const sameUnit = refs
+  .filter((r) => r.quantity && r.unit === ref.unit)
+  .sort((a, b) => (b.quantity ?? 0) - (a.quantity ?? 0));
+const rank = ref.quantity ? sameUnit.findIndex((r) => r.slug === ref.slug) + 1 : 0;
+const largest = sameUnit[0];
+
+const verwandt = refs
+  .filter((r) => r.slug !== ref.slug && r.category.some((c) => ref.category.includes(c)))
+  .sort((a, b) => b.year - a.year)
+  .slice(0, 4);
+
+/* Liegt eine Projektbeschreibung vor? Zu den Altprojekten: nein. */
+const hatBeschreibung = Boolean(ref.situation || ref.task || ref.works?.length || ref.notes || ref.result);
+
+const eckdaten: { key: string; value: string }[] = [
+  { key: 'Jahr', value: String(ref.year) },
+  { key: 'Auftraggeber', value: ref.client },
+  { key: 'Leistung', value: ref.scope },
+  { key: 'Objektart', value: ref.sector },
+  { key: 'Region', value: ref.region },
+];
+if (ref.quantity && ref.unit) {
+  eckdaten.splice(3, 0, { key: 'Menge', value: `${fmt(ref.quantity)} ${ref.unit}` });
+}
+
+const breadcrumb = [
+  { name: 'Startseite', href: '/' },
+  { name: 'Referenzen', href: '/referenzen/' },
+  { name: ref.client, href: `/referenzen/${ref.slug}/` },
+];
+
+const kategorien = ref.category as Kategorie[];
+---
+
+<Base
+  title={`${ref.client} — ${ref.scope} ${ref.year} | TN Abbruch`}
+  description={`Referenzprojekt TN Abbruch: ${ref.scope} für ${ref.client}, ${ref.sector}, ${ref.region}, ${ref.year}${ref.quantity ? `, ${fmt(ref.quantity)} ${ref.unit}` : ''}.`}
+  breadcrumb={breadcrumb}
+  schema={{
+    '@type': 'Project',
+    name: `${ref.client} — ${ref.scope}`,
+    startDate: String(ref.year),
+    location: ref.region,
+    provider: { '@id': 'https://www.tn-abbruch.de/#organisation' },
+  }}
+>
+  <!-- Kopf -->
+  <header class="ph zone-dark">
+    <div class="wrap">
+      <nav class="ph__crumb" aria-label="Brotkrumen">
+        <ol role="list">
+          {breadcrumb.map((c, i) => (
+            <li>
+              {i < breadcrumb.length - 1
+                ? <a href={c.href}>{c.name}</a>
+                : <span aria-current="page">{c.name}</span>}
+            </li>
+          ))}
+        </ol>
+      </nav>
+
+      <p class="label ph__eyebrow">Referenz <span class="num">{ref.year}</span></p>
+      <h1>{ref.client}</h1>
+      <p class="lead ph__lead">{ref.scope}</p>
+
+      <ul class="ph__tags" role="list">
+        {kategorien.map((c) => <li class="label">{leistungsbilder[c].label}</li>)}
+        <li class="label">{ref.sector}</li>
+        <li class="label">{ref.region}</li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Eckdaten -->
+  <section class="section ruled">
+    <div class="wrap">
+      <SectionMarker no="01" label="Aufmaß" rest="Aus der Projektdokumentation" />
+
+      <div class="detail">
+        <dl class="specs">
+          {eckdaten.map((d) => (
+            <div class="specs__row">
+              <dt>{d.key}</dt>
+              <dd class={d.key === 'Menge' || d.key === 'Jahr' ? 'num' : ''}>{d.value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div class="einordnung">
+          {ref.quantity && ref.unit ? (
+            <>
+              <div class="figure">
+                <span class="figure__value num">{fmt(ref.quantity)}</span>
+                <span class="figure__unit">{ref.unit}</span>
+                <span class="figure__label">
+                  {rank === 1
+                    ? `Größte dokumentierte Menge in ${ref.unit} unserer Projektliste.`
+                    : `Rang ${rank} von ${sameUnit.length} dokumentierten Projekten mit Mengenangabe in ${ref.unit}. Größtes Projekt: ${fmt(largest.quantity ?? 0)} ${largest.unit}.`}
+                </span>
+              </div>
+              <div class="bar" aria-hidden="true">
+                <span style={`--w:${Math.max(2, ((ref.quantity ?? 0) / (largest.quantity ?? 1)) * 100)}%`}></span>
+              </div>
+            </>
+          ) : (
+            <p class="einordnung__none">
+              Für dieses Projekt ist in unserer Aufstellung keine Menge vermerkt.
+              Wir tragen hier nur nach, was wir belegen können.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Leistungsbild -->
+  <section class="section zone-dark ruled">
+    <div class="wrap">
+      <SectionMarker no="02" label="Leistungsbild" rest={kategorien.length > 1 ? 'Zwei Gewerke' : 'Ein Gewerk'} />
+      <h2 class="lb__head">Was hinter dieser Leistung steckt.</h2>
+      <p class="lb__intro muted">
+        Allgemein zum Gewerk — nicht zum Ablauf dieses einzelnen Projekts.
+      </p>
+
+      <div class="lb">
+        {kategorien.map((c) => {
+          const l = leistungsbilder[c];
+          return (
+            <article class="lb__item">
+              <h3>{l.label}</h3>
+              <p>{l.body}</p>
+              <ul role="list">
+                {l.points.map((pt) => <li>{pt}</li>)}
+              </ul>
+              <a href={l.href} class="lb__link">
+                Zur Leistungsseite
+                <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+              </a>
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  <!-- Projektbeschreibung oder ehrliche Lücke -->
+  <section class="section ruled">
+    <div class="wrap">
+      <SectionMarker no="03" label="Projektverlauf" rest={hatBeschreibung ? 'Dokumentiert' : 'Nicht dokumentiert'} />
+
+      {hatBeschreibung ? (
+        <div class="verlauf">
+          {ref.situation && (
+            <div class="verlauf__block">
+              <span class="label">Ausgangslage</span>
+              <p>{ref.situation}</p>
+            </div>
+          )}
+          {ref.task && (
+            <div class="verlauf__block">
+              <span class="label">Aufgabe</span>
+              <p>{ref.task}</p>
+            </div>
+          )}
+          {ref.works?.length && (
+            <div class="verlauf__block">
+              <span class="label">Durchgeführte Arbeiten</span>
+              <ul role="list">{ref.works.map((w) => <li>{w}</li>)}</ul>
+            </div>
+          )}
+          {ref.notes && (
+            <div class="verlauf__block">
+              <span class="label">Technische Besonderheiten</span>
+              <p>{ref.notes}</p>
+            </div>
+          )}
+          {ref.result && (
+            <div class="verlauf__block">
+              <span class="label">Ergebnis</span>
+              <p>{ref.result}</p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div class="offen">
+          <div class="prose">
+            <h2>Hier gibt es keine Bilder.</h2>
+            <p>
+              Auf Rückbaubaustellen wird selten fotografiert, im Schwarzbereich der
+              Schadstoffsanierung gar nicht — dort geht keine Kamera mit hinein. Was aus
+              den Jahren vor der laufenden Dokumentation bleibt, sind die Angaben oben:
+              Auftraggeber, Leistung, Menge, Jahr.
+            </p>
+            <p>
+              Wir schreiben an dieser Stelle lieber nichts, als etwas zu schreiben, das
+              wir nicht belegen können. Wenn Sie zu einem vergleichbaren Vorhaben
+              Auskunft brauchen, rufen Sie an — mündlich können wir zu jedem dieser
+              Projekte erzählen, wie es gelaufen ist.
+            </p>
+          </div>
+
+          <aside class="offen__box">
+            <span class="label">Was hier künftig steht</span>
+            <ul role="list">
+              <li>Ausgangslage am Objekt</li>
+              <li>Aufgabenstellung des Auftraggebers</li>
+              <li>Durchgeführte Arbeiten</li>
+              <li>Technische Besonderheiten</li>
+              <li>Ergebnis und Übergabe</li>
+            </ul>
+            <p class="offen__note">
+              Die Felder sind angelegt. Für laufende Projekte werden sie gepflegt,
+              sobald die Baustelle abgeschlossen und die Freigabe des Auftraggebers
+              erteilt ist.
+            </p>
+          </aside>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <!-- Verwandte Projekte -->
+  {verwandt.length > 0 && (
+    <section class="section ruled">
+      <div class="wrap">
+        <SectionMarker no="04" label="Vergleichbar" rest="Gleiches Gewerk" />
+        <h2 class="verw__head">Weitere Projekte dieser Art.</h2>
+
+        <ol class="verw" role="list">
+          {verwandt.map((r) => (
+            <li>
+              <a href={`/referenzen/${r.slug}/`}>
+                <span class="verw__year num">{r.year}</span>
+                <span class="verw__client">{r.client}</span>
+                <span class="verw__scope">{r.scope}</span>
+                <span class="verw__qty num">
+                  {r.quantity ? `${fmt(r.quantity)} ${r.unit}` : '—'}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ol>
+
+        <a href="/referenzen/" class="btn btn--ghost verw__all">
+          Alle 20 Projekte
+          <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        </a>
+      </div>
+    </section>
+  )}
+
+  <Cta
+    heading="Ein vergleichbares Vorhaben?"
+    body="Sagen Sie uns Objekt, Leistung und Zeitraum. Wir prüfen die Anforderungen und melden uns persönlich — mit einer ehrlichen Einschätzung, auch wenn sie gegen uns ausfällt."
+  />
+</Base>
+
+<style>
+  /* ── Kopf ───────────────────────────────────────────────────────────── */
+  .ph {
+    background: var(--bg);
+    color: var(--fg);
+    padding-block: calc(4.25rem + var(--s-8)) var(--s-8);
+  }
+  .ph__crumb ol {
+    display: flex; flex-wrap: wrap; gap: .35rem var(--s-3);
+    margin: 0 0 var(--s-6); padding: 0; list-style: none;
+    font-family: var(--font-mono); font-size: var(--t-mono);
+    letter-spacing: .12em; text-transform: uppercase; color: var(--fg-muted);
+  }
+  .ph__crumb li + li::before { content: '→'; margin-right: var(--s-3); }
+  .ph__crumb a { color: var(--fg-muted); text-decoration: none; }
+  @media (pointer: coarse) {
+    .ph__crumb a { display: inline-flex; align-items: center; min-height: 44px; }
+  }
+  .ph__crumb a:hover { color: var(--accent); }
+  .ph__eyebrow { color: var(--accent); margin-bottom: var(--s-4); }
+  .ph h1 { font-size: var(--t-h1); max-width: 18ch; }
+  .ph__lead { margin-top: var(--s-5); color: var(--fg-muted); }
+  .ph__tags {
+    display: flex; flex-wrap: wrap; gap: var(--s-2);
+    margin: var(--s-7) 0 0; padding: 0; list-style: none;
+  }
+  .ph__tags li { padding: .35rem .7rem; border: 1px solid var(--rule-strong); }
+
+  /* ── Eckdaten ───────────────────────────────────────────────────────── */
+  .detail { display: grid; gap: var(--s-8) var(--gutter); }
+  @media (min-width: 60rem) {
+    .detail { grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: var(--s-9); align-items: start; }
+  }
+  .specs { margin: 0; border-top: 1px solid var(--rule-strong); }
+  .specs__row {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr);
+    gap: var(--s-4);
+    padding-block: var(--s-4);
+    border-bottom: 1px solid var(--rule);
+  }
+  .specs dt { font-family: var(--font-mono); font-size: var(--t-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg-muted); }
+  .specs dd { margin: 0; font-size: .9375rem; }
+
+  .einordnung { display: grid; gap: var(--s-5); align-content: start; }
+  .einordnung__none { font-size: .9375rem; color: var(--fg-muted); max-width: 40ch; }
+  .bar { height: 4px; background: var(--rule); }
+  .bar span { display: block; height: 100%; width: var(--w); background: var(--accent); }
+
+  /* ── Leistungsbild ──────────────────────────────────────────────────── */
+  .lb__head { max-width: 20ch; }
+  .lb__intro { margin-top: var(--s-3); font-size: .9375rem; }
+  .lb { display: grid; gap: var(--s-7) var(--gutter); margin-top: var(--s-7); }
+  @media (min-width: 56rem) { .lb { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: var(--s-8); } }
+  .lb__item { border-top: 1px solid var(--rule-strong); padding-top: var(--s-5); }
+  .lb__item h3 { margin-bottom: var(--s-4); }
+  .lb__item p { font-size: .9375rem; color: var(--fg-muted); max-width: 46ch; }
+  .lb__item ul { display: grid; gap: .5rem; margin: var(--s-5) 0 0; padding: 0; list-style: none; }
+  .lb__item li { position: relative; padding-left: 1.1rem; font-size: .875rem; }
+  .lb__item li::before {
+    content: ''; position: absolute; left: 0; top: .62em;
+    width: 7px; height: 1px; background: var(--accent);
+  }
+  .lb__link {
+    display: inline-flex; align-items: center; gap: var(--s-3);
+    min-height: 44px; margin-top: var(--s-5);
+    color: var(--accent); font-family: var(--font-display); font-weight: 600; font-size: .9375rem;
+    text-decoration: none;
+  }
+  .lb__link:hover { text-decoration: underline; }
+
+  /* ── Projektverlauf ─────────────────────────────────────────────────── */
+  .verlauf { display: grid; gap: var(--s-6); border-top: 1px solid var(--rule-strong); }
+  .verlauf__block { display: grid; gap: var(--s-3); padding-top: var(--s-5); border-bottom: 1px solid var(--rule); padding-bottom: var(--s-5); }
+  @media (min-width: 48rem) { .verlauf__block { grid-template-columns: 12rem minmax(0, 1fr); gap: var(--s-5); } }
+  .verlauf__block p, .verlauf__block li { font-size: .9375rem; max-width: 62ch; }
+  .verlauf__block ul { display: grid; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+  .verlauf__block li { position: relative; padding-left: 1.1rem; }
+  .verlauf__block li::before {
+    content: ''; position: absolute; left: 0; top: .62em;
+    width: 7px; height: 1px; background: var(--accent);
+  }
+
+  .offen { display: grid; gap: var(--s-7) var(--gutter); }
+  @media (min-width: 60rem) {
+    .offen { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: var(--s-9); align-items: start; }
+  }
+  .offen__box { padding: var(--s-6); border: 1px solid var(--rule-strong); background: var(--paper); }
+  .offen__box ul { display: grid; gap: .45rem; margin: var(--s-4) 0 0; padding: 0; list-style: none; }
+  .offen__box li { position: relative; padding-left: 1.1rem; font-size: .9375rem; }
+  .offen__box li::before {
+    content: ''; position: absolute; left: 0; top: .62em;
+    width: 7px; height: 1px; background: var(--accent);
+  }
+  .offen__note { margin-top: var(--s-5); font-size: var(--t-xs); color: var(--fg-muted); }
+
+  /* ── Verwandte Projekte ─────────────────────────────────────────────── */
+  .verw__head { max-width: 20ch; margin-bottom: var(--s-6); }
+  .verw { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--rule-strong); }
+  .verw li { border-bottom: 1px solid var(--rule); }
+  .verw a {
+    display: grid;
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    gap: var(--s-2) var(--s-4);
+    padding-block: var(--s-5);
+    text-decoration: none;
+    align-items: baseline;
+    transition: color var(--dur-ui) linear;
+  }
+  @media (min-width: 52rem) {
+    .verw a { grid-template-columns: 4rem minmax(0, 1.1fr) minmax(0, 1fr) 8rem; }
+  }
+  .verw a:hover { color: var(--accent); }
+  .verw__year { color: var(--accent); font-size: .8125rem; }
+  .verw__client { font-family: var(--font-display); font-weight: 700; font-size: 1.0625rem; letter-spacing: -.015em; }
+  .verw__scope { font-size: .875rem; color: var(--fg-muted); }
+  .verw__qty { font-size: .875rem; }
+  @media (min-width: 52rem) { .verw__qty { text-align: right; } }
+  .verw__all { margin-top: var(--s-7); }
+</style>

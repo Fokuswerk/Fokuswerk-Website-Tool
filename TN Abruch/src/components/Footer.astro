@@ -125,6 +125,13 @@ const year = new Date().getFullYear();
   }
   .site-footer__legal { display: flex; gap: var(--s-5); margin: 0 0 0 auto; padding: 0; }
 
+  /* Der Telefonlink darin muss mit dem Daumen zu treffen sein — als Zeile
+     im Fliesstext waere er nur 16 px hoch. */
+  .site-footer__note a {
+    display: inline-block;
+    padding-block: .75rem;
+    color: var(--accent);
+  }
   .site-footer__note {
     margin-top: var(--s-6);
     padding-top: var(--s-5);

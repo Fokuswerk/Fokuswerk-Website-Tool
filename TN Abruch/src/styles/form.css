@@ -1,0 +1,274 @@
+/* ==========================================================================
+   Formular-Primitive — gemeinsam genutzt von Projektanfrage, Kurzbewerbung
+   und dem Demo-Backend. Bewusst global (nicht scoped), damit dieselben
+   Bedienelemente überall identisch aussehen und sich identisch verhalten.
+   Wird nur auf den Seiten importiert, die ein Formular tragen.
+   ========================================================================== */
+
+@layer components {
+
+  /* ── Fortschritt ──────────────────────────────────────────────────────── */
+  /* Drei gleich breite Felder mit eigener Schiene. Die vorige Fassung war eine
+     Reihe kleiner Woerter — man sah nicht, wo man steht und wie weit es noch ist. */
+  .steps-bar {
+    scroll-margin-top: 6rem;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: var(--s-3);
+    margin: 0 0 var(--s-8);
+    padding: 0;
+    list-style: none;
+  }
+  .steps-bar li {
+    display: flex;
+    align-items: center;
+    /* Ohne min-width: 0 setzt jede Spalte ihre Mindestbreite durch — drei
+       gesperrte Versalwoerter nebeneinander sprengen dann das Telefon. */
+    min-width: 0;
+    gap: .6rem;
+    padding-top: var(--s-3);
+    border-top: 2px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: var(--t-mono);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    transition: border-color var(--dur-ui) linear, color var(--dur-ui) linear;
+  }
+  .steps-bar li .num {
+    display: inline-grid;
+    place-items: center;
+    width: 1.625rem; height: 1.625rem;
+    flex: none;
+    border: 1px solid currentColor;
+    font-size: var(--t-mono);
+  }
+  .steps-bar li.is-active { color: var(--accent); border-top-color: var(--accent); }
+  .steps-bar li.is-active .num { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+  .steps-bar li.is-done { color: var(--fg); border-top-color: var(--rule-strong); }
+
+  /* Auf schmalen Telefonen bleiben nur die Ziffern und die Schiene. Die Leiste
+     ist ohnehin aria-hidden — der Schritt wird im Formular benannt. */
+  @media (max-width: 32rem) {
+    .steps-bar { gap: var(--s-2); }
+    .steps-bar li { gap: 0; font-size: 0; justify-content: center; }
+    .steps-bar li .num { font-size: .75rem; }
+  }
+
+  /* ── Schritt ──────────────────────────────────────────────────────────── */
+  .fs { border: 0; padding: 0; margin: 0; }
+  .fs[hidden] { display: none; }
+  .fs__legend {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-4);
+    padding: 0 0 var(--s-6);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.375rem, 3vw, 1.875rem);
+    letter-spacing: -.025em;
+  }
+  .fs__legend .num { color: var(--accent); font-size: .875rem; }
+  .fs__nav { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-8); }
+  /* Die Schaltflaechen tragen jetzt Felder von 3,5 rem — bei 3 rem Knopfhoehe
+     sah der naechste Schritt aus wie eine Nebensache. */
+  .fs__nav .btn { min-height: 3.5rem; padding-inline: var(--s-6); font-size: 1rem; }
+
+  /* ── Feld ─────────────────────────────────────────────────────────────── */
+  .field { margin-bottom: var(--s-7); }
+  .field--split { display: grid; gap: var(--s-5); }
+  @media (min-width: 40rem) { .field--split { grid-template-columns: 1fr 1fr; } }
+
+  .field__label {
+    display: block;
+    margin-bottom: var(--s-3);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.0625rem;
+    letter-spacing: -.01em;
+  }
+  .req { color: var(--accent); }
+  .field__hint { margin-top: var(--s-2); font-size: .8125rem; color: var(--fg-muted); }
+  @media (pointer: coarse) { .field__hint { font-size: .875rem; } }
+  .field__hint--wide, .field__err--wide { grid-column: 1 / -1; margin-top: 0; }
+
+  .field__err {
+    margin-top: var(--s-2);
+    font-size: .8125rem;
+    color: var(--warn);
+    display: flex;
+    align-items: baseline;
+    gap: .4rem;
+  }
+  .field__err::before { content: '▲'; font-size: .6em; }
+  .field__err[hidden] { display: none; }
+
+  /* Auf dunklem Grund braucht die Fehlerfarbe mehr Helligkeit, um den Kontrast zu halten. */
+  .zone-dark .field__err { color: var(--warn-lift); }
+
+  /* ── Bedienelemente ───────────────────────────────────────────────────── */
+  .form input[type='text'],
+  .form input[type='tel'],
+  .form input[type='email'],
+  .form input[type='date'],
+  .form select,
+  .form textarea {
+    width: 100%;
+    padding: .95rem 1.05rem;
+    min-height: 3.5rem;
+    /* Eigene Flaeche statt durchscheinendem Grund: ein Feld muss als Feld zu
+       erkennen sein, bevor man hineinklickt. */
+    background: var(--field-bg, color-mix(in oklab, var(--fg) 5%, transparent));
+    border: 1px solid var(--rule-strong);
+    color: var(--fg);
+    font-size: 1.0625rem;
+    transition: border-color var(--dur-ui) linear, background-color var(--dur-ui) linear;
+  }
+  .form textarea { min-height: 8.5rem; resize: vertical; padding-top: .85rem; }
+  .form input:hover, .form select:hover, .form textarea:hover { border-color: var(--fg); }
+  .form input:focus, .form select:focus, .form textarea:focus { border-color: var(--accent); outline-offset: 1px; }
+  .form input[aria-invalid='true'] { border-color: var(--warn); }
+  .zone-dark .form input[aria-invalid='true'] { border-color: var(--warn-lift); }
+  .form ::placeholder { color: color-mix(in oklab, var(--fg-muted) 80%, transparent); }
+  /* Der Systemknopf des Dateifeldes sieht in jedem Browser anders aus und
+     immer nach Fremdkoerper. Er bekommt hier dieselbe Form wie ein Nebenknopf. */
+  .form input[type='file'] {
+    padding: .8rem 1rem;
+    font-size: .9375rem;
+    line-height: 1.6;
+    cursor: pointer;
+  }
+  .form input[type='file']::file-selector-button {
+    margin-right: var(--s-4);
+    padding: .55rem 1rem;
+    background: transparent;
+    border: 1px solid var(--rule-strong);
+    color: var(--fg);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: .875rem;
+    cursor: pointer;
+    transition: border-color var(--dur-ui) linear, background-color var(--dur-ui) linear;
+  }
+  .form input[type='file']::file-selector-button:hover {
+    border-color: var(--accent);
+    background: color-mix(in oklab, var(--accent) 12%, transparent);
+  }
+  .form select {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                      linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position: calc(100% - 1.15rem) 1.55rem, calc(100% - .8rem) 1.55rem;
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 2.5rem;
+  }
+
+  /* ── Auswahl ──────────────────────────────────────────────────────────── */
+  /* Auswahl als Raster gleich breiter Kacheln. Vorher standen hier kleine
+     Kaestchen in einer umbrechenden Reihe — unterschiedlich breit, eng
+     beieinander, mit dem Systemhaken als einzigem Zustand. Das war der Teil,
+     der die Anfrage unuebersichtlich gemacht hat. */
+  .choices {
+    display: grid;
+    gap: var(--s-3);
+    grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+  }
+  .choices--radio { grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr)); }
+  .choices--stack { grid-template-columns: minmax(0, 1fr); }
+
+  .choice {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--s-4);
+    min-height: 3.5rem;
+    padding: .9rem 1.1rem;
+    background: color-mix(in oklab, var(--fg) 3%, transparent);
+    border: 1px solid var(--rule-strong);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1.35;
+    transition: border-color var(--dur-ui) linear, background-color var(--dur-ui) linear;
+  }
+  .choice:hover { border-color: var(--fg); background: color-mix(in oklab, var(--fg) 7%, transparent); }
+
+  /* Systemhaken raus, eigene Marke rein — sonst sitzt in jeder Kachel ein
+     graues Kaestchen, das je nach Browser anders aussieht. */
+  .choice input {
+    position: absolute;
+    width: 1px; height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .choice > span { flex: 1; }
+  .choice::before {
+    content: '';
+    flex: none;
+    width: 1.375rem;
+    height: 1.375rem;
+    border: 1px solid var(--rule-strong);
+    background: transparent;
+    transition: background-color var(--dur-ui) linear, border-color var(--dur-ui) linear;
+  }
+  .choices--radio .choice::before { border-radius: 50%; }
+  .choice:has(input:checked) {
+    border-color: var(--accent);
+    background: color-mix(in oklab, var(--accent) 14%, transparent);
+  }
+  .choice:has(input:checked)::before {
+    background: var(--accent);
+    border-color: var(--accent);
+    /* Haken als Maske: faerbt sich mit, ohne zweites Element. */
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cpath d='M5 11.5l4 4 8-9' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='square'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cpath d='M5 11.5l4 4 8-9' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='square'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  }
+  .choices--radio .choice:has(input:checked)::before {
+    -webkit-mask: none;
+    mask: none;
+    box-shadow: inset 0 0 0 4px var(--bg);
+  }
+  .choice:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Große Auswahlkachel mit Unterzeile — Kurzbewerbung und Leistungswahl. */
+  .choice--block { align-items: flex-start; padding: var(--s-5); }
+  .choice--block::before { margin-top: .15rem; }
+  .choice--block .choice__t { display: block; font-family: var(--font-display); font-weight: 600; font-size: 1.0625rem; }
+  .choice--block .choice__s {
+    display: block;
+    margin-top: .3rem;
+    font-family: var(--font-mono);
+    font-size: var(--t-mono);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  /* ── Einwilligung, Spamfalle, Status ──────────────────────────────────── */
+  .field--consent { padding-top: var(--s-2); }
+  .consent {
+    display: flex;
+    gap: var(--s-4);
+    align-items: flex-start;
+    padding: var(--s-5);
+    border: 1px solid var(--rule);
+    font-size: .9375rem;
+    cursor: pointer;
+    transition: border-color var(--dur-ui) linear;
+  }
+  .consent:hover { border-color: var(--rule-strong); }
+  .consent input { margin-top: .1rem; width: 22px; height: 22px; accent-color: var(--accent); flex: none; }
+  .consent a { color: var(--accent); }
+
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+  .form__fallback { margin-top: var(--s-6); font-size: .8125rem; color: var(--fg-muted); }
+  .form__fallback a { color: var(--accent); }
+
+  .form__status { margin-top: var(--s-5); font-size: .9375rem; }
+  .form__status:empty { display: none; }
+  .form__status[data-tone='error'] { color: var(--warn); }
+  .zone-dark .form__status[data-tone='error'] { color: var(--warn-lift); }
+  .form__status[data-tone='ok'] { color: var(--accent); }
+}

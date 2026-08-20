@@ -1,0 +1,82 @@
+---
+/**
+ * Gerüst des Demo-Backends.
+ *
+ * Bewusst ohne die öffentliche Kopf- und Fußzeile: Das hier ist nicht Teil der
+ * Website, sondern zeigt, wie die Verwaltung dahinter aussehen würde. Alle
+ * Seiten sind noindex und in robots.txt gesperrt.
+ *
+ * Der Stand ist eine Vorführung — Daten liegen als Datei im Projekt, nicht in
+ * einer Datenbank. Statusänderungen speichert der Browser lokal, damit sich der
+ * Ablauf im Termin durchspielen lässt.
+ */
+import '~/styles/fonts.css';
+import '~/styles/system.css';
+import '~/styles/form.css';
+import '~/styles/demo.css';
+
+interface Props {
+  title: string;
+  active: 'uebersicht' | 'anfragen' | 'bewerbungen' | 'inhalte';
+}
+
+const { title, active } = Astro.props;
+
+const nav = [
+  { id: 'uebersicht', label: 'Übersicht', href: '/demo/' },
+  { id: 'anfragen', label: 'Projektanfragen', href: '/demo/anfragen/' },
+  { id: 'bewerbungen', label: 'Bewerbungen', href: '/demo/bewerbungen/' },
+  { id: 'inhalte', label: 'Inhalte', href: '/demo/inhalte/' },
+];
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} — Verwaltung (Demo) | TN Abbruch</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+
+  <body class="admin zone-dark">
+    <a href="#inhalt" class="skip-link">Zum Inhalt springen</a>
+
+    <aside class="adm-banner" aria-label="Hinweis zur Demonstration">
+      <strong>Demonstration.</strong> Diese Ansicht zeigt, wie die Verwaltung der Website
+      aussehen könnte. Alle Anfragen, Bewerbungen und Personen darin sind
+      <strong>frei erfunden</strong>. Statusänderungen werden nur in diesem Browser gespeichert.
+    </aside>
+
+    <header class="adm-head">
+      <div class="adm-head__in">
+        <a href="/demo/" class="adm-brand">
+          <span class="adm-brand__mark">TN</span>
+          <span class="adm-brand__txt">Verwaltung</span>
+        </a>
+
+        <nav class="adm-nav" aria-label="Verwaltung">
+          {nav.map((n) => (
+            <a href={n.href} class="adm-nav__l" aria-current={n.id === active ? 'page' : undefined}>
+              {n.label}
+            </a>
+          ))}
+        </nav>
+
+        <a href="/" class="adm-out">Zur Website →</a>
+      </div>
+    </header>
+
+    <main id="inhalt" class="adm-main">
+      <slot />
+    </main>
+
+    <footer class="adm-foot">
+      <p>
+        Vorführstand. Die Feldstruktur entspricht dem, was die Formulare auf der Website
+        erfassen — sie lässt sich ohne Umbau an eine Datenbank und ein Postfach hängen.
+      </p>
+    </footer>
+  </body>
+</html>

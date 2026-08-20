@@ -1,0 +1,204 @@
+---
+import { getCollection } from 'astro:content';
+import DemoLayout from '~/layouts/DemoLayout.astro';
+import { company } from '~/data/company';
+
+const refs = (await getCollection('referenzen')).map((r) => r.data).sort((a, b) => b.year - a.year);
+const jobs = (await getCollection('jobs')).sort((a, b) => a.data.order - b.data.order);
+const beispiel = refs[0];
+---
+
+<DemoLayout title="Inhalte" active="inhalte">
+  <div class="adm-title">
+    <h1>Inhalte</h1>
+    <p>
+      Referenzen, Stellen und Unternehmensdaten liegen getrennt vom Layout und mit
+      geprüftem Schema vor. Was hier geändert wird, wirkt an jeder Stelle der Website —
+      eine Stelle löschen heißt: sie verschwindet aus der Karriereseite, aus dem Zähler
+      und aus dem Stellenmarkup für Google.
+    </p>
+  </div>
+
+  <p class="adm-note">
+    <strong>Vorführung.</strong> Die Eingabefelder unten zeigen die tatsächliche
+    Feldstruktur, speichern aber nicht. Für den Produktivbetrieb wird ein
+    Redaktionssystem auf genau diese Felder gesetzt — die Website selbst muss dafür nicht
+    umgebaut werden.
+  </p>
+
+  <!-- Referenzen -->
+  <section class="adm-sec">
+    <div class="adm-sec__h">
+      <h2>Referenzprojekte</h2>
+      <span>{refs.length} Einträge</span>
+    </div>
+
+    <div class="adm-tablewrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th scope="col">Jahr</th>
+            <th scope="col">Auftraggeber</th>
+            <th scope="col">Leistung</th>
+            <th scope="col">Menge</th>
+            <th scope="col">Kategorie</th>
+            <th scope="col">Projektseite</th>
+          </tr>
+        </thead>
+        <tbody>
+          {refs.slice(0, 8).map((r) => (
+            <tr>
+              <td class="adm-t-date">{r.year}</td>
+              <td><strong>{r.client}</strong><span class="adm-t-sub">{r.sector} · {r.region}</span></td>
+              <td>{r.scope}</td>
+              <td>{r.quantity ? `${r.quantity.toLocaleString('de-DE')} ${r.unit}` : '—'}</td>
+              <td>{r.category.join(', ')}</td>
+              <td><a href={`/referenzen/${r.slug}/`}>ansehen →</a></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="adm-card" style="margin-top: var(--s-6)">
+      <h3 class="adm-card__h">Eintrag bearbeiten — Beispiel „{beispiel.client}"</h3>
+
+      <form class="form adm-fields" onsubmit="return false">
+        <div class="field">
+          <label class="field__label" for="r-client">Auftraggeber</label>
+          <input type="text" id="r-client" value={beispiel.client} />
+        </div>
+        <div class="field">
+          <label class="field__label" for="r-year">Jahr</label>
+          <input type="text" id="r-year" value={String(beispiel.year)} inputmode="numeric" />
+        </div>
+        <div class="field wide">
+          <label class="field__label" for="r-scope">Leistung</label>
+          <input type="text" id="r-scope" value={beispiel.scope} />
+        </div>
+        <div class="field">
+          <label class="field__label" for="r-sector">Objektart</label>
+          <input type="text" id="r-sector" value={beispiel.sector} />
+        </div>
+        <div class="field">
+          <label class="field__label" for="r-region">Region</label>
+          <input type="text" id="r-region" value={beispiel.region} />
+        </div>
+        <div class="field">
+          <label class="field__label" for="r-qty">Menge</label>
+          <input type="text" id="r-qty" value={beispiel.quantity ? String(beispiel.quantity) : ''} placeholder="leer lassen, wenn nicht dokumentiert" />
+        </div>
+        <div class="field">
+          <label class="field__label" for="r-unit">Einheit</label>
+          <select id="r-unit">
+            <option value="">—</option>
+            <option value="cbm" selected={beispiel.unit === 'cbm'}>cbm</option>
+            <option value="qm" selected={beispiel.unit === 'qm'}>qm</option>
+            <option value="m²" selected={beispiel.unit === 'm²'}>m²</option>
+          </select>
+        </div>
+        <div class="field wide">
+          <label class="field__label" for="r-situation">Ausgangslage</label>
+          <textarea id="r-situation" rows="2" placeholder="Wird gepflegt, sobald die Baustelle abgeschlossen und vom Auftraggeber freigegeben ist."></textarea>
+          <p class="field__hint">Bleibt das Feld leer, weist die Projektseite den Punkt offen aus — statt etwas zu behaupten.</p>
+        </div>
+        <div class="field wide">
+          <label class="field__label" for="r-notes">Technische Besonderheiten</label>
+          <textarea id="r-notes" rows="2"></textarea>
+        </div>
+        <div class="field wide">
+          <label class="adm-toggle">
+            <input type="checkbox" checked />
+            <span>Veröffentlicht</span>
+          </label>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Stellen -->
+  <section class="adm-sec">
+    <div class="adm-sec__h">
+      <h2>Offene Stellen</h2>
+      <span>{jobs.length} aktiv</span>
+    </div>
+
+    <div class="adm-tablewrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th scope="col">Reihenfolge</th>
+            <th scope="col">Titel</th>
+            <th scope="col">Bereich</th>
+            <th scope="col">Art</th>
+            <th scope="col">Anforderungen</th>
+            <th scope="col">Aktiv</th>
+          </tr>
+        </thead>
+        <tbody>
+          {jobs.map((j) => (
+            <tr>
+              <td class="adm-t-date">{String(j.data.order).padStart(2, '0')}</td>
+              <td><strong>{j.data.title}</strong></td>
+              <td>{j.data.field}</td>
+              <td>{j.data.type}</td>
+              <td>{j.data.requirements.join(' · ')}</td>
+              <td>
+                <label class="adm-toggle">
+                  <input type="checkbox" checked />
+                  <span class="visually-hidden">Stelle {j.data.title} aktiv</span>
+                </label>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="adm-note" style="margin-top: var(--s-5)">
+      Eine Stelle auf inaktiv setzen entfernt sie von der Karriereseite, aus der Auswahl
+      der Kurzbewerbung, aus der Zeile im Fuß der Startseite und aus dem
+      JobPosting-Markup, mit dem Google die Stelle in der Jobsuche anzeigt.
+    </p>
+  </section>
+
+  <!-- Unternehmensdaten -->
+  <section class="adm-sec">
+    <div class="adm-sec__h">
+      <h2>Unternehmensdaten</h2>
+      <span>eine Quelle für die ganze Website</span>
+    </div>
+
+    <div class="adm-card">
+      <h3 class="adm-card__h">Wird an jeder Stelle nachgezogen</h3>
+
+      <form class="form adm-fields" onsubmit="return false">
+        <div class="field">
+          <label class="field__label" for="c-phone">Telefon</label>
+          <input type="tel" id="c-phone" value={company.phone} />
+          <p class="field__hint">Steht in Kopfzeile, Fußzeile, Aktionsleiste, Kontaktseite, Impressum und in den strukturierten Daten.</p>
+        </div>
+        <div class="field">
+          <label class="field__label" for="c-mail">E-Mail</label>
+          <input type="email" id="c-mail" value={company.email} />
+        </div>
+        <div class="field">
+          <label class="field__label" for="c-street">Straße</label>
+          <input type="text" id="c-street" value={company.address.street} />
+        </div>
+        <div class="field">
+          <label class="field__label" for="c-city">PLZ, Ort</label>
+          <input type="text" id="c-city" value={`${company.address.postalCode} ${company.address.city}`} />
+        </div>
+        <div class="field">
+          <label class="field__label" for="c-team">Mitarbeiterzahl</label>
+          <input type="text" id="c-team" value={String(company.teamSize)} inputmode="numeric" />
+        </div>
+        <div class="field">
+          <label class="field__label" for="c-founded">Gründungsjahr</label>
+          <input type="text" id="c-founded" value={String(company.foundedYear)} inputmode="numeric" />
+        </div>
+      </form>
+    </div>
+  </section>
+</DemoLayout>

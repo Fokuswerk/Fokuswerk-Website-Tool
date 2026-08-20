@@ -2,7 +2,11 @@
 import Base from '~/layouts/Base.astro';
 import PageHeader from '~/components/PageHeader.astro';
 import SectionMarker from '~/components/SectionMarker.astro';
+import RouteSchema from '~/components/RouteSchema.astro';
 import { company } from '~/data/company';
+import '~/styles/form.css';
+
+import phBand from '~/assets/material-container-band.jpg';
 
 const breadcrumb = [
   { name: 'Startseite', href: '/' },
@@ -38,9 +42,11 @@ const objektarten = [
   }}
 >
   <PageHeader
+    image={phBand}
+    imageAlt="Materialaufnahme: verwitterte Containerwand aus Stahl, Farbschichten und Rost über einer Nietnaht."
     eyebrow="Kontakt"
-    title="Der schnellste Weg zum Angebot ist ein Anruf."
-    lead="Das Formular unten stellt genau die Fragen, die wir sonst am Telefon stellen müssten. Je vollständiger die Antworten, desto schneller kommt die Kalkulation — Pflichtfelder sind aber nur Name und ein Rückweg."
+    title="Am schnellsten geht es per Telefon."
+    lead="Rufen Sie an, wenn es schnell gehen soll. Wer lieber schreibt, nutzt das Formular unten — es stellt die Fragen, die wir sonst am Telefon stellen. Pflicht sind nur Ihr Name und ein Weg zurück zu Ihnen."
     breadcrumb={breadcrumb}
   />
 
@@ -82,12 +88,14 @@ const objektarten = [
 
       <div class="fw">
         <form
-          class="form"
+          class="form zone-light form-panel"
           id="anfrage-form"
           method="post"
           action="/api/anfrage"
           novalidate
           data-wizard
+          data-done="/kontakt/danke/"
+          data-preselect="leistung"
         >
           <!-- Fortschritt -->
           <ol class="steps-bar" role="list" data-steps-bar aria-hidden="true">
@@ -296,6 +304,9 @@ const objektarten = [
   <section class="section ruled">
     <div class="wrap">
       <SectionMarker no="03" label="Anfahrt" rest="Gewerbegebiet Delmenhorst" />
+
+      <RouteSchema />
+
       <div class="loc">
         <div>
           <h2>So finden Sie uns.</h2>
@@ -359,146 +370,26 @@ const objektarten = [
     overflow-wrap: anywhere;
   }
   a.direct__card:hover .direct__big, a.direct__card:hover .direct__mid { color: var(--accent); }
-  .direct__note { margin-top: auto; font-size: .8125rem; color: var(--fg-muted); }
+  .direct__note { margin-top: auto; font-size: var(--t-xs); color: var(--fg-muted); }
 
   /* ── Formular ───────────────────────────────────────────────────────── */
   .fw { display: grid; gap: var(--s-8) var(--gutter); }
+  /* Rasterfelder duerfen unter ihre Mindestbreite — sonst schiebt ein einziges
+     breites Kind die ganze Spalte ueber den Rand. */
+  .fw > * { min-width: 0; }
   @media (min-width: 68rem) {
-    .fw { grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr); gap: var(--s-9); align-items: start; }
+    .fw { grid-template-columns: minmax(0, 1.35fr) minmax(0, .65fr); gap: var(--s-9); align-items: start; }
   }
 
-  .steps-bar {
-    scroll-margin-top: 6rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--s-2) var(--s-5);
-    margin: 0 0 var(--s-7);
-    padding-bottom: var(--s-4);
-    border-bottom: 1px solid var(--rule-strong);
-    list-style: none;
+  /* Das Formular steht als helle Insel in der Dunkelzone. Auf Schwarz waren
+     Felder und Auswahl kaum vom Grund zu unterscheiden — hier ist sofort
+     klar, wo etwas einzutragen ist. */
+  .form-panel {
+    padding: var(--s-5);
+    border: 1px solid var(--rule);
   }
-  .steps-bar li {
-    display: inline-flex;
-    align-items: baseline;
-    gap: .5rem;
-    font-family: var(--font-mono);
-    font-size: var(--t-mono);
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--fg-muted);
-  }
-  .steps-bar li .num {
-    display: inline-grid;
-    place-items: center;
-    width: 1.5rem; height: 1.5rem;
-    border: 1px solid currentColor;
-    font-size: .68rem;
-  }
-  .steps-bar li.is-active { color: var(--accent); }
-  .steps-bar li.is-done { color: var(--fg); }
-
-  .fs { border: 0; padding: 0; margin: 0; }
-  .fs[hidden] { display: none; }
-  .fs__legend {
-    display: flex;
-    align-items: baseline;
-    gap: var(--s-4);
-    padding: 0 0 var(--s-6);
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: clamp(1.375rem, 3vw, 1.875rem);
-    letter-spacing: -.025em;
-  }
-  .fs__legend .num { color: var(--accent); font-size: .875rem; }
-
-  .field { margin-bottom: var(--s-6); }
-  .field--split { display: grid; gap: var(--s-5); }
-  @media (min-width: 40rem) { .field--split { grid-template-columns: 1fr 1fr; } }
-
-  .field__label {
-    display: block;
-    margin-bottom: var(--s-2);
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: .9375rem;
-  }
-  .req { color: var(--accent); }
-  .field__hint { margin-top: var(--s-2); font-size: .8125rem; color: var(--fg-muted); }
-  .field__hint--wide, .field__err--wide { grid-column: 1 / -1; margin-top: 0; }
-
-  .field__err {
-    margin-top: var(--s-2);
-    font-size: .8125rem;
-    color: var(--warn-lift);
-    display: flex;
-    align-items: baseline;
-    gap: .4rem;
-  }
-  .field__err::before { content: '▲'; font-size: .6em; }
-  .field__err[hidden] { display: none; }
-
-  input[type='text'], input[type='tel'], input[type='email'], select, textarea {
-    width: 100%;
-    padding: .75rem .875rem;
-    min-height: 3rem;
-    background: color-mix(in oklab, var(--dust) 8%, transparent);
-    border: 1px solid var(--rule-strong);
-    color: var(--fg);
-    font-size: 1rem;
-    transition: border-color var(--dur-ui) linear, background-color var(--dur-ui) linear;
-  }
-  textarea { min-height: 7rem; resize: vertical; }
-  input:hover, select:hover, textarea:hover { border-color: var(--fg); }
-  input:focus, select:focus, textarea:focus { border-color: var(--accent); outline-offset: 1px; }
-  input[aria-invalid='true'] { border-color: var(--warn-lift); }
-  ::placeholder { color: color-mix(in oklab, var(--fg-muted) 80%, transparent); }
-  input[type='file'] { padding: .7rem .875rem; font-size: .875rem; }
-  select {
-    appearance: none;
-    background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
-                      linear-gradient(135deg, currentColor 50%, transparent 50%);
-    background-position: calc(100% - 1.15rem) 1.3rem, calc(100% - .8rem) 1.3rem;
-    background-size: 6px 6px, 6px 6px;
-    background-repeat: no-repeat;
-    padding-right: 2.5rem;
-  }
-
-  .choices { display: flex; flex-wrap: wrap; gap: var(--s-2); }
-  .choice {
-    display: inline-flex;
-    align-items: center;
-    gap: .55rem;
-    min-height: 44px;
-    padding: .55rem .9rem;
-    border: 1px solid var(--rule-strong);
-    cursor: pointer;
-    font-size: .9375rem;
-    transition: border-color var(--dur-ui) linear, background-color var(--dur-ui) linear;
-  }
-  .choice:hover { border-color: var(--fg); }
-  .choice input { width: 14px; height: 14px; accent-color: var(--signal-lift); flex: none; }
-  .choice:has(input:checked) {
-    border-color: var(--accent);
-    background: color-mix(in oklab, var(--signal-lift) 16%, transparent);
-  }
-  .choice:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-  .field--consent { padding-top: var(--s-2); }
-  .consent { display: flex; gap: var(--s-3); align-items: flex-start; font-size: .875rem; cursor: pointer; }
-  .consent input { margin-top: .25rem; width: 16px; height: 16px; accent-color: var(--signal-lift); flex: none; }
-  .consent a { color: var(--accent); }
-
-  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
-
-  .fs__nav { display: flex; flex-wrap: wrap; gap: var(--s-3); margin-top: var(--s-7); }
-
-  .form__fallback { margin-top: var(--s-6); font-size: .8125rem; color: var(--fg-muted); }
-  .form__fallback a { color: var(--accent); }
-
-  .form__status { margin-top: var(--s-5); font-size: .9375rem; }
-  .form__status:empty { display: none; }
-  .form__status[data-tone='error'] { color: var(--warn-lift); }
-  .form__status[data-tone='ok'] { color: var(--accent); }
+  @media (min-width: 48rem) { .form-panel { padding: var(--s-8); } }
+  @media (min-width: 68rem) { .form-panel { padding: var(--s-8) var(--s-8) var(--s-7); } }
 
   /* ── Seitenspalte ───────────────────────────────────────────────────── */
   .aside { display: grid; gap: var(--s-6); align-content: start; }
@@ -521,7 +412,16 @@ const objektarten = [
     content: ''; position: absolute; left: 0; top: .62em;
     width: 7px; height: 1px; background: var(--accent);
   }
-  .aside__privacy { font-size: .78rem; color: var(--fg-muted); }
+  .aside__privacy { font-size: var(--t-xs); color: var(--fg-muted); }
+
+  /* ── Anfahrt ────────────────────────────────────────────────────────── */
+  /* Das Schema steht ueber der Textspalte und fuellt die Breite, die dort
+     vorher leer blieb. */
+  :global(.route) {
+    margin-bottom: var(--s-8);
+    padding-bottom: var(--s-6);
+    border-bottom: 1px solid var(--rule);
+  }
 
   /* ── Anfahrt ────────────────────────────────────────────────────────── */
   .loc { display: grid; gap: var(--s-7) var(--gutter); }
@@ -534,7 +434,7 @@ const objektarten = [
     display: inline-flex; align-items: center; min-height: 44px;
     color: var(--accent); font-weight: 500;
   }
-  .loc__note { margin-top: var(--s-4); font-size: .8125rem; color: var(--fg-muted); max-width: 60ch; }
+  .loc__note { margin-top: var(--s-4); font-size: var(--t-xs); color: var(--fg-muted); max-width: 60ch; }
   .loc__adr {
     display: flex;
     flex-direction: column;
@@ -558,118 +458,6 @@ const objektarten = [
 </style>
 
 <script>
-  const form = document.querySelector<HTMLFormElement>('[data-wizard]');
-  if (form) {
-    const steps = [...form.querySelectorAll<HTMLFieldSetElement>('.fs')];
-    const dots = [...form.querySelectorAll<HTMLElement>('[data-step-dot]')];
-    const status = form.querySelector<HTMLElement>('[data-form-status]');
-    let current = 0;
-    let attempted = false;   // Live-Prüfung erst nach dem ersten Absendeversuch
-
-    const show = (i: number, moved = true) => {
-      current = i;
-      steps.forEach((s, n) => (s.hidden = n !== i));
-      dots.forEach((d, n) => {
-        d.classList.toggle('is-active', n === i);
-        d.classList.toggle('is-done', n < i);
-      });
-      if (!moved) return;
-
-      // Kein eigener Scroll: der Fokus auf das erste Feld holt es bei Bedarf
-      // von selbst ins Bild — sofort und nur so weit wie nötig.
-      steps[i].querySelector<HTMLElement>('input, select, textarea, button')?.focus();
-    };
-
-    const setError = (id: string, msg: string | null, field?: HTMLElement) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.textContent = msg ?? '';
-      el.hidden = !msg;
-      field?.setAttribute('aria-invalid', msg ? 'true' : 'false');
-    };
-
-    const validateLast = () => {
-      let ok = true;
-      const name = form.elements.namedItem('name') as HTMLInputElement;
-      const tel = form.elements.namedItem('telefon') as HTMLInputElement;
-      const mail = form.elements.namedItem('email') as HTMLInputElement;
-      const consent = form.elements.namedItem('einwilligung') as HTMLInputElement;
-
-      if (!name.value.trim()) { setError('err-name', 'Bitte tragen Sie Ihren Namen ein.', name); ok = false; }
-      else setError('err-name', null, name);
-
-      if (!tel.value.trim() && !mail.value.trim()) {
-        setError('err-kontakt', 'Wir brauchen eine Telefonnummer oder eine E-Mail-Adresse.', mail);
-        ok = false;
-      } else if (mail.value.trim() && !mail.checkValidity()) {
-        setError('err-kontakt', 'Diese E-Mail-Adresse sieht nicht vollständig aus.', mail);
-        ok = false;
-      } else setError('err-kontakt', null, mail);
-
-      if (!consent.checked) { setError('err-consent', 'Ohne diese Einwilligung dürfen wir die Anfrage nicht bearbeiten.'); ok = false; }
-      else setError('err-consent', null);
-
-      if (!ok) {
-        const target = form.querySelector<HTMLElement>('[aria-invalid="true"]')
-          ?? (consent.checked ? null : consent);
-        target?.focus();
-      }
-      return ok;
-    };
-
-    // Wizard-Modus erst aktivieren, wenn JS läuft. Ohne JS bleibt es ein langes Formular.
-    show(0, false);
-    form.querySelectorAll('[data-next]').forEach((b) =>
-      b.addEventListener('click', () => show(Math.min(current + 1, steps.length - 1))),
-    );
-    form.querySelectorAll('[data-prev]').forEach((b) =>
-      b.addEventListener('click', () => show(Math.max(current - 1, 0))),
-    );
-
-    // Fehler räumen sich beim Korrigieren auf — aber erst, nachdem einmal
-    // abgeschickt wurde. Sonst springen Meldungen ein, während jemand noch tippt,
-    // verschieben das Layout und schlucken den nächsten Klick.
-    ['name', 'telefon', 'email'].forEach((n) => {
-      const el = form.elements.namedItem(n) as HTMLInputElement;
-      el?.addEventListener('blur', () => { if (attempted) validateLast(); });
-    });
-    (form.elements.namedItem('einwilligung') as HTMLInputElement)
-      ?.addEventListener('change', () => { if (attempted) validateLast(); });
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      attempted = true;
-      if (!validateLast()) return;
-
-      const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
-      const original = submit.textContent;
-      submit.disabled = true;
-      submit.textContent = 'Wird gesendet …';
-      if (status) { status.textContent = ''; status.removeAttribute('data-tone'); }
-
-      try {
-        const res = await fetch(form.action, { method: 'POST', body: new FormData(form) });
-        if (!res.ok) throw new Error(String(res.status));
-        location.href = '/kontakt/danke/';
-      } catch {
-        if (status) {
-          status.dataset.tone = 'error';
-          status.innerHTML =
-            'Die Anfrage konnte gerade nicht übermittelt werden. Bitte rufen Sie an ' +
-            '(<a href="tel:+494221802561" class="num">04221 80 25 61</a>) oder schreiben Sie an ' +
-            '<a href="mailto:info@tn-abbruch.de">info@tn-abbruch.de</a>.';
-        }
-        submit.disabled = false;
-        submit.textContent = original;
-      }
-    });
-
-    // Leistung aus der URL vorbelegen (?leistung=Schadstoffsanierung)
-    const pre = new URL(location.href).searchParams.get('leistung');
-    if (pre) {
-      form.querySelectorAll<HTMLInputElement>('input[name="leistung"]').forEach((c) => {
-        if (c.value === pre) c.checked = true;
-      });
-    }
-  }
+  import { initWizard } from '~/scripts/wizard';
+  initWizard();
 </script>

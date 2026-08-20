@@ -1,8 +1,14 @@
 /* ==========================================================================
    TN Abbruch — Designsystem
-   Idee: "Aufmaß". Die Seite ist als technisches Dokument gebaut.
-   Sichtbares Raster, Haarlinien statt Schatten, tabellarische Ziffern,
-   Positionsnummern wie in einem Leistungsverzeichnis. Radius global 0.
+   Idee: "Masse". Grosse Flaechen, grosse Bilder, grosse Zahlen — und dazwischen
+   so viel Weissraum, dass jedes Element Platz hat, zu wirken.
+
+   Die erste Fassung war als technisches Dokument gebaut: Haarlinien am
+   Contentrand, Trennlinie zwischen jedem Abschnitt, enger Rhythmus. Das las
+   sich gestaucht und blieb hinter dem zurueck, was ein Rueckbaubetrieb
+   hergibt. Geblieben sind die tabellarischen Ziffern, die Positionsnummern und
+   der Radius 0 — Struktur entsteht jetzt ueber Flaeche und Groessensprung,
+   nicht ueber gezeichnete Linien.
    ========================================================================== */
 
 @layer reset, tokens, base, layout, components, utilities;
@@ -13,6 +19,7 @@
     /* Flächen — hell ist Betonstaub, nicht Weiß */
     --dust:        #EDEAE4;
     --dust-2:      #E3DFD8;
+    --dust-3:      #D8D3C9;
     --paper:       #F7F5F1;
     --ink:         #0B0C0E;
     --ink-2:       #14161A;
@@ -50,7 +57,7 @@
     --s-1: .25rem;  --s-2: .5rem;   --s-3: .75rem;  --s-4: 1rem;
     --s-5: 1.5rem;  --s-6: 2rem;    --s-7: 3rem;    --s-8: 4rem;
     --s-9: 6rem;    --s-10: 8rem;
-    --section: clamp(3.5rem, 7.5vw, 7rem);
+    --section: clamp(5.5rem, 10.5vw, 11rem);
 
     /* Schrift */
     --font-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
@@ -58,13 +65,17 @@
     --font-mono:    'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
     --t-mono:  0.7rem;
+    --t-xs:    0.8125rem;   /* Fussnoten, Hinweise, Einheiten */
     --t-sm:    0.875rem;
     --t-base:  1.0625rem;
     --t-lead:  clamp(1.125rem, 1.6vw, 1.375rem);
     --t-h3:    clamp(1.25rem, 2.1vw, 1.75rem);
-    --t-h2:    clamp(1.8rem, 3.9vw, 3rem);
-    --t-h1:    clamp(2.35rem, 6vw, 4.75rem);
-    --t-mega:  clamp(2.75rem, 8.4vw, 7.25rem);
+    /* Bewusst eine Stufe zurueckgenommen: die vorige Skala (bis 11rem im Hero)
+       war so blockig, dass die Ueberschriften drei- und vierzeilig umbrachen
+       und mehr nach Plakat als nach Aussage aussahen. */
+    --t-h2:    clamp(1.85rem, 3.7vw, 3.35rem);
+    --t-h1:    clamp(2.25rem, 4.9vw, 4.25rem);
+    --t-mega:  clamp(2.3rem, 6.8vw, 6rem);
 
     /* Bewegung — Masse: langer Auslauf, harter Stopp */
     --ease-mass: cubic-bezier(.16, 1, .3, 1);
@@ -72,6 +83,22 @@
     --dur-ui:    140ms;
 
     color-scheme: light;
+  }
+
+  /* Hellzone — setzt die Semantik zurueck auf den hellen Grund. Gebraucht
+     fuer helle Inseln innerhalb einer Dunkelzone, etwa das Anfrageformular. */
+  .zone-light {
+    --bg:          var(--paper);
+    --bg-raised:   var(--dust);
+    --fg:          var(--ink);
+    --fg-muted:    var(--steel);
+    --accent:      var(--signal);
+    --rule:        color-mix(in oklab, var(--ink) 20%, transparent);
+    --rule-strong: color-mix(in oklab, var(--ink) 42%, transparent);
+    --selection:   color-mix(in oklab, var(--signal) 24%, transparent);
+    color-scheme: light;
+    background: var(--bg);
+    color: var(--fg);
   }
 
   /* Dunkelzone — bewusst harter Wechsel, wie Weiß- zu Schwarzbereich */
@@ -155,33 +182,78 @@
     margin-inline: auto;
     padding-inline: var(--edge);
   }
-  @media (min-width: 48rem)  { :root { --edge: 2rem; } }
-  @media (min-width: 64rem)  { :root { --edge: 3rem; } }
+  /* Unter 23rem (iPhone SE und aelter) wird der Rand schmaler, sonst passt die
+     Kopfzeile aus Logo, Anrufknopf und Menue nicht mehr nebeneinander. */
+  /* Versalien in Mono mit weitem Sperrsatz lesen sich klein schwerer als
+     normale Schrift. Auf Beruehrungsgeraeten — Telefon wie Tablet — deshalb
+     eine Spur groesser. An der Breite festgemacht wuerde das Tablet durchfallen. */
+  @media (pointer: coarse) { :root { --t-mono: 0.75rem; --t-xs: 0.875rem; } }
 
-  /* Sichtbare Konstruktion: Haarlinien am Contentrand laufen durch */
-  .ruled {
-    position: relative;
-  }
-  .ruled::before,
-  .ruled::after {
-    content: '';
-    position: absolute;
-    inset-block: 0;
-    width: 1px;
-    background: var(--rule);
-    pointer-events: none;
-  }
-  /* Auf die Contentkante ausgerichtet, auch wenn der Wrap zentriert laeuft */
-  .ruled::before { left:  max(var(--edge), (100% - var(--maxw)) / 2 + var(--edge)); }
-  .ruled::after  { right: max(var(--edge), (100% - var(--maxw)) / 2 + var(--edge)); }
-  @media (max-width: 47.99rem) { .ruled::before, .ruled::after { display: none; } }
+  @media (max-width: 22.99rem) { :root { --edge: 1.125rem; } }
+  @media (min-width: 48rem)  { :root { --edge: 2.5rem; } }
+  @media (min-width: 64rem)  { :root { --edge: 4rem; } }
+  @media (min-width: 100rem) { :root { --edge: 5rem; } }
+
+  /* Frueher liefen hier Haarlinien am Contentrand durch. Sie haben die Seite
+     eng und schematisch gemacht — Struktur entsteht jetzt ueber Flaeche,
+     Groessensprung und Weissraum. Die Klasse bleibt als Ankerpunkt bestehen. */
+  .ruled { position: relative; }
 
   .section {
     padding-block: var(--section);
     background: var(--bg);
     color: var(--fg);
   }
-  .section + .section { border-top: 1px solid var(--rule); }
+  /* Zweite helle Flaeche. Zwei helle Abschnitte hintereinander liefen vorher
+     ineinander — der Wechsel auf Papier trennt sie, ohne eine Linie zu ziehen. */
+  .section--paper { --bg: var(--paper); --bg-raised: var(--dust); }
+
+  /* Vollbreites Bildband. Steht zwischen zwei Abschnitten und traegt eine
+     kurze Aussage — der Grund, warum die Seite atmet statt zu listen. */
+  .band {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: clamp(15rem, 32vw, 26rem);
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--ink);
+    color: var(--dust);
+  }
+  .band__media { position: absolute; inset: 0; z-index: -2; }
+  .band__media img { width: 100%; height: 100%; object-fit: cover; }
+  .band::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(to top,
+      rgba(11, 12, 14, .94) 0%,
+      rgba(11, 12, 14, .86) 26%,
+      rgba(11, 12, 14, .40) 62%,
+      rgba(11, 12, 14, .08) 100%);
+  }
+  .band__body { padding-block: var(--s-8) var(--s-7); }
+  .band__claim {
+    max-width: 26ch;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.5rem, 3.4vw, 2.75rem);
+    line-height: 1.02;
+    letter-spacing: -.028em;
+    text-wrap: balance;
+  }
+  /* Ueber dem Bild reicht das gedaempfte Grau nicht — der Zusatz braucht Deckung. */
+  .band__note {
+    margin-top: var(--s-4);
+    max-width: 52ch;
+    font-size: var(--t-sm);
+    color: color-mix(in oklab, var(--dust) 86%, transparent);
+  }
+  /* Direkt nach dem Seitenkopf braucht es nicht das volle Abschnittsmass: der
+     Kopf bringt sein eigenes Polster mit, und der Farbwechsel trennt bereits.
+     Sonst klafft dort eine Flaeche, die wie ein Fehler aussieht. */
+  .ph + .section { padding-top: clamp(2.75rem, 4.5vw, 4.5rem); }
 
   .grid12 {
     display: grid;
@@ -207,9 +279,7 @@
     display: flex;
     align-items: baseline;
     gap: var(--s-4);
-    padding-bottom: var(--s-4);
-    margin-bottom: var(--s-7);
-    border-bottom: 1px solid var(--rule-strong);
+    margin-bottom: var(--s-6);
     font-family: var(--font-mono);
     font-size: var(--t-mono);
     letter-spacing: 0.16em;
@@ -246,6 +316,12 @@
   .btn--primary:hover { background: var(--signal-deep); border-color: var(--signal-deep); }
   .zone-dark .btn--primary { color: var(--ink); }
   .zone-dark .btn--primary:hover { background: var(--paper); border-color: var(--paper); }
+
+  /* Helle Insel in der Dunkelzone: die Regel oben greift ueber die
+     Nachfahrenkette weiter und haette dunkle Schrift auf dunklem Blau gelassen.
+     Gleiche Spezifitaet, spaetere Regel — deshalb steht sie genau hier. */
+  .zone-light .btn--primary { color: var(--paper); }
+  .zone-light .btn--primary:hover { background: var(--signal-deep); border-color: var(--signal-deep); }
 
   .btn--ghost {
     background: transparent;

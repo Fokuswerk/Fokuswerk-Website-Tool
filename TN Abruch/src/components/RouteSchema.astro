@@ -1,0 +1,86 @@
+---
+/**
+ * Anfahrtsschema.
+ *
+ * Statt einer eingebetteten Karte — die würde beim Seitenaufruf Daten an einen
+ * Kartendienst übertragen — steht hier ein Schema: die drei Orte, die für
+ * unsere Auftraggeber zählen, auf einer Linie, mit den Fahrzeiten dazwischen.
+ * Es ist keine Karte und gibt auch nicht vor, eine zu sein.
+ */
+const stops = [
+  { x: 96, city: 'Oldenburg', note: 'A 28' },
+  { x: 380, city: 'Delmenhorst', note: 'Betriebshof', here: true },
+  { x: 664, city: 'Bremen', note: 'A 1 / A 28' },
+];
+const legs = [
+  { x: 238, label: '≈ 30 min' },
+  { x: 522, label: '≈ 20 min' },
+];
+---
+
+<figure class="route">
+  <svg viewBox="0 0 760 168" role="img" aria-labelledby="route-t" class="route__svg">
+    <title id="route-t">
+      Schema der Lage: Der Betriebshof in Delmenhorst liegt zwischen Oldenburg,
+      rund dreißig Fahrminuten entfernt, und Bremen, rund zwanzig Fahrminuten entfernt.
+    </title>
+
+    <g aria-hidden="true">
+      <line x1="96" y1="86" x2="664" y2="86" class="route__line" />
+
+      {legs.map((l) => (
+        <text x={l.x} y="76" class="route__leg" text-anchor="middle">{l.label}</text>
+      ))}
+
+      {stops.map((s) => (
+        <>
+          {s.here
+            ? <rect x={s.x - 9} y="77" width="18" height="18" class="route__here" />
+            : <rect x={s.x - 6} y="80" width="12" height="12" class="route__dot" />}
+          <text x={s.x} y="42" class:list={['route__city', { 'route__city--here': s.here }]} text-anchor="middle">{s.city}</text>
+          <text x={s.x} y="130" class:list={['route__note', { 'route__note--here': s.here }]} text-anchor="middle">{s.note}</text>
+        </>
+      ))}
+    </g>
+  </svg>
+
+  <figcaption class="route__cap label">
+    Schema, keine Karte — Entfernungen nicht maßstäblich
+  </figcaption>
+</figure>
+
+<style>
+  .route { margin: 0; }
+  .route__svg { width: 100%; height: auto; overflow: visible; }
+
+  .route__line { stroke: var(--rule-strong); stroke-width: 1; }
+  .route__dot { fill: var(--bg); stroke: var(--rule-strong); stroke-width: 1; }
+  .route__here { fill: var(--accent); }
+
+  .route__city {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 21px;
+    letter-spacing: -.02em;
+    fill: var(--fg-muted);
+  }
+  .route__city--here { fill: var(--fg); font-size: 27px; }
+
+  .route__leg,
+  .route__note {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    fill: var(--fg-muted);
+  }
+  .route__note--here { fill: var(--accent); }
+
+  .route__cap { display: block; margin-top: var(--s-5); }
+
+  @media (max-width: 34rem) {
+    .route__city { font-size: 26px; }
+    .route__city--here { font-size: 32px; }
+    .route__leg, .route__note { font-size: 15px; }
+  }
+</style>

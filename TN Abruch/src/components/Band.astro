@@ -1,0 +1,30 @@
+---
+/**
+ * Vollbreites Bildband zwischen zwei Abschnitten.
+ *
+ * Die Unterseiten liefen vorher von Datenliste zu Datenliste durch. Ein Band
+ * setzt eine Pause, gibt dem Material Flaeche und traegt genau einen Satz —
+ * mehr wuerde die Seite wieder zustellen.
+ */
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  image: ImageMetadata;
+  /** Beschreibt das Material, nie ein Projekt. Leer lassen = dekorativ. */
+  alt?: string;
+  claim: string;
+  note?: string;
+}
+const { image, alt = '', claim, note } = Astro.props;
+---
+
+<section class="band">
+  <div class="band__media">
+    <Image src={image} alt={alt} widths={[900, 1400, 2000]} sizes="100vw" format="avif" quality={66} loading="lazy" />
+  </div>
+  <div class="wrap band__body">
+    <p class="band__claim">{claim}</p>
+    {note && <p class="band__note">{note}</p>}
+  </div>
+</section>

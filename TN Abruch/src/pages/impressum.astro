@@ -119,10 +119,12 @@ const breadcrumb = [
         <h3>Bildnachweis</h3>
         <p>
           Fotografien des Betriebshofs, des Fuhrparks und der Sanierungsarbeiten:
-          eigenes Bildmaterial der {company.legalName}. Die abstrakte Materialaufnahme
-          (Beton und Bewehrung) im Abschnitt „Wenn der Fund kommt" ist eine
-          KI-generierte Materialstudie und zeigt kein Projekt des Unternehmens. Logos
-          der Präqualifikation und der Fachverbände: jeweilige Rechteinhaber.
+          eigenes Bildmaterial der {company.legalName}. Alle übrigen Aufnahmen sind
+          abstrakte Materialstudien — Beton, Bewehrung, Folie, Bauschutt, Stahl,
+          Arbeitsschutz — und wurden KI-generiert. Sie dienen ausschließlich der
+          Illustration von Werkstoffen und zeigen weder ein Projekt noch einen Ort
+          noch einen Auftraggeber des Unternehmens. Logos der Präqualifikation und
+          der Fachverbände: jeweilige Rechteinhaber.
         </p>
       </div>
 
@@ -160,4 +162,15 @@ const breadcrumb = [
   }
   .legal__aside dt { font-size: .75rem; color: var(--fg-muted); }
   .legal__aside dd { margin: 0; font-size: .875rem; }
+
+  /* Telefon- und Mailadressen im Fliesstext: die Trefferflaeche waechst nach
+     oben und unten, der Zeilenfall bleibt durch den negativen Aussenabstand
+     unveraendert. Reine Textlinks nimmt WCAG 2.5.8 zwar aus — angetippt
+     werden diese beiden hier trotzdem. */
+  .legal__body a[href^='tel:'],
+  .legal__body a[href^='mailto:'] {
+    display: inline-block;
+    padding-block: .5rem;
+    margin-block: -.5rem;
+  }
 </style>

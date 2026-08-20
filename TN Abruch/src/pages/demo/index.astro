@@ -1,0 +1,118 @@
+---
+import DemoLayout from '~/layouts/DemoLayout.astro';
+import { demoLeads, demoBewerbungen, STATUS_LABEL, BEWERBUNG_LABEL } from '~/data/demo-leads';
+
+const neu = demoLeads.filter((l) => l.status === 'neu').length;
+const offen = demoLeads.filter((l) => ['neu', 'kontaktiert', 'besichtigung', 'angebot'].includes(l.status)).length;
+const gewonnen = demoLeads.filter((l) => l.status === 'gewonnen').length;
+const bewNeu = demoBewerbungen.filter((b) => b.status === 'neu').length;
+
+const zuletzt = [...demoLeads].sort((a, b) => b.eingang.localeCompare(a.eingang)).slice(0, 4);
+const datum = (iso: string) => new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+---
+
+<DemoLayout title="Übersicht" active="uebersicht">
+  <div class="adm-title">
+    <h1>Übersicht</h1>
+    <p>
+      Was über die Website hereinkommt, landet hier — mit allem, was das Formular
+      abgefragt hat, statt als unstrukturierte E-Mail im Postfach. Jede Anfrage bekommt
+      einen Status, damit nichts liegen bleibt.
+    </p>
+  </div>
+
+  <div class="adm-kpis">
+    <a href="/demo/anfragen/?status=neu" class="adm-kpi">
+      <span class="adm-kpi__v">{neu}</span>
+      <span class="adm-kpi__l">neue Projektanfragen</span>
+    </a>
+    <a href="/demo/anfragen/" class="adm-kpi">
+      <span class="adm-kpi__v">{offen}</span>
+      <span class="adm-kpi__l">in Bearbeitung</span>
+    </a>
+    <a href="/demo/anfragen/?status=gewonnen" class="adm-kpi">
+      <span class="adm-kpi__v">{gewonnen}</span>
+      <span class="adm-kpi__l">gewonnen</span>
+    </a>
+    <a href="/demo/bewerbungen/" class="adm-kpi">
+      <span class="adm-kpi__v">{bewNeu}</span>
+      <span class="adm-kpi__l">neue Bewerbungen</span>
+    </a>
+  </div>
+
+  <section class="adm-sec">
+    <div class="adm-sec__h">
+      <h2>Zuletzt eingegangen</h2>
+      <span>{demoLeads.length} Anfragen gesamt</span>
+    </div>
+
+    <div class="adm-tablewrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th scope="col">Eingang</th>
+            <th scope="col">Projekt</th>
+            <th scope="col">Ort</th>
+            <th scope="col">Schadstoff</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {zuletzt.map((l) => (
+            <tr>
+              <td class="adm-t-date">{datum(l.eingang)}<span class="adm-t-id">{l.id}</span></td>
+              <td>
+                <a href={`/demo/anfragen/${l.id}/`}>{l.leistung.join(' · ')}</a>
+                <span class="adm-t-sub">{l.firma ?? l.name} — {l.objektart}</span>
+              </td>
+              <td>{l.ort}</td>
+              <td>{l.schadstoff}</td>
+              <td><span class="pill" data-s={l.status} data-status-for={l.id}>{STATUS_LABEL[l.status]}</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="adm-sec">
+    <div class="adm-sec__h">
+      <h2>Bewerbungen</h2>
+      <span>{demoBewerbungen.length} gesamt</span>
+    </div>
+
+    <div class="adm-tablewrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th scope="col">Eingang</th>
+            <th scope="col">Position</th>
+            <th scope="col">Wohnort</th>
+            <th scope="col">Verfügbar</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {demoBewerbungen.map((b) => (
+            <tr>
+              <td class="adm-t-date">{datum(b.eingang)}<span class="adm-t-id">{b.id}</span></td>
+              <td>
+                <a href="/demo/bewerbungen/">{b.position}</a>
+                <span class="adm-t-sub">{b.name} — {b.erfahrung}</span>
+              </td>
+              <td>{b.wohnort}</td>
+              <td>{b.verfuegbar}</td>
+              <td><span class="pill" data-s={b.status}>{BEWERBUNG_LABEL[b.status]}</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</DemoLayout>
+
+<script>
+  import { applyStoredStatus } from '~/scripts/demo-status';
+  import { STATUS_LABEL, BEWERBUNG_LABEL } from '~/data/demo-leads';
+  applyStoredStatus({ ...STATUS_LABEL, ...BEWERBUNG_LABEL });
+</script>

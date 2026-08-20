@@ -1,0 +1,89 @@
+---
+/**
+ * Bestätigungsseite nach dem Absenden eines Formulars.
+ * Gemeinsames Gerüst für Projektanfrage und Kurzbewerbung — beide sollen sich
+ * gleich anfühlen: Bestätigung, Telefonnummer, was als Nächstes passiert.
+ */
+import Base from '~/layouts/Base.astro';
+import { company } from '~/data/company';
+
+interface Props {
+  title: string;
+  description: string;
+  eyebrow: string;
+  heading: string;
+  lead: string;
+  listLabel: string;
+  list: string[];
+  links: { href: string; label: string }[];
+}
+
+const { title, description, eyebrow, heading, lead, listLabel, list, links } = Astro.props;
+---
+
+<Base title={title} description={description} noindex>
+  <section class="thx zone-dark">
+    <div class="wrap">
+      <p class="label thx__eyebrow">{eyebrow}</p>
+      <h1>{heading}</h1>
+      <p class="lead">{lead}</p>
+
+      <div class="thx__actions">
+        <a href={company.phoneHref} class="thx__phone num">{company.phone}</a>
+        <a href={`mailto:${company.email}`} class="thx__mail">{company.email}</a>
+      </div>
+
+      <div class="thx__next">
+        <span class="label">{listLabel}</span>
+        <ul role="list">
+          {list.map((item) => <li>{item}</li>)}
+        </ul>
+      </div>
+
+      <nav class="thx__links" aria-label="Weiter auf der Website">
+        {links.map((l) => <a href={l.href}>{l.label}</a>)}
+      </nav>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .thx {
+    background: var(--bg);
+    color: var(--fg);
+    min-height: 74svh;
+    padding-block: calc(4.25rem + var(--s-9)) var(--s-9);
+    display: flex;
+    align-items: center;
+  }
+  .thx__eyebrow { color: var(--accent); margin-bottom: var(--s-4); }
+  .thx h1 { font-size: var(--t-h1); max-width: 16ch; }
+  .thx .lead { margin-top: var(--s-5); color: var(--fg-muted); }
+  .thx__actions { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-5); margin-top: var(--s-7); }
+  .thx__phone {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 4.4vw, 2.75rem);
+    font-weight: 700;
+    letter-spacing: -.025em;
+    text-decoration: none;
+  }
+  .thx__phone:hover { color: var(--accent); }
+  .thx__mail { color: var(--accent); display: inline-flex; align-items: center; min-height: 44px; }
+
+  .thx__next { margin-top: var(--s-8); padding-top: var(--s-5); border-top: 1px solid var(--rule); }
+  .thx__next ul {
+    display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-6);
+    margin: var(--s-4) 0 0; padding: 0; list-style: none;
+  }
+  .thx__next li { position: relative; padding-left: 1.1rem; font-size: .9375rem; }
+  .thx__next li::before {
+    content: ''; position: absolute; left: 0; top: .62em;
+    width: 7px; height: 1px; background: var(--accent);
+  }
+
+  .thx__links { display: flex; flex-wrap: wrap; gap: var(--s-6); margin-top: var(--s-8); }
+  .thx__links a {
+    display: inline-flex; align-items: center; min-height: 44px;
+    font-family: var(--font-display); font-weight: 600; font-size: .9375rem;
+  }
+</style>

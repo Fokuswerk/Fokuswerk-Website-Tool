@@ -226,7 +226,7 @@ const breadcrumb = [
     margin-top: var(--s-7);
     padding-top: var(--s-5);
     border-top: 1px solid var(--rule);
-    font-size: .8125rem !important;
+    font-size: var(--t-xs) !important;
   }
 
   .legal__aside { padding: var(--s-5); border: 1px solid var(--rule-strong); position: sticky; top: 6rem; }
@@ -238,4 +238,15 @@ const breadcrumb = [
   }
   .legal__aside dt { font-size: .75rem; color: var(--fg-muted); }
   .legal__aside dd { margin: 0; font-size: .875rem; }
+
+  /* Telefon- und Mailadressen im Fliesstext: die Trefferflaeche waechst nach
+     oben und unten, der Zeilenfall bleibt durch den negativen Aussenabstand
+     unveraendert. Reine Textlinks nimmt WCAG 2.5.8 zwar aus — angetippt
+     werden diese beiden hier trotzdem. */
+  .legal__body a[href^='tel:'],
+  .legal__body a[href^='mailto:'] {
+    display: inline-block;
+    padding-block: .5rem;
+    margin-block: -.5rem;
+  }
 </style>

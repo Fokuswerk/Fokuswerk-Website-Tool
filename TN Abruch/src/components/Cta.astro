@@ -1,32 +1,69 @@
 ---
+/**
+ * Abschlussblock.
+ *
+ * Zwei Fassungen vorher liefen ins Leere: erst Text links und Aktionen rechts
+ * mit einer toten Fläche darunter, dann eine Leiste mit 151 px Polster oben
+ * und unten und einer leeren rechten Hälfte neben der Überschrift.
+ *
+ * Jetzt: Ansprache links, die drei Zusagen rechts daneben — damit ist die
+ * Breite oben belegt —, darunter die Aktionsleiste über die volle Breite als
+ * Anker. Das Polster ist eigens gesetzt, nicht vom globalen Abschnittsmaß
+ * geerbt: ein Abschlussblock darf dichter stehen als eine Lesestrecke.
+ */
 import { company } from '~/data/company';
+
 interface Props {
   heading: string;
   body: string;
   /** Wird im Anfrageformular vorausgewählt. */
   service?: string;
 }
+
 const { heading, body, service } = Astro.props;
 const href = service ? `/kontakt/?leistung=${encodeURIComponent(service)}` : '/kontakt/';
+
+const zusagen = [
+  { k: 'Antwort', v: 'In der Regel am nächsten Werktag — telefonisch oder per E-Mail.' },
+  { k: 'Kosten', v: 'Die Einschätzung ist kostenlos und unverbindlich.' },
+  { k: 'Unterlagen', v: 'Hilfreich: Adresse, Baujahr, Umfang und — falls vorhanden — das Gutachten.' },
+];
 ---
 
 <section class="cta zone-dark">
-  <div class="wrap cta__inner">
-    <div class="cta__text">
-      <h2>{heading}</h2>
-      <p class="lead">{body}</p>
+  <div class="wrap">
+    <div class="cta__top">
+      <div class="cta__head">
+        <p class="label cta__eyebrow">Anfrage</p>
+        <h2>{heading}</h2>
+        <p class="cta__lead">{body}</p>
+      </div>
+
+      <ul class="cta__assure" role="list">
+        {zusagen.map((z) => (
+          <li>
+            <span class="label">{z.k}</span>
+            <span>{z.v}</span>
+          </li>
+        ))}
+      </ul>
     </div>
-    <div class="cta__actions">
-      <a href={href} class="btn btn--primary">
-        Projekt anfragen
-        <svg class="btn__arrow" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+
+    <div class="cta__bar">
+      <a href={href} class="cta__primary">
+        <span>Projekt anfragen</span>
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 6h9M6.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
       </a>
-      <a href={company.phoneHref} class="cta__phone num">{company.phone}</a>
-      <p class="cta__note">
-        Oder direkt per E-Mail an <a href={`mailto:${company.email}`}>{company.email}</a>.
-        Für ein belastbares Angebot brauchen wir Objektadresse, Baujahr, Leistungsumfang
-        und — falls vorhanden — das Schadstoffgutachten.
-      </p>
+
+      <a href={company.phoneHref} class="cta__cell cta__cell--phone">
+        <span class="label">Anrufen</span>
+        <span class="cta__phone num">{company.phone}</span>
+      </a>
+
+      <a href={`mailto:${company.email}`} class="cta__cell">
+        <span class="label">Schreiben</span>
+        <span class="cta__mail">{company.email}</span>
+      </a>
     </div>
   </div>
 </section>
@@ -35,25 +72,103 @@ const href = service ? `/kontakt/?leistung=${encodeURIComponent(service)}` : '/k
   .cta {
     background: var(--bg);
     color: var(--fg);
-    padding-block: var(--section);
-    border-top: 1px solid var(--rule);
+    /* Bewusst enger als --section: der Block schliesst ab, er liest sich nicht. */
+    padding-block: clamp(3.25rem, 5.5vw, 5.5rem);
   }
-  .cta__inner { display: grid; gap: var(--s-7) var(--gutter); }
+
+  /* Ansprache und Zusagen teilen sich die Breite — sonst steht rechts nichts. */
+  .cta__top { display: grid; gap: var(--s-7) var(--gutter); margin-bottom: var(--s-7); }
   @media (min-width: 60rem) {
-    .cta__inner { grid-template-columns: 1.1fr 1fr; align-items: start; gap: var(--s-9); }
+    .cta__top {
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+      gap: var(--s-9);
+      align-items: start;
+    }
   }
+
+  .cta__head { max-width: 34rem; }
+  .cta__eyebrow { color: var(--accent); margin-bottom: var(--s-5); }
   .cta h2 { font-size: var(--t-h2); }
-  .cta .lead { margin-top: var(--s-5); color: var(--fg-muted); }
-  .cta__actions { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-5); }
-  @media (min-width: 60rem) { .cta__actions { padding-top: .6rem; } }
+  .cta__lead { margin-top: var(--s-5); font-size: var(--t-lead); line-height: 1.5; color: var(--fg-muted); }
+
+  /* ── Aktionsleiste ────────────────────────────────────────────────────── */
+  .cta__bar {
+    display: grid;
+    gap: 1px;
+    background: var(--rule-strong);
+    border: 1px solid var(--rule-strong);
+  }
+  @media (min-width: 46rem) {
+    .cta__bar { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr) minmax(0, 1fr); }
+  }
+
+  .cta__primary,
+  .cta__cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--s-2);
+    min-height: 6.5rem;
+    padding: var(--s-5) var(--s-5);
+    background: var(--bg);
+    text-decoration: none;
+    transition: background-color var(--dur-ui) linear, color var(--dur-ui) linear;
+  }
+
+  .cta__primary {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-4);
+    background: var(--accent);
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.0625rem, 1.9vw, 1.25rem);
+    letter-spacing: -.01em;
+  }
+  .cta__primary svg { width: 1.1em; height: 1.1em; flex: none; transition: transform var(--dur-ui) linear; }
+  .cta__primary:hover { background: var(--paper); }
+  .cta__primary:hover svg { transform: translateX(5px); }
+
+  .cta__cell:hover { background: var(--ink-2); }
+  .cta__cell .label { color: var(--fg-muted); }
+  .cta__cell:hover .label { color: var(--accent); }
+
   .cta__phone {
     font-family: var(--font-display);
-    font-size: clamp(1.75rem, 4vw, 2.5rem);
     font-weight: 700;
-    letter-spacing: -.02em;
-    text-decoration: none;
+    font-size: clamp(1.5rem, 3.4vw, 2.125rem);
+    letter-spacing: -.025em;
+    line-height: 1;
   }
-  .cta__phone:hover { color: var(--accent); }
-  .cta__note { font-size: var(--t-sm); color: var(--fg-muted); max-width: 46ch; }
-  .cta__note a { color: var(--accent); }
+  .cta__mail {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1rem, 1.9vw, 1.1875rem);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  /* ── Zusagen ──────────────────────────────────────────────────────────── */
+  .cta__assure {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--rule);
+  }
+  @media (min-width: 46rem) and (max-width: 59.99rem) {
+    .cta__assure { grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 0; gap: var(--gutter); }
+    .cta__assure li { border-bottom: 0; padding-block: 0; }
+  }
+  .cta__assure li {
+    display: grid;
+    gap: var(--s-2);
+    align-content: start;
+    padding-block: var(--s-4);
+    border-bottom: 1px solid var(--rule);
+  }
+  .cta__assure li > span:last-child { font-size: var(--t-xs); color: var(--fg-muted); }
 </style>

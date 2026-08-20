@@ -15,11 +15,17 @@ const b = await chromium.launch();
   check(await p.getAttribute('[data-menu-toggle]', 'aria-expanded') === 'true', 'aria-expanded=true nach Öffnen');
   check((await p.textContent('.menu-toggle__text'))?.includes('Schließen'), 'Beschriftung wechselt auf "Schließen"');
   await p.keyboard.press('Escape');
+  // Das Panel blendet aus, bevor es aus dem Baum genommen wird — erst danach messen.
+  await p.waitForTimeout(360);
   check(!(await p.isVisible('[data-mobile-menu]')), 'Escape schließt das Menü');
+  check(!(await p.evaluate(() => document.documentElement.classList.contains('menue-offen'))),
+        'Scrollsperre nach Escape gelöst');
   await p.click('[data-menu-toggle]');
+  await p.waitForTimeout(300);
   await p.click('[data-mobile-menu] a[href="/referenzen/"]');
   await p.waitForURL('**/referenzen/');
   check(p.url().endsWith('/referenzen/'), 'Navigation aus dem mobilen Menü');
+  await p.waitForTimeout(360);
   check(!(await p.isVisible('[data-mobile-menu]')), 'Menü schließt nach Klick');
   // Aktionsleiste
   await p.evaluate(() => window.scrollTo(0, 1200));
@@ -87,12 +93,57 @@ const b = await chromium.launch();
   await p.close();
 }
 
+// --- Kurzbewerbung ---
+{
+  const p = await b.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const tap = async (sel) => { const l = p.locator(sel); await l.scrollIntoViewIfNeeded(); await l.click(); await p.waitForTimeout(150); };
+
+  await p.goto(BASE + '/karriere/?position=Bauhelfer');
+  check(await p.isChecked('input[name="position"][value="Bauhelfer"]'), 'Position aus der URL vorbelegt');
+  check(await p.isVisible('[data-step="1"]') && !(await p.isVisible('[data-step="2"]')), 'Kurzbewerbung: nur Schritt 1 sichtbar');
+
+  // Stellen-Button belegt die Position vor und springt in den Funnel
+  await p.goto(BASE + '/karriere/');
+  const first = p.locator('[data-apply]').first();
+  const wanted = await first.getAttribute('data-apply');
+  await first.scrollIntoViewIfNeeded();
+  await first.click();
+  await p.waitForTimeout(200);
+  check(await p.isChecked(`input[name="position"][value="${wanted}"]`), 'Stellen-Button belegt die Position vor');
+
+  await tap('[data-step="1"] [data-next]');
+  check(await p.isVisible('[data-step="2"]'), 'Kurzbewerbung: weiter zu Schritt 2');
+  await tap('[data-step="2"] [data-next]');
+  check(await p.isVisible('[data-step="3"]'), 'Kurzbewerbung: weiter zu Schritt 3');
+  await tap('[data-step="3"] [data-prev]');
+  check(await p.isVisible('[data-step="2"]'), 'Kurzbewerbung: zurück funktioniert');
+  await tap('[data-step="2"] [data-next]');
+
+  await tap('#bewerbung-form button[type="submit"]');
+  await p.waitForTimeout(300);
+  check(await p.isVisible('#err-name'), 'Kurzbewerbung: Pflichtfeldfehler Name');
+  check(await p.isVisible('#err-consent'), 'Kurzbewerbung: Pflichtfeldfehler Einwilligung');
+  await p.fill('#name', 'Testperson');
+  await p.waitForTimeout(250);   // Fehlermeldung räumt sich auf, Layout kommt zur Ruhe
+  await p.locator('input[name="einwilligung"]').scrollIntoViewIfNeeded();
+  await p.locator('input[name="einwilligung"]').check();
+  check(await p.isChecked('input[name="einwilligung"]'), 'Kurzbewerbung: Einwilligung anhakbar');
+  await tap('#bewerbung-form button[type="submit"]');
+  check(await p.isVisible('#err-kontakt'), 'Kurzbewerbung: weder Telefon noch E-Mail');
+  await p.fill('#telefon', '0170 1234567');
+  await p.waitForTimeout(200);
+  await tap('#bewerbung-form button[type="submit"]');
+  await p.waitForTimeout(400);
+  check(await p.isHidden('#err-kontakt'), 'Kurzbewerbung: Telefon allein genügt');
+  await p.close();
+}
+
 // --- Alle internen Links ---
 {
   const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
   const pages = ['/', '/leistungen/', '/leistungen/schadstoffsanierung/', '/leistungen/rueckbau-entkernung/',
     '/leistungen/beton-bohren-saegen/', '/leistungen/entsorgung-container/', '/referenzen/',
-    '/unternehmen/', '/karriere/', '/kontakt/', '/kontakt/danke/', '/impressum/', '/datenschutz/'];
+    '/unternehmen/', '/karriere/', '/kontakt/', '/kontakt/danke/', '/karriere/danke/', '/impressum/', '/datenschutz/'];
   const seen = new Set();
   for (const path of pages) {
     await p.goto(BASE + path);

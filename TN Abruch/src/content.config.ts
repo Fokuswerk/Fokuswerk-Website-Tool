@@ -20,6 +20,21 @@ const referenzen = defineCollection({
     category: z.array(z.enum(['schadstoff', 'entkernung', 'demontage', 'beton'])),
     sector: z.string(),
     region: z.string(),
+
+    /**
+     * Projektbeschreibung — durchgehend optional.
+     *
+     * Zu den Altprojekten liegt nichts davon vor: Auf Rückbaubaustellen wird
+     * selten fotografiert, im Schwarzbereich gar nicht. Die Felder stehen
+     * bereit, damit laufende Projekte ohne Codeänderung zur Fallstudie werden.
+     * Was fehlt, wird auf der Projektseite nicht behauptet, sondern als offen
+     * ausgewiesen.
+     */
+    situation: z.string().optional(),   // Ausgangslage
+    task: z.string().optional(),        // Aufgabenstellung
+    works: z.array(z.string()).optional(),   // durchgeführte Arbeiten
+    notes: z.string().optional(),       // technische Besonderheiten
+    result: z.string().optional(),      // Ergebnis
   }),
 });
 

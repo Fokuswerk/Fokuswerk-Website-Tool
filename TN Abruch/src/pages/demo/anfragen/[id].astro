@@ -1,0 +1,132 @@
+---
+import DemoLayout from '~/layouts/DemoLayout.astro';
+import { demoLeads, LEAD_STATUS, STATUS_LABEL } from '~/data/demo-leads';
+
+export async function getStaticPaths() {
+  return demoLeads.map((lead) => ({ params: { id: lead.id }, props: { lead } }));
+}
+
+const { lead } = Astro.props;
+const datum = (iso: string) => new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+const felder: { key: string; value: string; href?: string }[] = [
+  { key: 'Eingang', value: datum(lead.eingang) },
+  { key: 'Vorgang', value: lead.id },
+  { key: 'Name', value: lead.name },
+  ...(lead.firma ? [{ key: 'Firma', value: lead.firma }] : []),
+  ...(lead.telefon ? [{ key: 'Telefon', value: lead.telefon, href: `tel:${lead.telefon.replace(/\s/g, '')}` }] : []),
+  ...(lead.email ? [{ key: 'E-Mail', value: lead.email, href: `mailto:${lead.email}` }] : []),
+];
+
+const projekt: { key: string; value: string }[] = [
+  { key: 'Leistung', value: lead.leistung.join(', ') },
+  { key: 'Objektart', value: lead.objektart },
+  { key: 'Ort / PLZ', value: lead.ort },
+  ...(lead.baujahr ? [{ key: 'Baujahr', value: lead.baujahr }] : []),
+  ...(lead.menge ? [{ key: 'Fläche / Volumen', value: lead.menge }] : []),
+  ...(lead.zeitraum ? [{ key: 'Wunschzeitraum', value: lead.zeitraum }] : []),
+  { key: 'Schadstoffverdacht', value: lead.schadstoff },
+  { key: 'Gutachten', value: lead.gutachten },
+];
+---
+
+<DemoLayout title={`Anfrage ${lead.id}`} active="anfragen">
+  <a href="/demo/anfragen/" class="adm-back">← Alle Anfragen</a>
+
+  <div class="adm-title">
+    <h1>{lead.firma ?? lead.name}</h1>
+    <p>{lead.leistung.join(' · ')} — {lead.objektart}, {lead.ort}</p>
+  </div>
+
+  <div class="adm-cols">
+    <div>
+      <div class="adm-card">
+        <h2 class="adm-card__h">Projekt</h2>
+        <dl class="adm-dl">
+          {projekt.map((f) => (
+            <div><dt>{f.key}</dt><dd>{f.value}</dd></div>
+          ))}
+        </dl>
+      </div>
+
+      {lead.nachricht && (
+        <div class="adm-card">
+          <h2 class="adm-card__h">Nachricht</h2>
+          <p style="font-size:.9375rem">{lead.nachricht}</p>
+        </div>
+      )}
+
+      <div class="adm-card">
+        <h2 class="adm-card__h">Unterlagen</h2>
+        {lead.dateien.length ? (
+          <ul class="adm-files" role="list">
+            {lead.dateien.map((d) => (
+              <li>
+                <span aria-hidden="true">▣</span>
+                <span>{d.name}</span>
+                <span class="sz">{d.groesse}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="adm-files__none">Keine Unterlagen übermittelt.</p>
+        )}
+      </div>
+
+      <div class="adm-card">
+        <h2 class="adm-card__h">Verlauf</h2>
+        <ul class="adm-log" role="list">
+          {lead.verlauf.map((v) => (
+            <li>
+              <time datetime={v.datum}>{datum(v.datum)}</time>
+              <span>{v.text}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+
+    <aside>
+      <div class="adm-card">
+        <h2 class="adm-card__h">Status</h2>
+        <div class="adm-status">
+          <div class="adm-status__now">
+            <span class="pill" data-s={lead.status} data-status-for={lead.id}>{STATUS_LABEL[lead.status]}</span>
+            <span class="adm-saved" role="status" data-saved></span>
+          </div>
+
+          <form class="form" onsubmit="return false">
+            <label class="field__label" for="status">Status ändern</label>
+            <select
+              id="status"
+              data-status-select
+              data-lead-id={lead.id}
+              data-labels={JSON.stringify(STATUS_LABEL)}
+            >
+              {LEAD_STATUS.map((s) => (
+                <option value={s} selected={s === lead.status}>{STATUS_LABEL[s]}</option>
+              ))}
+            </select>
+          </form>
+        </div>
+      </div>
+
+      <div class="adm-card">
+        <h2 class="adm-card__h">Kontakt</h2>
+        <dl class="adm-dl">
+          {felder.map((f) => (
+            <div>
+              <dt>{f.key}</dt>
+              <dd>{f.href ? <a href={f.href}>{f.value}</a> : f.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </aside>
+  </div>
+</DemoLayout>
+
+<script>
+  import { initStatusControl } from '~/scripts/demo-status';
+  initStatusControl();
+</script>

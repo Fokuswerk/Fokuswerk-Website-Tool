@@ -1,0 +1,36 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fokuswerk-website",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "4200", "/Users/thees/Desktop/Claude/fokuswerk-website"],
+      "port": 4200
+    },
+    {
+      "name": "fokuswerk-landingpage",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "4321", "/Users/thees/Desktop/Claude/fokuswerk-ads/landingpage"],
+      "port": 4321
+    },
+    {
+      "name": "website-tool",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "/Users/thees/Desktop/Website Tool", "run", "dev"],
+      "port": 3002,
+      "autoPort": false
+    },
+    {
+      "name": "fokuswerk-angebot",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "/Users/thees/Desktop/Claude/fokuswerk-angebot", "run", "dev", "--", "-p", "3010"],
+      "port": 3010
+    },
+    {
+      "name": "anfangs-app-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "/Users/thees/Desktop/Claude/anfangs-app", "run", "web"],
+      "port": 8081
+    }
+  ]
+}
