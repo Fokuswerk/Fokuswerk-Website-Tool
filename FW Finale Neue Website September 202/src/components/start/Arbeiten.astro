@@ -1,0 +1,158 @@
+---
+import { Image } from 'astro:assets';
+import Abschnitt from '../Abschnitt.astro';
+import Titel from '../Titel.astro';
+import Pfeil from '../Pfeil.astro';
+import { fallstudien } from '../../data/fallstudien';
+import halle from '../../assets/werkstatt-halle.jpg';
+import steinmetz from '../../assets/steinmetz-halle.jpg';
+
+const wav = fallstudien[0];
+
+const weitere = [
+  {
+    betrieb: 'Jan Wandscher',
+    was: 'Steinmetz- und Bildhauerbetrieb, Oldenburg',
+    leistung: 'Website und monatliche Content-Produktion',
+  },
+];
+---
+
+<Abschnitt nummer="10" marke="Arbeiten" id="arbeiten">
+  <div class="arb-kopf">
+    <Titel zeilen={['Woran wir', 'gerade arbeiten.']} stufe="h2" groesse="d2" />
+    <p class="lead" data-auf style="--verzug:140ms">
+      Eine Fallstudie steht hier erst, wenn der Betrieb die Zahlen freigegeben hat
+      und wir sie aus dem Werbekonto belegen können. Deshalb ist es eine — und
+      nicht sechs.
+    </p>
+  </div>
+
+  <div class="arb-raster">
+    <a href={`/fallstudien/${wav.slug}/`} class="fall" data-auf>
+      <div class="bild fall-bild" data-zoom>
+        <Image src={halle} alt="Blick in eine aufgeräumte Kfz-Werkstatthalle mit zwei Hebebühnen."
+          widths={[700, 1100, 1600]} sizes="(min-width: 62rem) 58vw, 100vw" quality={80} loading="lazy" />
+      </div>
+
+      <div class="fall-text">
+        <p class="label fall-meta">{wav.branche}<span class="punkt">·</span>{wav.ort}</p>
+        <h3 class="d3 fall-titel">{wav.betrieb}</h3>
+        <p class="fliess fliess-2 fall-kurz">{wav.kurz}</p>
+
+        <ul class="fall-zahlen">
+          {wav.kennzahlen.map((k) => (
+            <li>
+              <span class="fall-wert ziffer">{k.wert}</span>
+              <span class="fall-label">{k.label}</span>
+            </li>
+          ))}
+        </ul>
+
+        <span class="link fall-link">Fallstudie ansehen<Pfeil /></span>
+      </div>
+    </a>
+
+    <aside class="arb-weitere">
+      <p class="label">Außerdem in Betreuung</p>
+      <ul class="arb-liste">
+        {weitere.map((w) => (
+          <li>
+            <p class="arb-betrieb">{w.betrieb}</p>
+            <p class="klein">{w.was}<br />{w.leistung}</p>
+          </li>
+        ))}
+      </ul>
+
+      <figure class="arb-bild" data-auf>
+        <div class="bild" data-zoom data-parallaxe="24">
+          <Image src={steinmetz} alt="Ein Steinmetz bearbeitet in seiner staubigen Werkstatt eine Granitplatte."
+            widths={[420, 640, 900]} sizes="(min-width: 62rem) 26vw, 100vw" quality={80} loading="lazy" />
+        </div>
+      </figure>
+
+      <p class="quelle">
+        Wir arbeiten nicht ausschließlich mit Kfz-Betrieben. Das Modell trägt überall
+        dort, wo ein Betrieb eine eigene Werkstatt hat, hochpreisig arbeitet und
+        Fachkräfte sucht.
+      </p>
+    </aside>
+  </div>
+</Abschnitt>
+
+<style>
+  .arb-kopf {
+    display: grid;
+    gap: clamp(1.75rem, 4vw, 3rem);
+    padding-bottom: clamp(2.5rem, 6vw, 4rem);
+  }
+  @media (min-width: 56rem) {
+    .arb-kopf {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(2.5rem, 6vw, 6rem);
+      align-items: end;
+    }
+  }
+  .arb-kopf .lead { max-width: 44ch; }
+
+  .arb-raster { display: grid; gap: clamp(2.5rem, 5vw, 3.5rem); }
+  @media (min-width: 62rem) {
+    .arb-raster {
+      grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+      gap: clamp(2.5rem, 5vw, 4rem);
+      align-items: start;
+    }
+  }
+
+  /* ---------- Fallstudien-Kachel ---------- */
+  .fall { display: block; }
+  .fall-bild { aspect-ratio: 16 / 9; }
+  .fall :global(img) { transition: scale 1s var(--ease); }
+  .fall:hover :global(img) { scale: 1.035; }
+
+  .fall-text { padding-top: clamp(1.25rem, 2.5vw, 1.75rem); }
+  .fall-meta { display: flex; flex-wrap: wrap; align-items: baseline; margin-bottom: 0.9em; }
+  .fall-titel { margin-bottom: 0.5em; }
+  .fall-kurz { max-width: 50ch; }
+
+  .fall-zahlen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(1.25rem, 4vw, 3rem);
+    margin-block: clamp(1.5rem, 3vw, 2rem);
+    padding-top: clamp(1.25rem, 2.5vw, 1.6rem);
+    border-top: 1px solid var(--linie);
+  }
+  .fall-zahlen li { display: grid; gap: 0.15rem; }
+  .fall-wert {
+    font-family: var(--schrift-display);
+    font-size: clamp(1.4rem, 1.1rem + 1.35vw, 2.1rem);
+    font-weight: 600;
+    letter-spacing: -0.032em;
+    line-height: 1;
+  }
+  .fall-label {
+    font-family: var(--schrift-display);
+    font-size: 0.74rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--tinte-3);
+  }
+  .fall:hover .fall-link::after { transform: scaleX(0); transform-origin: right; }
+  .fall:hover .fall-link :global(.pfeil) { translate: 0.28em 0; }
+
+  /* ---------- Seitenspalte ---------- */
+  .arb-weitere { display: grid; gap: var(--r-4); align-content: start; }
+  .arb-liste { border-top: 1px solid var(--linie); }
+  .arb-liste > li { padding-block: clamp(1rem, 2vw, 1.35rem); border-bottom: 1px solid var(--linie); }
+  .arb-betrieb {
+    font-family: var(--schrift-display);
+    font-size: 1.06rem;
+    font-weight: 600;
+    letter-spacing: -0.018em;
+    margin-bottom: 0.35em;
+  }
+  .arb-bild .bild { aspect-ratio: 4 / 3; }
+  .arb-bild { margin: 0; }
+</style>

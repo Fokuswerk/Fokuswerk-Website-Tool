@@ -1,0 +1,203 @@
+---
+import Abschnitt from '../Abschnitt.astro';
+import Titel from '../Titel.astro';
+import Pfeil from '../Pfeil.astro';
+import { cta } from '../../data/firma';
+
+const zahlen = [
+  { wert: 550.27, nach: 2, einheit: ' €',  label: 'Werbebudget insgesamt' },
+  { wert: 68,     nach: 0, einheit: '',    label: 'Bewerbungen' },
+  { wert: 27,     nach: 0, einheit: '',    label: 'davon fachlich brauchbar', hinweis: '25–30' },
+  { wert: 14,     nach: 0, einheit: ' Tage', label: 'bis zum unterschriebenen Vertrag' },
+];
+---
+
+<Abschnitt nummer="03" marke="Der Beweis" ton="dunkel" hoehe="weit" id="beweis">
+  <div class="bew-kopf">
+    <Titel
+      zeilen={['550&#8239;€ Werbebudget.', 'Ein Mechatroniker', 'nach 14 Tagen.']}
+      stufe="h2"
+      groesse="d2"
+    />
+    <p class="lead" data-auf style="--verzug:140ms">
+      WAV Westerstede, freie Kfz&#8209;Werkstatt im Ammerland. Neun Monate hatte
+      Alexander Lüers gesucht — vier Bewerbungen im ganzen Jahr, keine passte.
+      Wir haben einen Tag in seinem Betrieb gedreht und drei Kampagnenvarianten
+      gleichzeitig laufen lassen.
+    </p>
+  </div>
+
+  <ul class="bew-zahlen">
+    {zahlen.map((z, i) => (
+      <li data-auf style={`--verzug:${i * 90}ms`}>
+        <p class="bew-wert ziffer">
+          {z.hinweis
+            ? <span>{z.hinweis}</span>
+            : <><span data-zahl={z.wert} data-nachkomma={z.nach}>0</span>{z.einheit}</>}
+        </p>
+        <p class="bew-label">{z.label}</p>
+      </li>
+    ))}
+  </ul>
+
+  <div class="bew-unten">
+    <div class="bew-test" data-auf>
+      <p class="label">Warum drei Varianten</p>
+      <p class="fliess fliess-2">
+        Wir wussten vorher nicht, was bei einer Werkstatt funktioniert — also haben
+        wir es nicht geraten, sondern gemessen. Nach zehn Tagen war es eindeutig.
+      </p>
+
+      <div class="bew-vergleich">
+        <div class="bew-fall bew-fall-gut">
+          <p class="bew-fall-wert ziffer">4,92&#8239;€</p>
+          <p class="bew-fall-label">je Bewerbung, günstigste Variante</p>
+        </div>
+        <div class="bew-fall">
+          <p class="bew-fall-wert ziffer">218&#8239;€</p>
+          <p class="bew-fall-label">je Bewerbung, teuerste Variante</p>
+        </div>
+      </div>
+
+      <p class="bew-folge">
+        Bei gleichem Budget sind das 44 Bewerbungen statt einer. Wir haben die
+        teure Variante abgeschaltet und das Budget umgelegt. Beim nächsten Betrieb
+        läuft sie gar nicht erst an.
+      </p>
+    </div>
+
+    <div class="bew-referenz" data-auf style="--verzug:140ms">
+      <p class="label">Nachprüfbar</p>
+      <p class="bew-ref-satz">
+        Alle Zahlen stammen aus den Werbekonten. Alexander Lüers ist als Referenz
+        freigegeben — wenn Sie mit ihm sprechen möchten, geben wir Ihnen seine
+        Nummer.
+      </p>
+      <p class="fliess fliess-2 bew-ref-zusatz">
+        Für die Kundenseite läuft parallel Google Ads: rund 120 Anfragen in
+        zweieinhalb Monaten, also etwa zwei an jedem Werktag. Die Kampagne läuft
+        weiter.
+      </p>
+
+      <div class="bew-aktion">
+        <a href="/fallstudien/wav-westerstede/" class="link">Fallstudie ansehen<Pfeil /></a>
+        <a href={cta.ziel} class="knopf">{cta.primaer}<Pfeil /></a>
+      </div>
+    </div>
+  </div>
+</Abschnitt>
+
+<style>
+  .bew-kopf {
+    display: grid;
+    gap: clamp(1.75rem, 4vw, 3rem);
+    padding-bottom: clamp(3rem, 7vw, 5rem);
+  }
+  @media (min-width: 56rem) {
+    .bew-kopf {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(2.5rem, 6vw, 6rem);
+      align-items: start;
+    }
+  }
+  .bew-kopf .lead { max-width: 46ch; }
+
+  .bew-zahlen {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid var(--linie-dunkel);
+  }
+  @media (min-width: 56rem) {
+    .bew-zahlen { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+  .bew-zahlen > li {
+    padding: clamp(1.5rem, 3.5vw, 2.5rem) var(--r-3) clamp(1.5rem, 3.5vw, 2.5rem) 0;
+    border-bottom: 1px solid var(--linie-dunkel);
+  }
+  @media (min-width: 56rem) {
+    .bew-zahlen > li + li { border-left: 1px solid var(--linie-dunkel); padding-left: clamp(1.25rem, 2.5vw, 2rem); }
+  }
+  @media (max-width: 55.999rem) {
+    .bew-zahlen > li:nth-child(2n) { border-left: 1px solid var(--linie-dunkel); padding-left: var(--r-3); }
+  }
+
+  .bew-wert {
+    font-family: var(--schrift-display);
+    font-size: var(--t-zahl);
+    font-weight: 600;
+    letter-spacing: -0.048em;
+    line-height: 0.9;
+    margin-bottom: 0.35em;
+  }
+  .bew-label {
+    font-family: var(--schrift-display);
+    font-size: 0.82rem;
+    line-height: 1.45;
+    letter-spacing: -0.004em;
+    color: var(--auf-dunkel-2);
+    max-width: 18ch;
+  }
+
+  .bew-unten {
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 4rem);
+    padding-top: clamp(3rem, 7vw, 5rem);
+  }
+  @media (min-width: 62rem) {
+    .bew-unten {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(3rem, 7vw, 6.5rem);
+      align-items: start;
+    }
+  }
+  .bew-test, .bew-referenz { display: grid; gap: var(--r-4); align-content: start; }
+  .bew-test .label, .bew-referenz .label { margin-bottom: -0.5rem; }
+
+  .bew-vergleich {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid var(--linie-dunkel);
+    border-bottom: 1px solid var(--linie-dunkel);
+  }
+  .bew-fall { padding: clamp(1.1rem, 2.5vw, 1.6rem) var(--r-3) clamp(1.1rem, 2.5vw, 1.6rem) 0; }
+  .bew-fall + .bew-fall { border-left: 1px solid var(--linie-dunkel); padding-left: clamp(1rem, 2.5vw, 1.75rem); }
+  .bew-fall-wert {
+    font-family: var(--schrift-display);
+    font-size: clamp(1.75rem, 1.2rem + 2.4vw, 2.75rem);
+    font-weight: 600;
+    letter-spacing: -0.036em;
+    line-height: 1;
+    color: var(--auf-dunkel-2);
+    margin-bottom: 0.35em;
+  }
+  .bew-fall-gut .bew-fall-wert { color: #e9834f; }
+  .bew-fall-label {
+    font-family: var(--schrift-display);
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--auf-dunkel-2);
+    max-width: 20ch;
+  }
+  .bew-folge {
+    font-family: var(--schrift-display);
+    font-size: clamp(0.95rem, 0.92rem + 0.18vw, 1.06rem);
+    line-height: 1.55;
+    letter-spacing: -0.01em;
+    max-width: 48ch;
+  }
+
+  .bew-ref-satz {
+    font-family: var(--schrift-text);
+    font-size: clamp(1.15rem, 1.03rem + 0.52vw, 1.47rem);
+    line-height: 1.45;
+    max-width: 34ch;
+  }
+  .bew-ref-zusatz { max-width: 46ch; }
+  .bew-aktion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--r-3) var(--r-5);
+    margin-top: var(--r-2);
+  }
+</style>

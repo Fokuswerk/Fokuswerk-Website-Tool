@@ -1,0 +1,201 @@
+---
+import { Image } from 'astro:assets';
+import { cta } from '../../data/firma';
+import Pfeil from '../Pfeil.astro';
+import bild from '../../assets/hero-drehtag.jpg';
+
+const belege = [
+  { wert: '550,27 €', label: 'Werbebudget' },
+  { wert: '68',       label: 'Bewerbungen' },
+  { wert: '14 Tage',  label: 'bis zur Unterschrift' },
+];
+---
+
+<section class="hero">
+  <div class="hero-kopf huelle">
+    <p class="hero-augen label" data-auf>
+      Für Betriebe mit eigener Werkstatt<span class="punkt">·</span>Nordwest&#8209;Niedersachsen
+    </p>
+
+    <h1 class="hero-titel d1" data-zeilen>
+      <span class="zeile" style="--verzug:120ms"><span>Ein Drehtag im Monat.</span></span>
+      <span class="zeile" style="--verzug:200ms"><span>Zwei Kampagnen:</span></span>
+      <span class="zeile" style="--verzug:280ms"><span>Mitarbeiter und Kunden.</span></span>
+    </h1>
+
+    <div class="hero-unten">
+      <p class="hero-lead lead" data-auf style="--verzug:420ms">
+        Wir drehen einen halben Tag bei Ihnen im Betrieb. Daraus laufen den ganzen
+        Monat zwei Kampagnen — eine, die Bewerbungen bringt, und eine, die
+        Anfragen bringt.
+      </p>
+
+      <div class="hero-aktion" data-auf style="--verzug:520ms">
+        <a href={cta.ziel} class="knopf">{cta.primaer}<Pfeil /></a>
+        <p class="knopf-notiz">{cta.notiz}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-band" data-zoom>
+    <Image
+      src={bild}
+      alt="Ein Kameramann filmt einen Kfz-Mechatroniker, der an einem Rad arbeitet, in einer Werkstatthalle."
+      widths={[900, 1400, 1920, 2400]}
+      sizes="100vw"
+      quality={82}
+      loading="eager"
+      fetchpriority="high"
+      decoding="sync"
+    />
+
+    <div class="hero-beleg">
+      <div class="huelle hero-beleg-innen">
+        <ul class="hero-zahlen">
+          {belege.map((b) => (
+            <li>
+              <span class="hero-wert ziffer">{b.wert}</span>
+              <span class="hero-label">{b.label}</span>
+            </li>
+          ))}
+        </ul>
+        <a href="/fallstudien/wav-westerstede/" class="hero-quelle">
+          <span>WAV Westerstede, Kfz&#8209;Werkstatt<span class="punkt">·</span>Fallstudie ansehen</span>
+          <Pfeil groesse={13} />
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    display: grid;
+    grid-template-rows: auto minmax(13rem, 1fr);
+    min-height: 100svh;
+    padding-top: clamp(5.75rem, 11vh, 8rem);
+  }
+
+  .hero-kopf {
+    display: grid;
+    gap: clamp(1.25rem, 2.6vw, 2.1rem);
+    align-content: start;
+    padding-bottom: clamp(1.75rem, 3.5vw, 2.75rem);
+  }
+
+  .hero-augen { display: flex; flex-wrap: wrap; align-items: baseline; }
+  .punkt { padding-inline: 0.75em; opacity: 0.5; }
+
+  .hero-titel {
+    max-width: none;
+    margin-top: clamp(0.25rem, 1.5vw, 1rem);
+  }
+
+  .hero-unten {
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+  }
+  @media (min-width: 56rem) {
+    .hero-unten {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.78fr);
+      align-items: end;
+      gap: clamp(2rem, 4vw, 3.5rem);
+    }
+  }
+  .hero-lead { max-width: 44ch; }
+  .hero-aktion { display: grid; gap: var(--r-2); justify-items: start; }
+
+  /* ---------- Bildband ---------- */
+  .hero-band {
+    position: relative;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--sand-tief);
+    isolation: isolate;
+  }
+  .hero-band :global(img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 46%;
+  }
+
+  .hero-beleg {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding-block: clamp(1.1rem, 2.4vw, 1.7rem);
+    color: #fff;
+    background: linear-gradient(to top,
+      rgba(12, 10, 9, 0.82) 0%,
+      rgba(12, 10, 9, 0.62) 45%,
+      rgba(12, 10, 9, 0) 100%);
+  }
+  .hero-beleg-innen {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--r-3) var(--r-5);
+  }
+
+  .hero-zahlen {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(1.25rem, 4vw, 3.5rem);
+  }
+  .hero-zahlen li { display: grid; gap: 0.1rem; }
+  .hero-wert {
+    font-family: var(--schrift-display);
+    font-size: clamp(1.25rem, 0.95rem + 1.35vw, 2rem);
+    font-weight: 600;
+    letter-spacing: -0.028em;
+    line-height: 1.1;
+  }
+  .hero-label {
+    font-family: var(--schrift-display);
+    font-size: 0.74rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.82);
+  }
+
+  .hero-quelle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    font-family: var(--schrift-display);
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: -0.004em;
+    color: rgba(255, 255, 255, 0.92);
+    padding-block: 0.55em 0.35em;
+    position: relative;
+  }
+  .hero-quelle::after {
+    content: '';
+    position: absolute; left: 0; right: 0; bottom: 0;
+    height: 1px; background: currentColor;
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .5s var(--ease);
+  }
+  .hero-quelle:hover { color: #fff; }
+  .hero-quelle:hover::after { transform: scaleX(1); }
+  .hero-quelle:hover :global(.pfeil) { translate: 0.28em 0; }
+  .hero-quelle :global(.pfeil) { transition: translate .45s var(--ease); }
+
+  @media (max-width: 44rem) {
+    .hero {
+      grid-template-rows: auto minmax(11rem, 34svh);
+      padding-top: 4.75rem;
+    }
+    .hero-kopf { gap: 1rem; padding-bottom: 1.4rem; }
+    .hero-titel { margin-top: 0.15rem; }
+    .hero-lead { font-size: 1.06rem; line-height: 1.48; }
+    .hero-unten { gap: 1.25rem; }
+    .hero-quelle { font-size: 0.76rem; }
+    .hero-zahlen { gap: 1.1rem 1.75rem; }
+  }
+</style>

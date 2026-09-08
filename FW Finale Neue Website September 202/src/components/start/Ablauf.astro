@@ -1,0 +1,77 @@
+---
+import Abschnitt from '../Abschnitt.astro';
+import Titel from '../Titel.astro';
+
+const wochen = [
+  { nr: 'Woche 1', kopf: 'Wir kommen zum Drehtag.', text: 'Vorher ein Telefonat über den Ablauf, mehr Vorbereitung braucht es nicht. Kein Workshop, keine Konzeptphase.' },
+  { nr: 'Woche 2', kopf: 'Seiten stehen, Kampagnen gehen live.', text: 'Karriereseite und Anfrageseite sind gebaut, Werbekonten und Messung sind eingerichtet, die ersten Varianten laufen an.' },
+  { nr: 'Woche 3', kopf: 'Die ersten Bewerbungen landen auf Ihrem Handy.', text: 'Ab hier ist es Ihre Aufgabe, innerhalb von zwei Tagen zu antworten. Unsere ist, die Varianten zu messen und das Budget umzulegen.' },
+];
+---
+
+<Abschnitt nummer="06" marke="Der Ablauf" hoehe="eng">
+  <div class="abl-kopf">
+    <Titel zeilen={['In drei Wochen', 'läuft es.']} stufe="h2" groesse="d3" />
+    <p class="klein abl-notiz" data-auf>
+      Der Drehtag ist der Startpunkt, nicht das Ende einer Vorbereitungsphase.
+    </p>
+  </div>
+
+  <ol class="abl-wochen">
+    {wochen.map((w, i) => (
+      <li data-auf style={`--verzug:${i * 110}ms`}>
+        <p class="abl-nr">{w.nr}</p>
+        <h3 class="abl-h">{w.kopf}</h3>
+        <p class="klein">{w.text}</p>
+      </li>
+    ))}
+  </ol>
+</Abschnitt>
+
+<style>
+  .abl-kopf {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--r-3) var(--r-5);
+    padding-bottom: clamp(2rem, 5vw, 3.25rem);
+  }
+  .abl-notiz { max-width: 34ch; }
+
+  .abl-wochen {
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--linie);
+  }
+  @media (min-width: 52rem) {
+    .abl-wochen { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  .abl-wochen > li {
+    padding: clamp(1.4rem, 3vw, 2rem) var(--r-4) clamp(1.4rem, 3vw, 2rem) 0;
+    border-bottom: 1px solid var(--linie);
+  }
+  @media (min-width: 52rem) {
+    .abl-wochen > li { border-bottom: none; }
+    .abl-wochen > li + li { border-left: 1px solid var(--linie); padding-left: clamp(1.25rem, 2.5vw, 2rem); }
+  }
+  .abl-nr {
+    font-family: var(--schrift-display);
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin-bottom: 1em;
+  }
+  .abl-h {
+    font-family: var(--schrift-display);
+    font-size: clamp(1.12rem, 1rem + 0.55vw, 1.4rem);
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    line-height: 1.22;
+    margin-bottom: 0.7em;
+    max-width: 20ch;
+  }
+  .abl-wochen .klein { max-width: 34ch; }
+</style>

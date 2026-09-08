@@ -1,0 +1,82 @@
+---
+import { Image } from 'astro:assets';
+import Abschnitt from '../Abschnitt.astro';
+import Titel from '../Titel.astro';
+import Pfeil from '../Pfeil.astro';
+import transporter from '../../assets/transporter-hof.jpg';
+import schnitt from '../../assets/schnitt-vor-ort.jpg';
+---
+
+<Abschnitt nummer="08" marke="Wer kommt">
+  <div class="wer-raster">
+    <div class="wer-text">
+      <Titel zeilen={['Es kommen', 'zwei Leute.', 'Immer dieselben.']} stufe="h2" groesse="d2" />
+
+      <div class="fliess wer-fliess" data-auf style="--verzug:140ms">
+        <p>
+          Fokuswerk sind Julius Abt und Thees Bodenstab. Julius filmt und schneidet,
+          Thees baut die Seiten und fährt die Kampagnen. Es gibt keinen Account
+          Manager, der Ihre Frage weiterleitet, und keinen Freelancer, der Ihre Halle
+          zum ersten Mal sieht. Wer zum Drehtag kommt, ist derselbe, der abends die
+          Zahlen im Werbekonto anschaut.
+        </p>
+        <p>
+          Wir sitzen in Oldenburg. Die Betriebe, für die wir arbeiten, liegen in
+          Westerstede, im Ammerland, im Oldenburger Land. Wir fahren hin — das ist
+          keine Haltung, sondern die einzige Art, wie ein Drehtag im Betrieb
+          funktioniert.
+        </p>
+        <p>
+          Und es ist der Grund, warum wir zehn Betriebe betreuen wollen und nicht
+          fünfzig. Ab da wären wir jemand, der Termine koordiniert.
+        </p>
+      </div>
+
+      <a href="/ueber-uns/" class="link wer-link" data-auf style="--verzug:220ms">
+        Mehr über die Arbeitsweise<Pfeil />
+      </a>
+    </div>
+
+    <div class="wer-bilder">
+      <figure class="wer-bild wer-bild-a" data-auf>
+        <div class="bild" data-zoom data-parallaxe="30">
+          <Image src={transporter} alt="Ein Transporter mit geöffneter Seitentür und Kameraequipment steht morgens auf einem Betriebshof."
+            widths={[520, 780, 1100]} sizes="(min-width: 62rem) 30vw, 100vw" quality={80} loading="lazy" />
+        </div>
+        <figcaption class="bild-bu">Sieben Uhr, irgendwo im Ammerland. Der Drehtag beginnt mit dem Ausladen.</figcaption>
+      </figure>
+
+      <figure class="wer-bild wer-bild-b" data-auf style="--verzug:140ms">
+        <div class="bild" data-zoom data-parallaxe="22">
+          <Image src={schnitt} alt="Ein junger Mann schneidet an einem Laptop in einer Werkstattecke Videomaterial."
+            widths={[420, 640, 900]} sizes="(min-width: 62rem) 22vw, 82vw" quality={80} loading="lazy" />
+        </div>
+        <figcaption class="bild-bu">Geschnitten wird selbst. Meistens noch am selben Tag.</figcaption>
+      </figure>
+    </div>
+  </div>
+</Abschnitt>
+
+<style>
+  .wer-raster { display: grid; gap: clamp(2.5rem, 6vw, 4.5rem); }
+  @media (min-width: 62rem) {
+    .wer-raster {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+      gap: clamp(3rem, 7vw, 6rem);
+      align-items: start;
+    }
+  }
+  .wer-text { display: grid; gap: clamp(1.5rem, 3.5vw, 2.5rem); align-content: start; }
+  .wer-fliess { max-width: 46ch; }
+  .wer-link { justify-self: start; }
+
+  .wer-bilder { display: grid; gap: var(--r-4); }
+  @media (min-width: 40rem) {
+    .wer-bilder { grid-template-columns: repeat(12, 1fr); gap: clamp(1rem, 2.5vw, 2rem); }
+    .wer-bild-a { grid-column: 1 / 9; }
+    .wer-bild-b { grid-column: 9 / 13; align-self: end; padding-bottom: clamp(1.5rem, 4vw, 3.5rem); }
+  }
+  .wer-bild { margin: 0; }
+  .wer-bild-a .bild { aspect-ratio: 4 / 3; }
+  .wer-bild-b .bild { aspect-ratio: 3 / 4; }
+</style>

@@ -1,0 +1,288 @@
+---
+import { Image } from 'astro:assets';
+import Abschnitt from '../Abschnitt.astro';
+import Titel from '../Titel.astro';
+import aufbau from '../../assets/aufbau-stativ.jpg';
+import handy from '../../assets/mechatroniker-handy.jpg';
+import neuer from '../../assets/neuer-mitarbeiter.jpg';
+import kunde from '../../assets/schluesseluebergabe.jpg';
+
+const schritte = [
+  {
+    kopf: 'Wir kommen. Einen halben Tag.',
+    text: 'Keine Models, keine Studiobilder. Ihre Leute, an Ihren Bühnen, in Ihrer Halle. Wer sich später bewirbt, soll sehen, wo er landet — und wer anfragt, soll sehen, wer da arbeitet.',
+    bild: aufbau,
+    alt: 'Zwei Männer bauen ein Kamerastativ in einer Werkstatthalle auf, ein Mitarbeiter geht vorbei.',
+    schild: 'Der Drehtag',
+  },
+  {
+    kopf: 'Daraus läuft die Bewerberkampagne.',
+    text: 'Kurze Clips auf Instagram und Facebook, ausgespielt im Umkreis Ihres Betriebs — dort, wo die Leute wohnen, die zu Ihnen fahren würden. Bewerben geht in unter 60 Sekunden, ohne Lebenslauf, ohne Anschreiben, direkt vom Handy. Jede Bewerbung landet sofort auf Ihrem Telefon, nicht drei Tage später im Postfach.',
+    bild: handy,
+    alt: 'Ein Kfz-Mechatroniker schaut in einer Pause an der Werkbank auf sein Smartphone.',
+    schild: 'Ergebnis 1 — Bewerber',
+  },
+  {
+    kopf: 'Dazu die Karriereseite.',
+    text: 'Eine Seite mit genau einer Aufgabe: aus Interesse eine Bewerbung machen. Kein Bewerbungsportal, kein PDF-Upload, keine Pflichtfelder, die niemand ausfüllt. Sie gehört Ihnen und bleibt, auch wenn eine Kampagne pausiert.',
+    bild: neuer,
+    alt: 'Ein junger Mitarbeiter in Arbeitskleidung steht im Türrahmen einer Werkstatthalle.',
+    schild: 'Ergebnis 2 — Karriereseite',
+  },
+  {
+    kopf: 'Und die Kundenkampagne.',
+    text: 'Dasselbe Material, andere Aussage. Meta für Sichtbarkeit in der Region, Google für die, die gerade jetzt nach einer Werkstatt suchen. Gemessen wird in Anfragen, nicht in Aufrufen.',
+    bild: kunde,
+    alt: 'Ein Werkstattinhaber reicht einer Kundin am Tresen die Fahrzeugschlüssel.',
+    schild: 'Ergebnis 3 — Kunden',
+  },
+];
+---
+
+<Abschnitt nummer="04" marke="Der Drehtag" id="drehtag">
+  <div class="dreh-kopf">
+    <Titel
+      zeilen={['Ein Tag im Betrieb.', 'Ein Monat Material.']}
+      stufe="h2"
+      groesse="d2"
+    />
+    <p class="lead" data-auf style="--verzug:140ms">
+      Sie geben einen halben Tag ab. Wir gehen mit dem, was an diesem Tag entsteht,
+      den Rest des Monats arbeiten — in zwei Richtungen gleichzeitig.
+    </p>
+  </div>
+
+  <div class="dreh" data-dreh>
+    <div class="dreh-media">
+      <div class="dreh-frame">
+        {schritte.map((s, i) => (
+          <figure class="dreh-bild" data-bild={i} data-aktiv={i === 0 ? '' : undefined}>
+            <Image
+              src={s.bild}
+              alt={s.alt}
+              widths={[560, 840, 1180]}
+              sizes="(min-width: 62rem) 42vw, 78vw"
+              quality={80}
+              loading="lazy"
+            />
+            <figcaption class="dreh-schild">{s.schild}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </div>
+
+    <ol class="dreh-schritte">
+      {schritte.map((s, i) => (
+        <li class="dreh-schritt" data-schritt={i}>
+          <p class="dreh-nr ziffer" aria-hidden="true">{String(i + 1).padStart(2, '0')}</p>
+          <div>
+            <h3 class="d4">{s.kopf}</h3>
+            <p class="fliess fliess-2">{s.text}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </div>
+
+  <blockquote class="dreh-kern" data-auf>
+    <p>
+      Die Kamera läuft ohnehin. Ob daraus ein Clip entsteht, der einen
+      Mechatroniker anspricht, oder einer, der einen Kunden anspricht, kostet
+      <em>uns</em> fast dasselbe — <em>Ihnen</em> bringt es das Doppelte.
+    </p>
+    <footer class="dreh-kern-fuss">Genau deshalb können wir das anbieten und andere nicht.</footer>
+  </blockquote>
+</Abschnitt>
+
+<style>
+  .dreh-kopf {
+    display: grid;
+    gap: clamp(1.75rem, 4vw, 3rem);
+    padding-bottom: clamp(2.5rem, 6vw, 4.5rem);
+  }
+  @media (min-width: 56rem) {
+    .dreh-kopf {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(2.5rem, 6vw, 6rem);
+      align-items: end;
+    }
+  }
+  .dreh-kopf .lead { max-width: 42ch; }
+
+  .dreh { display: grid; gap: clamp(2rem, 5vw, 3.5rem); }
+  @media (min-width: 62rem) {
+    .dreh {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(3rem, 7vw, 6rem);
+      align-items: start;
+    }
+  }
+
+  /* ---------- Bildseite ---------- */
+  @media (min-width: 62rem) {
+    .dreh-media { position: sticky; top: 7.5rem; }
+    .dreh-frame {
+      position: relative;
+      aspect-ratio: 4 / 5;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--sand-tief);
+    }
+    .dreh-bild {
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      opacity: 0;
+      transition: opacity .8s var(--ease);
+    }
+    .dreh-bild[data-aktiv] { opacity: 1; }
+    .dreh-bild :global(img) {
+      width: 100%; height: 100%; object-fit: cover;
+      scale: 1.04;
+      transition: scale 1.8s var(--ease);
+    }
+    .dreh-bild[data-aktiv] :global(img) { scale: 1; }
+  }
+
+  /* Mobil: waagerechte Reihe mit Einrasten */
+  @media (max-width: 61.999rem) {
+    .dreh-frame {
+      display: flex;
+      gap: var(--r-2);
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      margin-inline: calc(-1 * var(--rand));
+      padding-inline: var(--rand);
+    }
+    .dreh-frame::-webkit-scrollbar { display: none; }
+    .dreh-bild {
+      flex: 0 0 min(78%, 20rem);
+      scroll-snap-align: start;
+      margin: 0;
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--sand-tief);
+    }
+    .dreh-bild :global(img) { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+  }
+
+  .dreh-schild {
+    position: absolute;
+    left: 0; bottom: 0;
+    padding: 1.4rem clamp(1rem, 2.5vw, 1.5rem) clamp(0.9rem, 2vw, 1.15rem);
+    width: 100%;
+    font-family: var(--schrift-display);
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(to top, rgba(12,10,9,.72), rgba(12,10,9,0));
+  }
+
+  /* ---------- Schritte ---------- */
+  .dreh-schritte { display: grid; }
+  .dreh-schritt {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    gap: 0 clamp(0.75rem, 2vw, 1.5rem);
+    padding-block: clamp(1.5rem, 3.4vw, 2.4rem);
+    border-top: 1px solid var(--linie);
+  }
+  .dreh-schritt:last-child { border-bottom: 1px solid var(--linie); }
+  .dreh-nr {
+    font-family: var(--schrift-display);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--tinte-3);
+    padding-top: 0.42em;
+    transition: color .5s var(--ease);
+  }
+  .dreh-schritt h3 { margin-bottom: 0.5em; }
+  .dreh-schritt p { max-width: 52ch; }
+
+  @media (min-width: 62rem) {
+    .dreh-schritte { padding-block: 4vh 22vh; }
+    .dreh-schritt { position: relative; }
+    .dreh-schritt .dreh-nr { color: var(--tinte-3); }
+    .dreh-schritt[data-aktiv] .dreh-nr { color: var(--signal); }
+    .dreh-schritt::before {
+      content: '';
+      position: absolute;
+      left: -1.5rem; top: clamp(1.35rem, 3vw, 2rem);
+      width: 2px; height: 0;
+      background: var(--signal);
+      transition: height .6s var(--ease);
+    }
+    .dreh-schritt[data-aktiv]::before { height: 1.9rem; }
+  }
+
+  /* ---------- Kernsatz ---------- */
+  .dreh-kern {
+    margin: clamp(3.5rem, 8vw, 6.5rem) 0 0;
+    padding-top: clamp(2rem, 4.5vw, 3rem);
+    border-top: 1px solid var(--linie);
+    max-width: 44rem;
+    margin-inline: auto;
+    text-align: center;
+  }
+  .dreh-kern p {
+    font-family: var(--schrift-text);
+    font-size: clamp(1.35rem, 1.05rem + 1.3vw, 2.15rem);
+    line-height: 1.32;
+    letter-spacing: -0.014em;
+    text-wrap: balance;
+  }
+  .dreh-kern :global(em) { font-style: italic; }
+  .dreh-kern-fuss {
+    margin-top: 1.4em;
+    font-family: var(--schrift-display);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    color: var(--tinte-3);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dreh-schritt, .dreh-bild, .dreh-bild :global(img) { transition: none; }
+    .dreh-schritt::before { transition: none; }
+  }
+</style>
+
+<script>
+  const wurzel = document.querySelector<HTMLElement>('[data-dreh]');
+  if (wurzel && window.matchMedia('(min-width: 62rem)').matches) {
+    const schritte = Array.from(wurzel.querySelectorAll<HTMLElement>('[data-schritt]'));
+    const bilder = Array.from(wurzel.querySelectorAll<HTMLElement>('[data-bild]'));
+    let aktiv = -1;
+
+    const setzen = (i: number) => {
+      if (i === aktiv) return;
+      aktiv = i;
+      schritte.forEach((s, n) => s.toggleAttribute('data-aktiv', n === i));
+      bilder.forEach((b, n) => b.toggleAttribute('data-aktiv', n === i));
+    };
+
+    const beobachter = new IntersectionObserver(
+      (eintraege) => {
+        // Der Schritt, der der Bildschirmmitte am nächsten liegt, ist aktiv.
+        let bester = aktiv;
+        let kleinster = Infinity;
+        const mitte = window.innerHeight / 2;
+        for (const s of schritte) {
+          const r = s.getBoundingClientRect();
+          const abstand = Math.abs(r.top + r.height / 2 - mitte);
+          if (abstand < kleinster) { kleinster = abstand; bester = Number(s.dataset.schritt); }
+        }
+        if (bester >= 0) setzen(bester);
+        void eintraege;
+      },
+      { rootMargin: '-45% 0px -45% 0px', threshold: 0 },
+    );
+    schritte.forEach((s) => beobachter.observe(s));
+    setzen(0);
+  }
+</script>

@@ -1,0 +1,111 @@
+---
+import { firma, navigation } from '../data/firma';
+import Wortmarke from './Wortmarke.astro';
+
+const jahr = new Date().getFullYear();
+---
+
+<footer class="fuss dunkel">
+  <div class="huelle">
+    <div class="fuss-oben">
+      <a href="/" class="fuss-marke" aria-label="Fokuswerk, zur Startseite">
+        <Wortmarke hoehe={26} />
+      </a>
+
+      <div class="fuss-spalten">
+        <div class="fuss-spalte">
+          <p class="label">Seiten</p>
+          <ul>
+            {navigation.map((e) => <li><a href={e.pfad}>{e.titel}</a></li>)}
+          </ul>
+        </div>
+
+        <div class="fuss-spalte">
+          <p class="label">Kontakt</p>
+          <ul>
+            <li><a href={`tel:${firma.telefon}`} class="ziffer">{firma.telefonAnzeige}</a></li>
+            <li><a href={`mailto:${firma.mail}`}>{firma.mail}</a></li>
+            <li><a href={firma.instagram} rel="noopener">Instagram</a></li>
+            <li><a href={firma.linkedin} rel="noopener">LinkedIn</a></li>
+          </ul>
+        </div>
+
+        <div class="fuss-spalte">
+          <p class="label">Adresse</p>
+          <address>
+            {firma.rechtsform}<br />
+            {firma.strasse}<br />
+            {firma.plz} {firma.ort}
+          </address>
+        </div>
+      </div>
+    </div>
+
+    <div class="fuss-unten">
+      <p class="klein">© {jahr} {firma.rechtsform}. Marketing für Betriebe mit eigener Werkstatt in Nordwest&#8209;Niedersachsen.</p>
+      <ul class="fuss-recht">
+        <li><a href="/impressum/">Impressum</a></li>
+        <li><a href="/datenschutz/">Datenschutz</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .fuss { padding-top: var(--r-8); padding-bottom: var(--r-5); }
+
+  .fuss-oben {
+    display: grid;
+    gap: var(--r-7);
+    padding-bottom: var(--r-7);
+  }
+  @media (min-width: 56rem) {
+    .fuss-oben { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); align-items: start; gap: var(--r-6); }
+  }
+  .fuss-marke { display: block; width: fit-content; color: var(--auf-dunkel); }
+
+  .fuss-spalten {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: var(--r-5) var(--r-4);
+  }
+  .fuss-spalte .label { margin-bottom: 1.15em; }
+  .fuss-spalte ul { display: grid; gap: 0.1rem; }
+  .fuss-spalte a, address {
+    font-family: var(--schrift-display);
+    font-size: 0.95rem;
+    font-style: normal;
+    line-height: 1.62;
+    letter-spacing: -0.008em;
+    color: var(--auf-dunkel);
+  }
+  .fuss-spalte a { position: relative; display: inline-block; padding-block: 0.42em; }
+  .fuss-spalte a::after {
+    content: '';
+    position: absolute; left: 0; right: 0; bottom: 0.28em;
+    height: 1px; background: currentColor;
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .45s var(--ease);
+  }
+  .fuss-spalte a:hover::after { transform: scaleX(1); }
+
+  .fuss-unten {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--r-2) var(--r-5);
+    padding-top: var(--r-4);
+    border-top: 1px solid var(--linie-dunkel);
+  }
+  .fuss-unten .klein { max-width: 52ch; }
+  .fuss-recht { display: flex; gap: var(--r-4); }
+  .fuss-recht a {
+    display: inline-block;
+    padding-block: 0.55em;
+    font-family: var(--schrift-display);
+    font-size: var(--t-klein);
+    color: var(--auf-dunkel-2);
+  }
+  .fuss-recht a:hover { color: var(--auf-dunkel); }
+</style>

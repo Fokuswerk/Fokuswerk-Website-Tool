@@ -1,0 +1,10 @@
+node_modules
+dist
+.astro
+.vercel
+.DS_Store
+
+# Rohgenerate und Prüfbilder gehören nicht ins Repo
+src/assets/raw/
+qa/shots*/
+qa/menue-*.png

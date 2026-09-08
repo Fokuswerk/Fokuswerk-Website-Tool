@@ -1,0 +1,84 @@
+---
+import Basis from '../layouts/Basis.astro';
+import Hero from '../components/start/Hero.astro';
+import Lage from '../components/start/Lage.astro';
+import Rechnung from '../components/start/Rechnung.astro';
+import Beweis from '../components/start/Beweis.astro';
+import Bildband from '../components/Bildband.astro';
+import Drehtag from '../components/start/Drehtag.astro';
+import Aufwand from '../components/start/Aufwand.astro';
+import Ablauf from '../components/start/Ablauf.astro';
+import Sicherheit from '../components/start/Sicherheit.astro';
+import WerKommt from '../components/start/WerKommt.astro';
+import Passung from '../components/start/Passung.astro';
+import Arbeiten from '../components/start/Arbeiten.astro';
+import Preis from '../components/start/Preis.astro';
+import Fragen from '../components/Fragen.astro';
+import SchlussCta from '../components/SchlussCta.astro';
+import band from '../assets/landtechnik-halle.jpg';
+
+const fragen = [
+  {
+    frage: 'Wir haben schon jemanden, der Social Media macht.',
+    antwort:
+      'Dann geht es hier nicht um Social Media. Es geht um zwei Kampagnen mit einem messbaren Ziel — Bewerbungen und Anfragen — und um die Seiten, auf denen beides landet. Wenn Ihr bestehender Dienstleister Ihnen sagen kann, was eine Bewerbung bei Ihnen kostet, sind Sie gut aufgestellt. Wenn nicht, ist das die eigentliche Frage.',
+  },
+  {
+    frage: 'Bei uns gibt es nichts zu filmen.',
+    antwort:
+      'Das sagen fast alle. Was Sie täglich sehen, ist für jemanden, der noch nie in Ihrer Halle stand, neu: die Bühne, die Diagnose, der Motor, die Leute. Genau daraus entsteht der Unterschied zu einer Stellenanzeige, die aus zwei Sätzen besteht. Wir bringen die Ideen mit, Sie müssen nichts vorbereiten.',
+  },
+  {
+    frage: 'Ich möchte nicht selbst vor der Kamera stehen.',
+    antwort:
+      'Müssen Sie nicht. In den meisten Betrieben funktioniert es sogar besser, wenn die Mitarbeiter zu sehen sind — Bewerber wollen ihre künftigen Kollegen sehen, nicht den Chef. Wenn Sie möchten, sagen Sie zwei Sätze in die Kamera. Wenn nicht, geht es auch ohne.',
+    },
+  {
+    frage: 'Was, wenn wir trotzdem niemanden finden?',
+    antwort:
+      'Ist nach 90 Tagen niemand eingestellt, arbeiten wir ohne weiteres Honorar weiter. Voraussetzung sind der Drehtag und Ihre Antwort auf Bewerbungen innerhalb von zwei Tagen — beides steht im Vertrag. Wir übernehmen den Teil, den wir beeinflussen können, und benennen den Teil, den Sie beeinflussen.',
+  },
+  {
+    frage: 'Warum zwölf Monate Laufzeit?',
+    antwort:
+      'Weil eine Kampagne aus Daten lernt und die ersten Wochen davon ausgehen, herauszufinden, was in Ihrer Region trägt. Wer nach acht Wochen abbricht, bezahlt genau diesen Lernteil und nutzt das Ergebnis nie. Die ersten drei Monate sind trotzdem monatlich kündbar — falls die Zusammenarbeit selbst nicht passt.',
+  },
+  {
+    frage: 'Was kostet das Werbebudget zusätzlich?',
+    antwort:
+      'Rund 600 € im Monat, direkt an Meta und Google gezahlt, nicht über uns. Wir verdienen nichts am Budget — das ist der einzige Weg, bei dem eine Empfehlung zur Budgethöhe ehrlich bleiben kann. Bei WAV haben 550 € über die gesamte Bewerberkampagne gereicht.',
+  },
+  {
+    frage: 'Arbeitet ihr auch außerhalb von Nordwest-Niedersachsen?',
+    antwort:
+      'Der Drehtag findet vor Ort statt, deshalb ist die Entfernung eine echte Grenze. Im Umkreis von etwa 100 Kilometern um Oldenburg fahren wir ohne Aufschlag. Darüber hinaus sprechen wir vorher darüber, ob es sich für beide Seiten rechnet.',
+  },
+];
+---
+
+<Basis
+  titel="Fokuswerk — ein Drehtag im Monat, zwei laufende Kampagnen"
+  beschreibung="Ein Drehtag im Monat in Ihrem Betrieb, daraus zwei laufende Kampagnen: eine für Bewerbungen, eine für Anfragen. Belegt: 550 € Budget, 68 Bewerbungen, Mechatroniker nach 14 Tagen."
+>
+  <Hero />
+  <Lage />
+  <Rechnung />
+  <Beweis />
+
+  <Bildband
+    bild={band}
+    alt="Ein Techniker arbeitet an einem teilweise zerlegten Kompakttraktor in einer Landtechnik-Werkstatt."
+    bu="Das Modell trägt überall dort, wo ein Betrieb eine eigene Werkstatt hat: Kfz, Karosserie, Land- und Forsttechnik, Motorgeräte, Nutzfahrzeuge."
+  />
+
+  <Drehtag />
+  <Aufwand />
+  <Ablauf />
+  <Sicherheit />
+  <WerKommt />
+  <Passung />
+  <Arbeiten />
+  <Preis />
+  <Fragen fragen={fragen} />
+  <SchlussCta />
+</Basis>

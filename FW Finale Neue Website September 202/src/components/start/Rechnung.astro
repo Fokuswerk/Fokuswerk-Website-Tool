@@ -1,0 +1,122 @@
+---
+import Abschnitt from '../Abschnitt.astro';
+import Titel from '../Titel.astro';
+import { rechnung } from '../../data/firma';
+
+const zeilen = [
+  { text: 'Verrechnete Stunden je Mechatroniker und Jahr', wert: '1.275 h' },
+  { text: 'Stundenverrechnungssatz', wert: '× 95 €' },
+  { text: 'Werkstattumsatz, den diese eine Person erwirtschaftet', wert: '121.125 €', stark: true },
+];
+---
+
+<Abschnitt nummer="02" marke="Die Rechnung" ton="sand">
+  <div class="rech-raster">
+    <div class="rech-links">
+      <Titel
+        zeilen={['Was eine offene', 'Stelle im Monat', 'wirklich kostet.']}
+        stufe="h2"
+        groesse="d2"
+      />
+      <p class="lead" data-auf style="--verzug:140ms">
+        Nicht das Gehalt, das Sie sparen. Der Umsatz, den die Stelle erwirtschaftet
+        hätte. Rechnen Sie es einmal für Ihren Betrieb durch — es ist die Zahl, an
+        der sich alles Weitere messen lassen muss.
+      </p>
+    </div>
+
+    <div class="rech-buch" data-auf style="--verzug:220ms">
+      <table class="buch">
+        <caption class="nur-sr">Umsatzbeitrag einer Fachkraft und Kosten einer unbesetzten Stelle</caption>
+        <tbody>
+          {zeilen.map((z) => (
+            <tr class={z.stark ? 'buch-summe' : undefined}>
+              <th scope="row">{z.text}</th>
+              <td class="ziffer ziffer-tabelle">{z.wert}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div class="rech-fehl">
+        <p class="rech-fehl-text">Jeder Monat mit unbesetzter Stelle</p>
+        <p class="rech-fehl-zahl ziffer">
+          <span aria-hidden="true">−</span><span data-zahl={rechnung.monatsverlust} data-auf>0</span>&#8239;€
+          <span class="nur-sr">minus {rechnung.monatsverlust} Euro</span>
+        </p>
+      </div>
+
+      <p class="quelle rech-quelle">{rechnung.quelle} Setzen Sie gern Ihre eigenen Zahlen ein — an der Größenordnung ändert das nichts.</p>
+    </div>
+  </div>
+</Abschnitt>
+
+<style>
+  .rech-raster { display: grid; gap: clamp(2.5rem, 6vw, 4.5rem); }
+  @media (min-width: 62rem) {
+    .rech-raster {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      gap: clamp(3rem, 7vw, 6.5rem);
+      align-items: start;
+    }
+  }
+  .rech-links { display: grid; gap: clamp(1.25rem, 3vw, 2rem); align-content: start; }
+  .rech-links .lead { max-width: 40ch; }
+
+  .buch { width: 100%; border-collapse: collapse; }
+  .buch th, .buch td {
+    padding-block: clamp(0.85rem, 1.8vw, 1.15rem);
+    border-top: 1px solid var(--linie-stark);
+    font-family: var(--schrift-display);
+    font-weight: 400;
+    text-align: left;
+    vertical-align: baseline;
+  }
+  .buch th {
+    font-size: clamp(0.92rem, 0.89rem + 0.15vw, 1.02rem);
+    letter-spacing: -0.008em;
+    color: var(--tinte-2);
+    padding-right: var(--r-4);
+  }
+  .buch td {
+    text-align: right;
+    white-space: nowrap;
+    font-size: clamp(1.02rem, 0.95rem + 0.35vw, 1.25rem);
+    font-weight: 500;
+    letter-spacing: -0.018em;
+  }
+  .buch-summe th { color: var(--tinte); font-weight: 500; }
+  .buch-summe td {
+    font-size: clamp(1.3rem, 1.05rem + 1.05vw, 1.9rem);
+    font-weight: 600;
+    letter-spacing: -0.028em;
+  }
+
+  .rech-fehl {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem var(--r-4);
+    margin-top: clamp(1.75rem, 4vw, 2.75rem);
+    padding-top: clamp(1.25rem, 3vw, 1.75rem);
+    border-top: 2px solid var(--tinte);
+  }
+  .rech-fehl-text {
+    font-family: var(--schrift-display);
+    font-size: clamp(0.95rem, 0.9rem + 0.25vw, 1.1rem);
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    max-width: 18ch;
+  }
+  .rech-fehl-zahl {
+    font-family: var(--schrift-display);
+    font-size: clamp(2.5rem, 1.4rem + 4.9vw, 5rem);
+    font-weight: 600;
+    letter-spacing: -0.042em;
+    line-height: 0.94;
+    color: var(--signal);
+    white-space: nowrap;
+  }
+  .rech-quelle { margin-top: clamp(1.5rem, 3vw, 2rem); }
+</style>

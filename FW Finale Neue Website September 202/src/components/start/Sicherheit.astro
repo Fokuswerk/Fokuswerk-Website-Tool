@@ -1,0 +1,99 @@
+---
+import Abschnitt from '../Abschnitt.astro';
+import Titel from '../Titel.astro';
+import Pfeil from '../Pfeil.astro';
+import { cta, preis } from '../../data/firma';
+
+const punkte = [
+  {
+    kopf: 'Die Garantie',
+    text: 'Ist nach 90 Tagen niemand eingestellt, arbeiten wir ohne weiteres Honorar weiter. Dafür brauchen wir zwei Dinge von Ihnen: den Drehtag und eine Antwort auf Bewerbungen innerhalb von zwei Tagen. Beides steht im Vertrag, unsere Pflicht ebenso.',
+  },
+  {
+    kopf: 'Nur ein Betrieb je Umkreis',
+    text: 'Wir arbeiten nicht gleichzeitig für zwei Betriebe derselben Branche im Umkreis von 20 bis 30 Kilometern. Der Umkreis steht im Vertrag. Das ist keine Verkaufsmasche, sondern die Bedingung dafür, dass eine Kampagne im selben Ort nicht gegen die andere bietet.',
+  },
+  {
+    kopf: 'Die Aufnahmen gehören Ihnen',
+    text: 'Dauerhaft, auch nach dem Ende der Zusammenarbeit. Dasselbe gilt für Karriereseite, Anfrageseite und Werbekonten — die laufen auf Ihren Namen, nicht auf unseren.',
+  },
+  {
+    kopf: `Die ersten ${preis.kuendbar} Monate monatlich kündbar`,
+    text: `Die Laufzeit beträgt ${preis.laufzeit} Monate, weil eine Kampagne Zeit braucht, um aus Daten zu lernen. Die ersten ${preis.kuendbar} Monate sind trotzdem monatlich kündbar — wenn Sie in dieser Zeit merken, dass es nicht passt, gehen Sie.`,
+  },
+];
+---
+
+<Abschnitt nummer="07" marke="Ihr Risiko">
+  <div class="sich-kopf">
+    <Titel
+      zeilen={['Was passiert,', 'wenn es nicht', 'funktioniert.']}
+      stufe="h2"
+      groesse="d2"
+    />
+    <p class="lead" data-auf style="--verzug:140ms">
+      Das ist die Frage, die zu Recht als Erstes kommt. Deshalb steht die Antwort
+      hier und nicht im Kleingedruckten.
+    </p>
+  </div>
+
+  <div class="sich-raster">
+    {punkte.map((p, i) => (
+      <div class="sich-punkt" data-auf style={`--verzug:${i * 80}ms`}>
+        <h3 class="d4">{p.kopf}</h3>
+        <p class="fliess fliess-2">{p.text}</p>
+      </div>
+    ))}
+  </div>
+
+  <div class="sich-aktion" data-auf>
+    <a href={cta.ziel} class="knopf">{cta.primaer}<Pfeil /></a>
+    <p class="knopf-notiz">{cta.notiz}</p>
+  </div>
+</Abschnitt>
+
+<style>
+  .sich-kopf {
+    display: grid;
+    gap: clamp(1.75rem, 4vw, 3rem);
+    padding-bottom: clamp(2.5rem, 6vw, 4rem);
+  }
+  @media (min-width: 56rem) {
+    .sich-kopf {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(2.5rem, 6vw, 6rem);
+      align-items: end;
+    }
+  }
+  .sich-kopf .lead { max-width: 40ch; }
+
+  .sich-raster {
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--linie);
+  }
+  @media (min-width: 52rem) {
+    .sich-raster { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  .sich-punkt {
+    padding: clamp(1.5rem, 3vw, 2.25rem) 0;
+    border-bottom: 1px solid var(--linie);
+  }
+  @media (min-width: 52rem) {
+    .sich-punkt { padding-right: clamp(1.5rem, 4vw, 3.5rem); }
+    .sich-punkt:nth-child(2n) {
+      border-left: 1px solid var(--linie);
+      padding-left: clamp(1.5rem, 4vw, 3.5rem);
+      padding-right: 0;
+    }
+  }
+  .sich-punkt h3 { margin-bottom: 0.6em; }
+  .sich-punkt p { max-width: 48ch; }
+
+  .sich-aktion {
+    display: grid;
+    gap: var(--r-2);
+    justify-items: start;
+    margin-top: clamp(2.5rem, 6vw, 4rem);
+  }
+</style>

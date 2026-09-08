@@ -1,0 +1,99 @@
+---
+import Basis from '../layouts/Basis.astro';
+import SeitenKopf from '../components/SeitenKopf.astro';
+import Bildband from '../components/Bildband.astro';
+import Drehtag from '../components/start/Drehtag.astro';
+import Aufwand from '../components/start/Aufwand.astro';
+import Ablauf from '../components/start/Ablauf.astro';
+import Sicherheit from '../components/start/Sicherheit.astro';
+import Preis from '../components/start/Preis.astro';
+import Abschnitt from '../components/Abschnitt.astro';
+import Titel from '../components/Titel.astro';
+import Haken from '../components/Haken.astro';
+import Fragen from '../components/Fragen.astro';
+import SchlussCta from '../components/SchlussCta.astro';
+import band from '../assets/hebebuehne-dreh.jpg';
+
+const enthalten = [
+  'Karriereseite und Anfrageseite, beide auf Bewerbung und Anfrage gebaut',
+  'Werbekonten und Messung, datenschutzkonform aufgesetzt',
+  'Ein Drehtag im Monat und daraus der komplette Monatsvorrat an Material',
+  'Zwei laufend betreute Kampagnen, so lange, bis besetzt ist',
+  'Alle Aufnahmen gehören Ihnen, dauerhaft',
+  'Ein Ansprechpartner, eine Rechnung',
+];
+
+const fragen = [
+  {
+    frage: 'Was passiert am Drehtag konkret?',
+    antwort:
+      'Wir kommen morgens, bauen auf und filmen den normalen Betrieb: die Bühne, die Diagnose, den Motor, die Leute bei der Arbeit. Dazwischen ein paar kurze Aufnahmen, in denen jemand etwas sagt — freiwillig. Nach vier bis fünf Stunden sind wir wieder weg. Ihr Betrieb läuft in dieser Zeit normal weiter.',
+  },
+  {
+    frage: 'Wem gehören die Aufnahmen und die Werbekonten?',
+    antwort:
+      'Ihnen. Die Aufnahmen dauerhaft, auch nach dem Ende der Zusammenarbeit. Werbekonten, Karriereseite und Anfrageseite laufen auf Ihren Namen — wir bekommen Zugriff, nicht Eigentum. Das ist der Unterschied zwischen einem Dienstleister und einer Abhängigkeit.',
+  },
+  {
+    frage: 'Wie oft berichtet ihr?',
+    antwort:
+      'Einmal im Monat eine Seite mit den Zahlen, die zählen: ausgegebenes Budget, Bewerbungen, Kosten je Bewerbung, Anfragen. Dazu, was wir im nächsten Monat ändern und warum. Kein Dashboard, in das Sie sich einloggen müssen, um es zu verstehen.',
+  },
+  {
+    frage: 'Können wir mit nur einer der beiden Kampagnen anfangen?',
+    antwort:
+      'Können Sie — es rechnet sich dann aber schlechter. Der Drehtag ist der teure Teil, und er fällt so oder so an. Die zweite Kampagne kostet uns fast nichts zusätzlich, deshalb ist sie im Paket enthalten. Wer nur die Bewerberkampagne bucht, zahlt fast dasselbe und bekommt die Hälfte.',
+  },
+  {
+    frage: 'Was ist mit Datenschutz und Einwilligungen?',
+    antwort:
+      'Tracking, Consent-Banner und die Einbindung der Werbekonten setzen wir so auf, dass Messung und Rechtslage zusammenpassen. Bewerberdaten laufen über ein Formular auf Ihrer eigenen Seite, nicht über ein fremdes Portal. Für die datenschutzrechtliche Prüfung im Einzelfall bleibt Ihr Berater zuständig, nicht wir.',
+  },
+];
+---
+
+<Basis
+  titel="Leistung — ein Drehtag, zwei Kampagnen | Fokuswerk"
+  beschreibung="Ein Drehtag im Monat, daraus Bewerber- und Kundenkampagne, Karriere- und Anfrageseite, Werbekonten und Messung. Ablauf, Aufwand, Garantie und Preis im Detail."
+>
+  <SeitenKopf
+    augen="Die Leistung"
+    zeilen={['Ein Drehtag.', 'Zwei Ergebnisse.']}
+    lead="Eine Agentur macht Mitarbeitergewinnung. Eine andere macht Kundenwerbung. Zwei Produktionen, zwei Rechnungen, zwei Ansprechpartner — und zweimal läuft jemand mit einer Kamera durch Ihre Halle. Wir machen beides aus demselben Drehtag."
+  />
+
+  <Bildband
+    bild={band}
+    alt="Ein Kameramann filmt einen Mechatroniker, der unter einem auf der Hebebühne stehenden Fahrzeug arbeitet."
+    hoehe="clamp(15rem, 46vh, 30rem)"
+  />
+
+  <Abschnitt nummer="01" marke="Der Umfang">
+    <div class="lst-raster">
+      <Titel zeilen={['Was dazugehört.']} stufe="h2" groesse="d3" />
+      <ul class="liste-strich lst-liste" data-auf>
+        {enthalten.map((t) => <li><Haken />{t}</li>)}
+      </ul>
+    </div>
+  </Abschnitt>
+
+  <Drehtag />
+  <Aufwand />
+  <Ablauf />
+  <Sicherheit />
+  <Preis />
+  <Fragen fragen={fragen} nummer="12" zeilen={['Bevor Sie', 'fragen.']} />
+  <SchlussCta />
+</Basis>
+
+<style>
+  .lst-raster { display: grid; gap: clamp(1.75rem, 4vw, 3rem); }
+  @media (min-width: 56rem) {
+    .lst-raster {
+      grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+      gap: clamp(2.5rem, 6vw, 5rem);
+      align-items: start;
+    }
+  }
+  .lst-liste > li { font-size: 1.02rem; }
+</style>

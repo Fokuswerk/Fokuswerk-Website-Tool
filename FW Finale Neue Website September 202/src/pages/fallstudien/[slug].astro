@@ -1,0 +1,321 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import Basis from '../../layouts/Basis.astro';
+import Abschnitt from '../../components/Abschnitt.astro';
+import Titel from '../../components/Titel.astro';
+import Bildband from '../../components/Bildband.astro';
+import SchlussCta from '../../components/SchlussCta.astro';
+import Pfeil from '../../components/Pfeil.astro';
+import { fallstudien } from '../../data/fallstudien';
+
+export function getStaticPaths() {
+  return fallstudien.map((f) => ({ params: { slug: f.slug }, props: { f } }));
+}
+
+const { f } = Astro.props;
+
+const bilder = import.meta.glob<{ default: ImageMetadata }>('../../assets/*.jpg', { eager: true });
+const holen = (name: string) => bilder[`../../assets/${name}.jpg`].default;
+const titelbild = holen(f.bild);
+---
+
+<Basis
+  titel={`${f.betrieb} — ${f.kennzahlen[1].wert} Bewerbungen | Fokuswerk`}
+  beschreibung={f.kurz}
+>
+  <article>
+    <header class="fs-kopf">
+      <div class="huelle">
+        <nav class="fs-krumen" aria-label="Sie sind hier">
+          <a href="/fallstudien/">Fallstudien</a>
+          <span aria-hidden="true" class="punkt">·</span>
+          <span>{f.betrieb}</span>
+        </nav>
+
+        <p class="label fs-meta" data-auf>
+          {f.branche}<span class="punkt">·</span>{f.ort}
+        </p>
+
+        <Titel zeilen={f.titel} stufe="h1" groesse="d1" klasse="fs-titel" />
+
+        <p class="lead fs-lead" data-auf style="--verzug:300ms">{f.kurz}</p>
+
+        <ul class="fs-kennzahlen" data-auf style="--verzug:380ms">
+          {f.kennzahlen.map((k) => (
+            <li>
+              <span class="fs-kz-wert ziffer">{k.wert}</span>
+              <span class="fs-kz-label">{k.label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </header>
+
+    <Bildband
+      bild={titelbild}
+      alt={`Drehtag im Betrieb ${f.betrieb}: ein Kameramann filmt einen Mechatroniker an der Hebebühne.`}
+      hoehe="clamp(16rem, 58vh, 38rem)"
+      bu={`Der Drehtag bei ${f.betrieb}. Eigene Leute, eigene Hebebühnen — keine Models, keine Studiobilder.`}
+    />
+
+    <Abschnitt nummer="01" marke="Ausgangslage">
+      <div class="fs-raster">
+        <Titel zeilen={['Neun Monate', 'gesucht.']} stufe="h2" groesse="d3" />
+        <div class="fliess" data-auf>
+          {f.ausgangslage.map((t) => <p>{t}</p>)}
+        </div>
+      </div>
+    </Abschnitt>
+
+    <Abschnitt nummer="02" marke="Das Problem" ton="sand">
+      <div class="fs-raster">
+        <Titel zeilen={['Es liegt nicht', 'am Betrieb.']} stufe="h2" groesse="d3" />
+        <ol class="fs-bloecke">
+          {f.problem.map((b, i) => (
+            <li data-auf style={`--verzug:${i * 90}ms`}>
+              <span class="fs-nr ziffer">{String(i + 1).padStart(2, '0')}</span>
+              <div>
+                <h3 class="d4">{b.kopf}</h3>
+                <p class="fliess fliess-2">{b.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </Abschnitt>
+
+    <Abschnitt nummer="03" marke="Das Vorgehen">
+      <div class="fs-raster">
+        <Titel zeilen={['Was wir', 'gemacht haben.']} stufe="h2" groesse="d3" />
+        <ol class="fs-bloecke">
+          {f.vorgehen.map((b, i) => (
+            <li data-auf style={`--verzug:${i * 90}ms`}>
+              <span class="fs-nr ziffer">{String(i + 1).padStart(2, '0')}</span>
+              <div>
+                <h3 class="d4">{b.kopf}</h3>
+                <p class="fliess fliess-2">{b.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <ul class="fs-leistung" data-auf>
+        {f.leistung.map((l) => <li>{l}</li>)}
+      </ul>
+    </Abschnitt>
+
+    <Abschnitt nummer="04" marke="Das Ergebnis" ton="dunkel" hoehe="weit">
+      <Titel zeilen={['Das Ergebnis.']} stufe="h2" groesse="d2" klasse="fs-erg-titel" />
+
+      <ul class="fs-erg">
+        {f.ergebnis.map((k, i) => (
+          <li data-auf style={`--verzug:${i * 90}ms`}>
+            <span class="fs-erg-wert ziffer">{k.wert}</span>
+            <span class="fs-erg-label">{k.label}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div class="fs-erg-unten">
+        <div data-auf>
+          {f.ergebnisText.map((t) => <p class="fs-erg-satz">{t}</p>)}
+          {f.seitdem && (
+            <div class="fs-seitdem">
+              <p class="label">{f.seitdem.kopf}</p>
+              <p class="fliess fliess-2">{f.seitdem.text}</p>
+            </div>
+          )}
+        </div>
+
+        <aside class="fs-beleg" data-auf style="--verzug:140ms">
+          <p class="label">Nachprüfbar</p>
+          <p class="fs-beleg-satz">{f.belegsatz}</p>
+        </aside>
+      </div>
+    </Abschnitt>
+
+    <Abschnitt nummer="05" marke="Der Übertrag">
+      <div class="fs-raster">
+        <Titel zeilen={['Was andere', 'davon haben.']} stufe="h2" groesse="d3" />
+        <ol class="fs-bloecke">
+          {f.learnings.map((b, i) => (
+            <li data-auf style={`--verzug:${i * 90}ms`}>
+              <span class="fs-nr ziffer">{String(i + 1).padStart(2, '0')}</span>
+              <div>
+                <h3 class="d4">{b.kopf}</h3>
+                <p class="fliess fliess-2">{b.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <p class="fs-zurueck">
+        <a href="/fallstudien/" class="link">Alle Fallstudien<Pfeil /></a>
+      </p>
+    </Abschnitt>
+
+    <SchlussCta />
+  </article>
+</Basis>
+
+<style>
+  .fs-kopf {
+    padding-top: clamp(6.5rem, 14vh, 10rem);
+    padding-bottom: clamp(2.5rem, 5vw, 4rem);
+  }
+  .fs-krumen {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    font-family: var(--schrift-display);
+    font-size: 0.8rem;
+    color: var(--tinte-3);
+    margin-bottom: clamp(1.75rem, 4vw, 3rem);
+  }
+  .fs-krumen a { position: relative; padding-bottom: 0.15em; }
+  .fs-krumen a::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+    background: currentColor; transform: scaleX(0); transform-origin: left;
+    transition: transform .45s var(--ease);
+  }
+  .fs-krumen a:hover::after { transform: scaleX(1); }
+
+  .fs-meta { display: flex; flex-wrap: wrap; align-items: baseline; margin-bottom: clamp(1rem, 2vw, 1.5rem); }
+  .fs-titel { max-width: 16ch; }
+  .fs-lead { margin-top: clamp(1.5rem, 3vw, 2.25rem); max-width: 50ch; }
+
+  .fs-kennzahlen {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.25rem, 3vw, 2rem);
+    margin-top: clamp(2.5rem, 5vw, 3.5rem);
+    padding-top: clamp(1.5rem, 3vw, 2rem);
+    border-top: 1px solid var(--linie);
+  }
+  @media (min-width: 40rem) { .fs-kennzahlen { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .fs-kennzahlen li { display: grid; gap: 0.25rem; align-content: start; }
+  .fs-kz-wert {
+    font-family: var(--schrift-display);
+    font-size: clamp(1.5rem, 1.15rem + 1.5vw, 2.35rem);
+    font-weight: 600;
+    letter-spacing: -0.034em;
+    line-height: 1;
+  }
+  .fs-kz-label {
+    font-family: var(--schrift-display);
+    font-size: 0.74rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--tinte-3);
+    line-height: 1.4;
+  }
+
+  .fs-raster { display: grid; gap: clamp(1.75rem, 4vw, 3rem); }
+  @media (min-width: 56rem) {
+    .fs-raster {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.35fr);
+      gap: clamp(2.5rem, 6vw, 5rem);
+      align-items: start;
+    }
+  }
+
+  .fs-bloecke { display: grid; }
+  .fs-bloecke > li {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    gap: 0 clamp(0.75rem, 2vw, 1.5rem);
+    padding-block: clamp(1.35rem, 3vw, 2rem);
+    border-top: 1px solid var(--linie);
+  }
+  .fs-bloecke > li:last-child { border-bottom: 1px solid var(--linie); }
+  .sand .fs-bloecke > li { border-color: var(--linie-stark); }
+  .fs-nr {
+    font-family: var(--schrift-display);
+    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em;
+    color: var(--signal); padding-top: 0.42em;
+  }
+  .fs-bloecke h3 { margin-bottom: 0.5em; }
+  .fs-bloecke p { max-width: 54ch; }
+
+  .fs-leistung {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: clamp(2rem, 4vw, 3rem);
+  }
+  .fs-leistung li {
+    font-family: var(--schrift-display);
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: -0.004em;
+    padding: 0.5em 0.85em;
+    border: 1px solid var(--linie-stark);
+    border-radius: var(--radius);
+    color: var(--tinte-2);
+  }
+
+  /* ---------- Ergebnis, dunkel ---------- */
+  .fs-erg-titel { margin-bottom: clamp(2.5rem, 5vw, 3.5rem); }
+  .fs-erg {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid var(--linie-dunkel);
+  }
+  @media (min-width: 56rem) { .fs-erg { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .fs-erg > li {
+    padding: clamp(1.5rem, 3.5vw, 2.5rem) var(--r-3) clamp(1.5rem, 3.5vw, 2.5rem) 0;
+    border-bottom: 1px solid var(--linie-dunkel);
+    display: grid; gap: 0.4rem; align-content: start;
+  }
+  @media (min-width: 56rem) {
+    .fs-erg > li + li { border-left: 1px solid var(--linie-dunkel); padding-left: clamp(1.25rem, 2.5vw, 2rem); }
+  }
+  @media (max-width: 55.999rem) {
+    .fs-erg > li:nth-child(2n) { border-left: 1px solid var(--linie-dunkel); padding-left: var(--r-3); }
+  }
+  .fs-erg-wert {
+    font-family: var(--schrift-display);
+    font-size: var(--t-zahl);
+    font-weight: 600; letter-spacing: -0.046em; line-height: 0.92;
+  }
+  .fs-erg-label {
+    font-family: var(--schrift-display);
+    font-size: 0.8rem; line-height: 1.45; color: var(--auf-dunkel-2); max-width: 18ch;
+  }
+
+  .fs-erg-unten {
+    display: grid;
+    gap: clamp(2.5rem, 5vw, 4rem);
+    padding-top: clamp(2.5rem, 5vw, 4rem);
+  }
+  @media (min-width: 62rem) {
+    .fs-erg-unten { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(3rem, 6vw, 5rem); align-items: start; }
+  }
+  .fs-erg-satz {
+    font-family: var(--schrift-display);
+    font-size: clamp(1.3rem, 1.05rem + 1.1vw, 1.95rem);
+    font-weight: 600; letter-spacing: -0.028em; line-height: 1.22;
+    max-width: 20ch;
+  }
+  .fs-seitdem { margin-top: clamp(2rem, 4vw, 2.75rem); }
+  .fs-seitdem .label { display: block; margin-bottom: 0.9em; }
+  .fs-seitdem p { max-width: 50ch; }
+
+  .fs-beleg {
+    padding-top: clamp(1.25rem, 2.5vw, 1.75rem);
+    border-top: 1px solid var(--linie-dunkel);
+  }
+  .fs-beleg .label { display: block; margin-bottom: 0.9em; }
+  .fs-beleg-satz {
+    font-family: var(--schrift-text);
+    font-size: clamp(1.08rem, 1rem + 0.4vw, 1.32rem);
+    line-height: 1.5;
+    max-width: 36ch;
+  }
+
+  .fs-zurueck { margin-top: clamp(2.5rem, 5vw, 3.5rem); }
+</style>

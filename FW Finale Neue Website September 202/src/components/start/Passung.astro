@@ -1,0 +1,79 @@
+---
+import Abschnitt from '../Abschnitt.astro';
+import Titel from '../Titel.astro';
+import Haken from '../Haken.astro';
+
+const passt = [
+  'Sie haben eine eigene Werkstatt oder Halle — einen Ort, an dem etwas passiert, das man zeigen kann.',
+  'Ein gewonnener Kunde bringt Ihnen vierstellig, eine besetzte Stelle fünfstellig im Jahr.',
+  'Ihre Kunden kommen, weil sie müssen: Schaden, Verschleiß, Prüfung, Ausfall, Anlass.',
+  'Sie wollen wachsen — und haben die Kapazität, mehr Anfragen auch zu bedienen.',
+  'Sie können auf eine Bewerbung innerhalb von zwei Tagen antworten.',
+];
+
+const passtNicht = [
+  'Sie suchen vor allem jemanden, der günstiger ist als der letzte Dienstleister.',
+  'Ihr Angebot ist verzichtbar oder stark saisonal, und ein einzelner gewonnener Kunde trägt die Werbekosten nicht.',
+  'Sie sind zufrieden mit der Größe Ihres Betriebs. Das ist völlig in Ordnung — wir wären dann nur die Falschen.',
+  'Sie möchten Reichweite, Aufrufe und Follower. Wir messen Bewerbungen und Anfragen.',
+  'Sie erwarten Ergebnisse, ohne einen halben Tag im Monat abzugeben.',
+];
+---
+
+<Abschnitt nummer="09" marke="Die Passung" ton="sand">
+  <div class="pas-kopf">
+    <Titel zeilen={['Für wen das ist.', 'Und für wen nicht.']} stufe="h2" groesse="d2" />
+    <p class="lead" data-auf style="--verzug:140ms">
+      Wir betreuen zehn Betriebe, nicht fünfzig. Das ist keine Verknappung, sondern
+      Kapazität — und der Grund, warum wir lieber vorher sagen, wann es nicht passt.
+    </p>
+  </div>
+
+  <div class="pas-raster">
+    <div class="pas-spalte" data-auf>
+      <p class="label pas-titel">Passt</p>
+      <ul class="liste-strich">
+        {passt.map((t) => <li><Haken />{t}</li>)}
+      </ul>
+    </div>
+
+    <div class="pas-spalte pas-nein" data-auf style="--verzug:120ms">
+      <p class="label pas-titel">Passt nicht</p>
+      <ul class="liste-strich">
+        {passtNicht.map((t) => <li><span class="strich" aria-hidden="true"></span>{t}</li>)}
+      </ul>
+    </div>
+  </div>
+</Abschnitt>
+
+<style>
+  .pas-kopf {
+    display: grid;
+    gap: clamp(1.75rem, 4vw, 3rem);
+    padding-bottom: clamp(2.5rem, 6vw, 4rem);
+  }
+  @media (min-width: 56rem) {
+    .pas-kopf {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(2.5rem, 6vw, 6rem);
+      align-items: end;
+    }
+  }
+  .pas-kopf .lead { max-width: 44ch; }
+
+  .pas-raster { display: grid; gap: clamp(2.5rem, 5vw, 4rem); }
+  @media (min-width: 56rem) {
+    .pas-raster { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(2.5rem, 6vw, 5rem); }
+  }
+  .pas-titel { display: block; margin-bottom: 1.4em; }
+  .pas-spalte .liste-strich > li { border-color: var(--linie-stark); }
+  .pas-spalte .liste-strich > li { font-family: var(--schrift-display); font-size: 0.98rem; line-height: 1.55; }
+  .pas-nein .liste-strich > li { color: var(--tinte-2); }
+
+  .strich { display: block; width: 13px; height: 13px; translate: 0 0.24em; position: relative; }
+  .strich::before {
+    content: '';
+    position: absolute; left: 1px; right: 1px; top: 50%;
+    height: 1px; background: var(--linie-stark);
+  }
+</style>

@@ -1,0 +1,178 @@
+---
+import Abschnitt from '../Abschnitt.astro';
+import Titel from '../Titel.astro';
+import { preis, rechnung } from '../../data/firma';
+
+const einrichtung = [
+  { text: 'Werbekonten, Messung, Zielgruppen', wert: '1.490 €' },
+  { text: 'Karriereseite und Bewerberfunnel', wert: '2.490 €' },
+  { text: 'Anfrageseite für Neukunden', wert: '1.290 €' },
+];
+const laufend = [
+  { text: 'Ein Drehtag im Betrieb, inklusive Produktion', wert: '1.990 €' },
+  { text: 'Bewerberkampagne, laufend betreut', wert: '690 €' },
+  { text: 'Neukundenkampagne, Meta und Google', wert: '990 €' },
+];
+---
+
+<Abschnitt nummer="11" marke="Der Preis" ton="sand" id="preis">
+  <div class="pre-kopf">
+    <Titel zeilen={['Was es kostet.']} stufe="h2" groesse="d2" />
+    <p class="lead" data-auf style="--verzug:140ms">
+      Der Preis steht auf dieser Seite, damit Sie ihn nicht in einem Gespräch
+      erfragen müssen. Wenn er für Ihren Betrieb nicht passt, haben wir beide
+      zwanzig Minuten gespart.
+    </p>
+  </div>
+
+  <div class="pre-raster">
+    <div class="pre-listen">
+      <div class="pre-liste" data-auf>
+        <p class="label">Einrichtung, einmalig</p>
+        <table class="buch">
+          <tbody>
+            {einrichtung.map((z) => (
+              <tr><th scope="row">{z.text}</th><td class="ziffer ziffer-tabelle">{z.wert}</td></tr>
+            ))}
+            <tr class="buch-summe"><th scope="row">zusammen</th><td class="ziffer ziffer-tabelle">5.270 €</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pre-liste" data-auf style="--verzug:100ms">
+        <p class="label">Laufend, monatlich</p>
+        <table class="buch">
+          <tbody>
+            {laufend.map((z) => (
+              <tr><th scope="row">{z.text}</th><td class="ziffer ziffer-tabelle">{z.wert}</td></tr>
+            ))}
+            <tr class="buch-summe"><th scope="row">zusammen</th><td class="ziffer ziffer-tabelle">3.670 €</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="pre-karte" data-auf style="--verzug:160ms">
+      <p class="label pre-karte-label">Im Paket</p>
+      <p class="pre-zahl ziffer">
+        <span data-zahl={preis.monat} data-auf>0</span>&#8239;€
+      </p>
+      <p class="pre-zahl-sub">im Monat, netto</p>
+
+      <ul class="pre-details">
+        <li>Die Einrichtung im Wert von 5.270 € ist enthalten.</li>
+        <li>{preis.laufzeit} Monate Laufzeit, die ersten {preis.kuendbar} monatlich kündbar.</li>
+        <li>Das Werbebudget zahlen Sie direkt an Meta und Google — rund {preis.budget} € im Monat reichen.</li>
+      </ul>
+
+      <p class="pre-gegen">
+        <span class="ziffer">{preis.monat.toLocaleString('de-DE')} €</span> im Monat.
+        Eine unbesetzte Stelle:
+        <span class="ziffer">{rechnung.monatsverlust.toLocaleString('de-DE')} €</span> im Monat.
+      </p>
+    </div>
+  </div>
+
+  <p class="quelle pre-quelle">
+    Alle Beträge netto zuzüglich Umsatzsteuer. Der Umfang wird vor Vertragsschluss
+    auf Ihren Betrieb zugeschnitten; die hier genannten Beträge sind der Rahmen, in
+    dem wir arbeiten, und keine unverbindliche Spanne.
+  </p>
+</Abschnitt>
+
+<style>
+  .pre-kopf {
+    display: grid;
+    gap: clamp(1.75rem, 4vw, 3rem);
+    padding-bottom: clamp(2.5rem, 6vw, 4rem);
+  }
+  @media (min-width: 56rem) {
+    .pre-kopf {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(2.5rem, 6vw, 6rem);
+      align-items: end;
+    }
+  }
+  .pre-kopf .lead { max-width: 44ch; }
+
+  .pre-raster { display: grid; gap: clamp(2.5rem, 5vw, 3.5rem); }
+  @media (min-width: 62rem) {
+    .pre-raster {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: clamp(2.5rem, 6vw, 5rem);
+      align-items: start;
+    }
+  }
+  .pre-listen { display: grid; gap: clamp(2rem, 4vw, 3rem); }
+  .pre-liste .label { display: block; margin-bottom: 0.9em; }
+
+  .buch { width: 100%; border-collapse: collapse; }
+  .buch th, .buch td {
+    padding-block: 0.85rem;
+    border-top: 1px solid var(--linie-stark);
+    font-family: var(--schrift-display);
+    font-weight: 400;
+    text-align: left;
+    vertical-align: baseline;
+  }
+  .buch tr:last-child th, .buch tr:last-child td { border-bottom: 1px solid var(--linie-stark); }
+  .buch th { font-size: 0.95rem; letter-spacing: -0.008em; color: var(--tinte-2); padding-right: var(--r-4); }
+  .buch td { text-align: right; white-space: nowrap; font-size: 1.02rem; font-weight: 500; letter-spacing: -0.018em; }
+  .buch-summe th { color: var(--tinte); font-weight: 500; }
+  .buch-summe td { font-weight: 600; }
+
+  /* ---------- Preiskarte ---------- */
+  .pre-karte {
+    background: var(--weiss);
+    border: 1px solid var(--linie-stark);
+    border-radius: var(--radius);
+    padding: clamp(1.5rem, 3.5vw, 2.5rem);
+  }
+  .pre-karte-label { display: block; margin-bottom: 1.2em; }
+  .pre-zahl {
+    font-family: var(--schrift-display);
+    font-size: clamp(3rem, 1.9rem + 4.9vw, 5.25rem);
+    font-weight: 600;
+    letter-spacing: -0.046em;
+    line-height: 0.92;
+    color: var(--signal);
+  }
+  .pre-zahl-sub {
+    font-family: var(--schrift-display);
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--tinte-2);
+    margin-top: 0.7em;
+  }
+  .pre-details {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: clamp(1.5rem, 3vw, 2rem);
+    padding-top: clamp(1.25rem, 2.5vw, 1.6rem);
+    border-top: 1px solid var(--linie);
+  }
+  .pre-details li {
+    font-family: var(--schrift-display);
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--tinte-2);
+    padding-left: 1.1em;
+    position: relative;
+  }
+  .pre-details li::before {
+    content: '';
+    position: absolute; left: 0; top: 0.66em;
+    width: 0.45em; height: 1px; background: var(--linie-stark);
+  }
+  .pre-gegen {
+    margin-top: clamp(1.5rem, 3vw, 2rem);
+    padding-top: clamp(1.25rem, 2.5vw, 1.6rem);
+    border-top: 1px solid var(--linie);
+    font-family: var(--schrift-display);
+    font-size: clamp(0.98rem, 0.94rem + 0.22vw, 1.12rem);
+    font-weight: 600;
+    letter-spacing: -0.016em;
+    line-height: 1.45;
+  }
+  .pre-quelle { margin-top: clamp(2rem, 4vw, 3rem); }
+</style>

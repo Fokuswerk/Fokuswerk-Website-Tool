@@ -1,0 +1,68 @@
+---
+import Basis from './Basis.astro';
+import Titel from '../components/Titel.astro';
+
+interface Props { titel: string; beschreibung: string; ueberschrift: string; stand?: string }
+const { titel, beschreibung, ueberschrift, stand } = Astro.props;
+---
+
+<Basis titel={titel} beschreibung={beschreibung} noindex>
+  <section class="rt-kopf">
+    <div class="huelle">
+      <p class="label" data-auf>Rechtliches</p>
+      <Titel zeilen={[ueberschrift]} stufe="h1" groesse="d2" klasse="rt-titel" />
+      {stand && <p class="klein rt-stand" data-auf style="--verzug:220ms">Stand: {stand}</p>}
+    </div>
+  </section>
+
+  <section class="rt-koerper">
+    <div class="huelle">
+      <div class="rt-text"><slot /></div>
+    </div>
+  </section>
+</Basis>
+
+<style>
+  .rt-kopf { padding-top: clamp(7rem, 15vh, 10rem); padding-bottom: clamp(1.75rem, 3.5vw, 2.5rem); }
+  .rt-kopf .label { display: block; margin-bottom: clamp(1rem, 2vw, 1.5rem); }
+  .rt-titel { max-width: 18ch; }
+  .rt-stand { margin-top: 1.25rem; }
+
+  .rt-koerper { padding-bottom: var(--abschnitt); }
+  .rt-text {
+    max-width: 68ch;
+    padding-top: clamp(1.75rem, 3.5vw, 2.5rem);
+    border-top: 1px solid var(--linie);
+  }
+
+  .rt-text :global(h2) {
+    font-size: clamp(1.18rem, 1.05rem + 0.55vw, 1.45rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-top: 2.6em;
+    margin-bottom: 0.7em;
+  }
+  .rt-text :global(h2:first-child) { margin-top: 0; }
+  .rt-text :global(h3) {
+    font-size: 1.02rem;
+    font-weight: 600;
+    letter-spacing: -0.014em;
+    margin-top: 1.9em;
+    margin-bottom: 0.5em;
+  }
+  .rt-text :global(p) { margin-bottom: 1.05em; color: var(--tinte-2); }
+  .rt-text :global(ul) { margin-bottom: 1.05em; display: grid; gap: 0.45rem; }
+  .rt-text :global(li) {
+    color: var(--tinte-2);
+    padding-left: 1.15em;
+    position: relative;
+  }
+  .rt-text :global(li)::before {
+    content: '';
+    position: absolute; left: 0; top: 0.72em;
+    width: 0.5em; height: 1px; background: var(--linie-stark);
+  }
+  .rt-text :global(a) { text-decoration: underline; text-underline-offset: 0.18em; color: var(--tinte); }
+  .rt-text :global(a:hover) { color: var(--signal); }
+  .rt-text :global(address) { font-style: normal; color: var(--tinte-2); line-height: 1.7; margin-bottom: 1.05em; }
+</style>

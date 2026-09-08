@@ -1,0 +1,359 @@
+---
+import { firma, navigation, cta } from '../data/firma';
+import Wortmarke from './Wortmarke.astro';
+import Pfeil from './Pfeil.astro';
+
+const pfad = Astro.url.pathname;
+---
+
+<header class="kopf" data-kopf>
+  <div class="kopf-grund" aria-hidden="true"></div>
+
+  <div class="kopf-innen huelle">
+    <a href="/" class="kopf-marke" aria-label="Fokuswerk, zur Startseite">
+      <Wortmarke hoehe={19} />
+    </a>
+
+    <div class="kopf-rechts">
+      <a href={`tel:${firma.telefon}`} class="kopf-tel ziffer">{firma.telefonAnzeige}</a>
+      <button
+        type="button"
+        class="brenner"
+        data-schalter
+        aria-expanded="false"
+        aria-controls="hauptmenue"
+      >
+        <span class="nur-sr">Menü öffnen</span>
+        <span class="brenner-linien" aria-hidden="true">
+          <span></span><span></span>
+        </span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="overlay" id="hauptmenue" data-overlay hidden>
+  <div class="overlay-grund" aria-hidden="true"></div>
+
+  <nav class="overlay-innen huelle" aria-label="Hauptmenü">
+    <p class="overlay-augen label">
+      Ein Drehtag im Monat<span class="punkt">·</span>Zwei Kampagnen<span class="punkt">·</span>Oldenburg
+    </p>
+
+    <ul class="menue">
+      {navigation.map((eintrag, i) => (
+        <li class="menue-zeile" style={`--i:${i}`}>
+          <a
+            href={eintrag.pfad}
+            class="menue-link"
+            aria-current={pfad.startsWith(eintrag.pfad) ? 'page' : undefined}
+          >
+            <span class="menue-titel"><span>{eintrag.titel}</span></span>
+            <span class="menue-zeile-text">{eintrag.zeile}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <div class="menue-seite">
+      <a href={cta.ziel} class="knopf">{cta.primaer}<Pfeil /></a>
+      <p class="knopf-notiz">{cta.notiz}</p>
+
+      <div class="menue-daten">
+        <a href={`tel:${firma.telefon}`} class="menue-tel ziffer">{firma.telefonAnzeige}</a>
+        <a href={`mailto:${firma.mail}`} class="menue-mail">{firma.mail}</a>
+        <p class="klein">{firma.strasse}<br />{firma.plz} {firma.ort}</p>
+      </div>
+    </div>
+  </nav>
+</div>
+
+<style>
+  /* ---------- Kopfleiste ---------- */
+  .kopf {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 80;
+    color: var(--tinte);
+  }
+  .kopf-grund {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--papier) 94%, transparent);
+    backdrop-filter: blur(20px) saturate(1.2);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    border-bottom: 1px solid transparent;
+    opacity: 0;
+    transition: opacity .5s var(--ease), border-color .5s var(--ease);
+  }
+  .kopf[data-gescrollt] .kopf-grund { opacity: 1; border-bottom-color: var(--linie); }
+
+  .kopf-innen {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--r-4);
+    padding-block: clamp(1.1rem, 0.7rem + 1.8vw, 1.9rem);
+  }
+  .kopf-marke { display: block; padding-block: 0.35rem; }
+
+  .kopf-rechts { display: flex; align-items: center; gap: clamp(1rem, 3vw, 2.25rem); }
+
+  .kopf-tel {
+    font-family: var(--schrift-display);
+    font-size: 0.88rem;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    color: var(--tinte-2);
+    position: relative;
+    padding-bottom: 0.2em;
+  }
+  .kopf-tel::after {
+    content: '';
+    position: absolute; left: 0; right: 0; bottom: 0;
+    height: 1px; background: currentColor;
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .45s var(--ease);
+  }
+  .kopf-tel:hover::after { transform: scaleX(1); }
+  @media (max-width: 40rem) { .kopf-tel { display: none; } }
+
+  /* ---------- Brenner: zwei Linien ---------- */
+  .brenner {
+    display: grid;
+    place-items: center;
+    width: 44px; height: 44px;
+    margin-right: -10px;
+  }
+  .brenner-linien {
+    position: relative;
+    display: block;
+    width: 30px; height: 13px;
+  }
+  .brenner-linien > span {
+    position: absolute;
+    left: 0;
+    width: 100%; height: 1.5px;
+    background: currentColor;
+    transition: transform .55s var(--ease), width .55s var(--ease);
+  }
+  .brenner-linien > span:first-child { top: 0; transform-origin: 50% 50%; }
+  .brenner-linien > span:last-child  { bottom: 0; transform-origin: 50% 50%; }
+
+  /* Hover: Linien versetzen sich gegenläufig */
+  .brenner:hover .brenner-linien > span:first-child { transform: translateX(-16%); width: 84%; }
+  .brenner:hover .brenner-linien > span:last-child  { transform: translateX(16%);  width: 84%; }
+
+  /* Offen: Kreuz */
+  .brenner[aria-expanded='true'] .brenner-linien > span:first-child {
+    transform: translateY(5.75px) rotate(45deg); width: 100%;
+  }
+  .brenner[aria-expanded='true'] .brenner-linien > span:last-child {
+    transform: translateY(-5.75px) rotate(-45deg); width: 100%;
+  }
+
+  /* ---------- Overlay ---------- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: grid;
+    align-items: end;
+    color: var(--tinte);
+  }
+  .overlay[hidden] { display: none; }
+
+  .overlay-grund {
+    position: absolute;
+    inset: 0;
+    background: var(--papier);
+    backdrop-filter: blur(26px) saturate(1.2);
+    -webkit-backdrop-filter: blur(26px) saturate(1.2);
+    opacity: 0;
+    transition: opacity .6s var(--ease);
+  }
+  .overlay[data-offen] .overlay-grund { opacity: 1; }
+
+  .overlay-augen {
+    grid-column: 1 / -1;
+    align-self: start;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    margin: 0 0 auto;
+  }
+  .overlay-augen .punkt { padding-inline: 0.7em; opacity: 0.45; }
+
+  .overlay-innen {
+    position: relative;
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 5rem);
+    padding-top: clamp(6.5rem, 12vh, 9rem);
+    padding-bottom: clamp(2rem, 5vh, 4rem);
+    align-content: end;
+    min-height: 100%;
+  }
+  @media (min-width: 62rem) {
+    .overlay-innen {
+      grid-template-columns: minmax(0, 1fr) minmax(17rem, 22rem);
+      grid-template-rows: auto 1fr;
+      align-items: end;
+      column-gap: clamp(2.5rem, 6vw, 5rem);
+      row-gap: clamp(2rem, 5vh, 4rem);
+    }
+  }
+
+  /* ---------- Menüeinträge ---------- */
+  .menue { border-top: 1px solid var(--linie); }
+
+  .menue-zeile { border-bottom: 1px solid var(--linie); }
+
+  .menue-link {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--r-4);
+    padding-block: clamp(0.7rem, 1.9vw, 1.15rem);
+    transition: opacity .45s var(--ease), padding-left .55s var(--ease);
+  }
+  .menue:hover .menue-link { opacity: 0.32; }
+  .menue .menue-link:hover { opacity: 1; padding-left: clamp(0.5rem, 1.4vw, 1.1rem); }
+
+  .menue-titel {
+    display: block;
+    overflow: hidden;
+    font-family: var(--schrift-display);
+    font-size: clamp(2.1rem, 1.1rem + 4.4vw, 4.4rem);
+    font-weight: 600;
+    letter-spacing: -0.032em;
+    line-height: 1.12;
+  }
+  .menue-titel > span {
+    display: block;
+    transform: translateY(105%);
+    transition: transform .85s var(--ease) calc(120ms + var(--i) * 65ms);
+  }
+  .overlay[data-offen] .menue-titel > span { transform: none; }
+
+  .menue-link[aria-current='page'] .menue-titel { color: var(--signal); }
+
+  .menue-zeile-text {
+    display: none;
+    font-family: var(--schrift-display);
+    font-size: 0.83rem;
+    letter-spacing: -0.004em;
+    color: var(--tinte-3);
+    text-align: right;
+    flex: none;
+    opacity: 0;
+    transition: opacity .45s var(--ease);
+  }
+  @media (min-width: 48rem) { .menue-zeile-text { display: block; } }
+  .menue-link:hover .menue-zeile-text { opacity: 1; }
+
+  /* ---------- Seitenspalte ---------- */
+  .menue-seite {
+    display: grid;
+    gap: var(--r-3);
+    align-content: end;
+    opacity: 0;
+    translate: 0 14px;
+    transition: opacity .7s var(--ease) .35s, translate .7s var(--ease) .35s;
+  }
+  .overlay[data-offen] .menue-seite { opacity: 1; translate: none; }
+  .menue-seite .knopf { justify-self: start; }
+
+  .menue-daten {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: var(--r-4);
+    padding-top: var(--r-4);
+    border-top: 1px solid var(--linie);
+    font-family: var(--schrift-display);
+  }
+  .menue-tel {
+    font-size: clamp(1.15rem, 1rem + 0.6vw, 1.4rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .menue-mail { font-size: 0.95rem; color: var(--tinte-2); }
+  .menue-tel:hover, .menue-mail:hover { color: var(--signal); }
+  .menue-daten .klein { margin-top: 0.4rem; font-family: var(--schrift-display); font-size: 0.83rem; }
+
+  @media (max-width: 61.999rem) {
+    .overlay-innen { padding-bottom: clamp(2.5rem, 6vh, 4rem); }
+    .menue-link { padding-block: 0.62rem; }
+    .menue-titel { font-size: clamp(2.4rem, 1.6rem + 3.6vw, 3.2rem); }
+    .menue-seite { gap: var(--r-3); }
+    .menue-daten { margin-top: var(--r-3); padding-top: var(--r-3); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .overlay-grund, .menue-titel > span, .menue-seite,
+    .brenner-linien > span, .kopf-grund { transition: none; }
+    .menue-titel > span { transform: none; }
+    .menue-seite { opacity: 1; translate: none; }
+    .overlay-grund { opacity: 1; }
+  }
+</style>
+
+<script>
+  const kopf = document.querySelector<HTMLElement>('[data-kopf]');
+  const schalter = document.querySelector<HTMLButtonElement>('[data-schalter]');
+  const overlay = document.querySelector<HTMLElement>('[data-overlay]');
+  if (kopf && schalter && overlay) {
+    const beschriftung = schalter.querySelector('.nur-sr')!;
+    let offen = false;
+    let letzterFokus: HTMLElement | null = null;
+
+    const fokussierbar = () =>
+      Array.from(
+        overlay.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'),
+      );
+
+    function setzen(neu: boolean) {
+      offen = neu;
+      schalter!.setAttribute('aria-expanded', String(offen));
+      beschriftung.textContent = offen ? 'Menü schließen' : 'Menü öffnen';
+      document.body.classList.toggle('menue-offen', offen);
+
+      if (offen) {
+        letzterFokus = document.activeElement as HTMLElement;
+        overlay!.hidden = false;
+        requestAnimationFrame(() => overlay!.setAttribute('data-offen', ''));
+      } else {
+        overlay!.removeAttribute('data-offen');
+        window.setTimeout(() => {
+          if (!offen) overlay!.hidden = true;
+        }, 620);
+        letzterFokus?.focus();
+      }
+    }
+
+    schalter.addEventListener('click', () => setzen(!offen));
+
+    document.addEventListener('keydown', (e) => {
+      if (!offen) return;
+      if (e.key === 'Escape') { setzen(false); schalter!.focus(); return; }
+      if (e.key !== 'Tab') return;
+      const ziele = [schalter!, ...fokussierbar()];
+      const erster = ziele[0];
+      const letzter = ziele[ziele.length - 1];
+      if (e.shiftKey && document.activeElement === erster) { e.preventDefault(); letzter.focus(); }
+      else if (!e.shiftKey && document.activeElement === letzter) { e.preventDefault(); erster.focus(); }
+    });
+
+    // Kopfleiste bekommt ab dem ersten Scrollen Grund und Haarlinie.
+    let gemerkt = false;
+    const pruefen = () => {
+      const jetzt = window.scrollY > 24;
+      if (jetzt !== gemerkt) {
+        gemerkt = jetzt;
+        kopf!.toggleAttribute('data-gescrollt', jetzt);
+      }
+    };
+    pruefen();
+    window.addEventListener('scroll', pruefen, { passive: true });
+  }
+</script>

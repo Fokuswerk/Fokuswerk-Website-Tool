@@ -1,0 +1,37 @@
+---
+import Basis from '../layouts/Basis.astro';
+import Titel from '../components/Titel.astro';
+import Pfeil from '../components/Pfeil.astro';
+import { navigation } from '../data/firma';
+---
+
+<Basis titel="Seite nicht gefunden | Fokuswerk" beschreibung="Diese Seite gibt es nicht." noindex>
+  <section class="nf">
+    <div class="huelle nf-innen">
+      <p class="label" data-auf>Fehler 404</p>
+      <Titel zeilen={['Diese Seite', 'gibt es nicht.']} stufe="h1" groesse="d2" klasse="nf-titel" />
+      <p class="lead nf-lead" data-auf style="--verzug:280ms">
+        Möglicherweise hat sich die Adresse geändert. Hier geht es weiter:
+      </p>
+      <ul class="nf-liste" data-auf style="--verzug:360ms">
+        {navigation.map((e) => (
+          <li><a href={e.pfad} class="link">{e.titel}<Pfeil /></a></li>
+        ))}
+      </ul>
+    </div>
+  </section>
+</Basis>
+
+<style>
+  .nf { display: grid; align-items: center; min-height: 78svh; padding-block: clamp(7rem, 15vh, 10rem) var(--r-8); }
+  .nf-innen { width: 100%; }
+  .nf .label { display: block; margin-bottom: clamp(1rem, 2vw, 1.5rem); }
+  .nf-titel { max-width: 14ch; }
+  .nf-lead { margin-top: clamp(1.5rem, 3vw, 2.25rem); max-width: 40ch; }
+  .nf-liste {
+    display: grid; gap: 0.85rem; justify-items: start;
+    margin-top: clamp(2rem, 4vw, 3rem);
+    padding-top: clamp(1.5rem, 3vw, 2rem);
+    border-top: 1px solid var(--linie);
+  }
+</style>

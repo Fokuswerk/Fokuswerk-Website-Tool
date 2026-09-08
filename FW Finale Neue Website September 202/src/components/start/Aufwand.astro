@@ -1,0 +1,92 @@
+---
+import Abschnitt from '../Abschnitt.astro';
+import Titel from '../Titel.astro';
+import Haken from '../Haken.astro';
+
+const ihre = [
+  'Einen halben Tag im Monat für den Dreh freihalten',
+  'Bewerbungen und Anfragen innerhalb von zwei Tagen beantworten',
+];
+const nicht = [
+  'Sich in Meta oder Google einarbeiten',
+  'Anzeigen texten, Bilder aussuchen, Budgets steuern',
+  'Eine Karriere- oder Anfrageseite bauen lassen',
+  'Sich um Tracking, Einwilligungen und Datenschutz kümmern',
+  'Zwei Dienstleister koordinieren',
+  'Selbst vor der Kamera stehen',
+];
+---
+
+<Abschnitt nummer="05" marke="Ihr Aufwand" ton="sand">
+  <div class="auf-kopf">
+    <Titel zeilen={['Ein halber Tag', 'im Monat.']} stufe="h2" groesse="d2" />
+    <p class="lead" data-auf style="--verzug:140ms">
+      Das ist die vollständige Liste dessen, was wir von Ihnen brauchen. Sie steht
+      hier, weil sie der Grund ist, aus dem Betriebe zusagen — und weil eine Agentur,
+      die mehr braucht, das an dieser Stelle nicht schreiben würde.
+    </p>
+  </div>
+
+  <div class="auf-raster">
+    <div class="auf-block" data-auf>
+      <p class="label">Was Sie tun</p>
+      <ul class="liste-strich auf-ja">
+        {ihre.map((t) => <li><Haken />{t}</li>)}
+      </ul>
+      <p class="auf-mehr">Mehr nicht.</p>
+    </div>
+
+    <div class="auf-block" data-auf style="--verzug:120ms">
+      <p class="label">Was Sie nicht tun</p>
+      <ul class="liste-strich auf-nein">
+        {nicht.map((t) => <li><span class="strich" aria-hidden="true"></span>{t}</li>)}
+      </ul>
+    </div>
+  </div>
+</Abschnitt>
+
+<style>
+  .auf-kopf {
+    display: grid;
+    gap: clamp(1.75rem, 4vw, 3rem);
+    padding-bottom: clamp(2.5rem, 6vw, 4rem);
+  }
+  @media (min-width: 56rem) {
+    .auf-kopf {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(2.5rem, 6vw, 6rem);
+      align-items: end;
+    }
+  }
+  .auf-kopf .lead { max-width: 46ch; }
+
+  .auf-raster { display: grid; gap: clamp(2.5rem, 5vw, 4rem); }
+  @media (min-width: 56rem) {
+    .auf-raster { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(2.5rem, 6vw, 5rem); }
+  }
+  .auf-block .label { display: block; margin-bottom: 1.4em; }
+  .auf-block .liste-strich > li { border-color: var(--linie-stark); }
+
+  .auf-nein > li { color: var(--tinte-2); }
+  .strich {
+    display: block;
+    width: 13px; height: 13px;
+    translate: 0 0.24em;
+    position: relative;
+  }
+  .strich::before {
+    content: '';
+    position: absolute;
+    left: 1px; right: 1px; top: 50%;
+    height: 1px;
+    background: var(--linie-stark);
+  }
+
+  .auf-mehr {
+    margin-top: clamp(1.25rem, 3vw, 2rem);
+    font-family: var(--schrift-display);
+    font-size: clamp(1.35rem, 1.1rem + 1.1vw, 2rem);
+    font-weight: 600;
+    letter-spacing: -0.028em;
+  }
+</style>

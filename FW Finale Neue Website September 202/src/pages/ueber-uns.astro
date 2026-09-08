@@ -1,0 +1,201 @@
+---
+import { Image } from 'astro:assets';
+import Basis from '../layouts/Basis.astro';
+import SeitenKopf from '../components/SeitenKopf.astro';
+import Bildband from '../components/Bildband.astro';
+import Abschnitt from '../components/Abschnitt.astro';
+import Titel from '../components/Titel.astro';
+import SchlussCta from '../components/SchlussCta.astro';
+import transporter from '../assets/transporter-hof.jpg';
+import besprechung from '../assets/besprechung-werkbank.jpg';
+import gebiet from '../assets/gewerbegebiet.jpg';
+
+const grundsaetze = [
+  {
+    kopf: 'Wir kommen selbst.',
+    text: 'Kein Freelancer, der Ihre Halle zum ersten Mal sieht, kein Account Manager, der Fragen weiterleitet. Wer dreht, schneidet auch. Wer die Kampagne aufsetzt, schaut sie auch am Sonntagabend an.',
+  },
+  {
+    kopf: 'Wir messen, statt zu behaupten.',
+    text: 'Bei WAV liefen drei Kampagnenvarianten gleichzeitig, weil wir nicht wussten, welche trägt. Eine kostete 4,92 € pro Bewerbung, eine 218 €. Ohne den Test hätten wir es geraten — und in zwei von drei Fällen falsch geraten.',
+  },
+  {
+    kopf: 'Wir sagen ab, wenn es nicht passt.',
+    text: 'Ein Betrieb, dessen Kunden nicht kommen müssen, sondern Lust haben, ist für dieses Modell der falsche. Das haben wir teuer gelernt und schreiben es deshalb auf die Seite, statt es im Gespräch zu umgehen.',
+  },
+  {
+    kopf: 'Wir bleiben klein genug.',
+    text: 'Zehn Betriebe in Betreuung, nicht fünfzig. Ab da wären wir jemand, der Termine koordiniert — und der Grund, aus dem uns Betriebe beauftragen, wäre weg.',
+  },
+];
+---
+
+<Basis
+  titel="Über uns — zwei Leute, ein Transporter, eine Region | Fokuswerk"
+  beschreibung="Fokuswerk sind Julius Abt und Thees Bodenstab aus Oldenburg: selbst drehen, selbst schneiden, selbst betreuen — für Betriebe mit eigener Werkstatt."
+>
+  <SeitenKopf
+    augen="Über uns"
+    zeilen={['Zwei Leute,', 'ein Transporter,', 'eine Region.']}
+    lead="Fokuswerk ist keine Agentur mit Abteilungen. Es sind Julius Abt und Thees Bodenstab aus Oldenburg. Julius filmt und schneidet, Thees baut die Seiten und fährt die Kampagnen. Zusammen betreuen wir eine überschaubare Zahl von Betrieben — und das ist Absicht, nicht Zwischenstand."
+  />
+
+  <Bildband
+    bild={transporter}
+    alt="Ein Transporter mit geöffneter Seitentür und Kameraequipment steht morgens auf einem Betriebshof."
+    hoehe="clamp(15rem, 48vh, 30rem)"
+    bu="Ein Drehtag beginnt um sieben mit dem Ausladen und endet, wenn das Material im Kasten ist."
+  />
+
+  <Abschnitt nummer="01" marke="Arbeitsweise">
+    <div class="ueb-raster">
+      <Titel zeilen={['Vier Dinge,', 'auf die wir', 'uns festlegen.']} stufe="h2" groesse="d3" />
+      <ol class="ueb-liste">
+        {grundsaetze.map((g, i) => (
+          <li data-auf style={`--verzug:${i * 90}ms`}>
+            <span class="ueb-nr ziffer">{String(i + 1).padStart(2, '0')}</span>
+            <div>
+              <h3 class="d4">{g.kopf}</h3>
+              <p class="fliess fliess-2">{g.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </Abschnitt>
+
+  <Abschnitt nummer="02" marke="Die Rollen" ton="sand">
+    <div class="ueb-personen-kopf">
+      <Titel zeilen={['Wer was macht.']} stufe="h2" groesse="d3" />
+      <p class="klein ueb-notiz" data-auf>
+        Es gibt keine dritte Person, an die etwas weitergereicht wird. Das ist der
+        Grund für die Zahl zehn.
+      </p>
+    </div>
+
+    <div class="ueb-personen">
+      <div class="ueb-person" data-auf>
+        <p class="ueb-name">Julius Abt</p>
+        <p class="label ueb-rolle">Produktion</p>
+        <p class="fliess fliess-2">
+          Dreh, Schnitt, Bildsprache. Julius entscheidet, wie ein Betrieb aussieht,
+          wenn ihn jemand zum ersten Mal auf dem Handy sieht — und steht dafür an
+          jedem Drehtag selbst mit der Kamera in der Halle.
+        </p>
+      </div>
+
+      <div class="ueb-person" data-auf style="--verzug:120ms">
+        <p class="ueb-name">Thees Bodenstab</p>
+        <p class="label ueb-rolle">Seiten, Kampagnen, Messung</p>
+        <p class="fliess fliess-2">
+          Karriereseite, Anfrageseite, Werbekonten, Tracking und die laufende
+          Optimierung. Thees ist der, der nach zehn Tagen sagt, welche
+          Kampagnenvariante abgeschaltet wird — und warum.
+        </p>
+      </div>
+    </div>
+
+    <figure class="ueb-bild" data-auf>
+      <div class="bild" data-zoom data-parallaxe="28">
+        <Image src={besprechung} alt="Ein Betriebsinhaber und ein jüngerer Mann besprechen an einer Werkbank eine ausgedruckte Seite."
+          widths={[700, 1100, 1600]} sizes="(min-width: 62rem) 70vw, 100vw" quality={80} loading="lazy" />
+      </div>
+      <figcaption class="bild-bu">
+        Vor dem ersten Drehtag steht ein Gespräch über Zahlen: Stundensatz, offene
+        Stellen, abgelehnte Aufträge. Kein Workshop, ein Blatt Papier.
+      </figcaption>
+    </figure>
+  </Abschnitt>
+
+  <Abschnitt nummer="03" marke="Die Region">
+    <div class="ueb-raster">
+      <Titel zeilen={['Warum die', 'Entfernung', 'eine Rolle spielt.']} stufe="h2" groesse="d3" />
+      <div class="fliess" data-auf>
+        <p>
+          Der Drehtag findet im Betrieb statt. Das ist keine Vorliebe, sondern die
+          Bedingung dafür, dass die Aufnahmen etwas zeigen, das ein Bewerber sonst
+          nirgends sieht. Deshalb ist die Entfernung eine echte Grenze und keine
+          Formulierung auf einer Kontaktseite.
+        </p>
+        <p>
+          Wir sitzen in Oldenburg. Im Umkreis von etwa 100 Kilometern fahren wir ohne
+          Aufschlag — Ammerland, Oldenburger Land, Wesermarsch, Ostfriesland, Bremen
+          und das Umland. Darüber hinaus sprechen wir vorher darüber, ob es sich für
+          beide Seiten rechnet.
+        </p>
+        <p>
+          Und wir arbeiten nicht gleichzeitig für zwei Betriebe derselben Branche im
+          Umkreis von 20 bis 30 Kilometern. Das steht im Vertrag, weil zwei Kampagnen
+          im selben Ort gegeneinander bieten würden — und dann bezahlen beide Betriebe
+          mehr für dasselbe Ergebnis.
+        </p>
+      </div>
+    </div>
+
+    <figure class="ueb-bild ueb-bild-schmal" data-auf>
+      <div class="bild" data-zoom data-parallaxe="24">
+        <Image src={gebiet} alt="Ein Gewerbegebiet am Rand einer nordwestdeutschen Kleinstadt bei bedecktem Himmel."
+          widths={[700, 1100, 1600]} sizes="(min-width: 62rem) 70vw, 100vw" quality={80} loading="lazy" />
+      </div>
+      <figcaption class="bild-bu">
+        Unsere Kunden sitzen selten in der Innenstadt. Meistens sind es Hallen am
+        Ortsrand, an einer Umgehungsstraße, mit Hof davor.
+      </figcaption>
+    </figure>
+  </Abschnitt>
+
+  <SchlussCta />
+</Basis>
+
+<style>
+  .ueb-raster { display: grid; gap: clamp(1.75rem, 4vw, 3rem); }
+  @media (min-width: 56rem) {
+    .ueb-raster {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.35fr);
+      gap: clamp(2.5rem, 6vw, 5rem);
+      align-items: start;
+    }
+  }
+
+  .ueb-liste { display: grid; }
+  .ueb-liste > li {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    gap: 0 clamp(0.75rem, 2vw, 1.5rem);
+    padding-block: clamp(1.35rem, 3vw, 2rem);
+    border-top: 1px solid var(--linie);
+  }
+  .ueb-liste > li:last-child { border-bottom: 1px solid var(--linie); }
+  .ueb-nr {
+    font-family: var(--schrift-display);
+    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em;
+    color: var(--signal); padding-top: 0.42em;
+  }
+  .ueb-liste h3 { margin-bottom: 0.5em; }
+  .ueb-liste p { max-width: 54ch; }
+
+  .ueb-personen-kopf {
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+    gap: var(--r-3) var(--r-5);
+    padding-bottom: clamp(2rem, 4vw, 3rem);
+  }
+  .ueb-notiz { max-width: 34ch; }
+
+  .ueb-personen { display: grid; gap: clamp(2rem, 4vw, 3rem); border-top: 1px solid var(--linie-stark); }
+  @media (min-width: 52rem) {
+    .ueb-personen { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(2.5rem, 6vw, 5rem); }
+  }
+  .ueb-person { padding-top: clamp(1.5rem, 3vw, 2rem); }
+  .ueb-name {
+    font-family: var(--schrift-display);
+    font-size: clamp(1.3rem, 1.1rem + 0.85vw, 1.75rem);
+    font-weight: 600; letter-spacing: -0.028em;
+    margin-bottom: 0.35em;
+  }
+  .ueb-rolle { display: block; margin-bottom: 1.1em; }
+  .ueb-person p.fliess { max-width: 44ch; }
+
+  .ueb-bild { margin: clamp(2.5rem, 6vw, 4.5rem) 0 0; }
+  .ueb-bild .bild { aspect-ratio: 16 / 9; }
+  .ueb-bild-schmal .bild { aspect-ratio: 21 / 9; }
+</style>

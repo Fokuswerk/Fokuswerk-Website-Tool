@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /danke/
+
+Sitemap: https://fokuswerk.de/sitemap-index.xml

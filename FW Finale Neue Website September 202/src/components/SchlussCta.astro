@@ -1,0 +1,74 @@
+---
+import { firma, cta } from '../data/firma';
+import Pfeil from './Pfeil.astro';
+import Titel from './Titel.astro';
+
+interface Props {
+  zeilen?: string[];
+  text?: string;
+}
+const {
+  zeilen = ['Nennen Sie uns', 'einen Drehtag.'],
+  text = 'Kein Konzept, kein Workshop, keine Vorbereitungsphase. Ein Anruf, in dem wir Ihre Zahlen durchgehen — Stundensatz, offene Stellen, was Sie im Monat an Aufträgen abgeben. Danach wissen Sie, ob sich das für Ihren Betrieb rechnet. Wenn nicht, sagen wir Ihnen das.',
+} = Astro.props;
+---
+
+<section class="schluss dunkel flaeche">
+  <div class="huelle">
+    <div class="schluss-raster">
+      <div class="schluss-links">
+        <Titel zeilen={zeilen} groesse="d2" klasse="schluss-titel" />
+      </div>
+
+      <div class="schluss-rechts" data-auf>
+        <p class="fliess fliess-2">{text}</p>
+
+        <div class="schluss-aktion">
+          <a href={cta.ziel} class="knopf">{cta.primaer}<Pfeil /></a>
+          <p class="knopf-notiz">{cta.notiz}</p>
+        </div>
+
+        <div class="schluss-direkt">
+          <p class="label">Oder direkt</p>
+          <a href={`tel:${firma.telefon}`} class="schluss-tel ziffer">{firma.telefonAnzeige}</a>
+          <a href={`mailto:${firma.mail}`} class="schluss-mail">{firma.mail}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .schluss { padding-bottom: var(--r-8); }
+  .schluss-raster {
+    display: grid;
+    gap: var(--r-6);
+  }
+  @media (min-width: 62rem) {
+    .schluss-raster {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(3rem, 7vw, 7rem);
+      align-items: start;
+    }
+  }
+  .schluss-titel { max-width: 14ch; }
+  .schluss-rechts { display: grid; gap: var(--r-5); }
+  .schluss-aktion { display: grid; gap: var(--r-2); justify-items: start; }
+
+  .schluss-direkt {
+    display: grid;
+    gap: 0.3rem;
+    padding-top: var(--r-4);
+    border-top: 1px solid var(--linie-dunkel);
+    font-family: var(--schrift-display);
+  }
+  .schluss-direkt .label { margin-bottom: 0.6em; }
+  .schluss-tel {
+    font-size: clamp(1.5rem, 1.1rem + 1.7vw, 2.15rem);
+    font-weight: 600;
+    letter-spacing: -0.028em;
+    width: fit-content;
+  }
+  .schluss-mail { font-size: 1rem; color: var(--auf-dunkel-2); width: fit-content; padding-block: 0.4em; }
+  .schluss-tel:hover, .schluss-mail:hover { color: #e9834f; }
+</style>
