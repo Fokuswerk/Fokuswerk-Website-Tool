@@ -417,9 +417,20 @@
   }
   [data-reveal][data-from="left"]  { transform: translate3d(-26px, 0, 0); }
   [data-reveal][data-from="right"] { transform: translate3d(26px, 0, 0); }
-  [data-reveal][data-from="scale"] { transform: scale(0.94); }
+  [data-reveal][data-from="scale"] { transform: scale(0.965); }
   [data-reveal][data-from="blur"]  { transform: none; filter: blur(14px); transition-property: opacity, filter; }
-  [data-reveal="shown"] { opacity: 1; transform: none; filter: none; will-change: auto; }
+
+  /* Die Ausgangszustände oben tragen zwei Attribute und sind damit
+     spezifischer als ein einfaches [data-reveal="shown"]. Ohne diese Zeile
+     bleibt die Verschiebung nach dem Erscheinen stehen — eine skalierte
+     Karte steht dann dauerhaft neben der Fluchtlinie ihrer Überschrift. */
+  [data-reveal="shown"],
+  [data-reveal="shown"][data-from] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    will-change: auto;
+  }
 
   /* Ueberschrift, Wort fuer Wort. Bewegt werden nur transform, opacity und
      filter — die Zeilenbox wird nicht angefasst, sonst laeuft bei mehrzeiligen

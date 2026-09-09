@@ -26,8 +26,19 @@ Drei Schaustücke tragen die Seite:
 | Baustein | Was es beweist |
 |---|---|
 | `Buehne` | Browserfenster mit einer Karriereseite, davor das Telefon mit der Anzeige, die darauf führt. Content, Ads und Web in einem Bild. |
+| `Vorgehen` | Scroll-Sequenz über fünf Schritte: links laufen die Schritte durch, rechts steht ein Rahmen fest und wechselt vom Foto über Anzeige und Seite bis zum Werbekonto. |
 | `Werbekonto` | Zwei gemessene Varianten, 4,92 € gegen 218 € je Bewerbung — und der Moment, in dem die teure abgeschaltet wird. |
 | `Rechner` | Zwei Regler, ein Ergebnis: was eine unbesetzte Stelle diesen Betrieb im Jahr kostet. Seine Zahlen, nicht unsere. |
+
+### Aufbau der Startseite
+
+Titelbereich · Beweisband · **01 Was wir machen** (fünf Leistungen mit dem, was
+hineingeht und was herauskommt) · **02 Das Vorgehen** (die Scroll-Sequenz) ·
+**03 Warum das trägt** · **04 Die Fälle** · **05 Die Rechnung** · Abschluss.
+
+Die Seite spricht **Handwerk und technische Betriebe** an, nicht nur
+Kfz-Werkstätten. WAV ist der eine Fall mit freigegebenen Zahlen, nicht das
+Thema der Seite.
 
 **Der Grund ist ein Hauch neben Reinweiß.** `#fbfaf9` statt `#ffffff`: reines
 Weiß hat kein Material. Zusammen mit dem Korn, das als feste Ebene über der
@@ -38,9 +49,15 @@ entschieden wird — beim Rechner und im Abschluss samt Fuß. Technisch ist ein
 Band nur die Klasse `.band`: sie schreibt dieselben Farbvariablen mit anderen
 Werten neu, und jeder Baustein folgt mit. Kein zweiter Satz Klassen.
 
-> **Fallstrick:** Die Farbwerte im `@theme` müssen fest sein, keine Verweise auf
-> weitere Variablen. Ein `var()` in einer auf `:root` deklarierten Variablen
+> **Fallstrick 1:** Die Farbwerte im `@theme` müssen fest sein, keine Verweise
+> auf weitere Variablen. Ein `var()` in einer auf `:root` deklarierten Variablen
 > wird bereits dort aufgelöst — `.band` könnte den Wert dann nicht mehr ändern.
+
+> **Fallstrick 2, hat einmal zugeschlagen:** Die Ausgangszustände der Enthüllung
+> tragen zwei Attribute (`[data-reveal][data-from="scale"]`) und sind damit
+> spezifischer als `[data-reveal="shown"]`. Ohne die zusätzliche Regel
+> `[data-reveal="shown"][data-from]` bleibt die Skalierung **dauerhaft** stehen —
+> eine große Karte steht dann 36 px neben der Fluchtlinie ihrer Überschrift.
 
 **Ein kursives Wort je Überschrift.** Instrument Serif kursiv, mit einem Marker
 dahinter, der beim Erscheinen von links auffährt. Das ist der größte einzelne
@@ -57,6 +74,9 @@ Grund — sonst läge sie wie ein Brett auf der Seite.
 
 Es werden **keine Referenzen, Kennzahlen oder Zitate erfunden.**
 
+- Unter „Außerdem in Betreuung" stehen nur Gewerk und Ort — keine Kennzahlen.
+  Die genannten Betriebe waren bereits auf der alten Website öffentlich; vor dem
+  Livegang trotzdem einmal die Einwilligung bestätigen lassen.
 - Im `Werbekonto` stehen nur die beiden Werte, die aus dem Konto belegt sind.
   Die dritte getestete Variante hat keine überlieferte Zahl und taucht deshalb
   als Zeile nicht auf.

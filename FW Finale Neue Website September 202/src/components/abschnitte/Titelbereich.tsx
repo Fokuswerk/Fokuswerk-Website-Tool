@@ -5,29 +5,25 @@ import { cta, marke } from '@/lib/inhalt';
 
 export default function Titelbereich() {
   return (
-    <section className="relative overflow-hidden pt-28 sm:pt-36">
+    <section className="relative overflow-hidden pt-32 sm:pt-40">
       <div className="schale">
-        <div className="mx-auto max-w-[56rem] text-center">
+        {/* Eine Schriftgröße für die Aussage, eine Kennung darüber, ein Absatz
+            darunter. Drei Stufen in der Überschrift wirkten unruhig. */}
+        <div className="mx-auto max-w-[54rem] text-center">
           <p className="kennung justify-center" data-reveal>
-            Für Betriebe mit eigener Werkstatt
+            Handwerk · Technik · Nordwest-Niedersachsen
           </p>
 
-          {/* Kaskade in einer Überschrift: drei Größen, ein Satz. Das eine
-              kursive Wort trägt den Marker. */}
-          <h1 className="mt-6 sm:mt-8" data-split>
-            <span className="block text-[length:var(--text-2xl)] font-semibold tracking-[-0.03em] text-ink-2">
-              Ein Drehtag im Monat.
-            </span>
-            <span className="mt-1 block text-[length:var(--text-6xl)] font-extrabold leading-[0.94] tracking-[-0.045em]">
-              Zwei Kampagnen.
-            </span>
-            <span className="mt-2 block text-[length:var(--text-3xl)] font-bold tracking-[-0.035em] sm:mt-3">
-              Mitarbeiter und <span className="kursiv">Kunden</span>.
-            </span>
+          <h1
+            className="mx-auto mt-7 max-w-[19ch] text-[length:var(--text-5xl)] leading-[0.98]"
+            data-split
+          >
+            Aus einem Drehtag im Monat werden Aufträge und{' '}
+            <span className="kursiv">Bewerbungen</span>.
           </h1>
 
           <p
-            className="mx-auto mt-7 max-w-[46ch] text-[length:var(--text-lg)] leading-[1.55] text-ink-2"
+            className="mx-auto mt-7 max-w-[48ch] text-[length:var(--text-lg)] leading-[1.55] text-ink-2"
             data-reveal
             style={{ ['--reveal-delay' as string]: '220ms' }}
           >
@@ -56,7 +52,7 @@ export default function Titelbereich() {
         </div>
       </div>
 
-      <div className="schale mt-16 sm:mt-20" data-reveal data-from="scale" style={{ ['--reveal-delay' as string]: '260ms' }}>
+      <div className="schale mt-16 sm:mt-20" data-reveal style={{ ['--reveal-delay' as string]: '260ms' }}>
         <Buehne />
       </div>
     </section>

@@ -1,8 +1,10 @@
 import Titelbereich from '@/components/abschnitte/Titelbereich';
 import Beweisband from '@/components/abschnitte/Beweisband';
-import Handwerk from '@/components/abschnitte/Handwerk';
-import Rechner from '@/components/abschnitte/Rechner';
+import Leistungen from '@/components/abschnitte/Leistungen';
+import Vorgehen from '@/components/abschnitte/Vorgehen';
+import Warum from '@/components/abschnitte/Warum';
 import Fallstudie from '@/components/abschnitte/Fallstudie';
+import Rechner from '@/components/abschnitte/Rechner';
 import Abschluss from '@/components/abschnitte/Abschluss';
 
 export default function Startseite() {
@@ -10,9 +12,11 @@ export default function Startseite() {
     <>
       <Titelbereich />
       <Beweisband />
-      <Handwerk />
-      <Rechner />
+      <Leistungen />
+      <Vorgehen />
+      <Warum />
       <Fallstudie />
+      <Rechner />
       <Abschluss />
     </>
   );

@@ -22,7 +22,7 @@ export default function Rechner() {
       <div className="schale">
         <div className="grid gap-14 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center lg:gap-20">
           <div>
-            <p className="kennung kennung-strich" data-reveal>02 — Die Rechnung</p>
+            <p className="kennung kennung-strich" data-reveal>05 — Die Rechnung</p>
             <h2 className="mt-6 text-[length:var(--text-4xl)]" data-split>
               Was eine offene Stelle kostet, steht in keiner{' '}
               <span className="kursiv">Rechnung</span>.

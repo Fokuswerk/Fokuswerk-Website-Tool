@@ -36,7 +36,7 @@ for (const breite of [1440, 390]) {
     if (ueberlauf > 1) melde('FEHLER', `${breite}px ${pfad}: ${ueberlauf}px waagerechter Überlauf`);
 
     if (breite === 1440) {
-      const ohneAlt = await seite.$$eval('img', (b) => b.filter((i) => !i.getAttribute('alt')).length);
+      const ohneAlt = await seite.$$eval('img', (b) => b.filter((i) => i.getAttribute('alt') === null).length);
       if (ohneAlt) melde('FEHLER', `${pfad}: ${ohneAlt} Bild(er) ohne alt`);
 
       const h1 = await seite.$$eval('h1', (e) => e.length);

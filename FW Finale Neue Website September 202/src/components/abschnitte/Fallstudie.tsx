@@ -1,14 +1,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import Pfeil from '@/components/ui/Pfeil';
-import { beleg } from '@/lib/inhalt';
+import { beleg, betriebe } from '@/lib/inhalt';
 
 export default function Fallstudie() {
   return (
     <section className="pt-24 sm:pt-36">
       <div className="schale">
         <div className="max-w-[44rem]">
-          <p className="kennung kennung-strich" data-reveal>03 — Der Fall</p>
+          <p className="kennung kennung-strich" data-reveal>04 — Die Fälle</p>
           <h2 className="mt-6 text-[length:var(--text-4xl)]" data-split>
             Neun Monate gesucht. Nach vierzehn Tagen{' '}
             <span className="kursiv">unterschrieben</span>.
@@ -67,6 +67,25 @@ export default function Fallstudie() {
           Alle Zahlen stammen aus den Werbekonten. Alexander Lüers ist als Referenz
           freigegeben — wenn Sie mit ihm sprechen möchten, geben wir Ihnen seine Nummer.
         </p>
+
+        {/* Weitere Betriebe: nur Gewerk und Ort. Eine Fallstudie mit Zahlen
+            steht erst hier, wenn der Betrieb sie freigegeben hat. */}
+        <div className="mt-16 border-t border-rule pt-8" data-reveal>
+          <p className="kennung">Außerdem in Betreuung</p>
+          <ul className="mt-6 grid gap-0 sm:grid-cols-2 lg:grid-cols-3">
+            {betriebe.filter((b) => !b.fall).map((b) => (
+              <li key={b.name} className="border-b border-rule py-5 pr-6 lg:border-b-0 lg:[&:not(:first-child)]:border-l lg:[&:not(:first-child)]:border-rule lg:[&:not(:first-child)]:pl-6">
+                <p className="text-[1.02rem] font-bold tracking-[-0.025em]">{b.name}</p>
+                <p className="mt-1.5 text-sm text-ink-3">{b.gewerk}<br />{b.ort}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-7 max-w-[58ch] text-sm leading-[1.6] text-ink-3">
+            Weitere Fallstudien folgen, sobald die Betriebe ihre Zahlen freigeben.
+            Wir veröffentlichen keine, die wir nicht aus einem Werbekonto oder einer
+            Rechnung belegen können — auch dann nicht, wenn das Ergebnis gut war.
+          </p>
+        </div>
       </div>
     </section>
   );
