@@ -1,0 +1,627 @@
+@import "tailwindcss";
+
+/* =========================================================================
+   FOKUSWERK — DESIGNSYSTEM
+   -------------------------------------------------------------------------
+   Der Grund ist ein Hauch neben Reinweiss. Reines #ffffff hat kein Material;
+   ein knappes Grad darunter, zusammen mit dem Korn, gibt der Flaeche
+   Oberflaeche, ohne cremig zu werden.
+
+   Takt gibt ein einziger Mechanismus: `.band` schreibt dieselben Farbnamen
+   mit anderen Werten neu. Kein zweiter Satz Klassen, keine Sonderfaelle in
+   den Bausteinen — `text-ink-2` traegt auf Weiss ein gedecktes Grau und im
+   Band ein helles, ohne dass ein Baustein davon etwas wissen muss.
+
+   WICHTIG: Hier stehen feste Werte, keine Verweise auf weitere Variablen.
+   Ein var() in einer auf :root deklarierten Variablen wird bereits dort
+   aufgeloest — ein Nachfahre koennte den Wert dann nicht mehr aendern.
+   ========================================================================= */
+
+@theme {
+  --breakpoint-xs: 25rem;
+
+  --color-paper:   #fbfaf9;
+  --color-paper-2: #f3f2f0;
+  --color-paper-3: #e8e6e3;
+  --color-ink:     #0d1014;
+  --color-ink-2:   #575f6a;   /* 6,1:1 auf #fbfaf9 */
+  --color-ink-3:   #6b737e;   /* 4,6:1 auf #fbfaf9 */
+  --color-rule:    #0d101418;
+  --color-rule-2:  #0d10142e;
+  --color-warn:    #b3261e;
+
+  /* Feste Toene, die nicht umschlagen */
+  --color-night:   #0c0f14;
+  --color-night-2: #151a22;
+  --color-night-3: #212834;
+
+  /* Schrift: Archivo traegt alles Gesetzte, DM Mono jede Kennung und jede
+     Zahl, Instrument Serif kursiv steht auf genau einem Wort je grosser
+     Ueberschrift. Dieses eine Wort ist der groesste Unterschied zwischen
+     „sauber gebaut" und „gestaltet" — und es wirkt nur, solange es eines bleibt. */
+  --font-sans:    var(--font-archivo), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:    var(--font-dm-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-display: var(--font-instrument), Georgia, "Times New Roman", serif;
+
+  --text-marker: 0.6875rem;
+  --text-xs:     0.8125rem;
+  --text-sm:     0.9375rem;
+  --text-base:   1.0625rem;
+  --text-lg:     clamp(1.0625rem, 0.3vw + 1rem, 1.25rem);
+  --text-xl:     clamp(1.1875rem, 0.55vw + 1.05rem, 1.5rem);
+  --text-2xl:    clamp(1.4375rem, 1vw + 1.2rem, 1.9375rem);
+  --text-3xl:    clamp(1.875rem, 2.1vw + 1.3rem, 3rem);
+  --text-4xl:    clamp(2.125rem, 2.8vw + 1.35rem, 3.75rem);
+  --text-5xl:    clamp(2.5rem, 4.6vw + 0.9rem, 5rem);
+  --text-6xl:    clamp(2.85rem, 6.2vw + 0.6rem, 6.25rem);
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --ease-out:  cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-back: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+:root {
+  /* Schatten muessen auf Weiss Hoehe zeigen, ohne die Flaeche zu vergrauen —
+     deshalb weit, weich und mehrfach gestaffelt statt einmal hart. */
+  --shadow-lift:  0 1px 2px #0d101410, 0 8px 24px -14px #0d10142e;
+  --shadow-float: 0 2px 6px #0d10140f, 0 18px 40px -18px #0d101426,
+                  0 48px 90px -50px #0d101440;
+  --shadow-deep:  0 30px 70px -30px #0d10144d, 0 90px 140px -80px #0d101459;
+
+  --glow-a: 0.10;
+  --glow-b: 0.04;
+
+  --shell: 80rem;
+  color-scheme: light;
+
+  /* Die Hausfarbe. Auf Weiss die abgedunkelte Fassung, im Band die
+     aufgehellte. Bausteine benutzen nur --accent und --act-*. */
+  --brand: #e3b778;
+  --on-brand: #17130c;
+  --brand-lit: #edc98f;
+  --brand-deep: #6b4d1c;
+  --brand-glow: 227 183 120;
+
+  --accent: var(--brand-deep);
+  --act-bg: #0d1014;
+  --act-fg: #ffffff;
+}
+
+.band {
+  --color-paper:   #0c0f14;
+  --color-paper-2: #151a22;
+  --color-paper-3: #212834;
+  --color-ink:     #ffffff;
+  --color-ink-2:   #b3bac4;
+  --color-ink-3:   #868f9a;
+  --color-rule:    #ffffff1f;
+  --color-rule-2:  #ffffff33;
+  --color-warn:    #ff9d7e;
+
+  --shadow-lift:  0 1px 2px #00000059, 0 10px 28px -14px #00000099;
+  --shadow-float: 0 2px 6px #00000066, 0 26px 60px -24px #000000cc;
+  --shadow-deep:  0 2px 6px #00000066, 0 40px 90px -30px #000000e6;
+
+  --glow-a: 0.18;
+  --glow-b: 0.07;
+
+  --accent: var(--brand-lit);
+  --act-bg: var(--brand);
+  --act-fg: var(--on-brand);
+
+  color-scheme: dark;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}
+
+/* Die feststehende Kopfzeile ueber einem dunklen Band kehrt dieselben
+   Variablen um, setzt aber KEINEN eigenen Hintergrund: die Leiste mischt
+   ihren Grund selbst und bleibt dadurch durchscheinend. */
+.kopf-dunkel {
+  --color-paper:   #0c0f14;
+  --color-ink:     #ffffff;
+  --color-ink-2:   #b3bac4;
+  --color-ink-3:   #868f9a;
+  --color-rule:    #ffffff1f;
+  --color-rule-2:  #ffffff33;
+  --accent: var(--brand-lit);
+  --act-bg: var(--brand);
+  --act-fg: var(--on-brand);
+  color-scheme: dark;
+  /* Ohne diese Zeile erbt die Wortmarke die Tinte des Körpers und
+     verschwindet auf dem dunklen Band. */
+  color: var(--color-ink);
+}
+
+/* =========================================================================
+   GRUNDEINSTELLUNGEN
+   ========================================================================= */
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
+    background: var(--color-paper);
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+  }
+  body.menue-offen { overflow: hidden; }
+
+  /* --- Korn ---------------------------------------------------------------
+     Liegt als feste Ebene ueber der ganzen Seite, nicht in einzelnen
+     Abschnitten. Das ist der Unterschied zwischen „Flaeche mit Muster" und
+     „Material": Korn bewegt sich nicht mit dem Inhalt, es liegt auf dem Bild. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0.7;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.1'/%3E%3C/svg%3E");
+  }
+
+  h1, h2, h3, h4 {
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+    text-wrap: balance;
+  }
+  p { margin: 0; text-wrap: pretty; }
+  ul, ol { margin: 0; padding: 0; list-style: none; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  img, svg, video, canvas { display: block; max-width: 100%; }
+
+  ::selection { background: var(--accent); color: #fff; }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: var(--radius-xs);
+  }
+}
+
+/* =========================================================================
+   BAUSTEINE
+   ========================================================================= */
+
+@layer components {
+
+  .schale {
+    width: 100%;
+    max-width: var(--shell);
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  }
+
+  /* --- Das eine kursive Wort ---------------------------------------------
+     Optisch laeuft die Serifenschrift kleiner als die Groteske daneben,
+     deshalb 1.06em. Der Marker faehrt beim Erscheinen von links auf. */
+  .kursiv {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 1.06em;
+    letter-spacing: -0.01em;
+    position: relative;
+    padding-inline: 0.06em;
+    white-space: nowrap;
+  }
+  .kursiv {
+    background-image: linear-gradient(
+      rgb(var(--brand-glow) / 0.55),
+      rgb(var(--brand-glow) / 0.55)
+    );
+    background-repeat: no-repeat;
+    background-position: 0 84%;
+    background-size: 0% 0.26em;
+    transition: background-size 0.9s var(--ease-out) 0.4s;
+  }
+  [data-split="shown"] .kursiv,
+  [data-reveal="shown"] .kursiv { background-size: 100% 0.26em; }
+  .band .kursiv {
+    background-image: linear-gradient(
+      rgb(var(--brand-glow) / 0.24),
+      rgb(var(--brand-glow) / 0.24)
+    );
+    background-position: 0 90%;
+  }
+
+  /* --- Kennung ------------------------------------------------------------ */
+  .kennung {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7em;
+    font-family: var(--font-mono);
+    font-size: var(--text-marker);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-ink-3);
+  }
+  .kennung::before {
+    content: "";
+    width: 5px; height: 5px;
+    background: var(--accent);
+    transform: rotate(45deg);
+    flex: none;
+    align-self: center;
+  }
+  /* Bricht der Text um, soll die Raute nicht allein auf einer Zeile stehen. */
+  .kennung { flex-wrap: wrap; row-gap: 0.2em; }
+  .kennung-strich::after {
+    content: "";
+    width: clamp(1.5rem, 4vw, 3rem);
+    height: 1px;
+    background: var(--color-rule-2);
+    flex: none;
+  }
+
+  /* --- Schaltflaechen ----------------------------------------------------- */
+  .akt {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6em;
+    padding: 0.95rem 1.45rem;
+    background: var(--act-bg);
+    color: var(--act-fg);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    box-shadow: var(--shadow-lift);
+    transition:
+      transform 0.35s var(--ease-out),
+      box-shadow 0.35s var(--ease-out),
+      filter 0.35s var(--ease-out);
+  }
+  .akt:hover { transform: translateY(-2px); box-shadow: var(--shadow-float); filter: brightness(1.06); }
+  .akt:active { transform: translateY(0); }
+  .akt svg { transition: transform 0.4s var(--ease-out); }
+  .akt:hover svg { transform: translateX(3px); }
+
+  .akt-still {
+    background: transparent;
+    color: var(--color-ink);
+    border: 1px solid var(--color-rule-2);
+    box-shadow: none;
+  }
+  .akt-still:hover { background: var(--color-paper-2); filter: none; box-shadow: var(--shadow-lift); }
+
+  /* Textlink mit wachsender Unterstreichung */
+  .verweis {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    font-weight: 600;
+    font-size: var(--text-sm);
+    padding-block: 0.35em;
+    position: relative;
+  }
+  .verweis::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0.15em;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.35;
+    transform-origin: left;
+    transition: transform 0.5s var(--ease-out), opacity 0.3s;
+  }
+  .verweis:hover::after { opacity: 1; }
+  .verweis svg { transition: transform 0.4s var(--ease-out); }
+  .verweis:hover svg { transform: translateX(3px); }
+
+  /* --- Karte -------------------------------------------------------------- */
+  .karte {
+    background: var(--color-paper);
+    border: 1px solid var(--color-rule);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lift);
+  }
+
+  /* --- Geraete ------------------------------------------------------------
+     Browserfenster und Telefon. Beides traegt echten Inhalt, nie eine
+     Skizze — ein Geraet mit Platzhalter darin ist schlimmer als keines. */
+  .geraet {
+    position: relative;
+    border-radius: var(--radius-lg);
+    background: var(--color-night-2);
+    box-shadow: var(--shadow-deep);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .geraet-leiste {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 0.9rem;
+    background: var(--color-night-3);
+    border-bottom: 1px solid #ffffff14;
+  }
+  .geraet-punkte { display: flex; gap: 5px; }
+  .geraet-punkte i { width: 9px; height: 9px; border-radius: 999px; background: #ffffff2b; }
+  .geraet-adresse {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5em;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    color: #ffffff8c;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* Lichtschein hinter einem Geraet. Auf Weiss kein Licht, sondern ein Hauch
+     Farbe — sonst wirkt er wie ein Druckfehler. */
+  .schein { position: relative; isolation: isolate; }
+  .schein::before {
+    content: "";
+    position: absolute;
+    inset: -12% -6% -18%;
+    z-index: -1;
+    border-radius: 50%;
+    background:
+      radial-gradient(60% 50% at 50% 45%, rgb(var(--brand-glow) / var(--glow-a)), transparent 70%),
+      radial-gradient(90% 70% at 50% 60%, #0d101410, transparent 72%);
+    filter: blur(30px);
+    opacity: var(--schein-op, 1);
+  }
+}
+
+/* =========================================================================
+   BEWEGUNG
+   -------------------------------------------------------------------------
+   Alles hier wird von einem einzigen Beobachter und einer einzigen
+   Bildschleife in `Bewegung.tsx` geschaltet. Keine Bibliothek, kein zweiter
+   Scroll-Listener, kein Layoutwechsel im laufenden Bild: bewegt werden
+   ausschliesslich transform, opacity, filter und clip-path.
+   ========================================================================= */
+
+@layer components {
+
+  [data-reveal] {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0);
+    transition:
+      opacity 0.8s var(--ease-out) var(--reveal-delay, 0ms),
+      transform 0.8s var(--ease-out) var(--reveal-delay, 0ms);
+    will-change: opacity, transform;
+  }
+  [data-reveal][data-from="left"]  { transform: translate3d(-26px, 0, 0); }
+  [data-reveal][data-from="right"] { transform: translate3d(26px, 0, 0); }
+  [data-reveal][data-from="scale"] { transform: scale(0.94); }
+  [data-reveal][data-from="blur"]  { transform: none; filter: blur(14px); transition-property: opacity, filter; }
+  [data-reveal="shown"] { opacity: 1; transform: none; filter: none; will-change: auto; }
+
+  /* Ueberschrift, Wort fuer Wort. Bewegt werden nur transform, opacity und
+     filter — die Zeilenbox wird nicht angefasst, sonst laeuft bei mehrzeiligen
+     Ueberschriften die letzte Zeile in den Absatz darunter. */
+  [data-split] { --split-step: 52ms; }
+  .wort { display: inline-block; }
+  .wort > span {
+    display: inline-block;
+    transform: translate3d(0, 0.4em, 0);
+    opacity: 0;
+    filter: blur(7px);
+    transition:
+      transform 0.9s var(--ease-out) calc(var(--i, 0) * var(--split-step)),
+      opacity 0.65s var(--ease-out) calc(var(--i, 0) * var(--split-step)),
+      filter 0.65s var(--ease-out) calc(var(--i, 0) * var(--split-step));
+    will-change: transform, opacity, filter;
+  }
+  [data-split="shown"] .wort > span { transform: none; opacity: 1; filter: none; will-change: auto; }
+
+  [data-draw] {
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 1s var(--ease-out) var(--reveal-delay, 0ms);
+  }
+  [data-draw="shown"] { transform: scaleX(1); }
+
+  @keyframes fw-float {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    50%      { transform: translate3d(0, -10px, 0); }
+  }
+  .schweben { animation: fw-float 7s var(--ease-soft) infinite; }
+  .schweben-langsam { animation: fw-float 11s var(--ease-soft) infinite; }
+
+  @keyframes fw-puls {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.35; transform: scale(0.75); }
+  }
+  .puls { animation: fw-puls 2.4s ease-in-out infinite; }
+
+  /* Lichtstreif ueber einen Bildschirm — der Hinweis „hier ist ein Geraet". */
+  @keyframes fw-streif {
+    0%        { transform: translateX(-130%) skewX(-14deg); opacity: 0; }
+    12%       { opacity: 1; }
+    55%, 100% { transform: translateX(230%) skewX(-14deg); opacity: 0; }
+  }
+  .streif::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, #ffffff26 45%, transparent);
+    animation: fw-streif 7s var(--ease-soft) infinite;
+  }
+
+  @keyframes fw-lauf {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(-50%, 0, 0); }
+  }
+  .lauf {
+    display: flex;
+    width: max-content;
+    animation: fw-lauf var(--lauf-zeit, 46s) linear infinite;
+  }
+  .lauf-halt:hover .lauf { animation-play-state: paused; }
+
+  @keyframes fw-wechsel {
+    from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.995); }
+    to   { opacity: 1; transform: none; }
+  }
+  .wechsel { animation: fw-wechsel 0.55s var(--ease-out); }
+
+  /* Neigung: der Zeiger schreibt nur Variablen, die Bewegung macht CSS. */
+  [data-tilt] {
+    transform:
+      perspective(1600px)
+      rotateX(var(--ry, 0deg))
+      rotateY(var(--rx, 0deg))
+      translate3d(0, 0, 0);
+    transition: transform 500ms var(--ease-soft);
+    transform-style: preserve-3d;
+  }
+  [data-tilt].ist-live { transition: transform 120ms linear; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal], .wort > span, [data-draw] {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    transition: none !important;
+  }
+  .kursiv::after { transform: scaleX(1) !important; transition: none; }
+  .schweben, .schweben-langsam, .puls, .streif::after, .lauf { animation: none !important; }
+  [data-tilt] { transform: none !important; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* Hilfsklasse */
+.nur-sr {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+/* =========================================================================
+   REGLER
+   Ein Eingabefeld, das nicht nach Formular aussehen soll: die gefüllte Seite
+   traegt die Hausfarbe, die leere den Grund darunter.
+   ========================================================================= */
+.fw-regler {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 28px;
+  background: transparent;
+  cursor: pointer;
+}
+.fw-regler::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0 var(--anteil),
+    var(--color-paper-3) var(--anteil) 100%
+  );
+}
+.fw-regler::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0 var(--anteil),
+    var(--color-paper-3) var(--anteil) 100%
+  );
+}
+.fw-regler::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
+  border-radius: 999px;
+  background: var(--color-ink);
+  border: 3px solid var(--color-paper);
+  box-shadow: var(--shadow-lift);
+  transition: transform 0.25s var(--ease-out);
+}
+.fw-regler::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--color-ink);
+  border: 3px solid var(--color-paper);
+  box-shadow: var(--shadow-lift);
+}
+.fw-regler:active::-webkit-slider-thumb { transform: scale(1.12); }
+
+/* Eingabefelder */
+.fw-eingabe {
+  width: 100%;
+  padding: 0.85rem 0.95rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--color-ink);
+  background: var(--color-paper);
+  border: 1px solid var(--color-rule-2);
+  border-radius: var(--radius-md);
+  transition: border-color 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
+}
+.fw-eingabe::placeholder { color: var(--color-ink-3); }
+.fw-eingabe:hover { border-color: var(--color-ink-3); }
+.fw-eingabe:focus {
+  outline: none;
+  border-color: var(--color-ink);
+  box-shadow: 0 0 0 3px rgb(var(--brand-glow) / 0.28);
+}
+.fw-eingabe:user-invalid { border-color: var(--color-warn); }
+
+/* Rechtstexte: eine Spalte, klare Stufen, nichts Dekoratives. */
+.fw-recht { display: grid; gap: 2.25rem; }
+.fw-recht h2 {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.75rem;
+}
+.fw-recht h3 {
+  font-size: var(--text-base);
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.4rem;
+}
+.fw-recht p, .fw-recht li {
+  font-size: 0.98rem;
+  line-height: 1.7;
+  color: var(--color-ink-2);
+}
+.fw-recht p + p { margin-top: 0.85rem; }
+.fw-recht ul { display: grid; gap: 0.45rem; margin-top: 0.75rem; }
+.fw-recht li { padding-left: 1.1rem; position: relative; }
+.fw-recht li::before {
+  content: "";
+  position: absolute; left: 0; top: 0.75em;
+  width: 0.45rem; height: 1px; background: var(--color-rule-2);
+}
+.fw-recht a { color: var(--color-ink); text-decoration: underline; text-underline-offset: 0.2em; }

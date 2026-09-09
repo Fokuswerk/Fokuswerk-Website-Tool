@@ -1,119 +1,142 @@
 # Fokuswerk — Website
 
-Strategischer Relaunch, September 2026. Astro, statisch, ohne Framework im Frontend.
-
-Konzept, Positionierung, Dramaturgie und Designsystem stehen in
-[`docs/KONZEPT.md`](docs/KONZEPT.md). Diese Datei beschreibt nur den Betrieb.
-
----
-
-## Befehle
+Next.js 16, React 19, Tailwind 4. Statisch vorgerendert, eine Serverfunktion
+für das Anfrageformular.
 
 ```bash
 npm install
-npm run dev       # Entwicklungsserver, Port 4330
-npm run build     # nach dist/
-npm run preview   # gebauten Stand ausliefern, Port 4321
-npm run qa        # Barrierefreiheit, tote Links, Überlauf, Meta, Gewicht
-npm run shots     # Bildschirmfotos nach qa/shots/
+npm run dev          # http://localhost:3000
+npm run build && npm start
+npm run typecheck
+npm run qa           # Barrierefreiheit, tote Links, Überlauf, Meta
+npm run shots        # Bildschirmfotos nach qa/shots/
 ```
 
-`npm run qa` und `npm run shots` erwarten einen laufenden Server. Standard ist
-`http://localhost:4331`; abweichend über `BASIS=…` setzen.
-
-```bash
-npx astro preview --port 4331 &
-BASIS=http://localhost:4331 npm run qa
-BASIS=http://localhost:4331 AUS=qa/shots-mobil BREITE=390 HOEHE=844 npm run shots
-```
+`qa` und `shots` erwarten einen laufenden Server; Standard ist
+`http://localhost:4341` bzw. `4340`, abweichend über `BASIS=…`.
 
 ---
 
-## Aufbau
+## 1. Die Idee, auf der alles steht
 
-```
-src/
-  data/firma.ts          Stammdaten, CTA-Label, Navigation, Preis- und Rechengrößen
-  data/fallstudien.ts    Fallstudien — eine weitere Fallstudie ist ein Eintrag mehr
-  styles/system.css      Designsystem: Token, Typoskala, Raster, Bewegung
-  scripts/bewegung.ts    Reveals, Parallaxe, Zahlen-Count-up (3,3 kB inline, kein Paket)
-  layouts/Basis.astro    Grundgerüst, Metadaten, strukturierte Daten
-  layouts/Rechtstext.astro
-  components/            Kopf mit Overlay-Menü, Fuß, Abschnitt, Titel, Bildband …
-  components/start/      Die Abschnitte der Startseite in Reihenfolge der Dramaturgie
-  pages/                 Startseite, Leistung, Fallstudien, Über uns, Kontakt, Recht
-  assets/                Bilder (Original als JPEG, Astro erzeugt WebP-Varianten)
-  assets/raw/            unbearbeitete Generate — nicht ausgeliefert
-api/anfrage.js           Vercel-Funktion für das Kontaktformular
-qa/                      Prüf- und Bildschirmfotoskripte
-```
+**Die Seite ist selbst der Beweis.** Fokuswerk verkauft Content, Kampagnen und
+Websites — also wird nicht behauptet, dass wir das können, sondern vorgeführt.
+Drei Schaustücke tragen die Seite:
+
+| Baustein | Was es beweist |
+|---|---|
+| `Buehne` | Browserfenster mit einer Karriereseite, davor das Telefon mit der Anzeige, die darauf führt. Content, Ads und Web in einem Bild. |
+| `Werbekonto` | Zwei gemessene Varianten, 4,92 € gegen 218 € je Bewerbung — und der Moment, in dem die teure abgeschaltet wird. |
+| `Rechner` | Zwei Regler, ein Ergebnis: was eine unbesetzte Stelle diesen Betrieb im Jahr kostet. Seine Zahlen, nicht unsere. |
+
+**Der Grund ist ein Hauch neben Reinweiß.** `#fbfaf9` statt `#ffffff`: reines
+Weiß hat kein Material. Zusammen mit dem Korn, das als feste Ebene über der
+ganzen Seite liegt, bekommt die Fläche Oberfläche, ohne cremig zu werden.
+
+**Zwei dunkle Bänder geben Takt.** Dunkel wird es dort, wo gerechnet und
+entschieden wird — beim Rechner und im Abschluss samt Fuß. Technisch ist ein
+Band nur die Klasse `.band`: sie schreibt dieselben Farbvariablen mit anderen
+Werten neu, und jeder Baustein folgt mit. Kein zweiter Satz Klassen.
+
+> **Fallstrick:** Die Farbwerte im `@theme` müssen fest sein, keine Verweise auf
+> weitere Variablen. Ein `var()` in einer auf `:root` deklarierten Variablen
+> wird bereits dort aufgelöst — `.band` könnte den Wert dann nicht mehr ändern.
+
+**Ein kursives Wort je Überschrift.** Instrument Serif kursiv, mit einem Marker
+dahinter, der beim Erscheinen von links auffährt. Das ist der größte einzelne
+Unterschied zwischen „sauber gebaut" und „gestaltet" — und es wirkt nur,
+solange es bei einem Wort bleibt.
+
+**Die Kopfleiste schwebt.** Liegt unter ihr ein dunkles Band, kehrt sie
+dieselben Variablen um wie das Band (`.kopf-dunkel`), setzt aber keinen eigenen
+Grund — sonst läge sie wie ein Brett auf der Seite.
 
 ---
 
-## Eine Fallstudie ergänzen
+## 2. Was nicht behauptet wird
 
-1. Bild nach `src/assets/<name>.jpg` legen (Langseite ≤ 2400 px, JPEG Q88).
-2. In `src/data/fallstudien.ts` einen Eintrag ans Array anhängen. Das Feld `bild`
-   enthält den Dateinamen ohne Endung.
-3. Fertig. Übersicht, Detailseite, Sitemap und die Startseiten-Kachel entstehen daraus.
+Es werden **keine Referenzen, Kennzahlen oder Zitate erfunden.**
 
-**Regel, die nicht verhandelbar ist:** Jede Zahl muss aus einem Werbekonto, einer
-Rechnung oder einem Vertrag belegbar sein. Ein Zitat kommt nur mit schriftlicher
-Freigabe des Betriebs auf die Seite — deshalb ist das Feld `zitat` optional und bei
-WAV bewusst leer.
+- Im `Werbekonto` stehen nur die beiden Werte, die aus dem Konto belegt sind.
+  Die dritte getestete Variante hat keine überlieferte Zahl und taucht deshalb
+  als Zeile nicht auf.
+- Das Zitat von Alexander Lüers ist **nicht freigegeben** und steht nirgends.
+- Kein Live-Dashboard, keine Reichweiten, keine „15+ Kunden", kein
+  Gründungsjahr — der GbR-Start (04/2025) widerspricht dem früher genannten
+  „seit 2022".
+
+Alles Geschäftliche steht in `src/lib/inhalt.ts`.
 
 ---
 
-## Kontaktformular
+## 3. Umgebungsvariablen
 
-`api/anfrage.js` nimmt das Formular entgegen und verschickt es über Resend.
-Benötigte Umgebungsvariablen in Vercel:
-
-| Variable | Beispiel | Pflicht |
+| Variable | Zweck | Pflicht |
 |---|---|---|
-| `RESEND_API_KEY` | `re_…` | ja |
-| `ANFRAGE_AN` | `contact@fokuswerk.de` | nein, Vorgabe wie hier |
-| `ANFRAGE_VON` | `Website <website@fokuswerk.de>` | nein, Absenderdomäne muss bei Resend verifiziert sein |
+| `NEXT_PUBLIC_SITE_URL` | Basis für Canonicals, Sitemap, Open Graph | empfohlen |
+| `RESEND_API_KEY` | Versand des Anfrageformulars | **ja** |
+| `ANFRAGE_AN` | Empfänger, Vorgabe `contact@fokuswerk.de` | nein |
+| `ANFRAGE_VON` | Absender, Domäne muss bei Resend verifiziert sein | nein |
 
-Ohne Schlüssel antwortet die Funktion mit 500; das Formular zeigt dann Telefonnummer
-und E-Mail als Ausweichweg an. Der Honigtopf heißt `webseite` und ist ausgeblendet.
-
----
-
-## Datenschutz — Stand der Umsetzung
-
-Die Datenschutzerklärung beschreibt **den tatsächlichen Zustand dieser Website**:
-keine Analyse, kein Tracking, keine Cookies, keine externen Skripte, Schriften
-selbst gehostet. Deshalb gibt es kein Einwilligungsbanner.
-
-**Wenn GA4, Google Ads oder das Meta Pixel eingebaut werden, muss beides zurück:**
-die entsprechenden Abschnitte in `src/pages/datenschutz.astro` und ein
-Einwilligungsbanner, das die Skripte erst nach Zustimmung lädt.
+Ohne `RESEND_API_KEY` antwortet `/api/anfrage` mit 500 und das Formular zeigt
+Telefonnummer und E-Mail als Ausweichweg — die Anfrage geht nie still verloren.
 
 ---
 
-## Bilder
+## 4. Aufbau
 
-Alle Bilder sind derzeit **Platzhalter** aus generativer Erzeugung, nach der in
-`docs/KONZEPT.md` beschriebenen Art Direction. Sie sind so kalibriert, dass echte
-Aufnahmen vom nächsten Drehtag sie ohne Bruch ersetzen: Tageslicht aus Hallenfenstern,
-warm-neutral, leicht entsättigt, Menschen bei der Arbeit, kein Blickkontakt zur Kamera.
+```
+src/app/
+  globals.css        Designsystem: Token, .band, Korn, Bewegung, Regler
+  layout.tsx         Schriften, Metadaten, strukturierte Daten
+  page.tsx           Startseite
+  fallstudien/…      Fallstudie WAV Westerstede
+  kontakt, danke, impressum, datenschutz
+  api/anfrage        Serverfunktion Formular
+  opengraph-image.tsx
+src/components/
+  Bewegung.tsx       ein Beobachter, eine Bildschleife, kein Framework
+  abschnitte/        die Abschnitte der Startseite
+  geraete/           Bühne, Werbekonto
+  seite/             Kopf, Fuß, Rechtstext
+  ui/
+src/lib/inhalt.ts    Stammdaten, CTA, belegte Zahlen, Rechengrößen
+```
 
-Ersetzen heißt: gleiche Datei in `src/assets/` überschreiben, gleiches Seitenverhältnis
-beibehalten, neu bauen. Die Bildunterschriften behaupten bewusst nirgends, wer auf
-einem Bild zu sehen ist.
+### Bewegung
+Alles läuft über `Bewegung.tsx`: ein IntersectionObserver und eine
+rAF-Schleife. Bewegt werden ausschließlich `transform`, `opacity`, `filter`
+und `background-size` — nie Layout.
 
-Für die Fallstudie WAV fehlt noch der **Screenshot aus dem Meta-Werbekonto**
-(drei Kampagnenzeilen, Kosten je Ergebnis). Der gehört als Beleg auf
-`/fallstudien/wav-westerstede/`, sobald er freigegeben ist.
+- `data-reveal` (`data-from="left|right|scale|blur"`) — Erscheinen
+- `data-split` — Überschrift Wort für Wort; das kursive Wort bleibt als Ganzes
+  stehen, weil es den Marker trägt
+- `data-zahl` — zählt hoch, sobald sichtbar
+- `data-tilt` — Neigung zum Zeiger, nur auf Zeigergeräten
+
+`prefers-reduced-motion: reduce` schaltet alles ab, Inhalte bleiben sichtbar.
 
 ---
 
-## Auslieferung
+## 5. Bilder
 
-Vercel, statisch. `vercel.json` setzt `cleanUrls`, `trailingSlash`, unveränderliche
-Zwischenspeicherung für `/fonts/` und `/_astro/` sowie die üblichen Sicherheits-Header.
-Die Serverfunktion unter `api/` läuft auf Node.
+Die Aufnahmen unter `public/bilder/` sind **Platzhalter** aus generativer
+Erzeugung nach fester Art Direction: dokumentarisch, Tageslicht aus
+Hallenfenstern, warm-neutral, leicht entsättigt, Menschen bei der Arbeit, kein
+Blickkontakt zur Kamera. Sie sind so kalibriert, dass echte Aufnahmen vom
+nächsten Drehtag sie ohne Bruch ersetzen: gleiche Datei überschreiben,
+Seitenverhältnis beibehalten, neu bauen.
 
-Gewicht der Startseite: 69 kB HTML, 3,3 kB JavaScript (inline, keine externe Datei),
-Schriften 46 kB + 122 kB, Bilder als WebP in vier Breiten.
+Bildunterschriften behaupten nirgends, wer auf einem Bild zu sehen ist.
+
+**Fehlt noch:** der Screenshot aus dem Meta-Werbekonto für die Fallstudie.
+Das Schaustück `Werbekonto` stellt die belegten Zahlen in eigener Gestaltung
+dar — es ist bewusst kein nachgebauter Screenshot.
+
+---
+
+## 6. Auslieferung
+
+Vercel. `vercel.json` setzt die Sicherheits-Header und hält die Seite unter
+`*.vercel.app` auf `noindex` — die Regel ist an den Host gebunden und greift
+nicht mehr, sobald die echte Domain auf das Projekt zeigt.

@@ -1,10 +1,10 @@
 node_modules
-dist
-.astro
+.next
+out
 .vercel
 .DS_Store
+*.tsbuildinfo
 
-# Rohgenerate und Prüfausgaben gehören nicht ins Repo
-src/assets/raw/
+# Prüfausgaben
 qa/*/
 qa/*.png
