@@ -1,7 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import Abschnitt from '../Abschnitt.astro';
-import Titel from '../Titel.astro';
+import AbschnittKopf from '../AbschnittKopf.astro';
 import aufbau from '../../assets/aufbau-stativ.jpg';
 import handy from '../../assets/mechatroniker-handy.jpg';
 import neuer from '../../assets/neuer-mitarbeiter.jpg';
@@ -40,17 +40,10 @@ const schritte = [
 ---
 
 <Abschnitt nummer="04" marke="Der Drehtag" id="drehtag">
-  <div class="dreh-kopf">
-    <Titel
-      zeilen={['Ein Tag im Betrieb.', 'Ein Monat Material.']}
-      stufe="h2"
-      groesse="d2"
-    />
-    <p class="lead" data-auf style="--verzug:140ms">
-      Sie geben einen halben Tag ab. Wir gehen mit dem, was an diesem Tag entsteht,
-      den Rest des Monats arbeiten — in zwei Richtungen gleichzeitig.
-    </p>
-  </div>
+  <AbschnittKopf
+    zeilen={['Ein Tag im Betrieb.', 'Ein Monat Material.']}
+    lead="Sie geben einen halben Tag ab. Wir gehen mit dem, was an diesem Tag entsteht, den Rest des Monats arbeiten — in zwei Richtungen gleichzeitig."
+  />
 
   <div class="dreh" data-dreh>
     <div class="dreh-media">
@@ -95,19 +88,6 @@ const schritte = [
 </Abschnitt>
 
 <style>
-  .dreh-kopf {
-    display: grid;
-    gap: clamp(1.75rem, 4vw, 3rem);
-    padding-bottom: clamp(2.5rem, 6vw, 4.5rem);
-  }
-  @media (min-width: 56rem) {
-    .dreh-kopf {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: clamp(2.5rem, 6vw, 6rem);
-      align-items: end;
-    }
-  }
-  .dreh-kopf .lead { max-width: 42ch; }
 
   .dreh { display: grid; gap: clamp(2rem, 5vw, 3.5rem); }
   @media (min-width: 62rem) {

@@ -1,7 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import Abschnitt from '../Abschnitt.astro';
-import Titel from '../Titel.astro';
+import AbschnittKopf from '../AbschnittKopf.astro';
 import Pfeil from '../Pfeil.astro';
 import { fallstudien } from '../../data/fallstudien';
 import halle from '../../assets/werkstatt-halle.jpg';
@@ -19,14 +19,10 @@ const weitere = [
 ---
 
 <Abschnitt nummer="10" marke="Arbeiten" id="arbeiten">
-  <div class="arb-kopf">
-    <Titel zeilen={['Woran wir', 'gerade arbeiten.']} stufe="h2" groesse="d2" />
-    <p class="lead" data-auf style="--verzug:140ms">
-      Eine Fallstudie steht hier erst, wenn der Betrieb die Zahlen freigegeben hat
-      und wir sie aus dem Werbekonto belegen können. Deshalb ist es eine — und
-      nicht sechs.
-    </p>
-  </div>
+  <AbschnittKopf
+    zeilen={['Woran wir', 'gerade arbeiten.']}
+    lead="Eine Fallstudie steht hier erst, wenn der Betrieb die Zahlen freigegeben hat und wir sie aus dem Werbekonto belegen können. Deshalb ist es eine — und nicht sechs."
+  />
 
   <div class="arb-raster">
     <a href={`/fallstudien/${wav.slug}/`} class="fall" data-auf>
@@ -81,19 +77,6 @@ const weitere = [
 </Abschnitt>
 
 <style>
-  .arb-kopf {
-    display: grid;
-    gap: clamp(1.75rem, 4vw, 3rem);
-    padding-bottom: clamp(2.5rem, 6vw, 4rem);
-  }
-  @media (min-width: 56rem) {
-    .arb-kopf {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: clamp(2.5rem, 6vw, 6rem);
-      align-items: end;
-    }
-  }
-  .arb-kopf .lead { max-width: 44ch; }
 
   .arb-raster { display: grid; gap: clamp(2.5rem, 5vw, 3.5rem); }
   @media (min-width: 62rem) {

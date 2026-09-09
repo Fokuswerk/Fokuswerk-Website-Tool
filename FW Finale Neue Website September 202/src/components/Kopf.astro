@@ -11,7 +11,7 @@ const pfad = Astro.url.pathname;
 
   <div class="kopf-innen huelle">
     <a href="/" class="kopf-marke" aria-label="Fokuswerk, zur Startseite">
-      <Wortmarke hoehe={19} />
+      <Wortmarke hoehe={26} klasse="kopf-logo" />
     </a>
 
     <div class="kopf-rechts">
@@ -24,6 +24,7 @@ const pfad = Astro.url.pathname;
         aria-controls="hauptmenue"
       >
         <span class="nur-sr">Menü öffnen</span>
+        <span class="brenner-wort" aria-hidden="true">Menü</span>
         <span class="brenner-linien" aria-hidden="true">
           <span></span><span></span>
         </span>
@@ -94,11 +95,36 @@ const pfad = Astro.url.pathname;
     align-items: center;
     justify-content: space-between;
     gap: var(--r-4);
-    padding-block: clamp(1.1rem, 0.7rem + 1.8vw, 1.9rem);
+    padding-block: clamp(1.35rem, 0.9rem + 2.2vw, 2.35rem);
+    transition: padding-block .5s var(--ease);
+  }
+  .kopf[data-gescrollt] .kopf-innen {
+    padding-block: clamp(1.05rem, 0.8rem + 1.3vw, 1.55rem);
   }
   .kopf-marke { display: block; padding-block: 0.35rem; }
+  /* Die Marke schrumpft beim Scrollen leicht mit — das macht den Wechsel
+     von „über dem Bild" zu „auf der Leiste" spürbar, ohne ihn anzukündigen. */
+  .kopf-marke :global(.kopf-logo) { transition: height .5s var(--ease); }
+  .kopf[data-gescrollt] .kopf-marke :global(.kopf-logo) { height: 21px; }
 
-  .kopf-rechts { display: flex; align-items: center; gap: clamp(1rem, 3vw, 2.25rem); }
+  .kopf-rechts {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2.25rem);
+    transition: color .4s var(--ease);
+  }
+  /* Über dem randabfallenden Heldenbild steht die rechte Kopfgruppe auf Weiß.
+     Sobald die Leiste ihren Grund bekommt, gilt wieder die Tinte. */
+  :global(body[data-hero-bild]) .kopf:not([data-gescrollt]) .kopf-rechts { color: #fff; }
+  :global(body[data-hero-bild]) .kopf:not([data-gescrollt]) .kopf-tel { color: rgba(255, 255, 255, 0.86); }
+  @media (max-width: 61.999rem) {
+    :global(body[data-hero-bild]) .kopf:not([data-gescrollt]) .kopf-rechts { color: var(--tinte); }
+    :global(body[data-hero-bild]) .kopf:not([data-gescrollt]) .kopf-tel { color: var(--tinte-2); }
+  }
+  /* Bei offenem Menü liegt die Kopfzeile auf der hellen Overlay-Fläche —
+     Weiß wäre dort unsichtbar. */
+  :global(body.menue-offen) .kopf:not([data-gescrollt]) .kopf-rechts { color: var(--tinte); }
+  :global(body.menue-offen) .kopf:not([data-gescrollt]) .kopf-tel { color: var(--tinte-2); }
 
   .kopf-tel {
     font-family: var(--schrift-display);
@@ -121,11 +147,20 @@ const pfad = Astro.url.pathname;
 
   /* ---------- Brenner: zwei Linien ---------- */
   .brenner {
-    display: grid;
-    place-items: center;
-    width: 44px; height: 44px;
-    margin-right: -10px;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    height: 44px;
+    padding-left: 0.5rem;
   }
+  .brenner-wort {
+    font-family: var(--schrift-display);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  @media (max-width: 30rem) { .brenner-wort { display: none; } }
   .brenner-linien {
     position: relative;
     display: block;

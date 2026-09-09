@@ -1,6 +1,6 @@
 ---
 import Abschnitt from '../Abschnitt.astro';
-import Titel from '../Titel.astro';
+import AbschnittKopf from '../AbschnittKopf.astro';
 import Pfeil from '../Pfeil.astro';
 import { cta, preis } from '../../data/firma';
 
@@ -25,17 +25,11 @@ const punkte = [
 ---
 
 <Abschnitt nummer="07" marke="Ihr Risiko">
-  <div class="sich-kopf">
-    <Titel
-      zeilen={['Was passiert,', 'wenn es nicht', 'funktioniert.']}
-      stufe="h2"
-      groesse="d2"
-    />
-    <p class="lead" data-auf style="--verzug:140ms">
-      Das ist die Frage, die zu Recht als Erstes kommt. Deshalb steht die Antwort
-      hier und nicht im Kleingedruckten.
-    </p>
-  </div>
+  <AbschnittKopf
+    zeilen={['Was passiert, wenn es', 'nicht funktioniert.']}
+    lead="Das ist die Frage, die zu Recht als Erstes kommt. Deshalb steht die Antwort hier und nicht im Kleingedruckten."
+    breit
+  />
 
   <div class="sich-raster">
     {punkte.map((p, i) => (
@@ -53,19 +47,6 @@ const punkte = [
 </Abschnitt>
 
 <style>
-  .sich-kopf {
-    display: grid;
-    gap: clamp(1.75rem, 4vw, 3rem);
-    padding-bottom: clamp(2.5rem, 6vw, 4rem);
-  }
-  @media (min-width: 56rem) {
-    .sich-kopf {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: clamp(2.5rem, 6vw, 6rem);
-      align-items: end;
-    }
-  }
-  .sich-kopf .lead { max-width: 40ch; }
 
   .sich-raster {
     display: grid;
@@ -94,6 +75,6 @@ const punkte = [
     display: grid;
     gap: var(--r-2);
     justify-items: start;
-    margin-top: clamp(2.5rem, 6vw, 4rem);
+    margin-top: clamp(2rem, 4vw, 3rem);
   }
 </style>

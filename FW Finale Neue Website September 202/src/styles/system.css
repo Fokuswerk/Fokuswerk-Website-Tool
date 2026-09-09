@@ -29,10 +29,10 @@
 /* --- Token -------------------------------------------------------------- */
 :root {
   /* Fläche */
-  --papier:      #f5f2ec;
-  --sand:        #eae5db;
-  --sand-tief:   #ded7c9;
-  --weiss:       #fbfaf7;
+  --papier:      #f6f4ef;
+  --sand:        #ebe7e0;
+  --sand-tief:   #ddd7cb;
+  --weiss:       #fcfbf8;
   --dunkel:      #141210;
   --dunkel-2:    #1f1c18;
 
@@ -44,8 +44,8 @@
   --auf-dunkel-2:    #b0a99f;
 
   /* Linie */
-  --linie:       #d9d3c8;
-  --linie-stark: #c2baab;
+  --linie:       #ddd7cc;
+  --linie-stark: #c6bfb1;
   --linie-dunkel:#332e28;
 
   /* Signal */
@@ -58,8 +58,8 @@
   --schrift-text:    'Source Serif 4', Georgia, 'Times New Roman', serif;
 
   /* Typoskala — fluid, 360px bis 1440px */
-  --t-d1:   clamp(2.05rem, 1.25rem + 3.55vw, 4.75rem);
-  --t-d2:   clamp(2.00rem, 1.35rem + 2.90vw, 3.50rem);
+  --t-d1:   clamp(2.30rem, 1.05rem + 5.35vw, 5.50rem);
+  --t-d2:   clamp(2.00rem, 1.30rem + 3.30vw, 3.75rem);
   --t-d3:   clamp(1.60rem, 1.25rem + 1.70vw, 2.55rem);
   --t-d4:   clamp(1.22rem, 1.08rem + 0.75vw, 1.68rem);
   --t-lead: clamp(1.15rem, 1.03rem + 0.52vw, 1.47rem);
@@ -76,16 +76,19 @@
   --r-9: 8rem;    --r-10: 10rem;  --r-11: 12.5rem;
 
   /* Abschnittsrhythmus — bewusst unterschiedliche Höhen */
-  --abschnitt:       clamp(5rem, 3.2rem + 8vw, 9.5rem);
-  --abschnitt-eng:   clamp(3.5rem, 2.4rem + 4.9vw, 6rem);
-  --abschnitt-weit:  clamp(7rem, 4rem + 13.3vw, 15rem);
+  --abschnitt:       clamp(5rem, 2.8rem + 9.7vw, 10rem);
+  --abschnitt-eng:   clamp(3.75rem, 2.4rem + 6vw, 7rem);
+  --abschnitt-weit:  clamp(6.5rem, 3.5rem + 13.3vw, 13rem);
 
   /* Raster */
   --breite:      1320px;
   --breite-eng:  760px;
   --breite-text: 62ch;
   --rand:        clamp(1.25rem, 0.6rem + 2.9vw, 3.5rem);
-  --rail:        clamp(0px, -8rem + 14vw, 13rem);
+  --rail:        clamp(3.5rem, 4.4vw, 6rem);
+  /* Linke Kante des Inhalts, auch außerhalb von .huelle nutzbar — für
+     vollflächige Abschnitte, die am Raster ausgerichtet bleiben sollen. */
+  --rand-links:  max(var(--rand), calc((100vw - var(--breite)) / 2));
 
   --radius: 2px;
 
@@ -171,7 +174,7 @@ strong, b { font-weight: 600; }
 @media (min-width: 60rem) {
   .rail {
     grid-template-columns: var(--rail) minmax(0, 1fr);
-    gap: clamp(2rem, 4vw, 4.5rem);
+    gap: clamp(1.5rem, 2.6vw, 3rem);
   }
 }
 
@@ -217,9 +220,9 @@ strong, b { font-weight: 600; }
 .dunkel h1, .dunkel h2, .dunkel h3, .dunkel h4 { color: var(--auf-dunkel); }
 
 /* --- Typo-Klassen ------------------------------------------------------- */
-.d1 { font-size: var(--t-d1); line-height: 0.96; letter-spacing: -0.033em; font-weight: 600; }
-.d2 { font-size: var(--t-d2); line-height: 1.02; letter-spacing: -0.028em; }
-.d3 { font-size: var(--t-d3); line-height: 1.08; letter-spacing: -0.022em; }
+.d1 { font-size: var(--t-d1); line-height: 0.94; letter-spacing: -0.042em; font-weight: 500; }
+.d2 { font-size: var(--t-d2); line-height: 1.0;  letter-spacing: -0.036em; font-weight: 500; }
+.d3 { font-size: var(--t-d3); line-height: 1.08; letter-spacing: -0.026em; font-weight: 500; }
 .d4 { font-size: var(--t-d4); line-height: 1.18; letter-spacing: -0.016em; }
 
 .lead {
@@ -261,6 +264,10 @@ strong, b { font-weight: 600; }
 /* Lining figures, aber KEINE Tabellenziffern: Schibsted Grotesk setzt Komma und
    Punkt im tnum-Satz auf volle Ziffernbreite, was „550 , 27 €" ergibt. */
 .ziffer { font-variant-numeric: lining-nums; }
+
+/* Trennpunkt zwischen Angaben einer Zeile. Global, weil er in Kopfzeilen,
+   Brotkrumen und Bildunterschriften gleich aussehen muss. */
+.punkt { padding-inline: 0.7em; opacity: 0.45; }
 /* Nur dort, wo Spalten wirklich untereinander stehen müssen. */
 .ziffer-tabelle { font-variant-numeric: tabular-nums lining-nums; }
 

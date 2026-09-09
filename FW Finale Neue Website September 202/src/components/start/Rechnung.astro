@@ -32,7 +32,7 @@ const zeilen = [
           {zeilen.map((z) => (
             <tr class={z.stark ? 'buch-summe' : undefined}>
               <th scope="row">{z.text}</th>
-              <td class="ziffer ziffer-tabelle">{z.wert}</td>
+              <td class="ziffer">{z.wert}</td>
             </tr>
           ))}
         </tbody>
@@ -57,7 +57,7 @@ const zeilen = [
     .rech-raster {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
       gap: clamp(3rem, 7vw, 6.5rem);
-      align-items: start;
+      align-items: end;
     }
   }
   .rech-links { display: grid; gap: clamp(1.25rem, 3vw, 2rem); align-content: start; }

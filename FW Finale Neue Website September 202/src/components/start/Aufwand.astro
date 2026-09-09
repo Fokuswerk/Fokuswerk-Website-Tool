@@ -1,6 +1,6 @@
 ---
 import Abschnitt from '../Abschnitt.astro';
-import Titel from '../Titel.astro';
+import AbschnittKopf from '../AbschnittKopf.astro';
 import Haken from '../Haken.astro';
 
 const ihre = [
@@ -18,14 +18,10 @@ const nicht = [
 ---
 
 <Abschnitt nummer="05" marke="Ihr Aufwand" ton="sand">
-  <div class="auf-kopf">
-    <Titel zeilen={['Ein halber Tag', 'im Monat.']} stufe="h2" groesse="d2" />
-    <p class="lead" data-auf style="--verzug:140ms">
-      Das ist die vollständige Liste dessen, was wir von Ihnen brauchen. Sie steht
-      hier, weil sie der Grund ist, aus dem Betriebe zusagen — und weil eine Agentur,
-      die mehr braucht, das an dieser Stelle nicht schreiben würde.
-    </p>
-  </div>
+  <AbschnittKopf
+    zeilen={['Ein halber Tag', 'im Monat.']}
+    lead="Das ist die vollständige Liste dessen, was wir von Ihnen brauchen. Sie steht hier, weil sie der Grund ist, aus dem Betriebe zusagen — und weil eine Agentur, die mehr braucht, das an dieser Stelle nicht schreiben würde."
+  />
 
   <div class="auf-raster">
     <div class="auf-block" data-auf>
@@ -46,19 +42,6 @@ const nicht = [
 </Abschnitt>
 
 <style>
-  .auf-kopf {
-    display: grid;
-    gap: clamp(1.75rem, 4vw, 3rem);
-    padding-bottom: clamp(2.5rem, 6vw, 4rem);
-  }
-  @media (min-width: 56rem) {
-    .auf-kopf {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: clamp(2.5rem, 6vw, 6rem);
-      align-items: end;
-    }
-  }
-  .auf-kopf .lead { max-width: 46ch; }
 
   .auf-raster { display: grid; gap: clamp(2.5rem, 5vw, 4rem); }
   @media (min-width: 56rem) {

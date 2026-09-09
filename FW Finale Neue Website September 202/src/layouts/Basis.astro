@@ -9,8 +9,11 @@ interface Props {
   beschreibung: string;
   bild?: string;
   noindex?: boolean;
+  /** Setzt die rechte Kopfzeile auf Weiß — für Seiten, deren Hero rechts
+      ein randabfallendes Foto trägt. */
+  heroBild?: boolean;
 }
-const { titel, beschreibung, bild = '/og-fokuswerk.jpg', noindex = false } = Astro.props;
+const { titel, beschreibung, bild = '/og-fokuswerk.jpg', noindex = false, heroBild = false } = Astro.props;
 const kanonisch = new URL(Astro.url.pathname, Astro.site).href;
 const ogBild = new URL(bild, Astro.site).href;
 ---
@@ -62,7 +65,7 @@ const ogBild = new URL(bild, Astro.site).href;
     })} />
   </head>
 
-  <body>
+  <body data-hero-bild={heroBild ? '' : undefined}>
     <a href="#inhalt" class="skip">Zum Inhalt springen</a>
     <Kopf />
     <main id="inhalt"><slot /></main>

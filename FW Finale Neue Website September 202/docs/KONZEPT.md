@@ -136,7 +136,7 @@ erzeugt hat.
 
 | # | Abschnitt | Frage im Kopf des Lesers | Antwort |
 |---|---|---|---|
-| 1 | Hero | Was ist das, für wen? | Ein Drehtag im Monat, zwei Kampagnen. Für Betriebe mit eigener Werkstatt. |
+| 1 | Hero | Was ist das, für wen? | Vollhoher Zweischlag: Typo auf Papier links, randabfallendes Hochformat rechts, darunter ein Sockel mit drei belegten Zahlen. Die Fold enthält drei Blöcke, nicht fünf. |
 | 2 | Die Lage | Kennen die meinen Laden? | Stelle offen, Hebebühne halbtags, Termine drei Wochen voraus. |
 | 3 | Die Rechnung | Was kostet mich das wirklich? | 1.275 Std × 95 € = 121.125 €/Jahr. Unbesetzt: 10.100 €/Monat. Mit Quelle. |
 | 4 | Der Beweis | Können die das? | WAV: 550 € → 68 Bewerbungen → 14 Tage. Werbekonto. Rufen Sie ihn an. |
@@ -209,18 +209,24 @@ Beide selbst gehostet als woff2, `font-display: swap`, Subset latin.
 Skala (fluid, clamp): Display 1 → 4 (Hero bis Abschnittstitel), Lead, Body,
 Small, Label. Keine Zwischengrößen nach Gefühl.
 
+**Displayschnitte laufen im Gewicht 500, nicht 600.** Bei 88 px wirkt 600 laut;
+500 wirkt ruhig und teuer. Die Laufweite ist bei D1 auf −0,042 em gezogen.
+
 ### Farbe
 Hell, warm, nicht steril. Drei Töne plus ein Signal.
 
 | Rolle | Wert |
 |---|---|
-| Papier | `#F5F2EC` |
-| Sand (Abschnittswechsel) | `#EAE5DB` |
+| Papier | `#F6F4EF` |
+| Sand (Abschnittswechsel) | `#EBE7E0` |
 | Tinte | `#1A1815` |
 | Tinte sekundär | `#57514A` |
-| Linie | `#D9D3C8` |
-| Signal | `#BE4B22` |
+| Linie | `#DDD7CC` |
+| Signal | `#B04420` |
 | Dunkel (dramaturgisch) | `#141210` |
+
+Das Signal wurde von `#BE4B22` auf `#B04420` abgedunkelt: der hellere Ton lag
+auf Papier bei 4,45:1 und damit unter der Lesbarkeitsschwelle für kleine Schrift.
 
 Das Signal ist gebrannter Ton — Werkstattfarbe, kein Neon. Es erscheint
 ausschließlich auf primären CTAs, auf der aktiven Navigationsmarke und auf
@@ -230,16 +236,28 @@ Dunkle Abschnitte gibt es genau zwei: den Beweis und den Schluss.
 
 ### Raster und Raum
 - 12 Spalten, Inhaltsbreite max. 1320 px, Gutter 24/32
-- **Linke Marginalspalte** trägt Abschnittsnummern (`01 —`) und Kurzlabel.
+- **Linke Marginalspalte** von 6 rem — nicht mehr. In der ersten Fassung waren
+  es 13 rem plus 4,5 rem Abstand; zusammen mit zweispaltigen Textköpfen blieben
+  für den Inhalt schmale Spalten neben großen Leerflächen. Genau das ließ die
+  Seite eng wirken, obwohl viel Weißraum vorhanden war.
+- Die Marginalspalte trägt Abschnittsnummern (`01 —`) und Kurzlabel.
   Übernimmt die Sprache der bestehenden Angebots- und Fallstudien-PDFs
   („01 — Das Vorgehen"). Website und Dokumente wirken dadurch als ein Haus.
 - Abstandsskala: 8/12/16/24/32/48/64/96/128/160/200
 - Radien: **2 px überall**, ohne Ausnahme. Keine Pillen, keine 16-px-Cards.
 - Schatten: keine. Trennung über Haarlinien und Tonwechsel Papier/Sand.
 
+### Abschnittskopf: die Kaskade
+Jeder Abschnitt beginnt gleich — Marke, Überschrift über die volle Breite,
+Lead eingerückt darunter. Zwei Textblöcke nebeneinander auf gleicher Oberkante
+erzeugen zwei konkurrierende Lesespalten und lassen den Abschnitt eng wirken;
+die Treppe führt das Auge. **Der Kopf ist überall gleich, die Vielfalt trägt
+der Körper.** In der ersten Fassung war es umgekehrt — uneinheitliche Köpfe
+über ähnlichen Körpern — und genau das las sich als Template.
+
 ### Layoutmechaniken
-Zehn Archetypen, damit kein Abschnitt aussieht wie der vorige — alle aus
-demselben Raster:
+Zehn Archetypen für die Abschnittskörper, damit kein Abschnitt aussieht wie
+der vorige — alle aus demselben Raster:
 
 1. Editorialer Zweispalter (Marginalie + Prosa)
 2. Vollflächiges Bildband mit einer Zeile

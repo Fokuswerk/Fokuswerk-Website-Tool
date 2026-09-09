@@ -1,7 +1,7 @@
 ---
 import { Image } from 'astro:assets';
 import Abschnitt from '../Abschnitt.astro';
-import Titel from '../Titel.astro';
+import AbschnittKopf from '../AbschnittKopf.astro';
 import bild from '../../assets/leere-hebebuehne.jpg';
 
 const gruende = [
@@ -21,22 +21,12 @@ const gruende = [
 ---
 
 <Abschnitt nummer="01" marke="Die Lage">
-  <div class="lage-kopf">
-    <Titel
-      zeilen={['Sie suchen.', 'Es meldet sich', 'niemand.']}
-      stufe="h2"
-      groesse="d2"
-    />
-    <div class="lage-lead" data-auf style="--verzug:120ms">
-      <p class="lead">
-        Die Anzeige läuft seit Monaten. Ein paar Bewerbungen sind gekommen, keine
-        hat gepasst. Währenddessen steht eine Bühne halb leer, Termine vergeben Sie
-        drei Wochen im Voraus, und Aufträge, die Sie früher angenommen hätten,
-        macht jetzt jemand anders.
-      </p>
-      <p class="lage-satz">Das liegt nicht an Ihrem Betrieb. Es liegt daran, wo gesucht wird.</p>
-    </div>
-  </div>
+  <AbschnittKopf
+    zeilen={['Sie suchen.', 'Es meldet sich niemand.']}
+    lead="Die Anzeige läuft seit Monaten. Ein paar Bewerbungen sind gekommen, keine hat gepasst. Währenddessen steht eine Bühne halb leer, Termine vergeben Sie drei Wochen im Voraus, und Aufträge, die Sie früher angenommen hätten, macht jetzt jemand anders."
+  />
+
+  <p class="lage-satz" data-auf>Das liegt nicht an Ihrem Betrieb.<br />Es liegt daran, wo gesucht wird.</p>
 
   <div class="lage-raster">
     <ol class="lage-gruende">
@@ -71,27 +61,18 @@ const gruende = [
 </Abschnitt>
 
 <style>
-  .lage-kopf {
-    display: grid;
-    gap: clamp(1.75rem, 4vw, 3rem);
-    padding-bottom: clamp(3rem, 7vw, 5.5rem);
-  }
-  @media (min-width: 56rem) {
-    .lage-kopf {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: clamp(2.5rem, 6vw, 6rem);
-      align-items: start;
-    }
-  }
-  .lage-lead { display: grid; gap: 1.15em; }
-  .lage-lead .lead { max-width: 48ch; }
+  /* Der Kernsatz steht allein zwischen Kopf und Gründen — er ist die
+     Scharnierstelle des Abschnitts und bekommt deshalb eine eigene Zeile. */
   .lage-satz {
     font-family: var(--schrift-display);
-    font-size: clamp(1.02rem, 0.97rem + 0.24vw, 1.18rem);
-    font-weight: 600;
-    letter-spacing: -0.014em;
-    line-height: 1.4;
-    max-width: 34ch;
+    font-size: clamp(1.15rem, 0.98rem + 0.75vw, 1.62rem);
+    font-weight: 500;
+    letter-spacing: -0.026em;
+    line-height: 1.28;
+    padding-bottom: clamp(2.75rem, 5.8vw, 5rem);
+  }
+  @media (min-width: 56rem) {
+    .lage-satz { margin-left: clamp(5rem, 27%, 18rem); }
   }
 
   .lage-raster { display: grid; gap: clamp(2.5rem, 6vw, 4.5rem); }

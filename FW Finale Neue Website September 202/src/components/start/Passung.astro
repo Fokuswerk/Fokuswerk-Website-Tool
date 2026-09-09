@@ -1,6 +1,6 @@
 ---
 import Abschnitt from '../Abschnitt.astro';
-import Titel from '../Titel.astro';
+import AbschnittKopf from '../AbschnittKopf.astro';
 import Haken from '../Haken.astro';
 
 const passt = [
@@ -21,13 +21,10 @@ const passtNicht = [
 ---
 
 <Abschnitt nummer="09" marke="Die Passung" ton="sand">
-  <div class="pas-kopf">
-    <Titel zeilen={['Für wen das ist.', 'Und für wen nicht.']} stufe="h2" groesse="d2" />
-    <p class="lead" data-auf style="--verzug:140ms">
-      Wir betreuen zehn Betriebe, nicht fünfzig. Das ist keine Verknappung, sondern
-      Kapazität — und der Grund, warum wir lieber vorher sagen, wann es nicht passt.
-    </p>
-  </div>
+  <AbschnittKopf
+    zeilen={['Für wen das ist.', 'Und für wen nicht.']}
+    lead="Wir betreuen zehn Betriebe, nicht fünfzig. Das ist keine Verknappung, sondern Kapazität — und der Grund, warum wir lieber vorher sagen, wann es nicht passt."
+  />
 
   <div class="pas-raster">
     <div class="pas-spalte" data-auf>
@@ -47,19 +44,6 @@ const passtNicht = [
 </Abschnitt>
 
 <style>
-  .pas-kopf {
-    display: grid;
-    gap: clamp(1.75rem, 4vw, 3rem);
-    padding-bottom: clamp(2.5rem, 6vw, 4rem);
-  }
-  @media (min-width: 56rem) {
-    .pas-kopf {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: clamp(2.5rem, 6vw, 6rem);
-      align-items: end;
-    }
-  }
-  .pas-kopf .lead { max-width: 44ch; }
 
   .pas-raster { display: grid; gap: clamp(2.5rem, 5vw, 4rem); }
   @media (min-width: 56rem) {

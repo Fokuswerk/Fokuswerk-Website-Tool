@@ -1,6 +1,6 @@
 ---
 import Abschnitt from '../Abschnitt.astro';
-import Titel from '../Titel.astro';
+import AbschnittKopf from '../AbschnittKopf.astro';
 import { preis, rechnung } from '../../data/firma';
 
 const einrichtung = [
@@ -16,14 +16,10 @@ const laufend = [
 ---
 
 <Abschnitt nummer="11" marke="Der Preis" ton="sand" id="preis">
-  <div class="pre-kopf">
-    <Titel zeilen={['Was es kostet.']} stufe="h2" groesse="d2" />
-    <p class="lead" data-auf style="--verzug:140ms">
-      Der Preis steht auf dieser Seite, damit Sie ihn nicht in einem Gespräch
-      erfragen müssen. Wenn er für Ihren Betrieb nicht passt, haben wir beide
-      zwanzig Minuten gespart.
-    </p>
-  </div>
+  <AbschnittKopf
+    zeilen={['Was es kostet.']}
+    lead="Der Preis steht auf dieser Seite, damit Sie ihn nicht in einem Gespräch erfragen müssen. Wenn er für Ihren Betrieb nicht passt, haben wir beide zwanzig Minuten gespart."
+  />
 
   <div class="pre-raster">
     <div class="pre-listen">
@@ -32,9 +28,9 @@ const laufend = [
         <table class="buch">
           <tbody>
             {einrichtung.map((z) => (
-              <tr><th scope="row">{z.text}</th><td class="ziffer ziffer-tabelle">{z.wert}</td></tr>
+              <tr><th scope="row">{z.text}</th><td class="ziffer">{z.wert}</td></tr>
             ))}
-            <tr class="buch-summe"><th scope="row">zusammen</th><td class="ziffer ziffer-tabelle">5.270 €</td></tr>
+            <tr class="buch-summe"><th scope="row">zusammen</th><td class="ziffer">5.270 €</td></tr>
           </tbody>
         </table>
       </div>
@@ -44,9 +40,9 @@ const laufend = [
         <table class="buch">
           <tbody>
             {laufend.map((z) => (
-              <tr><th scope="row">{z.text}</th><td class="ziffer ziffer-tabelle">{z.wert}</td></tr>
+              <tr><th scope="row">{z.text}</th><td class="ziffer">{z.wert}</td></tr>
             ))}
-            <tr class="buch-summe"><th scope="row">zusammen</th><td class="ziffer ziffer-tabelle">3.670 €</td></tr>
+            <tr class="buch-summe"><th scope="row">zusammen</th><td class="ziffer">3.670 €</td></tr>
           </tbody>
         </table>
       </div>
@@ -81,19 +77,6 @@ const laufend = [
 </Abschnitt>
 
 <style>
-  .pre-kopf {
-    display: grid;
-    gap: clamp(1.75rem, 4vw, 3rem);
-    padding-bottom: clamp(2.5rem, 6vw, 4rem);
-  }
-  @media (min-width: 56rem) {
-    .pre-kopf {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: clamp(2.5rem, 6vw, 6rem);
-      align-items: end;
-    }
-  }
-  .pre-kopf .lead { max-width: 44ch; }
 
   .pre-raster { display: grid; gap: clamp(2.5rem, 5vw, 3.5rem); }
   @media (min-width: 62rem) {

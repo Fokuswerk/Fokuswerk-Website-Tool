@@ -1,6 +1,6 @@
 ---
 import Abschnitt from '../Abschnitt.astro';
-import Titel from '../Titel.astro';
+import AbschnittKopf from '../AbschnittKopf.astro';
 import Pfeil from '../Pfeil.astro';
 import { cta } from '../../data/firma';
 
@@ -13,19 +13,11 @@ const zahlen = [
 ---
 
 <Abschnitt nummer="03" marke="Der Beweis" ton="dunkel" hoehe="weit" id="beweis">
-  <div class="bew-kopf">
-    <Titel
-      zeilen={['550&#8239;€ Werbebudget.', 'Ein Mechatroniker', 'nach 14 Tagen.']}
-      stufe="h2"
-      groesse="d2"
-    />
-    <p class="lead" data-auf style="--verzug:140ms">
-      WAV Westerstede, freie Kfz&#8209;Werkstatt im Ammerland. Neun Monate hatte
-      Alexander Lüers gesucht — vier Bewerbungen im ganzen Jahr, keine passte.
-      Wir haben einen Tag in seinem Betrieb gedreht und drei Kampagnenvarianten
-      gleichzeitig laufen lassen.
-    </p>
-  </div>
+  <AbschnittKopf
+    zeilen={['550&#8239;€ Werbebudget.', 'Ein Mechatroniker nach 14 Tagen.']}
+    lead="WAV Westerstede, freie Kfz-Werkstatt im Ammerland. Neun Monate hatte Alexander Lüers gesucht — vier Bewerbungen im ganzen Jahr, keine passte. Wir haben einen Tag in seinem Betrieb gedreht und drei Kampagnenvarianten gleichzeitig laufen lassen."
+    breit
+  />
 
   <ul class="bew-zahlen">
     {zahlen.map((z, i) => (
@@ -88,20 +80,6 @@ const zahlen = [
 </Abschnitt>
 
 <style>
-  .bew-kopf {
-    display: grid;
-    gap: clamp(1.75rem, 4vw, 3rem);
-    padding-bottom: clamp(3rem, 7vw, 5rem);
-  }
-  @media (min-width: 56rem) {
-    .bew-kopf {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: clamp(2.5rem, 6vw, 6rem);
-      align-items: start;
-    }
-  }
-  .bew-kopf .lead { max-width: 46ch; }
-
   .bew-zahlen {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
