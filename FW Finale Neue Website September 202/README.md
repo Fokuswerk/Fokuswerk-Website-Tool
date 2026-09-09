@@ -27,6 +27,7 @@ Drei Schaustücke tragen die Seite:
 |---|---|
 | `Buehne` | Browserfenster mit einer Karriereseite, davor das Telefon mit der Anzeige, die darauf führt. Content, Ads und Web in einem Bild. |
 | `Vorgehen` | Scroll-Sequenz über fünf Schritte: links laufen die Schritte durch, rechts steht ein Rahmen fest und wechselt vom Foto über Anzeige und Seite bis zum Werbekonto. |
+| `Produktion` | Filmstreifen mit Perforation und Zeitcode, vom Scrollstand gezogen statt von einer Uhr. Kein Karussell — er bewegt sich nur, solange gescrollt wird. |
 | `Werbekonto` | Zwei gemessene Varianten, 4,92 € gegen 218 € je Bewerbung — und der Moment, in dem die teure abgeschaltet wird. |
 | `Rechner` | Zwei Regler, ein Ergebnis: was eine unbesetzte Stelle diesen Betrieb im Jahr kostet. Seine Zahlen, nicht unsere. |
 
@@ -123,6 +124,21 @@ src/components/
 src/lib/inhalt.ts    Stammdaten, CTA, belegte Zahlen, Rechengrößen
 ```
 
+### Der Sucher
+
+Das eine Element, das sich durch die ganze Seite zieht. Vier Eckwinkel liegen
+fest über der Seite und rasten beim Scrollen auf das Element ein, das gerade in
+der Bildmitte steht — wie der Autofokus einer Kamera. Es kommt aus der
+Bildmarke und aus dem, was wir tun.
+
+Ziele werden über `data-fokus="Kennung"` markiert; die Kennung erscheint als
+Zeile unter dem Rahmen. Regeln, damit es dezent bleibt:
+
+- nur auf Zeigergeräten ab 62 rem, nie auf dem Handy
+- nur, solange ein Ziel näher als 42 % der Bildhöhe an der Mitte steht
+- Haarlinien in der Hausfarbe, im dunklen Band die aufgehellte Fassung
+- bei `prefers-reduced-motion` wird gar nicht erst gerendert
+
 ### Bewegung
 Alles läuft über `Bewegung.tsx`: ein IntersectionObserver und eine
 rAF-Schleife. Bewegt werden ausschließlich `transform`, `opacity`, `filter`
@@ -133,6 +149,11 @@ und `background-size` — nie Layout.
   stehen, weil es den Marker trägt
 - `data-zahl` — zählt hoch, sobald sichtbar
 - `data-tilt` — Neigung zum Zeiger, nur auf Zeigergeräten
+- `data-szene` — schreibt `--p` von 0 auf 1, während das Element ins Bild
+  fährt. `data-szene="lang"` rechnet über den gesamten Durchlauf statt bis zur
+  Bildmitte — dafür gedacht, lange Bewegungen wie den Filmstreifen zu ziehen.
+  Getragen wird die Bewegung von `.szene-geraet`, `.szene-parallaxe` und
+  `.fw-streifen`; geschrieben wird nur eine Zahl, den Rest macht CSS.
 
 `prefers-reduced-motion: reduce` schaltet alles ab, Inhalte bleiben sichtbar.
 

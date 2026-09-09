@@ -18,7 +18,7 @@ export default function Beweisband() {
           </p>
         </div>
 
-        <ul className="grid grid-cols-2 md:grid-cols-4">
+        <ul className="grid grid-cols-2 md:grid-cols-4" data-fokus="Aus dem Werbekonto">
           {zahlen.map((z, i) => (
             <li
               key={z.label}

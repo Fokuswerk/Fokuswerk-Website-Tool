@@ -1,20 +1,24 @@
 import Image from 'next/image';
 
 /**
- * Das Produktionsband. Zwei Reihen laufen gegenläufig durch — das ist die
- * einzige Stelle, an der die Seite zeigt statt behauptet, dass aus einem
- * Drehtag ein Monatsvorrat wird.
+ * Der Filmstreifen.
  *
- * Jede Reihe steht doppelt im Markup; die Bewegung läuft über genau -50 %
- * und schließt dadurch nahtlos.
+ * Kein Karussell: der Streifen läuft nicht von selbst, sondern wird vom
+ * Scrollen gezogen. In der Mitte steht ein fester Kopf, unter dem die Bilder
+ * durchlaufen — dazu Perforation und Zeitcode. Das Bauteil zeigt, was ein
+ * Drehtag hergibt, in der Sprache dessen, womit es aufgenommen wurde.
  */
-const reiheA = [
-  'aufbau-stativ', 'mechatroniker-handy', 'haende-motor', 'werkstatt-halle',
-  'neuer-mitarbeiter', 'kameramonitor', 'schluesseluebergabe',
-];
-const reiheB = [
-  'steinmetz-halle', 'landtechnik-halle', 'schnitt-vor-ort', 'inhaber-tresen',
-  'transporter-hof', 'besprechung-werkbank', 'hebebuehne-dreh',
+const streifen = [
+  { bild: 'aufbau-stativ', code: '00:00:14', tag: 'Aufbau' },
+  { bild: 'werkstatt-halle', code: '00:07:02', tag: 'Halle' },
+  { bild: 'haende-motor', code: '00:19:38', tag: 'Detail' },
+  { bild: 'mechatroniker-handy', code: '00:31:55', tag: 'Pause' },
+  { bild: 'inhaber-tresen', code: '00:48:20', tag: 'Chef' },
+  { bild: 'steinmetz-halle', code: '01:02:47', tag: 'Staub' },
+  { bild: 'landtechnik-halle', code: '01:16:09', tag: 'Technik' },
+  { bild: 'neuer-mitarbeiter', code: '01:29:31', tag: 'Porträt' },
+  { bild: 'schluesseluebergabe', code: '01:44:06', tag: 'Übergabe' },
+  { bild: 'besprechung-werkbank', code: '01:58:52', tag: 'Abnahme' },
 ];
 
 export default function Produktion() {
@@ -33,9 +37,48 @@ export default function Produktion() {
         </div>
       </div>
 
-      <div className="mt-14 grid gap-4 sm:mt-16 sm:gap-5">
-        <Reihe bilder={reiheA} zeit={64} />
-        <Reihe bilder={reiheB} zeit={78} rueck />
+      {/* Der Streifen. Bewegt sich nur, solange gescrollt wird. */}
+      <div className="relative mt-16 select-none">
+        {/* Fester Kopf in der Mitte */}
+        <div className="pointer-events-none absolute inset-y-0 left-1/2 z-20 hidden w-px -translate-x-1/2 lg:block"
+             style={{ background: 'rgb(var(--brand-glow) / 0.55)' }}>
+          <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45"
+                style={{ background: 'var(--brand)' }} />
+        </div>
+
+        <div data-szene="lang" className="fw-streifen">
+          <div className="fw-perf" aria-hidden="true" />
+
+          <div className="flex gap-3 py-3 sm:gap-4">
+            {streifen.map((k) => (
+              <figure key={k.bild} className="relative flex-none">
+                <div
+                  className="relative aspect-[3/2] w-[15rem] overflow-hidden rounded-[3px] sm:w-[21rem]"
+                  style={{ background: 'var(--color-night-3)' }}
+                >
+                  <Image
+                    src={`/bilder/${k.bild}.jpg`}
+                    alt=""
+                    fill
+                    sizes="21rem"
+                    className="object-cover"
+                    aria-hidden="true"
+                  />
+                </div>
+                <figcaption className="mt-2 flex items-baseline justify-between gap-3 px-0.5">
+                  <span className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-white/65">
+                    {k.tag}
+                  </span>
+                  <span className="font-mono text-[0.58rem] tracking-[0.08em] text-white/55">
+                    {k.code}
+                  </span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+
+          <div className="fw-perf" aria-hidden="true" />
+        </div>
       </div>
 
       <div className="schale mt-14">
@@ -53,34 +96,5 @@ export default function Produktion() {
         </ul>
       </div>
     </section>
-  );
-}
-
-function Reihe({ bilder, zeit, rueck = false }: { bilder: string[]; zeit: number; rueck?: boolean }) {
-  const doppelt = [...bilder, ...bilder];
-  return (
-    <div className="lauf-halt relative">
-      <div
-        className={`lauf gap-4 sm:gap-5${rueck ? ' lauf-rueck' : ''}`}
-        style={{ ['--lauf-zeit' as string]: `${zeit}s` }}
-      >
-        {doppelt.map((b, i) => (
-          <figure
-            key={`${b}-${i}`}
-            className="relative aspect-[4/3] w-[13rem] flex-none overflow-hidden rounded-[var(--radius-md)] sm:w-[19rem]"
-            style={{ background: 'var(--color-night-3)' }}
-          >
-            <Image
-              src={`/bilder/${b}.jpg`}
-              alt=""
-              fill
-              sizes="19rem"
-              className="object-cover"
-              aria-hidden="true"
-            />
-          </figure>
-        ))}
-      </div>
-    </div>
   );
 }

@@ -682,3 +682,34 @@
     .szene-parallaxe img { transform: none !important; }
   }
 }
+
+/* =========================================================================
+   FILMSTREIFEN
+   Der Streifen laeuft nicht von selbst — er wird vom Scrollstand gezogen.
+   Deshalb keine Animation, sondern eine Transformation an `--p`.
+   ========================================================================= */
+@layer components {
+  .fw-streifen {
+    --p: 0;
+    width: max-content;
+    padding-inline: 12vw;
+    transform: translate3d(calc(12vw - var(--p) * 62%), 0, 0);
+    will-change: transform;
+  }
+
+  /* Perforation wie am 35-mm-Material: gleichmaessige Loecher, keine Grafik. */
+  .fw-perf {
+    height: 14px;
+    background-image: radial-gradient(
+      circle at 10px 50%,
+      #ffffff2e 0 3.6px,
+      transparent 3.7px
+    );
+    background-size: 28px 14px;
+    background-repeat: repeat-x;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fw-streifen { transform: translate3d(-24%, 0, 0) !important; }
+  }
+}

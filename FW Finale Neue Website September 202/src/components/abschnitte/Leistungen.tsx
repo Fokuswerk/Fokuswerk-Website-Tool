@@ -31,6 +31,7 @@ export default function Leistungen() {
                     style={{ boxShadow: 'var(--shadow-float)' }}
                     data-tilt="2.5"
                     data-szene
+                    data-fokus={`${l.nr} — ${l.titel}`}
                   >
                     <Image
                       src={`/bilder/${l.bild}.jpg`}

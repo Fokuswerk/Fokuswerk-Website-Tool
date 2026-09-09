@@ -102,7 +102,12 @@ export default function Bewegung() {
       const h = window.innerHeight;
       for (const el of szenen) {
         const r = el.getBoundingClientRect();
-        const roh = (h - r.top) / (h * 0.85);
+        // „lang" laeuft ueber den gesamten Durchlauf des Elements durchs Bild,
+        // sonst ist der Fortschritt bei Erreichen der Bildmitte erschoepft.
+        const roh =
+          el.dataset.szene === 'lang'
+            ? (h - r.top) / (h + r.height)
+            : (h - r.top) / (h * 0.85);
         const p = Math.max(0, Math.min(1, roh));
         el.style.setProperty('--p', p.toFixed(4));
       }
