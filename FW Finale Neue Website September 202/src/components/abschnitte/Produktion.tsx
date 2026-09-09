@@ -38,24 +38,23 @@ export default function Produktion() {
       </div>
 
       {/* Der Streifen. Bewegt sich nur, solange gescrollt wird. */}
-      <div className="relative mt-16 select-none">
-        {/* Fester Kopf in der Mitte */}
+      <div className="relative mt-16 select-none" data-faden="rechts">
         <div className="pointer-events-none absolute inset-y-0 left-1/2 z-20 hidden w-px -translate-x-1/2 lg:block"
-             style={{ background: 'rgb(var(--brand-glow) / 0.55)' }}>
+             style={{ background: 'rgb(var(--brand-glow) / 0.5)' }}>
           <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45"
                 style={{ background: 'var(--brand)' }} />
         </div>
 
-        <div data-szene="lang" className="fw-streifen">
-          <div className="fw-perf" aria-hidden="true" />
+        <div data-szene="lang" className="fw-film">
+          <div className="fw-perf flex items-center justify-between px-6" aria-hidden="true">
+            <span className="fw-randtext">Fokuswerk · 400 · Safety Film</span>
+            <span className="fw-randtext">Oldenburg</span>
+          </div>
 
-          <div className="flex gap-3 py-3 sm:gap-4">
-            {streifen.map((k) => (
-              <figure key={k.bild} className="relative flex-none">
-                <div
-                  className="relative aspect-[3/2] w-[15rem] overflow-hidden rounded-[3px] sm:w-[21rem]"
-                  style={{ background: 'var(--color-night-3)' }}
-                >
+          <div className="flex">
+            {streifen.map((k, i) => (
+              <figure key={k.bild} className="fw-kader">
+                <div className="relative aspect-[3/2] w-[15rem] overflow-hidden sm:w-[21rem]">
                   <Image
                     src={`/bilder/${k.bild}.jpg`}
                     alt=""
@@ -64,12 +63,13 @@ export default function Produktion() {
                     className="object-cover"
                     aria-hidden="true"
                   />
+                  <span className="fw-vignette" />
                 </div>
-                <figcaption className="mt-2 flex items-baseline justify-between gap-3 px-0.5">
-                  <span className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-white/65">
-                    {k.tag}
+                <figcaption className="flex items-baseline justify-between gap-3 px-2 py-1.5">
+                  <span className="font-mono text-[0.55rem] uppercase tracking-[0.16em] text-white/60">
+                    {String(i + 1).padStart(2, '0')} · {k.tag}
                   </span>
-                  <span className="font-mono text-[0.58rem] tracking-[0.08em] text-white/55">
+                  <span className="font-mono text-[0.55rem] tracking-[0.08em] text-white/50">
                     {k.code}
                   </span>
                 </figcaption>
@@ -77,7 +77,10 @@ export default function Produktion() {
             ))}
           </div>
 
-          <div className="fw-perf" aria-hidden="true" />
+          <div className="fw-perf flex items-center justify-between px-6" aria-hidden="true">
+            <span className="fw-randtext">Drehtag · Werkstatt · 24 B/s</span>
+            <span className="fw-randtext">Fokuswerk · 400</span>
+          </div>
         </div>
       </div>
 

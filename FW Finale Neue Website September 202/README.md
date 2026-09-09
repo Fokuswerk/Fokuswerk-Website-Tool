@@ -124,20 +124,29 @@ src/components/
 src/lib/inhalt.ts    Stammdaten, CTA, belegte Zahlen, Rechengrößen
 ```
 
-### Der Sucher
+### Der rote Faden
 
-Das eine Element, das sich durch die ganze Seite zieht. Vier Eckwinkel liegen
-fest über der Seite und rasten beim Scrollen auf das Element ein, das gerade in
-der Bildmitte steht — wie der Autofokus einer Kamera. Es kommt aus der
-Bildmarke und aus dem, was wir tun.
+Eine Linie läuft von oben nach unten durch die Seite, schlingt sich abwechselnd
+links und rechts an den Bausteinen vorbei und wird beim Scrollen gezeichnet. Am
+Ende hakt sie ein und landet mit einem Knoten auf der Schaltfläche.
 
-Ziele werden über `data-fokus="Kennung"` markiert; die Kennung erscheint als
-Zeile unter dem Rahmen. Regeln, damit es dezent bleibt:
+Ankerpunkte stehen im Markup: `data-faden="links" | "rechts" | "ziel"`.
+Die Reihenfolge ergibt sich aus der Y-Position, nicht aus der Reihenfolge im
+Dokument — ein Anker mehr genügt, um den Verlauf zu ändern.
 
-- nur auf Zeigergeräten ab 62 rem, nie auf dem Handy
-- nur, solange ein Ziel näher als 42 % der Bildhöhe an der Mitte steht
-- Haarlinien in der Hausfarbe, im dunklen Band die aufgehellte Fassung
-- bei `prefers-reduced-motion` wird gar nicht erst gerendert
+- gerechnet wird nur bei Aufbau und Größenänderung; beim Scrollen wird eine
+  einzige Zahl geschrieben (`strokeDashoffset`) plus die Position des Knotens
+- der Schlussbogen bekommt eigene Kontrollpunkte, damit er nicht senkrecht
+  durch den Absatz über der Schaltfläche fällt
+- erst ab 64 rem; auf dem Handy ist der Scrollweg ohnehin linear
+
+### Der Filmstreifen
+
+Kein Bilderband: eigene Filmbasis, **rechteckige** Perforation wie bei 35 mm als
+SVG-Kachel (rund wäre der Fehler, an dem man einen nachgebauten Streifen sofort
+erkennt), Bildstege zwischen den Kadern, Randbeschriftung, Vignette je Kader und
+eine warme, leicht flaue Gradation. Gezogen wird er vom Scrollstand, nicht von
+einer Uhr.
 
 ### Bewegung
 Alles läuft über `Bewegung.tsx`: ein IntersectionObserver und eine

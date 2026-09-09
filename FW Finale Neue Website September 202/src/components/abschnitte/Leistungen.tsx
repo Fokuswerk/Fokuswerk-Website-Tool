@@ -23,6 +23,7 @@ export default function Leistungen() {
               key={l.nr}
               className="grid items-center gap-8 lg:grid-cols-2 lg:gap-16"
               data-reveal
+              data-faden={i % 2 === 1 ? 'rechts' : 'links'}
             >
               <div className={i % 2 === 1 ? 'lg:order-2' : undefined}>
                 <div className="schein">
@@ -31,7 +32,6 @@ export default function Leistungen() {
                     style={{ boxShadow: 'var(--shadow-float)' }}
                     data-tilt="2.5"
                     data-szene
-                    data-fokus={`${l.nr} — ${l.titel}`}
                   >
                     <Image
                       src={`/bilder/${l.bild}.jpg`}

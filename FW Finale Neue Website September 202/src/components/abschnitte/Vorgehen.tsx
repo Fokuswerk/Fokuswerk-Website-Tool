@@ -137,7 +137,7 @@ export default function Vorgehen() {
           <div className="hidden lg:block">
             <div className="sticky top-28">
               <div className="schein">
-                <div className="geraet aspect-[4/5] w-full" data-fokus="Der Ablauf, Schritt für Schritt">
+                <div className="geraet aspect-[4/5] w-full" data-faden="rechts">
                   {schritte.map((s, i) => (
                     <div
                       key={s.nr}

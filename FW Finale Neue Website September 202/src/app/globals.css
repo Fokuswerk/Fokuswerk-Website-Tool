@@ -91,6 +91,9 @@
   --accent: var(--brand-deep);
   --act-bg: #0d1014;
   --act-fg: #ffffff;
+
+  /* Der rote Faden. Ein Ton, der auf Papier und im dunklen Band traegt. */
+  --faden: #d2622f;
 }
 
 .band {
@@ -114,6 +117,7 @@
   --accent: var(--brand-lit);
   --act-bg: var(--brand);
   --act-fg: var(--on-brand);
+  --faden: #e88a56;
 
   color-scheme: dark;
   background-color: var(--color-paper);
@@ -668,6 +672,86 @@
 /* Zweite Laufrichtung fuer das Produktionsband. */
 @layer components {
   .lauf-rueck { animation-direction: reverse; }
+}
+
+@layer components {
+  /* Parallaxe innerhalb des Rahmens. Das Bild ist 12 % groesser als sein
+     Ausschnitt, damit der Versatz nie eine Kante freilegt. */
+  .szene-parallaxe { --p: 0; overflow: hidden; }
+  .szene-parallaxe img {
+    transform: translate3d(0, calc((0.5 - var(--p)) * 6%), 0) scale(1.12);
+    will-change: transform;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .szene-parallaxe img { transform: none !important; }
+  }
+}
+
+/* =========================================================================
+   FILMSTREIFEN
+   -------------------------------------------------------------------------
+   Kein Bilderband, sondern Material: eigene Filmbasis, rechteckige
+   Perforation wie bei 35 mm (nicht rund — das ist der Unterschied, an dem
+   man einen nachgebauten Streifen sofort erkennt), Bildstege zwischen den
+   Kadern, Randbeschriftung und eine warme, leicht flaue Gradation.
+
+   Der Streifen laeuft nicht von selbst: gezogen wird er vom Scrollstand.
+   ========================================================================= */
+@layer components {
+  .fw-film {
+    --p: 0;
+    --film-basis: #17120d;
+    --film-kante: #241b12;
+    width: max-content;
+    transform: translate3d(calc(12vw - var(--p) * 62%), 0, 0);
+    will-change: transform;
+    background: var(--film-basis);
+    border-block: 1px solid #00000059;
+  }
+
+  /* Perforationsband. Die Loecher sind abgerundete Rechtecke wie bei 35 mm —
+     als SVG-Kachel, weil ein Farbverlauf keine runden Ecken kann und ein
+     Streifen mit runden Loechern sofort nachgebaut aussieht. */
+  .fw-perf {
+    height: 24px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='24'%3E%3Crect width='32' height='24' fill='%23241b12'/%3E%3Crect x='10' y='7' width='12' height='10' rx='2.5' fill='%230a0806'/%3E%3C/svg%3E");
+    background-size: 32px 24px;
+    background-repeat: repeat-x;
+  }
+
+  .fw-randtext {
+    font-family: var(--font-mono);
+    font-size: 0.44rem;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: #c98a4e6b;
+    white-space: nowrap;
+  }
+
+  /* Ein Kader. Der Steg links ist der Bildstrich. */
+  .fw-kader {
+    position: relative;
+    flex: none;
+    border-left: 1px solid #00000073;
+  }
+  .fw-kader:last-child { border-right: 1px solid #00000073; }
+
+  .fw-kader img {
+    /* Analoge Anmutung: waermer, etwas flauer, leicht abgesenkte Lichter. */
+    filter: sepia(0.22) saturate(0.86) contrast(1.04) brightness(0.96);
+  }
+  /* Randabdunklung wie bei einem projizierten Kader. */
+  .fw-kader .fw-vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(115% 95% at 50% 50%, transparent 52%, #0a0705a6 100%);
+    mix-blend-mode: multiply;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fw-film { transform: translate3d(-24%, 0, 0) !important; }
+  }
 }
 
 @layer components {

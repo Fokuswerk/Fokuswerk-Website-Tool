@@ -11,7 +11,7 @@ import Image from 'next/image';
 export default function Buehne() {
   return (
     <div className="schein relative mx-auto w-full max-w-[62rem]" style={{ ['--schein-op' as string]: 1 }}>
-      <div data-szene className="szene-geraet" data-fokus="Ausgeliefert · WAV Westerstede">
+      <div data-szene className="szene-geraet" data-faden="rechts">
       <div data-tilt="3" className="relative">
         {/* Browserfenster */}
         <div className="geraet streif mx-auto w-full max-w-[54rem]">

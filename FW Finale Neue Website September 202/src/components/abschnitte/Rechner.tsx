@@ -57,7 +57,7 @@ export default function Rechner() {
           <div data-reveal data-from="scale">
             <div
               className="rounded-[var(--radius-xl)] p-8 sm:p-10"
-              data-fokus="Ihre Zahlen"
+              data-faden="links"
               style={{
                 background: 'var(--color-paper-2)',
                 border: '1px solid var(--color-rule)',

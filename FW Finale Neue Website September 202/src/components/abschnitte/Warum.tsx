@@ -12,7 +12,7 @@ export default function Warum() {
           </h2>
         </div>
 
-        <ol className="mt-14 grid gap-0 border-t border-rule">
+        <ol className="mt-14 grid gap-0 border-t border-rule" data-faden="links">
           {gruende.map((g, i) => (
             <li
               key={g.kopf}

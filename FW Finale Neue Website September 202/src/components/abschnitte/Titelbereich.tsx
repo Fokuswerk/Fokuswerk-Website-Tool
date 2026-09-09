@@ -5,7 +5,7 @@ import { cta, marke } from '@/lib/inhalt';
 
 export default function Titelbereich() {
   return (
-    <section className="relative overflow-hidden pt-32 sm:pt-40">
+    <section className="relative pt-32 sm:pt-40">
       <div className="schale">
         {/* Eine Schriftgröße für die Aussage, eine Kennung darüber, ein Absatz
             darunter. Drei Stufen in der Überschrift wirkten unruhig. */}
@@ -52,7 +52,7 @@ export default function Titelbereich() {
         </div>
       </div>
 
-      <div className="schale mt-16 sm:mt-20" data-reveal style={{ ['--reveal-delay' as string]: '260ms' }}>
+      <div className="schale mt-16 pb-14 sm:mt-20 sm:pb-16" data-reveal style={{ ['--reveal-delay' as string]: '260ms' }}>
         <Buehne />
       </div>
     </section>
