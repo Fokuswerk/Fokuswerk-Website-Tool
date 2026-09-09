@@ -18,11 +18,12 @@ export default function Beweisband() {
           </p>
         </div>
 
-        <ul className="grid grid-cols-2 md:grid-cols-4" data-faden="links">
+        <ul className="grid grid-cols-2 md:grid-cols-4">
           {zahlen.map((z, i) => (
             <li
               key={z.label}
               className="border-b border-rule py-7 pr-4 md:border-b-0 md:[&:not(:first-child)]:border-l md:[&:not(:first-child)]:border-rule md:[&:not(:first-child)]:pl-6"
+              data-faden={i === 1 ? 'kreis' : undefined}
               data-reveal
               style={{ ['--reveal-delay' as string]: `${i * 80}ms` }}
             >

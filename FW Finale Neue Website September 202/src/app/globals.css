@@ -120,8 +120,17 @@
   --faden: #e88a56;
 
   color-scheme: dark;
-  background-color: var(--color-paper);
   color: var(--color-ink);
+  position: relative;
+}
+/* Der Grund des Bandes liegt auf einer eigenen Ebene hinter dem roten Faden.
+   Traege das Band seinen Hintergrund selbst, wuerde es den Faden verdecken. */
+.band::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: var(--color-paper);
 }
 
 /* Die feststehende Kopfzeile ueber einem dunklen Band kehrt dieselben
@@ -160,7 +169,11 @@
 
   body {
     margin: 0;
-    background: var(--color-paper);
+    /* KEIN Hintergrund auf dem Koerper. In der Malreihenfolge kommt der
+       Hintergrund eines Blockelements NACH den Nachfahren mit negativem
+       z-index — der rote Faden lieg dort und waere sonst zugedeckt. Den Grund
+       traegt deshalb das Wurzelelement. */
+    background: transparent;
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-size: var(--text-base);
@@ -797,3 +810,7 @@
     .fw-streifen { transform: translate3d(-24%, 0, 0) !important; }
   }
 }
+
+
+/* Der rote Faden liegt hinter dem Inhalt, aber vor den Bandgruenden. */
+.fw-faden { z-index: -1; }

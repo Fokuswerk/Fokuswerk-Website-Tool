@@ -3,6 +3,7 @@ import Beweisband from '@/components/abschnitte/Beweisband';
 import Produktion from '@/components/abschnitte/Produktion';
 import Leistungen from '@/components/abschnitte/Leistungen';
 import Vorgehen from '@/components/abschnitte/Vorgehen';
+import ZwischenCta from '@/components/abschnitte/ZwischenCta';
 import Warum from '@/components/abschnitte/Warum';
 import Fallstudie from '@/components/abschnitte/Fallstudie';
 import Rechner from '@/components/abschnitte/Rechner';
@@ -16,6 +17,7 @@ export default function Startseite() {
       <Produktion />
       <Leistungen />
       <Vorgehen />
+      <ZwischenCta />
       <Warum />
       <Fallstudie />
       <Rechner />
