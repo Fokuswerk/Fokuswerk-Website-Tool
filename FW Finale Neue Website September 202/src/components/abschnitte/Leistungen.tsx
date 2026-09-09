@@ -27,9 +27,10 @@ export default function Leistungen() {
               <div className={i % 2 === 1 ? 'lg:order-2' : undefined}>
                 <div className="schein">
                   <div
-                    className="relative aspect-[4/3] overflow-hidden rounded-[var(--radius-lg)]"
+                    className="szene-parallaxe relative aspect-[4/3] rounded-[var(--radius-lg)]"
                     style={{ boxShadow: 'var(--shadow-float)' }}
                     data-tilt="2.5"
+                    data-szene
                   >
                     <Image
                       src={`/bilder/${l.bild}.jpg`}

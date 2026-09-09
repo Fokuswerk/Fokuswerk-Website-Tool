@@ -636,3 +636,49 @@
   width: 0.45rem; height: 1px; background: var(--color-rule-2);
 }
 .fw-recht a { color: var(--color-ink); text-decoration: underline; text-underline-offset: 0.2em; }
+
+/* =========================================================================
+   SZENEN
+   An den Scrollstand gekoppelte Bewegung. `--p` kommt aus Bewegung.tsx und
+   laeuft von 0 auf 1, waehrend das Element ins Bild faehrt.
+   ========================================================================= */
+@layer components {
+  /* Das Geraet richtet sich beim Hereinfahren auf, statt einfach da zu sein.
+     Drehpunkt ist die Unterkante — es steht auf, es kippt nicht. */
+  .szene-geraet {
+    --p: 0;
+    transform:
+      perspective(2000px)
+      rotateX(calc((1 - var(--p)) * 13deg))
+      scale(calc(0.93 + var(--p) * 0.07))
+      translate3d(0, calc((1 - var(--p)) * 26px), 0);
+    transform-origin: 50% 100%;
+    will-change: transform;
+  }
+
+  /* Ein Band, das beim Scrollen seitlich laeuft. Der Versatz haengt am
+     Fortschritt, nicht an einer Uhr — es bewegt sich nur, wenn gescrollt wird. */
+  .szene-schub { --p: 0; transform: translate3d(calc(var(--p) * var(--schub, -6rem)), 0, 0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .szene-geraet, .szene-schub { transform: none !important; }
+  }
+}
+
+/* Zweite Laufrichtung fuer das Produktionsband. */
+@layer components {
+  .lauf-rueck { animation-direction: reverse; }
+}
+
+@layer components {
+  /* Parallaxe innerhalb des Rahmens. Das Bild ist 12 % groesser als sein
+     Ausschnitt, damit der Versatz nie eine Kante freilegt. */
+  .szene-parallaxe { --p: 0; overflow: hidden; }
+  .szene-parallaxe img {
+    transform: translate3d(0, calc((0.5 - var(--p)) * 6%), 0) scale(1.12);
+    will-change: transform;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .szene-parallaxe img { transform: none !important; }
+  }
+}

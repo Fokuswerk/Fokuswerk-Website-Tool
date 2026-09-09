@@ -4,7 +4,7 @@ import { cta, marke } from '@/lib/inhalt';
 
 export default function Abschluss() {
   return (
-    <section className="band mt-24 pt-24 pb-4 sm:mt-36 sm:pt-32">
+    <section className="band pt-24 pb-4 sm:pt-32">
       <div className="schale">
         <div className="mx-auto max-w-[46rem] text-center">
           <p className="kennung justify-center" data-reveal>Der nächste Schritt</p>

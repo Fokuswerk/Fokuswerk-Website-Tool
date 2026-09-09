@@ -36,7 +36,13 @@ export default function Beweisband() {
                   </>
                 )}
               </p>
-              <p className="mt-2.5 max-w-[16ch] text-sm text-ink-3">{z.label}</p>
+              <span
+                className="mt-4 block h-px w-full origin-left"
+                style={{ background: 'var(--accent)', ['--reveal-delay' as string]: `${i * 80 + 120}ms` }}
+                data-draw
+                aria-hidden="true"
+              />
+              <p className="mt-3 max-w-[16ch] text-sm text-ink-3">{z.label}</p>
             </li>
           ))}
         </ul>

@@ -91,6 +91,35 @@ export default function Bewegung() {
       .querySelectorAll<HTMLElement>('[data-reveal], [data-split], [data-draw], [data-zahl]')
       .forEach((el) => beobachter.observe(el));
 
+    // --- Szenen: Scrollfortschritt als Variable ---------------------------
+    // --p laeuft von 0 (Element betritt das Bild von unten) bis 1 (Element
+    // hat die Bildmitte erreicht). Geschrieben wird nur eine Zahl; die
+    // Bewegung selbst macht CSS.
+    const szenen = Array.from(document.querySelectorAll<HTMLElement>('[data-szene]'));
+    let szenenLaeuft = false;
+    const szenenMessen = () => {
+      szenenLaeuft = false;
+      const h = window.innerHeight;
+      for (const el of szenen) {
+        const r = el.getBoundingClientRect();
+        const roh = (h - r.top) / (h * 0.85);
+        const p = Math.max(0, Math.min(1, roh));
+        el.style.setProperty('--p', p.toFixed(4));
+      }
+    };
+    const szenenPlanen = () => {
+      if (szenenLaeuft) return;
+      szenenLaeuft = true;
+      requestAnimationFrame(szenenMessen);
+    };
+    if (szenen.length && !ruhe.matches) {
+      szenenMessen();
+      window.addEventListener('scroll', szenenPlanen, { passive: true });
+      window.addEventListener('resize', szenenPlanen);
+    } else {
+      szenen.forEach((el) => el.style.setProperty('--p', '1'));
+    }
+
     // --- Neigung ----------------------------------------------------------
     const geneigte = Array.from(document.querySelectorAll<HTMLElement>('[data-tilt]'));
     const zeiger = window.matchMedia('(hover: hover) and (pointer: fine)');
@@ -120,6 +149,8 @@ export default function Bewegung() {
     return () => {
       beobachter.disconnect();
       window.removeEventListener('pointermove', aufZeiger);
+      window.removeEventListener('scroll', szenenPlanen);
+      window.removeEventListener('resize', szenenPlanen);
     };
   }, []);
 

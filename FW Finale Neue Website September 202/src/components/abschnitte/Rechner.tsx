@@ -18,7 +18,7 @@ export default function Rechner() {
   const monat = Math.round(jahr / 12);
 
   return (
-    <section id="rechnung" className="band mt-24 py-24 sm:mt-36 sm:py-32">
+    <section id="rechnung" className="band mt-24 pt-24 pb-4 sm:mt-36 sm:pt-32">
       <div className="schale">
         <div className="grid gap-14 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center lg:gap-20">
           <div>
