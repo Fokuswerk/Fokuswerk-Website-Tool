@@ -27,7 +27,7 @@ export default function Leistungen() {
               <div className={i % 2 === 1 ? 'lg:order-2' : undefined}>
                 <div className="schein">
                   <div
-                    className="szene-parallaxe relative aspect-[4/3] rounded-[var(--radius-lg)]"
+                    className="szene-parallaxe maske-auf relative aspect-[4/3] rounded-[var(--radius-lg)]"
                     style={{ boxShadow: 'var(--shadow-float)' }}
                     data-tilt="2.5"
                     data-szene

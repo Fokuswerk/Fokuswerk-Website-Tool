@@ -89,19 +89,26 @@ function Zeile({
   name, wert, anteil, gut, aus,
 }: { name: string; wert: number; anteil: number; gut: boolean; aus: boolean }) {
   return (
-    <div className="px-5 py-4" style={{ opacity: aus ? 0.42 : 1, transition: 'opacity .7s var(--ease-out)' }}>
+    <div className="px-5 py-4">
       <div className="flex items-baseline justify-between gap-4">
-        <p className="text-sm font-medium">
+        <p
+          className="text-sm font-medium"
+          style={{ color: aus ? 'var(--color-ink-3)' : undefined, transition: 'color .7s var(--ease-out)' }}
+        >
           {name}
           {aus && (
-            <span className="ml-2 rounded-[4px] border border-rule-2 px-1.5 py-0.5 font-mono text-[0.58rem] uppercase tracking-[0.1em] text-ink-3">
+            <span className="ml-2 rounded-[4px] border border-rule-2 px-1.5 py-0.5 font-mono text-[0.58rem] uppercase tracking-[0.1em] text-ink-2">
               aus
             </span>
           )}
         </p>
         <p
           className="whitespace-nowrap text-[1.15rem] font-bold tracking-[-0.03em]"
-          style={{ color: gut ? 'var(--accent)' : 'var(--color-ink)' }}
+          style={{
+            color: gut ? 'var(--accent)' : aus ? 'var(--color-ink-3)' : 'var(--color-ink)',
+            textDecoration: aus ? 'line-through' : undefined,
+            transition: 'color .7s var(--ease-out)',
+          }}
         >
           {wert.toLocaleString('de-DE', { minimumFractionDigits: 2 })} €
         </p>
@@ -111,8 +118,8 @@ function Zeile({
           className="h-full rounded-full"
           style={{
             width: `${anteil * 100}%`,
-            background: gut ? 'var(--accent)' : 'var(--color-ink)',
-            transition: 'width 1.6s var(--ease-out)',
+            background: gut ? 'var(--accent)' : aus ? 'var(--color-rule-2)' : 'var(--color-ink)',
+            transition: 'width 1.6s var(--ease-out), background .7s var(--ease-out)',
           }}
         />
       </div>

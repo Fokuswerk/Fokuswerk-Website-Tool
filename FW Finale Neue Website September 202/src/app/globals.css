@@ -1042,16 +1042,36 @@ html.auftakt-laeuft { overflow: hidden; }
     z-index: 45;
     background: transparent !important;
   }
+  /* ---------- Vorhang ----------
+     Die Fläche blendet nicht ein, sie fällt als Vorhang von oben. An ihrer
+     Unterkante läuft eine Haarlinie in der Hausfarbe mit. Beim Schließen
+     läuft alles schneller und rückwärts: erst treten die Einträge ab, dann
+     zieht sich der Vorhang hoch. Der Weichzeichner steht inline (Kopf.tsx). */
   .overlay-grund {
     position: absolute;
     inset: 0;
-    /* Weichzeichner siehe Kopf.tsx (inline). Hier gesetzt kam er am
-       Element nicht an — berechneter Wert war none. */
     background: rgb(12 15 20 / 0.86);
-    opacity: 0;
-    transition: opacity .6s var(--ease-out);
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path .6s cubic-bezier(.76, 0, .24, 1) .14s;
   }
-  .overlay[data-offen] .overlay-grund { opacity: 1; }
+  .overlay[data-offen] .overlay-grund {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path .8s cubic-bezier(.76, 0, .24, 1);
+  }
+  .overlay-kante {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 4%, rgb(var(--brand-glow) / 0.85) 50%, transparent 96%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .overlay[data-offen] .overlay-kante { animation: fw-kante .8s cubic-bezier(.76, 0, .24, 1) forwards; }
+  @keyframes fw-kante {
+    0%   { transform: translate3d(0, 0, 0); opacity: 1; }
+    80%  { opacity: 1; }
+    100% { transform: translate3d(0, 100svh, 0); opacity: 0; }
+  }
 
   .overlay-innen {
     position: absolute;
@@ -1074,40 +1094,88 @@ html.auftakt-laeuft { overflow: hidden; }
   }
   .overlay-augen {
     opacity: 0;
-    transition: opacity .6s var(--ease-out) .2s;
+    transform: translate3d(0, 10px, 0);
+    transition: opacity .2s, transform .2s;
   }
-  .overlay[data-offen] .overlay-augen { opacity: 1; }
+  .overlay[data-offen] .overlay-augen {
+    opacity: 1;
+    transform: none;
+    transition: opacity .7s var(--ease-out) .45s, transform .7s var(--ease-out) .45s;
+  }
 
-  .menue { border-top: 1px solid var(--color-rule); }
-  .menue-zeile { border-bottom: 1px solid var(--color-rule); }
+  /* Die Linien ziehen sich von links auf, Zeile für Zeile. */
+  .menue { position: relative; }
+  .menue-zeile { position: relative; }
+  .menue::before,
+  .menue-zeile::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: var(--color-rule-2);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform .3s ease-in;
+  }
+  .menue::before { top: 0; }
+  .menue-zeile::after { bottom: 0; }
+  .overlay[data-offen] .menue::before {
+    transform: scaleX(1);
+    transition: transform 1.1s cubic-bezier(.16, 1, .3, 1) .32s;
+  }
+  .overlay[data-offen] .menue-zeile::after {
+    transform: scaleX(1);
+    transition: transform 1.1s cubic-bezier(.16, 1, .3, 1) calc(.4s + var(--i) * .08s);
+  }
 
   .menue-link {
     display: flex;
     align-items: baseline;
-    justify-content: space-between;
-    gap: 1.5rem;
-    padding-block: clamp(0.65rem, 1.7vw, 1.05rem);
+    gap: clamp(.9rem, 2vw, 1.6rem);
+    padding-block: clamp(.65rem, 1.7vw, 1.05rem);
     transition: opacity .45s var(--ease-out), padding-left .55s var(--ease-out);
   }
   /* Beim Überfahren treten die anderen zurück. */
   .menue:hover .menue-link { opacity: 0.32; }
-  .menue .menue-link:hover { opacity: 1; padding-left: clamp(0.5rem, 1.4vw, 1.1rem); }
+  .menue .menue-link:hover { opacity: 1; padding-left: clamp(.5rem, 1.4vw, 1.1rem); }
+
+  .menue-nr {
+    flex: none;
+    align-self: flex-start;
+    margin-top: 1.15em;
+    font-family: var(--font-mono);
+    font-size: .64rem;
+    letter-spacing: .12em;
+    color: var(--color-ink-3);
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .overlay[data-offen] .menue-nr {
+    opacity: 1;
+    transition: opacity .6s var(--ease-out) calc(.6s + var(--i) * .08s);
+  }
 
   .menue-titel {
+    flex: 1;
     display: block;
     overflow: hidden;
     font-size: clamp(2.4rem, 1.2rem + 4.6vw, 4.75rem);
     font-weight: 700;
     letter-spacing: -0.045em;
     line-height: 1.08;
-    padding-bottom: 0.04em;
+    padding-bottom: .06em;
   }
+  /* Die Einträge steigen aus der Maske und richten sich dabei auf. */
   .menue-titel > span {
     display: block;
-    transform: translate3d(0, 105%, 0);
-    transition: transform .85s var(--ease-out) calc(120ms + var(--i) * 65ms);
+    transform: translate3d(0, 115%, 0) skewY(6deg);
+    transform-origin: left bottom;
+    transition: transform .35s cubic-bezier(.5, 0, .75, 0);
   }
-  .overlay[data-offen] .menue-titel > span { transform: none; }
+  .overlay[data-offen] .menue-titel > span {
+    transform: none;
+    transition: transform 1.05s cubic-bezier(.16, 1, .3, 1) calc(.36s + var(--i) * .075s);
+  }
   .menue-link[aria-current="page"] .menue-titel { color: var(--accent); }
 
   .menue-zeile-text {
@@ -1122,15 +1190,22 @@ html.auftakt-laeuft { overflow: hidden; }
   @media (min-width: 48rem) { .menue-zeile-text { display: block; } }
   .menue-link:hover .menue-zeile-text { opacity: 1; }
 
-  .menue-seite {
-    display: grid;
-    gap: 0.9rem;
-    align-content: end;
+  /* Rechte Spalte: jedes Teil kommt einzeln nach. */
+  .menue-seite { display: grid; gap: 0.9rem; align-content: end; }
+  .menue-seite > * {
     opacity: 0;
-    transform: translate3d(0, 14px, 0);
-    transition: opacity .7s var(--ease-out) .35s, transform .7s var(--ease-out) .35s;
+    transform: translate3d(0, 18px, 0);
+    transition: opacity .2s, transform .2s;
   }
-  .overlay[data-offen] .menue-seite { opacity: 1; transform: none; }
+  .menue-seite > :nth-child(2) { --j: 1; }
+  .menue-seite > :nth-child(3) { --j: 2; }
+  .overlay[data-offen] .menue-seite > * {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity .8s var(--ease-out) calc(.62s + var(--j, 0) * .09s),
+      transform .8s var(--ease-out) calc(.62s + var(--j, 0) * .09s);
+  }
 
   .menue-daten {
     display: grid;
@@ -1144,9 +1219,134 @@ html.auftakt-laeuft { overflow: hidden; }
   .menue-tel:hover, .menue-mail:hover { color: var(--accent); }
 
   @media (prefers-reduced-motion: reduce) {
-    .overlay-grund, .menue-titel > span, .menue-seite, .overlay-augen,
+    .overlay-grund { clip-path: none !important; transition: none !important; }
+    .overlay-kante { display: none; }
+    .menue::before, .menue-zeile::after { transform: none !important; transition: none !important; }
+    .menue-titel > span, .menue-seite > *, .overlay-augen, .menue-nr {
+      transform: none !important; opacity: 1 !important; transition: none !important;
+    }
     .brenner-linien > span { transition: none !important; }
-    .menue-titel > span { transform: none; }
-    .menue-seite { opacity: 1; transform: none; }
+  }
+}
+
+
+/* =========================================================================
+   AUFBAU BEIM SCROLLEN
+   -------------------------------------------------------------------------
+   Die Einblendungen hängen am Scrollstand, nicht an einer Uhr. Wer schnell
+   scrollt, bekommt die Inhalte so schnell fertig, wie er scrollt — es gibt
+   nichts, worauf man warten müsste. Wer langsam scrollt, sieht jeden
+   Abschnitt entstehen. Fertig ist ein Element, wenn es ein knappes Drittel
+   ins Bild gefahren ist.
+
+   Nur Langformen, keine `animation`-Kurzform: die Kurzform setzt
+   animation-timeline stillschweigend auf auto zurück.
+
+   Gilt nur, wo der Browser Scroll-Zeitleisten kann; sonst bleibt die
+   Uhr-Fassung weiter oben. Der Titelbereich (.titel-zone) bleibt bei der
+   Uhr: er steht beim Laden schon im Bild und tritt nach dem Auftakt auf.
+   ========================================================================= */
+@layer components {
+  @keyframes fw-auf        { from { opacity: 0; transform: translate3d(0, 44px, 0); } to { opacity: 1; transform: none; } }
+  @keyframes fw-auf-gross  { from { opacity: 0; transform: scale(.94); }            to { opacity: 1; transform: none; } }
+  @keyframes fw-auf-links  { from { opacity: 0; transform: translate3d(-40px, 0, 0); } to { opacity: 1; transform: none; } }
+  @keyframes fw-auf-rechts { from { opacity: 0; transform: translate3d(40px, 0, 0); }  to { opacity: 1; transform: none; } }
+  @keyframes fw-auf-weich  { from { opacity: 0; filter: blur(14px); }               to { opacity: 1; filter: none; } }
+  @keyframes fw-wort {
+    from { opacity: 0; transform: translate3d(0, .55em, 0) rotate(2.5deg); filter: blur(8px); }
+    to   { opacity: 1; transform: none; filter: none; }
+  }
+  @keyframes fw-marker { from { background-size: 0% .26em; } to { background-size: 100% .26em; } }
+  /* Bildmaske: öffnet sich von unten und wächst am Ende über die Kante
+     hinaus, damit der Schatten des Rahmens nicht abgeschnitten bleibt. */
+  @keyframes fw-maske {
+    from { clip-path: inset(24% 5% 0 5% round var(--radius-lg)); }
+    to   { clip-path: inset(-90px -90px -120px -90px round 0); }
+  }
+  @keyframes fw-zug-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes fw-zug-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  @keyframes fw-punkt {
+    from { background: var(--color-paper); color: var(--color-ink-2); border-color: var(--color-rule-2); }
+    to   { background: var(--color-ink);   color: var(--color-paper); border-color: var(--color-ink); }
+  }
+
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+
+      :where([data-reveal]):not(.titel-zone *) {
+        transition: none;
+        animation-name: fw-auf;
+        animation-fill-mode: both;
+        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+        animation-timeline: view();
+        animation-range: cover calc(1% + var(--versatz, 0%)) cover calc(27% + var(--versatz, 0%));
+      }
+      :where([data-reveal][data-from="scale"]):not(.titel-zone *) { animation-name: fw-auf-gross; }
+      :where([data-reveal][data-from="left"]):not(.titel-zone *)  { animation-name: fw-auf-links; }
+      :where([data-reveal][data-from="right"]):not(.titel-zone *) { animation-name: fw-auf-rechts; }
+      :where([data-reveal][data-from="blur"]):not(.titel-zone *)  { animation-name: fw-auf-weich; }
+
+      /* Überschriften Wort für Wort, jedes Wort ein Stück später auf der
+         Strecke. Gedeckelt, damit lange Sätze nicht nachhängen. */
+      :where([data-split]):not(.titel-zone *) .wort > span {
+        transition: none;
+        animation-name: fw-wort;
+        animation-fill-mode: both;
+        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+        animation-timeline: view();
+        animation-range:
+          cover calc(2% + min(var(--i, 0) * 1.2%, 9%))
+          cover calc(24% + min(var(--i, 0) * 1.2%, 9%));
+      }
+      .kursiv:not(.titel-zone *) {
+        transition: none;
+        animation-name: fw-marker;
+        animation-fill-mode: both;
+        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+        animation-timeline: view();
+        animation-range: cover 12% cover 34%;
+      }
+
+      .maske-auf {
+        animation-name: fw-maske;
+        animation-fill-mode: both;
+        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+        animation-timeline: view();
+        animation-range: cover 0% cover 38%;
+      }
+
+      /* Prozessschiene: die Liste selbst bleibt stehen, es bewegen sich die
+         Stationen — sonst stapeln sich zwei Bewegungen. */
+      .prozess[data-reveal] { animation-name: none; opacity: 1; transform: none; }
+      .prozess-station {
+        opacity: 1;
+        transform: none;
+        transition: none;
+        animation-name: fw-auf;
+        animation-fill-mode: both;
+        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+        animation-timeline: view();
+        animation-range: cover calc(2% + var(--i) * 2.5%) cover calc(26% + var(--i) * 2.5%);
+      }
+      .prozess-punkt {
+        transition: none;
+        animation-name: fw-punkt;
+        animation-fill-mode: both;
+        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+        animation-timeline: view();
+        animation-range: cover calc(6% + var(--i) * 2.5%) cover calc(24% + var(--i) * 2.5%);
+      }
+      .prozess-schiene[data-draw] {
+        transition: none;
+        animation-name: fw-zug-y;
+        animation-fill-mode: both;
+        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+        animation-timeline: view();
+        animation-range: cover 0% cover 40%;
+      }
+      @media (min-width: 64rem) {
+        .prozess-schiene[data-draw] { animation-name: fw-zug-x; }
+      }
+    }
   }
 }

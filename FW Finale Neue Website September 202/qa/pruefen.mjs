@@ -14,7 +14,14 @@ const browser = await chromium.launch();
 const links = new Set();
 
 for (const breite of [1440, 390]) {
-  const kontext = await browser.newContext({ viewport: { width: breite, height: breite < 700 ? 844 : 900 } });
+  // Mit reduzierter Bewegung messen: Die Einblendungen hängen am Scrollstand,
+  // und ohne diese Einstellung misst axe Elemente mitten im Aufbau — halb
+  // durchsichtig und damit scheinbar zu kontrastarm. Gemessen werden soll der
+  // fertige Zustand, also das, was man beim Lesen tatsächlich sieht.
+  const kontext = await browser.newContext({
+    viewport: { width: breite, height: breite < 700 ? 844 : 900 },
+    reducedMotion: 'reduce',
+  });
   const seite = await kontext.newPage();
 
   for (const pfad of SEITEN) {

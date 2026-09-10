@@ -20,7 +20,7 @@ const belege = [
 
 export default function Titelbereich() {
   return (
-    <section className="band relative overflow-hidden pt-32 sm:pt-40">
+    <section className="band titel-zone relative overflow-hidden pt-32 sm:pt-40">
       <div className="buehne-grund" aria-hidden="true" />
 
       <div className="schale relative">

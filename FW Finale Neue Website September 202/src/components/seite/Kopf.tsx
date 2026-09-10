@@ -56,7 +56,8 @@ export default function Kopf() {
       setSichtbar(true);
       return;
     }
-    const t = window.setTimeout(() => setSichtbar(false), 650);
+    // Vorhang zieht sich in 0,6 s hoch, nach 0,14 s Vorlauf.
+    const t = window.setTimeout(() => setSichtbar(false), 780);
     return () => window.clearTimeout(t);
   }, [offen]);
 
@@ -147,6 +148,7 @@ export default function Kopf() {
               WebkitBackdropFilter: 'blur(36px) saturate(1.1)',
             }}
           />
+          <span className="overlay-kante" aria-hidden="true" />
 
           <div className="overlay-innen schale">
             <p className="overlay-augen kennung">
@@ -163,6 +165,7 @@ export default function Kopf() {
                       aria-current={pfad === n.pfad ? 'page' : undefined}
                       onClick={() => setOffen(false)}
                     >
+                      <span className="menue-nr" aria-hidden="true">0{i + 1}</span>
                       <span className="menue-titel"><span>{n.titel}</span></span>
                       <span className="menue-zeile-text">{n.zeile}</span>
                     </Link>
@@ -172,10 +175,12 @@ export default function Kopf() {
             </nav>
 
             <div className="menue-seite">
-              <Link href={cta.ziel} className="akt justify-self-start" onClick={() => setOffen(false)}>
-                {cta.text}
-                <Pfeil />
-              </Link>
+              <div>
+                <Link href={cta.ziel} className="akt" onClick={() => setOffen(false)}>
+                  {cta.text}
+                  <Pfeil />
+                </Link>
+              </div>
               <p className="max-w-[30ch] text-sm leading-[1.55] text-ink-3">{cta.notiz}</p>
 
               <div className="menue-daten">

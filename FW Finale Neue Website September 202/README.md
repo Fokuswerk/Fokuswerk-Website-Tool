@@ -169,6 +169,40 @@ in `inhalt.ts`); rechts Schaltfläche und Kontakt.
 > Zweiter Teil desselben Fehlers: Das Overlay darf kein Scroll-Container sein.
 > Gescrollt wird in `.overlay-innen`.
 
+### Aufbau beim Scrollen
+
+Die Einblendungen hängen am **Scrollstand, nicht an einer Uhr** (CSS
+`animation-timeline: view()`). Wer schnell scrollt, bekommt die Inhalte so
+schnell fertig, wie er scrollt — es gibt nichts, worauf man warten müsste. Wer
+langsam scrollt, sieht jeden Abschnitt entstehen. Fertig ist ein Element, wenn
+es ein knappes Drittel ins Bild gefahren ist.
+
+- Blöcke steigen und blenden auf, Überschriften Wort für Wort mit leichtem
+  Aufrichten, Bilder öffnen sich als Maske von unten, die Prozessschiene zieht
+  sich und ihre Punkte füllen sich der Reihe nach.
+- Gestaffelt wird über die Strecke statt über die Zeit: `Bewegung.tsx` leitet
+  aus `--reveal-delay` (ms) einen `--versatz` (%) ab, 25 ms = 1 %.
+- **Nur Langformen** (`animation-name`, `animation-timeline` …), keine
+  `animation`-Kurzform — die setzt `animation-timeline` stillschweigend auf
+  `auto` zurück.
+- Die Bildmaske wächst am Ende über die Kante hinaus (negatives `inset`), sonst
+  bliebe der Schatten des Rahmens dauerhaft abgeschnitten.
+- Der Titelbereich (`.titel-zone`) bleibt bei der Uhr-Fassung: er steht beim
+  Laden schon im Bild und tritt nach dem Auftakt auf.
+- Browser ohne Scroll-Zeitleisten bekommen die Uhr-Fassung; bei
+  `prefers-reduced-motion` ist alles sofort da.
+
+### Menü-Choreografie
+
+Öffnen: Die Fläche fällt als Vorhang von oben (`clip-path`), an ihrer Kante
+läuft eine Haarlinie in der Hausfarbe mit. Dann ziehen sich die Trennlinien von
+links auf, die Einträge steigen aus der Maske und richten sich dabei auf
+(`skewY` → 0), Nummern und rechte Spalte folgen gestaffelt.
+
+Schließen läuft schneller und rückwärts: Die Einträge treten ab, dann zieht sich
+der Vorhang hoch. Die Verzögerungen stehen deshalb nur im geöffneten Zustand —
+im geschlossenen wären sie beim Schließen genauso lang wie beim Öffnen.
+
 ### Auftakt
 
 Beim ersten Aufruf je Sitzung stehen vier Eckwinkel an den Bildschirmrändern

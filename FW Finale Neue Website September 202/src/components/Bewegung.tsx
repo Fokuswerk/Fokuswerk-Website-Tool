@@ -61,6 +61,14 @@ export default function Bewegung() {
 
     document.querySelectorAll<HTMLElement>('[data-split]').forEach(zerlegen);
 
+    // Gestaffelte Einblendungen tragen ihre Verzögerung als --reveal-delay in
+    // Millisekunden. Die Scroll-Fassung staffelt über die Strecke statt über
+    // die Zeit: 25 ms werden zu einem Prozent Versatz, höchstens zwölf.
+    document.querySelectorAll<HTMLElement>('[data-reveal]').forEach((el) => {
+      const ms = parseFloat(el.style.getPropertyValue('--reveal-delay'));
+      if (ms > 0) el.style.setProperty('--versatz', `${Math.min(ms / 25, 12)}%`);
+    });
+
     if (ruhe.matches) {
       document
         .querySelectorAll<HTMLElement>('[data-reveal], [data-split], [data-draw]')
