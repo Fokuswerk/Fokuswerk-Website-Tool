@@ -33,13 +33,28 @@ Drei Schaustücke tragen die Seite:
 
 ### Aufbau der Startseite
 
-Titelbereich · Beweisband · **01 Was wir machen** (fünf Leistungen mit dem, was
-hineingeht und was herauskommt) · **02 Das Vorgehen** (die Scroll-Sequenz) ·
+**Titelbereich** (dunkel, mit dem Beleg im selben Band) · **01 Was wir machen** ·
+**02 Das Vorgehen** (Scroll-Sequenz) · Zwischenstopp · Filmstreifen ·
 **03 Warum das trägt** · **04 Die Fälle** · **05 Die Rechnung** · Abschluss.
 
-Die Seite spricht **Handwerk und technische Betriebe** an, nicht nur
-Kfz-Werkstätten. WAV ist der eine Fall mit freigegebenen Zahlen, nicht das
-Thema der Seite.
+Dunkel wird es dreimal, und nie zweimal hintereinander: Titelbereich,
+Filmstreifen, sowie Rechnung und Abschluss als ein zusammenhängender Block.
+
+**Die Seite verkauft Performance Marketing, nicht Recruiting.** Kunden und
+Mitarbeiter stehen gleichwertig nebeneinander — Kampagnen zuerst, Produktion
+und Seiten als das, was ihnen zuliefert. WAV ist der eine Fall mit
+freigegebenen Zahlen, nicht das Thema der Seite.
+
+### Der Titelbereich
+
+Dunkel, weil der Rest hell ist: der Bruch beim ersten Scrollen ist der stärkste
+Takt, den eine Seite hat. Darüber liegen zwei Ebenen, die sich langsam bewegen —
+ein Punktraster und zwei warme Lichter (`.buehne-grund`). Beides ist Grafik,
+kein Bild, kostet nichts an Ladezeit und skaliert auf jede Bildschirmgröße.
+
+Der Beleg steht im selben Band, nicht als eigener Abschnitt darunter: Der erste
+Einwand ist „behaupten kann das jeder", und der wird beantwortet, bevor er
+entsteht.
 
 **Der Grund ist ein Hauch neben Reinweiß.** `#fbfaf9` statt `#ffffff`: reines
 Weiß hat kein Material. Zusammen mit dem Korn, das als feste Ebene über der

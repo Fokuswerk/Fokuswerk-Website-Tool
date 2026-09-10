@@ -244,11 +244,16 @@
   [data-reveal="shown"] .kursiv { background-size: 100% 0.26em; }
   .band .kursiv {
     background-image: linear-gradient(
-      rgb(var(--brand-glow) / 0.24),
-      rgb(var(--brand-glow) / 0.24)
+      rgb(var(--brand-glow) / 0.2),
+      rgb(var(--brand-glow) / 0.2)
     );
-    background-position: 0 90%;
+    background-position: 0 92%;
   }
+  /* Bei sehr großer Schrift wächst der Marker mit und wird zum Balken.
+     `.kursiv-fein` haelt ihn dort auf Unterlegungsstaerke. */
+  .kursiv-fein { background-size: 0% 0.12em !important; }
+  [data-split="shown"] .kursiv-fein,
+  [data-reveal="shown"] .kursiv-fein { background-size: 100% 0.12em !important; }
 
   /* --- Kennung ------------------------------------------------------------ */
   .kennung {
@@ -794,3 +799,52 @@
   }
 }
 
+
+/* =========================================================================
+   BÜHNENGRUND
+   Zwei Ebenen hinter dem Titelbereich: ein Punktraster, das langsam wandert,
+   und zwei warme Lichter, die atmen. Beides Grafik, kein Bild — es kostet
+   nichts an Ladezeit und skaliert auf jede Bildschirmgröße.
+   ========================================================================= */
+@layer components {
+  .buehne-grund {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .buehne-grund::before {
+    content: "";
+    position: absolute;
+    inset: -40px;
+    background-image: radial-gradient(#ffffff1c 1px, transparent 1px);
+    background-size: 38px 38px;
+    -webkit-mask-image: radial-gradient(78% 62% at 50% 34%, #000 22%, transparent 76%);
+    mask-image: radial-gradient(78% 62% at 50% 34%, #000 22%, transparent 76%);
+    animation: fw-raster 34s linear infinite;
+  }
+
+  .buehne-grund::after {
+    content: "";
+    position: absolute;
+    inset: -20%;
+    background:
+      radial-gradient(38% 30% at 26% 18%, rgb(var(--brand-glow) / 0.2), transparent 68%),
+      radial-gradient(42% 34% at 76% 46%, rgb(var(--brand-glow) / 0.12), transparent 70%);
+    filter: blur(20px);
+    animation: fw-atmen 16s ease-in-out infinite;
+  }
+
+  @keyframes fw-raster {
+    to { transform: translate3d(38px, 38px, 0); }
+  }
+  @keyframes fw-atmen {
+    0%, 100% { opacity: 0.85; transform: scale(1); }
+    50%      { opacity: 1;    transform: scale(1.06); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .buehne-grund::before, .buehne-grund::after { animation: none; }
+  }
+}

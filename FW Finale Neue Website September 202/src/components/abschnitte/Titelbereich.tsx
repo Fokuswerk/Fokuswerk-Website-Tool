@@ -1,39 +1,54 @@
 import Link from 'next/link';
 import Buehne from '@/components/geraete/Buehne';
 import Pfeil from '@/components/ui/Pfeil';
-import { cta, marke } from '@/lib/inhalt';
+import { beleg, cta, marke } from '@/lib/inhalt';
+
+/**
+ * Der Titelbereich als dunkle Bühne.
+ *
+ * Dunkel, weil der Rest der Seite hell ist: der Bruch beim ersten Scrollen
+ * ist der stärkste Takt, den eine Seite hat. Darüber liegen zwei Ebenen, die
+ * sich langsam bewegen — Punktraster und zwei warme Lichter. Beide sind
+ * Grafik, kein Bild, und kosten nichts an Ladezeit.
+ */
+const belege = [
+  { wert: beleg.budget, nach: 2, einheit: ' €', label: 'Werbebudget' },
+  { wert: beleg.bewerbungen, nach: 0, einheit: '', label: 'Bewerbungen' },
+  { wert: beleg.anfragen, nach: 0, einheit: '', label: 'Anfragen über Google Ads' },
+  { wert: beleg.tage, nach: 0, einheit: ' Tage', label: 'bis zur Unterschrift' },
+];
 
 export default function Titelbereich() {
   return (
-    <section className="relative pt-32 sm:pt-40">
-      <div className="schale">
-        {/* Eine Schriftgröße für die Aussage, eine Kennung darüber, ein Absatz
-            darunter. Drei Stufen in der Überschrift wirkten unruhig. */}
-        <div className="mx-auto max-w-[54rem] text-center">
+    <section className="band relative overflow-hidden pt-32 sm:pt-40">
+      <div className="buehne-grund" aria-hidden="true" />
+
+      <div className="schale relative">
+        <div className="mx-auto max-w-[56rem] text-center">
           <p className="kennung justify-center" data-reveal>
-            Handwerk · Technik · Nordwest-Niedersachsen
+            Performance Marketing · Oldenburg
           </p>
 
           <h1
-            className="mx-auto mt-7 max-w-[19ch] text-[length:var(--text-5xl)] leading-[0.98]"
+            className="mx-auto mt-7 max-w-[15ch] text-[length:var(--text-6xl)] leading-[0.92]"
             data-split
           >
-            Aus einem Drehtag im Monat werden Aufträge und{' '}
-            <span className="kursiv">Bewerbungen</span>.
+            Kunden und Mitarbeiter.<br />
+            <span className="kursiv kursiv-fein">Nachgerechnet</span>.
           </h1>
 
           <p
-            className="mx-auto mt-7 max-w-[48ch] text-[length:var(--text-lg)] leading-[1.55] text-ink-2"
+            className="mx-auto mt-8 max-w-[50ch] text-[length:var(--text-lg)] leading-[1.55] text-ink-2"
             data-reveal
             style={{ ['--reveal-delay' as string]: '220ms' }}
           >
-            Wir drehen bei Ihnen im Betrieb, fahren die Kampagnen auf Meta und
-            Google und bauen die Seiten, auf denen beides landet. Alles selbst,
-            alles im Haus.
+            Wir produzieren, schalten und messen selbst. Am Monatsende steht,
+            was eine Anfrage gekostet hat und was eine Bewerbung — nicht, wie
+            viele Leute ein Video gesehen haben.
           </p>
 
           <div
-            className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
+            className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
             data-reveal
             style={{ ['--reveal-delay' as string]: '320ms' }}
           >
@@ -52,8 +67,42 @@ export default function Titelbereich() {
         </div>
       </div>
 
-      <div className="schale mt-16 pb-14 sm:mt-20 sm:pb-16" data-reveal style={{ ['--reveal-delay' as string]: '260ms' }}>
+      <div className="schale relative mt-16 pb-4 sm:mt-20" data-reveal style={{ ['--reveal-delay' as string]: '260ms' }}>
         <Buehne />
+      </div>
+
+      {/* Beleg direkt im Titelbereich: der erste Einwand ist „behaupten kann
+          das jeder", und der wird hier schon beantwortet. */}
+      <div className="schale relative mt-16 sm:mt-20">
+        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-rule pb-4">
+          <p className="kennung kennung-strich" data-reveal>Ein Fall, vollständig belegt</p>
+          <p className="font-mono text-[0.66rem] uppercase tracking-[0.14em] text-ink-3" data-reveal>
+            WAV Westerstede · Kfz-Werkstatt
+          </p>
+        </div>
+
+        <ul className="grid grid-cols-2 pb-16 md:grid-cols-4 sm:pb-20">
+          {belege.map((z, i) => (
+            <li
+              key={z.label}
+              className="border-b border-rule py-7 pr-4 md:border-b-0 md:[&:not(:first-child)]:border-l md:[&:not(:first-child)]:border-rule md:[&:not(:first-child)]:pl-6"
+              data-reveal
+              style={{ ['--reveal-delay' as string]: `${i * 80}ms` }}
+            >
+              <p className="text-[length:var(--text-3xl)] font-extrabold leading-none tracking-[-0.045em]">
+                <span data-zahl={z.wert} data-nachkomma={z.nach}>0</span>
+                {z.einheit}
+              </p>
+              <span
+                className="mt-4 block h-px w-full origin-left"
+                style={{ background: 'var(--accent)', ['--reveal-delay' as string]: `${i * 80 + 120}ms` }}
+                data-draw
+                aria-hidden="true"
+              />
+              <p className="mt-3 max-w-[18ch] text-sm text-ink-3">{z.label}</p>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

@@ -1,5 +1,4 @@
 import Titelbereich from '@/components/abschnitte/Titelbereich';
-import Beweisband from '@/components/abschnitte/Beweisband';
 import Produktion from '@/components/abschnitte/Produktion';
 import Leistungen from '@/components/abschnitte/Leistungen';
 import Vorgehen from '@/components/abschnitte/Vorgehen';
@@ -13,11 +12,10 @@ export default function Startseite() {
   return (
     <>
       <Titelbereich />
-      <Beweisband />
-      <Produktion />
       <Leistungen />
       <Vorgehen />
       <ZwischenCta />
+      <Produktion />
       <Warum />
       <Fallstudie />
       <Rechner />

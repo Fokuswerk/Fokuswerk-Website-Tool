@@ -70,47 +70,49 @@ export const betriebe: Betrieb[] = [
 ];
 
 /** Was wir konkret liefern. Jede Leistung nennt, was hineingeht und was
- *  herauskommt — sonst ist es eine Überschrift, keine Leistung. */
+ *  herauskommt — sonst ist es eine Überschrift, keine Leistung.
+ *  Reihenfolge nach Gewicht: Kampagnen sind das Geschäft, alles andere
+ *  liefert ihnen zu. */
 export const leistungen = [
   {
     nr: '01',
-    titel: 'Produktion im Betrieb',
-    kurz: 'Ein Drehtag im Monat, bei Ihnen.',
-    was: 'Wir kommen mit Kamera, Ton und Licht in Ihre Halle und drehen den normalen Betrieb — Ihre Leute, Ihre Maschinen, Ihre Arbeit. Vier bis fünf Stunden, dann sind wir wieder weg.',
-    raus: ['8 bis 12 Clips für den Monat', 'Standbilder für Seiten und Anzeigen', 'Alle Rohaufnahmen, dauerhaft Ihr Eigentum'],
-    bild: 'aufbau-stativ',
+    titel: 'Kampagnen für Neukunden',
+    kurz: 'Meta für die Region, Google für den Bedarf.',
+    was: 'Meta macht Sie im Umkreis bekannt, Google fängt die ab, die gerade jetzt suchen. Wir bauen die Zielgruppen, testen mehrere Varianten gegeneinander und legen das Budget auf die um, die liefert. Gemessen wird in Anfragen und Anrufen, nicht in Aufrufen.',
+    raus: ['Meta- und Google-Kampagnen, laufend betreut', 'Anfrageseite, auf Abschluss gebaut', 'Kosten je Anfrage, monatlich ausgewiesen'],
+    bild: 'schluesseluebergabe',
   },
   {
     nr: '02',
-    titel: 'Bewerberkampagnen',
+    titel: 'Kampagnen für Mitarbeiter',
     kurz: 'Für die, die gerade nicht suchen.',
-    was: 'Ausgespielt im Umkreis Ihres Betriebs, dort wo die Leute wohnen, die zu Ihnen fahren würden. Bewerben ohne Lebenslauf, ohne Anschreiben, direkt vom Handy — jede Bewerbung landet sofort auf Ihrem Telefon.',
-    raus: ['Kampagne auf Meta, laufend betreut', 'Karriereseite mit Kurzbewerbung', 'Bewerbungen als Push, nicht als Postfach'],
+    was: 'Dieselbe Mechanik, andere Zielgruppe: ausgespielt dort, wo die Leute wohnen, die zu Ihnen fahren würden. Bewerben ohne Lebenslauf, ohne Anschreiben, direkt vom Handy — jede Bewerbung landet sofort auf Ihrem Telefon.',
+    raus: ['Bewerberkampagne auf Meta', 'Karriereseite mit Kurzbewerbung', 'Kosten je Bewerbung, monatlich ausgewiesen'],
     bild: 'mechatroniker-handy',
   },
   {
     nr: '03',
-    titel: 'Neukundenkampagnen',
-    kurz: 'Meta für die Region, Google für den Bedarf.',
-    was: 'Dasselbe Material, andere Aussage. Meta macht Sie im Umkreis bekannt, Google fängt die ab, die gerade jetzt suchen. Gemessen wird in Anfragen, nicht in Aufrufen.',
-    raus: ['Meta- und Google-Kampagnen', 'Anfrageseite, auf Abschluss gebaut', 'Anrufe und Formularanfragen, zugeordnet'],
-    bild: 'schluesseluebergabe',
+    titel: 'Messung und Auswertung',
+    kurz: 'Eine Seite im Monat, keine Dashboards.',
+    was: 'Werbekonten, Tracking und Zuordnung richten wir so ein, dass am Monatsende eine Zahl steht, mit der Sie etwas anfangen können. Ohne saubere Messung ist Performance Marketing nur Werbung mit Rechnung.',
+    raus: ['Konten und Messung auf Ihren Namen', 'Kosten je Anfrage und je Bewerbung', 'Was wir im nächsten Monat ändern, und warum'],
+    bild: 'besprechung-werkbank',
   },
   {
     nr: '04',
-    titel: 'Seiten, die etwas tun',
-    kurz: 'Karriereseite, Anfrageseite, Firmenseite.',
-    was: 'Gebaut auf Ihren Namen und Ihr Konto, nicht auf unseres. Schnell, auf dem Handy zuerst, ohne Baukasten darunter. Diese Seite hier kommt aus derselben Werkstatt.',
-    raus: ['Seiten, die Ihnen gehören', 'Ladezeiten unter einer Sekunde', 'Messung und Einwilligungen sauber aufgesetzt'],
-    bild: 'kameramonitor',
+    titel: 'Produktion im Betrieb',
+    kurz: 'Ein Drehtag im Monat, bei Ihnen.',
+    was: 'Kampagnen sind nur so gut wie das Material darin. Wir kommen mit Kamera, Ton und Licht in Ihre Halle und drehen den normalen Betrieb — Ihre Leute, Ihre Maschinen. Vier bis fünf Stunden, daraus der Vorrat für vier Wochen.',
+    raus: ['8 bis 12 Clips für den Monat', 'Standbilder für Seiten und Anzeigen', 'Alle Rohaufnahmen, dauerhaft Ihr Eigentum'],
+    bild: 'aufbau-stativ',
   },
   {
     nr: '05',
-    titel: 'Messung und Auswertung',
-    kurz: 'Eine Seite im Monat, keine Dashboards.',
-    was: 'Werbekonten, Tracking und Zuordnung richten wir so ein, dass am Monatsende eine Zahl steht, mit der Sie etwas anfangen können: was eine Bewerbung gekostet hat und was eine Anfrage.',
-    raus: ['Konten auf Ihren Namen', 'Kosten je Bewerbung und je Anfrage', 'Was wir im nächsten Monat ändern, und warum'],
-    bild: 'besprechung-werkbank',
+    titel: 'Seiten, die etwas tun',
+    kurz: 'Anfrageseite, Karriereseite, Firmenseite.',
+    was: 'Eine Kampagne, die auf eine schlechte Seite führt, verbrennt Budget. Deshalb bauen wir beides. Gebaut auf Ihren Namen und Ihr Konto, schnell, auf dem Handy zuerst, ohne Baukasten darunter. Diese Seite hier kommt aus derselben Werkstatt.',
+    raus: ['Seiten, die Ihnen gehören', 'Ladezeiten unter einer Sekunde', 'Messung und Einwilligungen sauber aufgesetzt'],
+    bild: 'kameramonitor',
   },
 ] as const;
 
@@ -128,7 +130,7 @@ export const schritte = [
     nr: '02',
     marke: 'Der Schnitt',
     titel: 'Wir schneiden selbst.',
-    text: 'Aus einem Drehtag entstehen die Clips für vier Wochen — in zwei Fassungen: eine, die Bewerber anspricht, und eine, die Kunden anspricht. Dasselbe Material, zwei Aussagen.',
+    text: 'Aus einem Drehtag entstehen die Clips für vier Wochen — in zwei Fassungen: eine, die Kunden anspricht, und eine, die Bewerber anspricht. Dasselbe Material, zwei Aussagen, zwei Kampagnen.',
     art: 'bild' as const,
     bild: 'schnitt-vor-ort',
   },
@@ -136,7 +138,7 @@ export const schritte = [
     nr: '03',
     marke: 'Die Anzeige',
     titel: 'Wir schalten im Umkreis.',
-    text: 'Ausgespielt dort, wo die Leute wohnen, die zu Ihnen fahren würden. Nicht eine Anzeige, sondern mehrere Varianten gleichzeitig — wir wissen vorher nicht, welche trägt.',
+    text: 'Meta im Umkreis Ihres Betriebs, Google auf die Suchbegriffe, die Bedarf anzeigen. Nie eine Anzeige, sondern mehrere Varianten gegeneinander — wir wissen vorher nicht, welche trägt.',
     art: 'telefon' as const,
     bild: 'mechatroniker-handy',
   },
@@ -144,7 +146,7 @@ export const schritte = [
     nr: '04',
     marke: 'Die Landung',
     titel: 'Wir bauen, wo es ankommt.',
-    text: 'Eine Seite mit genau einer Aufgabe: aus Interesse eine Bewerbung oder eine Anfrage machen. Kein Portal, kein PDF-Upload, keine Pflichtfelder, die niemand ausfüllt.',
+    text: 'Eine Seite mit genau einer Aufgabe: aus Interesse eine Anfrage oder eine Bewerbung machen. Kein Portal, kein PDF-Upload, keine Pflichtfelder, die niemand ausfüllt.',
     art: 'fenster' as const,
     bild: 'hero-hoch',
   },
@@ -152,7 +154,7 @@ export const schritte = [
     nr: '05',
     marke: 'Die Messung',
     titel: 'Wir legen um, was nicht trägt.',
-    text: 'Nach zehn Tagen steht fest, welche Variante liefert. Die teure wird abgeschaltet, das Budget wandert. Das ist der Unterschied zwischen Werbung und Kampagne.',
+    text: 'Nach zehn Tagen steht fest, welche Variante liefert. Die teure wird abgeschaltet, das Budget wandert. Genau das ist der Unterschied zwischen Werbung und Performance Marketing.',
     art: 'konto' as const,
     bild: '',
   },
@@ -162,7 +164,7 @@ export const schritte = [
 export const gruende = [
   {
     kopf: 'Das zweite Ergebnis kostet fast nichts',
-    text: 'Die Kamera läuft ohnehin. Ob aus dem Drehtag ein Clip entsteht, der einen Mechaniker anspricht, oder einer, der einen Kunden anspricht, kostet uns fast dasselbe — Ihnen bringt es das Doppelte. Genau deshalb bekommen Sie zwei Kampagnen zum Preis von etwa einer.',
+    text: 'Die Kamera läuft ohnehin. Ob aus dem Drehtag ein Clip entsteht, der einen Kunden anspricht, oder einer, der einen Mechaniker anspricht, kostet uns fast dasselbe — Ihnen bringt es das Doppelte. Genau deshalb laufen bei uns zwei Kampagnen zum Preis von etwa einer.',
   },
   {
     kopf: 'Gemessen, nicht geraten',
@@ -174,20 +176,3 @@ export const gruende = [
   },
 ] as const;
 
-export const disziplinen = [
-  {
-    kennung: 'Bewegtbild',
-    titel: 'Wir drehen im Betrieb',
-    text: 'Keine Models, keine Studiobilder. Ihre Leute an Ihren Maschinen. Ein halber Tag im Monat, daraus der Vorrat für vier Wochen.',
-  },
-  {
-    kennung: 'Performance',
-    titel: 'Wir fahren die Kampagnen',
-    text: 'Meta und Google, mit Messung, die trägt. Varianten laufen gegeneinander, bis eine gewinnt — und die andere wird abgeschaltet.',
-  },
-  {
-    kennung: 'Web',
-    titel: 'Wir bauen, wo es landet',
-    text: 'Karriereseite, Anfrageseite, Firmenseite. Auf Ihrem Konto, auf Ihren Namen. Diese Seite hier ist aus derselben Werkstatt.',
-  },
-] as const;
