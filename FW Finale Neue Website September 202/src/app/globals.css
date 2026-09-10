@@ -1242,120 +1242,99 @@ html[data-auftakt="laeuft"] body::after {
 /* =========================================================================
    AUFBAU BEIM SCROLLEN
    -------------------------------------------------------------------------
-   Die Einblendungen hängen am Scrollstand, nicht an einer Uhr. Wer schnell
-   scrollt, bekommt die Inhalte so schnell fertig, wie er scrollt — es gibt
-   nichts, worauf man warten müsste. Wer langsam scrollt, sieht jeden
-   Abschnitt entstehen. Fertig ist ein Element, wenn es ein knappes Drittel
-   ins Bild gefahren ist.
+   Bewegung.tsx rechnet für jedes Element einen Fortschritt aus dem
+   Scrollstand und schreibt ihn als --a (linear) und --ae (weich auslaufend).
+   Hier wird daraus Bewegung. Kein Zeitverlauf: wer schnell scrollt, wartet
+   auf nichts; wer normal scrollt, sieht jedes Element in der unteren
+   Bildhälfte entstehen — dort, wo das Auge beim Runterscrollen hinschaut.
 
-   Nur Langformen, keine `animation`-Kurzform: die Kurzform setzt
-   animation-timeline stillschweigend auf auto zurück.
+   Vorher lief das über CSS-Scroll-Zeitleisten (animation-timeline). Zwei
+   Gründe dagegen: die Bewegung war nach wenigen Pixeln an der Unterkante
+   durch und damit praktisch unsichtbar, und nicht jeder Browser kann es.
+   Die Skript-Fassung läuft überall gleich.
 
-   Gilt nur, wo der Browser Scroll-Zeitleisten kann; sonst bleibt die
-   Uhr-Fassung weiter oben. Der Titelbereich (.titel-zone) bleibt bei der
-   Uhr: er steht beim Laden schon im Bild und tritt nach dem Auftakt auf.
+   Gilt nur mit html[data-aufbau] — das setzt Bewegung.tsx. Ohne Skript und
+   bei reduzierter Bewegung steht alles sofort. Die Titelbühne bleibt bei
+   der Uhr-Fassung, sie steht beim Laden schon im Bild.
+
+   Eigene Variablennamen (--a, --ae), weil --p schon von den Szenen belegt
+   ist und manche Elemente beides tragen (Leistungsbilder: Parallaxe und
+   Maske).
    ========================================================================= */
 @layer components {
-  @keyframes fw-auf        { from { opacity: 0; transform: translate3d(0, 44px, 0); } to { opacity: 1; transform: none; } }
-  @keyframes fw-auf-gross  { from { opacity: 0; transform: scale(.94); }            to { opacity: 1; transform: none; } }
-  @keyframes fw-auf-links  { from { opacity: 0; transform: translate3d(-40px, 0, 0); } to { opacity: 1; transform: none; } }
-  @keyframes fw-auf-rechts { from { opacity: 0; transform: translate3d(40px, 0, 0); }  to { opacity: 1; transform: none; } }
-  @keyframes fw-auf-weich  { from { opacity: 0; filter: blur(14px); }               to { opacity: 1; filter: none; } }
-  @keyframes fw-wort {
-    from { opacity: 0; transform: translate3d(0, .55em, 0) rotate(2.5deg); filter: blur(8px); }
-    to   { opacity: 1; transform: none; filter: none; }
+
+  /* Blöcke: steigen auf und blenden ein. */
+  html[data-aufbau] :where([data-reveal]):not(.titel-zone *) {
+    opacity: var(--ae, 0);
+    transform: translate3d(0, calc((1 - var(--ae, 0)) * 72px), 0);
+    transition: none;
+    will-change: opacity, transform;
   }
-  @keyframes fw-marker { from { background-size: 0% .26em; } to { background-size: 100% .26em; } }
-  /* Bildmaske: öffnet sich von unten und wächst am Ende über die Kante
-     hinaus, damit der Schatten des Rahmens nicht abgeschnitten bleibt. */
-  @keyframes fw-maske {
-    from { clip-path: inset(24% 5% 0 5% round var(--radius-lg)); }
-    to   { clip-path: inset(-90px -90px -120px -90px round 0); }
+  html[data-aufbau] :where([data-reveal][data-from="scale"]):not(.titel-zone *) {
+    transform: scale(calc(0.88 + var(--ae, 0) * 0.12));
   }
-  @keyframes fw-zug-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-  @keyframes fw-zug-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-  @keyframes fw-punkt {
-    from { background: var(--color-paper); color: var(--color-ink-2); border-color: var(--color-rule-2); }
-    to   { background: var(--color-ink);   color: var(--color-paper); border-color: var(--color-ink); }
+  html[data-aufbau] :where([data-reveal][data-from="left"]):not(.titel-zone *) {
+    transform: translate3d(calc((1 - var(--ae, 0)) * -64px), 0, 0);
+  }
+  html[data-aufbau] :where([data-reveal][data-from="right"]):not(.titel-zone *) {
+    transform: translate3d(calc((1 - var(--ae, 0)) * 64px), 0, 0);
+  }
+  html[data-aufbau] :where([data-reveal][data-from="blur"]):not(.titel-zone *) {
+    transform: none;
+    filter: blur(calc((1 - var(--ae, 0)) * 14px));
   }
 
-  @supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
+  /* Überschriften: jedes Wort nimmt seinen Anteil aus dem Fortschritt der
+     Überschrift, versetzt über --i. Der Satz entsteht von links nach rechts,
+     jedes Wort steigt, richtet sich auf und wird scharf. Gedeckelt bei zwölf
+     Wörtern, damit das letzte bei vollem Fortschritt sicher fertig ist. */
+  html[data-aufbau] :where([data-split]):not(.titel-zone *) .wort > span {
+    --w: clamp(0, calc(var(--a, 0) * 2.2 - min(var(--i, 0), 12) * 0.1), 1);
+    opacity: var(--w);
+    transform:
+      translate3d(0, calc((1 - var(--w)) * 0.75em), 0)
+      rotate(calc((1 - var(--w)) * 4deg));
+    filter: blur(calc((1 - var(--w)) * 7px));
+    transition: none;
+  }
+  /* Der Marker unter dem kursiven Wort fährt auf, wenn der Satz fast steht. */
+  html[data-aufbau] .kursiv:not(.titel-zone *) {
+    background-size: calc(clamp(0, calc(var(--a, 0) * 2.4 - 1.3), 1) * 100%) .26em;
+    transition: none;
+  }
 
-      :where([data-reveal]):not(.titel-zone *) {
-        transition: none;
-        animation-name: fw-auf;
-        animation-fill-mode: both;
-        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
-        animation-timeline: view();
-        animation-range: cover calc(1% + var(--versatz, 0%)) cover calc(27% + var(--versatz, 0%));
-      }
-      :where([data-reveal][data-from="scale"]):not(.titel-zone *) { animation-name: fw-auf-gross; }
-      :where([data-reveal][data-from="left"]):not(.titel-zone *)  { animation-name: fw-auf-links; }
-      :where([data-reveal][data-from="right"]):not(.titel-zone *) { animation-name: fw-auf-rechts; }
-      :where([data-reveal][data-from="blur"]):not(.titel-zone *)  { animation-name: fw-auf-weich; }
+  /* Bilder: öffnen sich von unten und zoomen dabei auf Maß. Am Ende wächst
+     die Maske über die Kante hinaus, sonst bliebe der Schatten abgeschnitten. */
+  html[data-aufbau] .maske-auf {
+    clip-path: inset(
+      calc((1 - var(--ae, 0)) * 30% - var(--ae, 0) * 90px)
+      calc((1 - var(--ae, 0)) * 7% - var(--ae, 0) * 90px)
+      calc(0px - var(--ae, 0) * 120px)
+      calc((1 - var(--ae, 0)) * 7% - var(--ae, 0) * 90px)
+      round var(--radius-lg)
+    );
+  }
+  html[data-aufbau] .maske-auf img { scale: calc(1.18 - var(--ae, 0) * 0.18); }
 
-      /* Überschriften Wort für Wort, jedes Wort ein Stück später auf der
-         Strecke. Gedeckelt, damit lange Sätze nicht nachhängen. */
-      :where([data-split]):not(.titel-zone *) .wort > span {
-        transition: none;
-        animation-name: fw-wort;
-        animation-fill-mode: both;
-        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
-        animation-timeline: view();
-        animation-range:
-          cover calc(2% + min(var(--i, 0) * 1.2%, 9%))
-          cover calc(24% + min(var(--i, 0) * 1.2%, 9%));
-      }
-      .kursiv:not(.titel-zone *) {
-        transition: none;
-        animation-name: fw-marker;
-        animation-fill-mode: both;
-        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
-        animation-timeline: view();
-        animation-range: cover 12% cover 34%;
-      }
-
-      .maske-auf {
-        animation-name: fw-maske;
-        animation-fill-mode: both;
-        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
-        animation-timeline: view();
-        animation-range: cover 0% cover 38%;
-      }
-
-      /* Prozessschiene: die Liste selbst bleibt stehen, es bewegen sich die
-         Stationen — sonst stapeln sich zwei Bewegungen. */
-      .prozess[data-reveal] { animation-name: none; opacity: 1; transform: none; }
-      .prozess-station {
-        opacity: 1;
-        transform: none;
-        transition: none;
-        animation-name: fw-auf;
-        animation-fill-mode: both;
-        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
-        animation-timeline: view();
-        animation-range: cover calc(2% + var(--i) * 2.5%) cover calc(26% + var(--i) * 2.5%);
-      }
-      .prozess-punkt {
-        transition: none;
-        animation-name: fw-punkt;
-        animation-fill-mode: both;
-        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
-        animation-timeline: view();
-        animation-range: cover calc(6% + var(--i) * 2.5%) cover calc(24% + var(--i) * 2.5%);
-      }
-      .prozess-schiene[data-draw] {
-        transition: none;
-        animation-name: fw-zug-y;
-        animation-fill-mode: both;
-        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
-        animation-timeline: view();
-        animation-range: cover 0% cover 40%;
-      }
-      @media (min-width: 64rem) {
-        .prozess-schiene[data-draw] { animation-name: fw-zug-x; }
-      }
-    }
+  /* Prozessschiene: die Liste steht, die Stationen bauen der Reihe nach auf,
+     die Schiene zieht sich, die Punkte füllen sich. */
+  html[data-aufbau] .prozess[data-reveal] { opacity: 1; transform: none; }
+  html[data-aufbau] .prozess .prozess-station {
+    opacity: var(--ae, 0);
+    transform: translate3d(0, calc((1 - var(--ae, 0)) * 44px), 0);
+    transition: none;
+  }
+  html[data-aufbau] .prozess .prozess-station .prozess-punkt {
+    background: color-mix(in srgb, var(--color-ink) calc(var(--ae, 0) * 100%), var(--color-paper));
+    border-color: color-mix(in srgb, var(--color-ink) calc(var(--ae, 0) * 100%), var(--color-rule-2));
+    color: color-mix(in srgb, var(--color-paper) calc(var(--ae, 0) * 100%), var(--color-ink-2));
+    transition: none;
+  }
+  html[data-aufbau] .prozess .prozess-schiene[data-draw] {
+    transform: scaleY(var(--ae, 0));
+    transition: none;
+  }
+  @media (min-width: 64rem) {
+    html[data-aufbau] .prozess .prozess-schiene[data-draw] { transform: scaleX(var(--ae, 0)); }
   }
 }

@@ -171,26 +171,38 @@ in `inhalt.ts`); rechts Schaltfläche und Kontakt.
 
 ### Aufbau beim Scrollen
 
-Die Einblendungen hängen am **Scrollstand, nicht an einer Uhr** (CSS
-`animation-timeline: view()`). Wer schnell scrollt, bekommt die Inhalte so
-schnell fertig, wie er scrollt — es gibt nichts, worauf man warten müsste. Wer
-langsam scrollt, sieht jeden Abschnitt entstehen. Fertig ist ein Element, wenn
-es ein knappes Drittel ins Bild gefahren ist.
+Die Einblendungen hängen am **Scrollstand, nicht an einer Uhr**. Wer schnell
+scrollt, wartet auf nichts; wer normal scrollt, sieht jedes Element in der
+unteren Bildhälfte entstehen — dort, wo das Auge beim Runterscrollen hinschaut.
 
-- Blöcke steigen und blenden auf, Überschriften Wort für Wort mit leichtem
-  Aufrichten, Bilder öffnen sich als Maske von unten, die Prozessschiene zieht
-  sich und ihre Punkte füllen sich der Reihe nach.
-- Gestaffelt wird über die Strecke statt über die Zeit: `Bewegung.tsx` leitet
-  aus `--reveal-delay` (ms) einen `--versatz` (%) ab, 25 ms = 1 %.
-- **Nur Langformen** (`animation-name`, `animation-timeline` …), keine
-  `animation`-Kurzform — die setzt `animation-timeline` stillschweigend auf
-  `auto` zurück.
-- Die Bildmaske wächst am Ende über die Kante hinaus (negatives `inset`), sonst
-  bliebe der Schatten des Rahmens dauerhaft abgeschnitten.
-- Der Titelbereich (`.titel-zone`) bleibt bei der Uhr-Fassung: er steht beim
-  Laden schon im Bild und tritt nach dem Auftakt auf.
-- Browser ohne Scroll-Zeitleisten bekommen die Uhr-Fassung; bei
-  `prefers-reduced-motion` ist alles sofort da.
+`Bewegung.tsx` vermisst jedes Element einmal (`offsetTop`, ignoriert
+Transformationen) und rechnet beim Scrollen daraus einen Fortschritt: 0, wenn
+die Oberkante unten ins Bild kommt, 1, wenn sie 42 % der Bildhöhe hochgefahren
+ist. Geschrieben werden nur `--a` (linear) und `--ae` (weich auslaufend); die
+Bewegung macht CSS.
+
+- Blöcke steigen um 72 px auf und blenden ein.
+- Überschriften entstehen Wort für Wort: jedes Wort nimmt seinen Anteil aus dem
+  Fortschritt der Überschrift, versetzt über `--i`, steigt, richtet sich auf
+  und wird scharf.
+- Bilder öffnen sich von unten und zoomen dabei auf Maß (1,18 → 1).
+- Die Prozessschiene zieht sich, Stationen bauen der Reihe nach auf, Punkte
+  füllen sich.
+- Gestaffelt wird über die Strecke: 25 ms der alten `--reveal-delay` werden
+  1 % Bildhöhe.
+
+> **Warum nicht CSS `animation-timeline: view()`?** Das war die erste Fassung.
+> Zwei Probleme: Die Bewegung war nach wenigen Pixeln an der Unterkante durch —
+> Rückmeldung „keine Scroll-Animation drin", obwohl sie technisch lief. Und nicht
+> jeder Browser kann Scroll-Zeitleisten. Die Skript-Fassung läuft überall gleich
+> und lässt sich im Testbrowser zuverlässig prüfen.
+
+> **Eigene Variablennamen**, weil `--p` schon von den Szenen belegt ist und
+> Leistungsbilder beides tragen (Parallaxe und Maske).
+
+Gilt nur mit `html[data-aufbau]`, das setzt `Bewegung.tsx`. Ohne Skript und bei
+`prefers-reduced-motion` steht alles sofort. Die Titelbühne (`.titel-zone`)
+bleibt bei der Uhr-Fassung — sie steht beim Laden schon im Bild.
 
 ### Menü-Choreografie
 

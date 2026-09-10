@@ -61,13 +61,7 @@ export default function Bewegung() {
 
     document.querySelectorAll<HTMLElement>('[data-split]').forEach(zerlegen);
 
-    // Gestaffelte Einblendungen tragen ihre Verzögerung als --reveal-delay in
-    // Millisekunden. Die Scroll-Fassung staffelt über die Strecke statt über
-    // die Zeit: 25 ms werden zu einem Prozent Versatz, höchstens zwölf.
-    document.querySelectorAll<HTMLElement>('[data-reveal]').forEach((el) => {
-      const ms = parseFloat(el.style.getPropertyValue('--reveal-delay'));
-      if (ms > 0) el.style.setProperty('--versatz', `${Math.min(ms / 25, 12)}%`);
-    });
+
 
     if (ruhe.matches) {
       document
@@ -159,6 +153,88 @@ export default function Bewegung() {
     }
 
     // --- Neigung ----------------------------------------------------------
+    // --- Aufbau am Scrollstand ---------------------------------------------
+    // Alles außerhalb der Titelbühne baut sich über den Scrollstand auf, nicht
+    // über eine Uhr. Pro Element entsteht ein Fortschritt von 0 (Oberkante
+    // kommt unten ins Bild) bis 1 (Oberkante ist STRECKE der Bildhöhe
+    // hochgefahren). Geschrieben werden nur zwei Variablen; die Bewegung
+    // selbst macht CSS (Abschnitt AUFBAU BEIM SCROLLEN).
+    //
+    // Positionen werden einmal vermessen und beim Scrollen nur verrechnet —
+    // kein getBoundingClientRect pro Bild. Das ist auch inhaltlich nötig: die
+    // Messung darf die eigene Verschiebung nicht mitlesen, sonst rechnet sich
+    // das Element aus seiner eigenen Bewegung heraus. offsetTop ignoriert
+    // Transformationen.
+    const STRECKE = 0.42;
+    const aufbauZiele = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        '[data-reveal], [data-split], .maske-auf, .prozess-station, .prozess-schiene',
+      ),
+    ).filter((el) => !el.closest('.titel-zone'));
+
+    type Lage = { el: HTMLElement; oben: number; versatz: number; zuletzt: number };
+    let lagen: Lage[] = [];
+
+    const dokOben = (el: HTMLElement) => {
+      let y = 0;
+      let e: HTMLElement | null = el;
+      while (e) { y += e.offsetTop; e = e.offsetParent as HTMLElement | null; }
+      return y;
+    };
+
+    const aufbauRechnen = () => {
+      const h = window.innerHeight;
+      const y = window.scrollY;
+      for (const l of lagen) {
+        const roh = (h - (l.oben - y) - (l.versatz / 100) * h) / (h * STRECKE);
+        const a = roh <= 0 ? 0 : roh >= 1 ? 1 : roh;
+        if (Math.abs(a - l.zuletzt) < 0.001) continue;
+        l.zuletzt = a;
+        l.el.style.setProperty('--a', a.toFixed(3));
+        l.el.style.setProperty('--ae', (1 - Math.pow(1 - a, 3)).toFixed(3));
+      }
+    };
+
+    const vermessen = () => {
+      lagen = aufbauZiele.map((el) => {
+        // Staffelung über die Strecke statt über die Zeit: 25 ms der alten
+        // Verzögerung werden ein Prozent Bildhöhe, Stationen je drei Prozent.
+        const ms = parseFloat(el.style.getPropertyValue('--reveal-delay')) || 0;
+        const i = el.classList.contains('prozess-station')
+          ? Number(el.style.getPropertyValue('--i')) || 0
+          : 0;
+        return { el, oben: dokOben(el), versatz: Math.min(ms / 25, 12) + i * 3, zuletzt: -1 };
+      });
+      aufbauRechnen();
+    };
+
+    let aufbauLaeuft = false;
+    const aufbauPlanen = () => {
+      if (aufbauLaeuft) return;
+      aufbauLaeuft = true;
+      requestAnimationFrame(() => { aufbauLaeuft = false; aufbauRechnen(); });
+    };
+    let messungGeplant = false;
+    const messungPlanen = () => {
+      if (messungGeplant) return;
+      messungGeplant = true;
+      requestAnimationFrame(() => { messungGeplant = false; vermessen(); });
+    };
+
+    // Erst vermessen und schreiben, dann das Attribut setzen — im selben
+    // Durchlauf, damit nichts einen Moment lang ungestylt aufblitzt.
+    vermessen();
+    document.documentElement.setAttribute('data-aufbau', '');
+    window.addEventListener('scroll', aufbauPlanen, { passive: true });
+    window.addEventListener('resize', messungPlanen);
+    window.addEventListener('load', messungPlanen);
+    document.fonts?.ready.then(messungPlanen);
+    // Bilder und Schriften verschieben das Layout nach dem ersten Messen. Die
+    // eigenen Schreibzugriffe ändern nur transform, opacity und clip-path —
+    // kein Layout —, daher kann dieser Beobachter keine Schleife auslösen.
+    const layoutBeobachter = new ResizeObserver(messungPlanen);
+    layoutBeobachter.observe(document.body);
+
     const geneigte = Array.from(document.querySelectorAll<HTMLElement>('[data-tilt]'));
     const zeiger = window.matchMedia('(hover: hover) and (pointer: fine)');
     const aufZeiger = (ev: PointerEvent) => {
@@ -190,6 +266,11 @@ export default function Bewegung() {
       window.removeEventListener('pointermove', aufZeiger);
       window.removeEventListener('scroll', szenenPlanen);
       window.removeEventListener('resize', szenenPlanen);
+      window.removeEventListener('scroll', aufbauPlanen);
+      window.removeEventListener('resize', messungPlanen);
+      window.removeEventListener('load', messungPlanen);
+      layoutBeobachter.disconnect();
+      document.documentElement.removeAttribute('data-aufbau');
     };
   }, []);
 
