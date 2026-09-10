@@ -23,7 +23,7 @@ export default function Fallstudie() {
           data-reveal
           data-from="scale"
         >
-          <div className="relative overflow-hidden rounded-[var(--radius-xl)]" style={{ boxShadow: 'var(--shadow-float)' }} data-faden="rechts">
+          <div className="relative overflow-hidden rounded-[var(--radius-xl)]" style={{ boxShadow: 'var(--shadow-float)' }}>
             <div className="relative aspect-[16/9] w-full sm:aspect-[21/9]">
               <Image
                 src="/bilder/aufbau-stativ.jpg"

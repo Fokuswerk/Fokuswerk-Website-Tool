@@ -32,7 +32,6 @@ export default function Abschluss() {
           >
             <Link
               href={cta.ziel}
-              data-faden="ziel"
               className="akt group w-full flex-col !items-start !gap-0.5 !rounded-[var(--radius-lg)] !px-8 !py-5 text-left sm:w-auto"
             >
               <span className="flex items-center gap-2.5 text-[1.08rem] font-bold tracking-[-0.02em]">

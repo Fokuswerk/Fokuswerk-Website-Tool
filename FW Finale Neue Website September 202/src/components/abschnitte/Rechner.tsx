@@ -68,7 +68,6 @@ export default function Rechner() {
               </p>
 
               <p className="mt-6 inline-block text-[length:var(--text-6xl)] font-extrabold leading-[0.9] tracking-[-0.05em]"
-                 data-faden="kreis"
                  style={{ color: 'var(--accent)' }}>
                 {jahr.toLocaleString('de-DE')} €
               </p>

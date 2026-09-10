@@ -26,7 +26,7 @@ export default function ZwischenCta() {
           </div>
 
           <div className="flex flex-none flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
-            <Link href={cta.ziel} className="akt" data-faden="ziel">
+            <Link href={cta.ziel} className="akt">
               {cta.text}
               <Pfeil />
             </Link>

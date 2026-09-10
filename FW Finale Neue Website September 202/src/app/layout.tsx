@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Archivo, DM_Mono, Instrument_Serif } from 'next/font/google';
 import Bewegung from '@/components/Bewegung';
-import Faden from '@/components/Faden';
 import Kopf from '@/components/seite/Kopf';
 import Fuss from '@/components/seite/Fuss';
 import { marke } from '@/lib/inhalt';
@@ -58,8 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <a href="#inhalt" className="nur-sr">Zum Inhalt springen</a>
         <Kopf />
-        <main id="inhalt" className="relative">{children}</main>
-        <Faden />
+        <main id="inhalt">{children}</main>
         <Fuss />
         <Bewegung />
         <script

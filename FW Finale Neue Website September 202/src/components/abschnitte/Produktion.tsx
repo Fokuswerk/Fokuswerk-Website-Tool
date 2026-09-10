@@ -38,7 +38,7 @@ export default function Produktion() {
       </div>
 
       {/* Der Streifen. Bewegt sich nur, solange gescrollt wird. */}
-      <div className="relative mt-16 select-none" data-faden="rechts">
+      <div className="relative mt-16 select-none">
         <div className="pointer-events-none absolute inset-y-0 left-1/2 z-20 hidden w-px -translate-x-1/2 lg:block"
              style={{ background: 'rgb(var(--brand-glow) / 0.5)' }}>
           <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45"

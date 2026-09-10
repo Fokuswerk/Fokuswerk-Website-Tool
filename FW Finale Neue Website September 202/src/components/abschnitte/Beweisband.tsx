@@ -23,7 +23,6 @@ export default function Beweisband() {
             <li
               key={z.label}
               className="border-b border-rule py-7 pr-4 md:border-b-0 md:[&:not(:first-child)]:border-l md:[&:not(:first-child)]:border-rule md:[&:not(:first-child)]:pl-6"
-              data-faden={i === 1 ? 'kreis' : undefined}
               data-reveal
               style={{ ['--reveal-delay' as string]: `${i * 80}ms` }}
             >

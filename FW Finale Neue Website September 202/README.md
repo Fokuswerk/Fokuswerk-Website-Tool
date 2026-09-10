@@ -124,42 +124,6 @@ src/components/
 src/lib/inhalt.ts    Stammdaten, CTA, belegte Zahlen, Rechengrößen
 ```
 
-### Der rote Faden
-
-Eine Linie läuft von oben nach unten durch die Seite, schlingt sich abwechselnd
-links und rechts an den Bausteinen vorbei und wird beim Scrollen gezeichnet. Am
-Ende hakt sie ein und landet mit einem Knoten auf der Schaltfläche.
-
-Ankerpunkte stehen im Markup, die Reihenfolge ergibt sich aus der Y-Position:
-
-| Anker | Wirkung |
-|---|---|
-| `data-faden="links"` / `"rechts"` | Wegpunkt neben dem Baustein |
-| `data-faden="kreis"` | der Faden umrundet das Element einmal — die Geste, mit der man auf Papier etwas einkreist |
-| `data-faden="ziel"` | er hakt waagerecht auf einer Schaltfläche ein; mehrere sind erlaubt |
-
-Drei Dinge, die beim Bauen schiefgingen und deshalb hier stehen:
-
-1. **Der Kopf hing hinterher.** Der Fortschritt wurde aus der Y-Achse gerechnet
-   und auf die Bogenlänge angewendet — beide laufen aber nicht gleich, weil ein
-   weiter Bogen viel Länge auf wenig Höhe verbraucht. Jetzt liegt eine Tabelle
-   (Länge → Y) mit 600 Stützstellen vor, in der die passende Länge gesucht wird.
-2. **Er lag vor dem Text.** Der Faden liegt auf `z-index: -1`, die dunklen
-   Bänder tragen ihren Grund auf `.band::before` bei `-2`. Entscheidend dabei:
-   **der Körper darf keinen Hintergrund haben.** In der Malreihenfolge kommt der
-   Hintergrund eines Blockelements nach den Nachfahren mit negativem z-index —
-   ein `background` auf `body` deckt den Faden vollständig zu. Den Grund trägt
-   deshalb das Wurzelelement.
-3. **Ein ResizeObserver auf dem Körper erzeugte eine Schleife.** Jede
-   Neuberechnung änderte das Layout und löste die nächste aus; der Faden wurde
-   dabei ständig zurückgesetzt und nie gezeichnet. Jetzt: zwei feste Anläufe
-   plus `document.fonts.ready`.
-
-Weiter: gerechnet wird nur bei Aufbau und Größenänderung, beim Scrollen wird
-eine einzige Zahl geschrieben. Die Längentabelle wird erst gebaut, wenn React
-den neuen Pfad im DOM hat — sonst misst `getTotalLength` den alten. Erst ab
-64 rem; auf dem Handy ist der Scrollweg ohnehin linear.
-
 ### Der Filmstreifen
 
 Kein Bilderband: eigene Filmbasis, **rechteckige** Perforation wie bei 35 mm als
