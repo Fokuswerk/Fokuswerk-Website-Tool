@@ -19,31 +19,42 @@ npm run shots        # Bildschirmfotos nach qa/shots/
 
 ## 1. Die Idee, auf der alles steht
 
-**Die Seite ist selbst der Beweis.** Fokuswerk verkauft Content, Kampagnen und
-Websites — also wird nicht behauptet, dass wir das können, sondern vorgeführt.
-Drei Schaustücke tragen die Seite:
+**Aufbau 1 zu 1 nach der Gartenzwerg-Präsentation**
+(gartenzwerg-praesentation.vercel.app, Quellcode in `Desktop/Claude/Gartenservice neu/web`).
+Reihenfolge, Raster, Abstände und Typostufen folgen der Vorlage; Farben, Schrift,
+Bildwelt und Inhalte sind Fokuswerk. Jeder Vorlagen-Abschnitt hat sein Gegenstück:
 
-| Baustein | Was es beweist |
+| Gartenzwerg | Fokuswerk (`components/abschnitte/`) |
 |---|---|
-| `Buehne` | Browserfenster mit einer Karriereseite, davor das Telefon mit der Anzeige, die darauf führt. Content, Ads und Web in einem Bild. |
-| `Vorgehen` | Scroll-Sequenz über fünf Schritte: links laufen die Schritte durch, rechts steht ein Rahmen fest und wechselt vom Foto über Anzeige und Seite bis zum Werbekonto. |
-| `Produktion` | Filmstreifen mit Perforation und Zeitcode, vom Scrollstand gezogen statt von einer Uhr. Kein Karussell — er bewegt sich nur, solange gescrollt wird. |
-| `Werbekonto` | Zwei gemessene Varianten, 4,92 € gegen 218 € je Bewerbung — und der Moment, in dem die teure abgeschaltet wird. |
-| `Rechner` | Zwei Regler, ein Ergebnis: was eine unbesetzte Stelle diesen Betrieb im Jahr kostet. Seine Zahlen, nicht unsere. |
+| Hero mit PLZ-Prüfung | `Titelbereich` — Drehtag-Foto, Einstieg „Rechnet sich das für Ihren Betrieb?" |
+| Vertrauensband | `Vertrauen` — vier Werte, unten in `Warum` belegt |
+| Das eigentliche Problem | `Problem` — vier Sätze des Inhabers, darunter 121.125 € (Branchenwert) |
+| Das Gartenjahr (gepinnt) | `Monat` — vier Wochen: Drehtag, Schnitt, Messen, Auswertung |
+| Das Prinzip | `Prinzip` — Anfragen statt Reichweite |
+| So beginnt es | `Einstieg` — fünf Schritte mit Zeitangabe |
+| Was dazugehört | `Leistungen` — Register mit Bildvorschau, aufklappbar |
+| Betreuungsstufen | `Stufen` — Mitarbeiter · Neukunden · Beides, **ohne Preise** |
+| Preis-Peilung | `Rechnung` — entgangener Werkstattumsatz, zwei Regler + Suchdauer |
+| Gartenprofil | `Bericht` — die WAV-Auswertung als Dokument |
+| Objekte | `Betriebe` — Bahn mit Scroll-Snap, Schriftkarten statt Symbolfotos |
+| Warum wir + Kundenstimmen | `Warum` — fünf Belege, statt Zitaten die freigegebene Referenz |
+| Für Immobilien | `Mitarbeiter` — eigener Einstieg für die Bewerbersuche |
+| Einsatzgebiet | `FuerWen` — Auswahl aus dem Zielkundenprofil |
+| Fragen | `Fragen` — Kaufeinwände, dazu FAQPage-JSON-LD |
+| Abschluss | `Schluss` — derselbe Einstieg wie oben, Risikoumkehr, Nummer |
 
-### Aufbau der Startseite
+Dazu wie in der Vorlage: `seite/MobileLeiste` (feste Anrufleiste auf dem Handy,
+nach dem ersten Bildschirm) und eine Fußzeile mit Marke, drei Spalten, Gebiet.
 
-**Titelbereich** (Foto vom Drehtag, dunkel) · **Beleg** (ein Fall mit Zahlen,
-daneben die Bühne) · **01 Was wir machen** ·
-**02 Das Vorgehen** (Scroll-Sequenz) · Zwischenstopp · Filmstreifen ·
-**03 Warum das trägt** · **04 Die Fälle** · **05 Die Rechnung** · Abschluss.
-
-Dunkel wird es dreimal, und nie zweimal hintereinander: Titelbereich,
-Filmstreifen, sowie Rechnung und Abschluss als ein zusammenhängender Block.
+**Inhalte stehen in `lib/inhalt.ts`**, jede Aussage aus dieser Datei, dem
+Zielkundenprofil (`Strategie Fokuswerk/ICP.md`) oder den Angebotsdokumenten.
+Bewusst **nicht** auf der Seite: Preise (fallen im Gespräch), Laufzeit,
+Kündigung und Garantie (im Angebot noch nicht entschieden), Kundenzitate (nicht
+freigegeben) und die im Werkstattangebot als erfunden markierten WAV-Werte
+(„neun Monate", „vier Bewerbungen").
 
 **Die Seite verkauft Performance Marketing, nicht Recruiting.** Kunden und
-Mitarbeiter stehen gleichwertig nebeneinander — Kampagnen zuerst, Produktion
-und Seiten als das, was ihnen zuliefert. WAV ist der eine Fall mit
+Mitarbeiter stehen gleichwertig nebeneinander. WAV ist der eine Fall mit
 freigegebenen Zahlen, nicht das Thema der Seite.
 
 ### Der Titelbereich
@@ -60,19 +71,13 @@ Beim Auftakt stellt das Bild scharf (`data-from="fokus"`: erst weich und
 leicht zu nah, dann klar), während die Blende hochfährt. Danach steht die
 Headline.
 
-Der Beleg steht direkt darunter als eigener Streifen (`Belege.tsx`), an der
-Stelle, an der die Vorlage ihre Vertrauensleiste hat: vier Zahlen aus dem
-Werbekonto, daneben die Bühne mit Anzeige und Karriereseite. Der erste
-Einwand ist „behaupten kann das jeder", und der wird beantwortet, bevor er
-entsteht.
-
 > **Fallstrick:** Die Regel `[data-reveal][data-from="fokus"]` muss im Stylesheet
 > **vor** `[data-reveal="shown"][data-from]` stehen und in derselben Ebene
 > (`@layer components`). Ungeschichtet oder dahinter gewinnt sie gegen die
 > shown-Regel, und das Titelbild bleibt dauerhaft unscharf.
 >
-> **Fallstrick, hat zugeschlagen:** Der Lichtschein hinter Bildern
-> (`.schein::before`, `inset: -6 %`) und das Telefon der Bühne ragen über ihren
+> **Fallstrick, hat zugeschlagen:** Ein Lichtschein hinter Bildern
+> (`inset: -6 %`, inzwischen entfernt) und das Telefon der Bühne ragten über ihren
 > Rahmen hinaus. Bei voller Bildbreite schob das die Seite seitwärts — 12 px
 > bei 800 px Breite, 1 px bei 390. Eine Regel fängt das für alle Abschnitte:
 > `main#inhalt { overflow-x: clip }`. `clip` statt `hidden`, damit `main` kein
@@ -162,14 +167,6 @@ src/components/
   ui/
 src/lib/inhalt.ts    Stammdaten, CTA, belegte Zahlen, Rechengrößen
 ```
-
-### Der Filmstreifen
-
-Kein Bilderband: eigene Filmbasis, **rechteckige** Perforation wie bei 35 mm als
-SVG-Kachel (rund wäre der Fehler, an dem man einen nachgebauten Streifen sofort
-erkennt), Bildstege zwischen den Kadern, Randbeschriftung, Vignette je Kader und
-eine warme, leicht flaue Gradation. Gezogen wird er vom Scrollstand, nicht von
-einer Uhr.
 
 ### Kopfleiste und Menü
 

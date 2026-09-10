@@ -25,7 +25,7 @@
   --color-paper-3: #e8e6e3;
   --color-ink:     #0d1014;
   --color-ink-2:   #575f6a;   /* 6,1:1 auf #fbfaf9 */
-  --color-ink-3:   #6b737e;   /* 4,6:1 auf #fbfaf9 */
+  --color-ink-3:   #636b76;   /* 5,2:1 auf #fbfaf9, 4,7:1 auf #f3f2f0 (paper-2) */
   --color-rule:    #0d101418;
   --color-rule-2:  #0d10142e;
   --color-warn:    #b3261e;
@@ -66,7 +66,9 @@
   --ease-back: cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
+
 :root {
+  --rand: max(clamp(1.25rem, 5vw, 5.5rem), calc((100vw - 96rem) / 2 + clamp(1.25rem, 5vw, 5.5rem)));
   /* Schatten muessen auf Weiss Hoehe zeigen, ohne die Flaeche zu vergrauen —
      deshalb weit, weich und mehrfach gestaffelt statt einmal hart. */
   --shadow-lift:  0 1px 2px #0d101410, 0 8px 24px -14px #0d10142e;
@@ -210,11 +212,14 @@
 
 @layer components {
 
+  /* Satzspiegel wie in der Gartenzwerg-Präsentation: bis 96rem breit,
+     Rand wächst mit dem Fenster bis 5,5rem. --rand ist derselbe Abstand für
+     Bahnen, die über die volle Breite laufen und trotzdem bündig beginnen. */
   .schale {
     width: 100%;
-    max-width: var(--shell);
+    max-width: 96rem;
     margin-inline: auto;
-    padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+    padding-inline: clamp(1.25rem, 5vw, 5.5rem);
   }
 
   /* --- Das eine kursive Wort ---------------------------------------------
@@ -260,10 +265,10 @@
     display: inline-flex;
     align-items: center;
     gap: 0.7em;
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: var(--text-marker);
-    font-weight: 500;
-    letter-spacing: 0.16em;
+    font-weight: 600;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--color-ink-3);
   }
@@ -349,56 +354,6 @@
     box-shadow: var(--shadow-lift);
   }
 
-  /* --- Geraete ------------------------------------------------------------
-     Browserfenster und Telefon. Beides traegt echten Inhalt, nie eine
-     Skizze — ein Geraet mit Platzhalter darin ist schlimmer als keines. */
-  .geraet {
-    position: relative;
-    border-radius: var(--radius-lg);
-    background: var(--color-night-2);
-    box-shadow: var(--shadow-deep);
-    overflow: hidden;
-    isolation: isolate;
-  }
-  .geraet-leiste {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.7rem 0.9rem;
-    background: var(--color-night-3);
-    border-bottom: 1px solid #ffffff14;
-  }
-  .geraet-punkte { display: flex; gap: 5px; }
-  .geraet-punkte i { width: 9px; height: 9px; border-radius: 999px; background: #ffffff2b; }
-  .geraet-adresse {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5em;
-    font-family: var(--font-mono);
-    font-size: 0.66rem;
-    letter-spacing: 0.06em;
-    color: #ffffff8c;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  /* Lichtschein hinter einem Geraet. Auf Weiss kein Licht, sondern ein Hauch
-     Farbe — sonst wirkt er wie ein Druckfehler. */
-  .schein { position: relative; isolation: isolate; }
-  .schein::before {
-    content: "";
-    position: absolute;
-    inset: -12% -6% -18%;
-    z-index: -1;
-    border-radius: 50%;
-    background:
-      radial-gradient(60% 50% at 50% 45%, rgb(var(--brand-glow) / var(--glow-a)), transparent 70%),
-      radial-gradient(90% 70% at 50% 60%, #0d101410, transparent 72%);
-    filter: blur(30px);
-    opacity: var(--schein-op, 1);
-  }
 }
 
 /* =========================================================================
@@ -473,51 +428,6 @@
   }
   [data-draw="shown"] { transform: scaleX(1); }
 
-  @keyframes fw-float {
-    0%, 100% { transform: translate3d(0, 0, 0); }
-    50%      { transform: translate3d(0, -10px, 0); }
-  }
-  .schweben { animation: fw-float 7s var(--ease-soft) infinite; }
-  .schweben-langsam { animation: fw-float 11s var(--ease-soft) infinite; }
-
-  @keyframes fw-puls {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%      { opacity: 0.35; transform: scale(0.75); }
-  }
-  .puls { animation: fw-puls 2.4s ease-in-out infinite; }
-
-  /* Lichtstreif ueber einen Bildschirm — der Hinweis „hier ist ein Geraet". */
-  @keyframes fw-streif {
-    0%        { transform: translateX(-130%) skewX(-14deg); opacity: 0; }
-    12%       { opacity: 1; }
-    55%, 100% { transform: translateX(230%) skewX(-14deg); opacity: 0; }
-  }
-  .streif::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(90deg, transparent, #ffffff26 45%, transparent);
-    animation: fw-streif 7s var(--ease-soft) infinite;
-  }
-
-  @keyframes fw-lauf {
-    from { transform: translate3d(0, 0, 0); }
-    to   { transform: translate3d(-50%, 0, 0); }
-  }
-  .lauf {
-    display: flex;
-    width: max-content;
-    animation: fw-lauf var(--lauf-zeit, 46s) linear infinite;
-  }
-  .lauf-halt:hover .lauf { animation-play-state: paused; }
-
-  @keyframes fw-wechsel {
-    from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.995); }
-    to   { opacity: 1; transform: none; }
-  }
-  .wechsel { animation: fw-wechsel 0.55s var(--ease-out); }
-
   /* Neigung: der Zeiger schreibt nur Variablen, die Bewegung macht CSS. */
   [data-tilt] {
     transform:
@@ -539,7 +449,6 @@
     transition: none !important;
   }
   .kursiv::after { transform: scaleX(1) !important; transition: none; }
-  .schweben, .schweben-langsam, .puls, .streif::after, .lauf { animation: none !important; }
   [data-tilt] { transform: none !important; }
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
@@ -654,164 +563,6 @@
 .fw-recht a { color: var(--color-ink); text-decoration: underline; text-underline-offset: 0.2em; }
 
 /* =========================================================================
-   SZENEN
-   An den Scrollstand gekoppelte Bewegung. `--p` kommt aus Bewegung.tsx und
-   laeuft von 0 auf 1, waehrend das Element ins Bild faehrt.
-   ========================================================================= */
-@layer components {
-  /* Das Geraet richtet sich beim Hereinfahren auf, statt einfach da zu sein.
-     Drehpunkt ist die Unterkante — es steht auf, es kippt nicht. */
-  .szene-geraet {
-    --p: 0;
-    transform:
-      perspective(2000px)
-      rotateX(calc((1 - var(--p)) * 13deg))
-      scale(calc(0.93 + var(--p) * 0.07))
-      translate3d(0, calc((1 - var(--p)) * 26px), 0);
-    transform-origin: 50% 100%;
-    will-change: transform;
-  }
-
-  /* Ein Band, das beim Scrollen seitlich laeuft. Der Versatz haengt am
-     Fortschritt, nicht an einer Uhr — es bewegt sich nur, wenn gescrollt wird. */
-  .szene-schub { --p: 0; transform: translate3d(calc(var(--p) * var(--schub, -6rem)), 0, 0); }
-
-  @media (prefers-reduced-motion: reduce) {
-    .szene-geraet, .szene-schub { transform: none !important; }
-  }
-}
-
-/* Zweite Laufrichtung fuer das Produktionsband. */
-@layer components {
-  .lauf-rueck { animation-direction: reverse; }
-}
-
-@layer components {
-  /* Parallaxe innerhalb des Rahmens. Das Bild ist 12 % groesser als sein
-     Ausschnitt, damit der Versatz nie eine Kante freilegt. */
-  .szene-parallaxe { --p: 0; overflow: hidden; }
-  .szene-parallaxe img {
-    transform: translate3d(0, calc((0.5 - var(--p)) * 6%), 0) scale(1.12);
-    will-change: transform;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .szene-parallaxe img { transform: none !important; }
-  }
-}
-
-/* =========================================================================
-   FILMSTREIFEN
-   -------------------------------------------------------------------------
-   Kein Bilderband, sondern Material: eigene Filmbasis, rechteckige
-   Perforation wie bei 35 mm (nicht rund — das ist der Unterschied, an dem
-   man einen nachgebauten Streifen sofort erkennt), Bildstege zwischen den
-   Kadern, Randbeschriftung und eine warme, leicht flaue Gradation.
-
-   Der Streifen laeuft nicht von selbst: gezogen wird er vom Scrollstand.
-   ========================================================================= */
-@layer components {
-  .fw-film {
-    --p: 0;
-    --film-basis: #17120d;
-    --film-kante: #241b12;
-    width: max-content;
-    transform: translate3d(calc(12vw - var(--p) * 62%), 0, 0);
-    will-change: transform;
-    background: var(--film-basis);
-    border-block: 1px solid #00000059;
-  }
-
-  /* Perforationsband. Die Loecher sind abgerundete Rechtecke wie bei 35 mm —
-     als SVG-Kachel, weil ein Farbverlauf keine runden Ecken kann und ein
-     Streifen mit runden Loechern sofort nachgebaut aussieht. */
-  .fw-perf {
-    height: 24px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='24'%3E%3Crect width='32' height='24' fill='%23241b12'/%3E%3Crect x='10' y='7' width='12' height='10' rx='2.5' fill='%230a0806'/%3E%3C/svg%3E");
-    background-size: 32px 24px;
-    background-repeat: repeat-x;
-  }
-
-  .fw-randtext {
-    font-family: var(--font-mono);
-    font-size: 0.44rem;
-    letter-spacing: 0.34em;
-    text-transform: uppercase;
-    color: #c98a4e6b;
-    white-space: nowrap;
-  }
-
-  /* Ein Kader. Der Steg links ist der Bildstrich. */
-  .fw-kader {
-    position: relative;
-    flex: none;
-    border-left: 1px solid #00000073;
-  }
-  .fw-kader:last-child { border-right: 1px solid #00000073; }
-
-  .fw-kader img {
-    /* Analoge Anmutung: waermer, etwas flauer, leicht abgesenkte Lichter. */
-    filter: sepia(0.22) saturate(0.86) contrast(1.04) brightness(0.96);
-  }
-  /* Randabdunklung wie bei einem projizierten Kader. */
-  .fw-kader .fw-vignette {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(115% 95% at 50% 50%, transparent 52%, #0a0705a6 100%);
-    mix-blend-mode: multiply;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .fw-film { transform: translate3d(-24%, 0, 0) !important; }
-  }
-}
-
-@layer components {
-  /* Parallaxe innerhalb des Rahmens. Das Bild ist 12 % groesser als sein
-     Ausschnitt, damit der Versatz nie eine Kante freilegt. */
-  .szene-parallaxe { --p: 0; overflow: hidden; }
-  .szene-parallaxe img {
-    transform: translate3d(0, calc((0.5 - var(--p)) * 6%), 0) scale(1.12);
-    will-change: transform;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .szene-parallaxe img { transform: none !important; }
-  }
-}
-
-/* =========================================================================
-   FILMSTREIFEN
-   Der Streifen laeuft nicht von selbst — er wird vom Scrollstand gezogen.
-   Deshalb keine Animation, sondern eine Transformation an `--p`.
-   ========================================================================= */
-@layer components {
-  .fw-streifen {
-    --p: 0;
-    width: max-content;
-    padding-inline: 12vw;
-    transform: translate3d(calc(12vw - var(--p) * 62%), 0, 0);
-    will-change: transform;
-  }
-
-  /* Perforation wie am 35-mm-Material: gleichmaessige Loecher, keine Grafik. */
-  .fw-perf {
-    height: 14px;
-    background-image: radial-gradient(
-      circle at 10px 50%,
-      #ffffff2e 0 3.6px,
-      transparent 3.7px
-    );
-    background-size: 28px 14px;
-    background-repeat: repeat-x;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .fw-streifen { transform: translate3d(-24%, 0, 0) !important; }
-  }
-}
-
-
-/* =========================================================================
    AUFTAKT
    Die Blende. Vier Eckwinkel ziehen sich von den Bildschirmrändern auf die
    Mitte zusammen, die Wortmarke steht, dann hebt sich alles nach oben weg.
@@ -878,95 +629,6 @@ html[data-auftakt="laeuft"] body::after {
   inset: 0;
   z-index: 99;
   background: #0c0f14;
-}
-
-/* =========================================================================
-   PROZESS
-   Fünf Stationen auf einer Schiene. Waagerecht ab 64rem, sonst senkrecht.
-   Die Schiene zieht sich über [data-draw], die Stationen gehen gestaffelt
-   auf, sobald die Liste erschienen ist.
-   ========================================================================= */
-@layer components {
-  .prozess {
-    position: relative;
-    display: grid;
-    gap: 2.5rem;
-    padding-left: 3.25rem;
-  }
-  .prozess-schiene {
-    position: absolute;
-    left: 1.15rem;
-    top: 0.5rem;
-    bottom: 0.5rem;
-    width: 1px;
-    background: linear-gradient(to bottom, var(--accent), var(--color-rule-2));
-    transform-origin: top center;
-  }
-  /* [data-draw] zieht waagerecht auf — für die senkrechte Schiene umlenken. */
-  .prozess-schiene[data-draw] { transform: scaleY(0); }
-  .prozess-schiene[data-draw="shown"] { transform: scaleY(1); transition: transform 1.2s var(--ease-out); }
-
-  .prozess-station {
-    position: relative;
-    opacity: 0;
-    transform: translate3d(0, 14px, 0);
-    transition:
-      opacity .7s var(--ease-out) calc(250ms + var(--i) * 120ms),
-      transform .7s var(--ease-out) calc(250ms + var(--i) * 120ms);
-  }
-  .prozess[data-reveal="shown"] .prozess-station { opacity: 1; transform: none; }
-
-  .prozess-punkt {
-    position: absolute;
-    left: -3.25rem;
-    top: -0.1rem;
-    display: grid;
-    place-items: center;
-    width: 2.3rem;
-    height: 2.3rem;
-    border-radius: 999px;
-    background: var(--color-paper);
-    border: 1px solid var(--color-rule-2);
-    font-family: var(--font-mono);
-    font-size: 0.66rem;
-    font-weight: 500;
-    color: var(--color-ink-2);
-    transition: background .5s var(--ease-out), color .5s var(--ease-out), border-color .5s var(--ease-out);
-    transition-delay: calc(350ms + var(--i) * 120ms);
-  }
-  .prozess[data-reveal="shown"] .prozess-punkt {
-    background: var(--color-ink);
-    border-color: var(--color-ink);
-    color: var(--color-paper);
-  }
-  .prozess-station:last-child .prozess-punkt { box-shadow: 0 0 0 5px rgb(var(--brand-glow) / 0.28); }
-
-  @media (min-width: 64rem) {
-    .prozess {
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 2rem;
-      padding-left: 0;
-      padding-top: 3.5rem;
-    }
-    .prozess-schiene {
-      left: 1.15rem;
-      right: 1.15rem;
-      top: 1.15rem;
-      bottom: auto;
-      width: auto;
-      height: 1px;
-      background: linear-gradient(to right, var(--color-rule-2), var(--accent));
-      transform-origin: left center;
-    }
-    .prozess-schiene[data-draw] { transform: scaleX(0); }
-    .prozess-schiene[data-draw="shown"] { transform: scaleX(1); }
-    .prozess-punkt { left: 0; top: -3.5rem; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .prozess-station { opacity: 1 !important; transform: none !important; transition: none !important; }
-    .prozess-schiene[data-draw] { transform: none !important; }
-  }
 }
 
 /* =========================================================================
@@ -1278,27 +940,6 @@ html[data-auftakt="laeuft"] body::after {
   }
   html[data-aufbau] .maske-auf img { scale: calc(1.18 - var(--ae, 0) * 0.18); }
 
-  /* Prozessschiene: die Liste steht, die Stationen bauen der Reihe nach auf,
-     die Schiene zieht sich, die Punkte füllen sich. */
-  html[data-aufbau] .prozess[data-reveal] { opacity: 1; transform: none; }
-  html[data-aufbau] .prozess .prozess-station {
-    opacity: var(--ae, 0);
-    transform: translate3d(0, calc((1 - var(--ae, 0)) * 44px), 0);
-    transition: none;
-  }
-  html[data-aufbau] .prozess .prozess-station .prozess-punkt {
-    background: color-mix(in srgb, var(--color-ink) calc(var(--ae, 0) * 100%), var(--color-paper));
-    border-color: color-mix(in srgb, var(--color-ink) calc(var(--ae, 0) * 100%), var(--color-rule-2));
-    color: color-mix(in srgb, var(--color-paper) calc(var(--ae, 0) * 100%), var(--color-ink-2));
-    transition: none;
-  }
-  html[data-aufbau] .prozess .prozess-schiene[data-draw] {
-    transform: scaleY(var(--ae, 0));
-    transition: none;
-  }
-  @media (min-width: 64rem) {
-    html[data-aufbau] .prozess .prozess-schiene[data-draw] { transform: scaleX(var(--ae, 0)); }
-  }
 }
 
 /* =========================================================================
@@ -1413,9 +1054,55 @@ html[data-auftakt="laeuft"] body::after {
 
 /* =========================================================================
    SEITLICH BESCHNEIDEN
-   Der Lichtschein hinter Bildern (.schein::before, inset -6 %) und das
-   Telefon der Bühne ragen über ihren Rahmen hinaus. Bei voller Bildbreite
-   (Tablet, Handy) schob das die Seite um bis zu 12 px seitwärts. `clip`
+   Elemente, die über ihren Rahmen hinausragen (früher ein Lichtschein mit
+   inset -6 %, heute Bahnen und Zoom-Bilder), schieben die Seite sonst bei
+   voller Bildbreite seitwärts — gemessen waren es bis zu 12 px. `clip`
    statt `hidden`: kein Scroll-Container, position: sticky bleibt intakt.
    ========================================================================= */
 main#inhalt { overflow-x: clip; }
+
+/* =========================================================================
+   STARTSEITE — Typoskala und Bausteine nach der Gartenzwerg-Präsentation.
+   Eigene Namen, gleiche Stufen: display, h1, h2, h3, lead, body, small.
+   ========================================================================= */
+@layer components {
+  .t-display { font-weight: 800; font-size: clamp(2.5rem, 5.8vw, 5.25rem); line-height: 1; letter-spacing: -0.045em; }
+  .t-h1 { font-weight: 800; font-size: clamp(2rem, 4.2vw, 3.5rem); line-height: 1.06; letter-spacing: -0.04em; }
+  .t-h2 { font-weight: 700; font-size: clamp(1.6rem, 3vw, 2.5rem); line-height: 1.12; letter-spacing: -0.035em; }
+  .t-h3 { font-weight: 600; font-size: clamp(1.18rem, 1.6vw, 1.45rem); line-height: 1.3; letter-spacing: -0.025em; }
+  .t-lead { font-size: clamp(1.08rem, 1.3vw, 1.25rem); line-height: 1.58; }
+  .t-body { font-size: 1.0625rem; line-height: 1.68; }
+  .t-small { font-size: 0.9375rem; line-height: 1.6; }
+  .t-num { font-weight: 800; letter-spacing: -0.045em; font-variant-numeric: lining-nums; }
+
+  .abschnitt { padding-block: clamp(4.5rem, 9vw, 9rem); }
+  .abschnitt-eng { padding-block: clamp(3rem, 6vw, 5.5rem); }
+  .messen { max-width: 34rem; }
+  .messen-weit { max-width: 46rem; }
+
+  .bild-rahmen {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--color-paper-3);
+  }
+  .keine-leiste { scrollbar-width: none; }
+  .keine-leiste::-webkit-scrollbar { display: none; }
+
+  /* Kennung ohne Raute — für Etiketten in Reihen und Karten. */
+  .kennung-ohne::before { display: none; }
+
+  .monat-ein { animation: monat-ein 0.6s var(--ease-out) both; }
+  .schubs { animation: schubs 1.8s ease-in-out infinite; }
+  @keyframes monat-ein { from { opacity: 0; transform: translate3d(0, 14px, 0); } to { opacity: 1; transform: none; } }
+  @keyframes schubs { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+}
+
+/* Mobile Anrufleiste: kommt nach dem ersten Bildschirm, geht bei offenem
+   Menü aus dem Weg. */
+.mobil-leiste {
+  transform: translate3d(0, 100%, 0);
+  transition: transform 0.5s var(--ease-out);
+}
+.mobil-leiste[data-sichtbar] { transform: none; }
+body.menue-offen .mobil-leiste { transform: translate3d(0, 100%, 0); }

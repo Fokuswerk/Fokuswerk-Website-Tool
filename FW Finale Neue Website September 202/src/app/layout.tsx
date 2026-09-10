@@ -3,6 +3,7 @@ import { Archivo, DM_Mono, Instrument_Serif } from 'next/font/google';
 import Bewegung from '@/components/Bewegung';
 import Intro from '@/components/Intro';
 import Kopf from '@/components/seite/Kopf';
+import MobileLeiste from '@/components/seite/MobileLeiste';
 import Fuss from '@/components/seite/Fuss';
 import { marke } from '@/lib/inhalt';
 import './globals.css';
@@ -70,6 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Kopf />
         <main id="inhalt">{children}</main>
         <Fuss />
+        <MobileLeiste />
         <Bewegung />
         <Intro />
         <script

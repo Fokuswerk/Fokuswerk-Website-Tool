@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { cta, marke, navigation } from '@/lib/inhalt';
 import Pfeil from '@/components/ui/Pfeil';
+import Zeichen from '@/components/ui/Zeichen';
 
 /**
  * Kopfleiste und Vollbildmenü.
@@ -43,6 +44,9 @@ export default function Kopf() {
       let drin = false;
       for (const b of document.querySelectorAll<HTMLElement>('.band')) {
         const r = b.getBoundingClientRect();
+        // Nur Flächen über die volle Breite zählen — eine dunkle Karte
+        // mitten in einem hellen Abschnitt soll die Leiste nicht umfärben.
+        if (r.width < window.innerWidth * 0.9) continue;
         if (r.top <= 40 && r.bottom >= 40) { drin = true; break; }
       }
       setUeberBand(drin);
@@ -227,17 +231,6 @@ export default function Kopf() {
         </div>
       )}
     </>
-  );
-}
-
-/** Bildmarke: Sucherwinkel um einen Punkt. Ohne Kachel, damit sie auf
- *  Bild, Hell und Dunkel gleich ruhig steht; der Punkt trägt die Hausfarbe. */
-function Zeichen() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="square" aria-hidden="true">
-      <path d="M1.5 6.5V1.5h5M18.5 6.5V1.5h-5M1.5 13.5v5h5M18.5 13.5v5h-5" />
-      <rect x="8.1" y="8.1" width="3.8" height="3.8" fill="var(--accent)" stroke="none" />
-    </svg>
   );
 }
 
