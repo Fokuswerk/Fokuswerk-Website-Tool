@@ -33,7 +33,6 @@ export default function Buehne() {
               fill
               sizes="(min-width: 64rem) 54rem, 100vw"
               className="object-cover object-[52%_38%]"
-              priority
             />
             <div
               className="absolute inset-0"

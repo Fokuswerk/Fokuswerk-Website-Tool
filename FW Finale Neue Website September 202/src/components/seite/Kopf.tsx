@@ -9,12 +9,16 @@ import Pfeil from '@/components/ui/Pfeil';
 /**
  * Kopfleiste und Vollbildmenü.
  *
- * Das Menü übernimmt, was an der ersten Fassung wertig war: eine Fläche, die
- * die Seite dahinter weichzeichnet statt sie zu verdecken; Einträge in voller
- * Displaygröße, die gestaffelt aus einer Maske fahren; beim Überfahren treten
- * die anderen zurück und die Beschreibungszeile erscheint; rechts eine Spalte
- * mit Schaltfläche und Kontakt. Der Schalter besteht aus zwei Linien, die
- * sich beim Überfahren gegeneinander versetzen und beim Öffnen kreuzen.
+ * Die Leiste folgt der Gartenzwerg-Präsentation: volle Breite statt
+ * schwebender Pille, Navigation als Text in der Mitte, rechts Telefon und
+ * Schaltfläche. Über dem Titelbild liegt sie transparent. Sobald gescrollt
+ * wird, bekommt sie Grund und Haarlinie — hell über hellen Abschnitten,
+ * dunkel über dunklen. Ein heller Balken über einem schwarzen Band war in
+ * einer früheren Fassung genau der „komische weiße Balken".
+ *
+ * Unter 64rem trägt der Schalter das Vollbildmenü: eine Fläche, die die Seite
+ * dahinter weichzeichnet; Einträge in Displaygröße, die gestaffelt aus einer
+ * Maske fahren; rechts eine Spalte mit Schaltfläche und Kontakt.
  */
 export default function Kopf() {
   const [gescrollt, setGescrollt] = useState(false);
@@ -30,7 +34,7 @@ export default function Kopf() {
   const pfad = usePathname();
 
   // Liegt unter der Leiste ein dunkles Band, kehrt sie dieselben Farbvariablen
-  // um wie das Band — sonst steht eine weiße Kachel auf schwarzem Grund.
+  // um wie das Band.
   useEffect(() => {
     let laeuft = false;
     const messen = () => {
@@ -39,7 +43,7 @@ export default function Kopf() {
       let drin = false;
       for (const b of document.querySelectorAll<HTMLElement>('.band')) {
         const r = b.getBoundingClientRect();
-        if (r.top <= 52 && r.bottom >= 52) { drin = true; break; }
+        if (r.top <= 40 && r.bottom >= 40) { drin = true; break; }
       }
       setUeberBand(drin);
     };
@@ -77,6 +81,15 @@ export default function Kopf() {
   // Beim Seitenwechsel schließen.
   useEffect(() => { setOffen(false); }, [pfad]);
 
+  // Ab 64rem steht die Navigation in der Leiste und der Schalter ist weg —
+  // ein offenes Menü ließe sich dann nicht mehr schließen.
+  useEffect(() => {
+    const breit = window.matchMedia('(min-width: 64rem)');
+    const pruefen = () => { if (breit.matches) setOffen(false); };
+    breit.addEventListener('change', pruefen);
+    return () => breit.removeEventListener('change', pruefen);
+  }, []);
+
   useEffect(() => {
     if (!offen) return;
     const aufTaste = (e: KeyboardEvent) => {
@@ -86,48 +99,56 @@ export default function Kopf() {
     return () => window.removeEventListener('keydown', aufTaste);
   }, [offen]);
 
-  const dunkel = (ueberBand && !offen) || offen;
+  const dunkel = offen || ueberBand;
+  const gefuellt = gescrollt && !offen;
+  // Der Weichzeichner steht inline: aus dem Stylesheet kam backdrop-filter
+  // in diesem Projekt nicht zuverlässig an (siehe Menüfläche unten).
+  const weich = gefuellt ? 'blur(18px) saturate(1.4)' : 'none';
 
   return (
     <>
       <header
-        className={`fixed inset-x-0 top-0 z-50 pointer-events-none${dunkel ? ' kopf-dunkel' : ''}`}
-        style={{ paddingTop: gescrollt && !offen ? '0.6rem' : '1.1rem', transition: 'padding-top .5s var(--ease-out)' }}
+        className={`kopf${dunkel ? ' kopf-dunkel' : ''}`}
+        data-grund={gefuellt ? 'voll' : 'klar'}
+        style={{ backdropFilter: weich, WebkitBackdropFilter: weich }}
       >
-        <div className="schale">
-          <div
-            className="pointer-events-auto flex items-center gap-3 rounded-[var(--radius-lg)] px-3 py-2 sm:px-4"
-            style={{
-              background: gescrollt && !offen ? 'color-mix(in srgb, var(--color-paper) 82%, transparent)' : 'transparent',
-              backdropFilter: gescrollt && !offen ? 'blur(18px) saturate(1.4)' : 'none',
-              WebkitBackdropFilter: gescrollt && !offen ? 'blur(18px) saturate(1.4)' : 'none',
-              border: `1px solid ${gescrollt && !offen ? 'var(--color-rule)' : 'transparent'}`,
-              boxShadow: gescrollt && !offen ? 'var(--shadow-lift)' : 'none',
-              transition: 'background .5s var(--ease-out), border-color .5s var(--ease-out), box-shadow .5s var(--ease-out)',
-            }}
-          >
-            <Link href="/" className="flex items-center gap-2.5 pr-2" aria-label="Fokuswerk, zur Startseite">
-              <Zeichen />
-              <span className="text-[1.05rem] font-bold tracking-[-0.035em]">Fokuswerk</span>
-            </Link>
+        <div className="schale flex h-16 items-center justify-between gap-6 md:h-20">
+          <Link href="/" className="flex items-center gap-2.5" aria-label="Fokuswerk, zur Startseite">
+            <Zeichen />
+            <span className="text-[1.1rem] font-bold tracking-[-0.035em] md:text-[1.2rem]">Fokuswerk</span>
+          </Link>
 
-            <a
-              href={`tel:${marke.telefon}`}
-              className="ml-auto hidden items-center gap-2 px-3 py-2 text-sm font-semibold md:flex"
-            >
+          <nav aria-label="Hauptnavigation" className="hidden lg:block">
+            <ul className="flex items-center gap-8 xl:gap-10">
+              {navigation.map((n) => (
+                <li key={n.pfad}>
+                  <Link
+                    href={n.pfad}
+                    className="kopf-link"
+                    aria-current={pfad === n.pfad ? 'page' : undefined}
+                  >
+                    {n.titel}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="flex items-center gap-2 md:gap-5">
+            <a href={`tel:${marke.telefon}`} className="kopf-tel hidden xl:inline-flex">
               <Hoerer />
-              <span className="font-mono tracking-[-0.01em]">{marke.telefonText}</span>
+              {marke.telefonText}
             </a>
 
-            <Link href={cta.ziel} className="akt ml-auto !px-4 !py-2.5 text-[0.82rem] md:ml-0">
-              Gespräch
+            <Link href={cta.ziel} className="akt kopf-akt hidden sm:inline-flex">
+              {cta.text}
               <Pfeil groesse={12} />
             </Link>
 
             <button
               ref={schalter}
               type="button"
-              className="brenner"
+              className="brenner -mr-1 lg:hidden"
               aria-expanded={offen}
               aria-controls="hauptmenue"
               onClick={() => setOffen((o) => !o)}
@@ -209,19 +230,14 @@ export default function Kopf() {
   );
 }
 
-/** Bildmarke: Sucherwinkel um einen Punkt. */
+/** Bildmarke: Sucherwinkel um einen Punkt. Ohne Kachel, damit sie auf
+ *  Bild, Hell und Dunkel gleich ruhig steht; der Punkt trägt die Hausfarbe. */
 function Zeichen() {
   return (
-    <span
-      className="grid h-8 w-8 place-items-center rounded-[9px]"
-      style={{ background: 'var(--color-ink)', color: 'var(--color-paper)' }}
-      aria-hidden="true"
-    >
-      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="square">
-        <path d="M3 7V3h4M17 7V3h-4M3 13v4h4M17 13v4h-4" />
-        <rect x="8.6" y="8.6" width="2.8" height="2.8" fill="currentColor" stroke="none" />
-      </svg>
-    </span>
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="square" aria-hidden="true">
+      <path d="M1.5 6.5V1.5h5M18.5 6.5V1.5h-5M1.5 13.5v5h5M18.5 13.5v5h-5" />
+      <rect x="8.1" y="8.1" width="3.8" height="3.8" fill="var(--accent)" stroke="none" />
+    </svg>
   );
 }
 

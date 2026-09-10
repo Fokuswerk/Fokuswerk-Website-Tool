@@ -424,6 +424,17 @@
   [data-reveal][data-from="right"] { transform: translate3d(26px, 0, 0); }
   [data-reveal][data-from="scale"] { transform: scale(0.965); }
   [data-reveal][data-from="blur"]  { transform: none; filter: blur(14px); transition-property: opacity, filter; }
+  /* Das Titelbild stellt scharf: steht von Anfang an (kein schwarzes Loch
+     hinter der Blende), nur weich und leicht zu nah. Muss VOR der
+     shown-Regel stehen und in derselben Ebene, sonst bleibt es unscharf. */
+  [data-reveal][data-from="fokus"] {
+    opacity: 1;
+    transform: scale(1.08);
+    filter: blur(18px);
+    transition:
+      transform 2.4s var(--ease-out) var(--reveal-delay, 0ms),
+      filter 1.3s var(--ease-out) var(--reveal-delay, 0ms);
+  }
 
   /* Die Ausgangszustände oben tragen zwei Attribute und sind damit
      spezifischer als ein einfaches [data-reveal="shown"]. Ohne diese Zeile
@@ -799,55 +810,6 @@
   }
 }
 
-
-/* =========================================================================
-   BÜHNENGRUND
-   Zwei Ebenen hinter dem Titelbereich: ein Punktraster, das langsam wandert,
-   und zwei warme Lichter, die atmen. Beides Grafik, kein Bild — es kostet
-   nichts an Ladezeit und skaliert auf jede Bildschirmgröße.
-   ========================================================================= */
-@layer components {
-  .buehne-grund {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    overflow: hidden;
-  }
-
-  .buehne-grund::before {
-    content: "";
-    position: absolute;
-    inset: -40px;
-    background-image: radial-gradient(#ffffff1c 1px, transparent 1px);
-    background-size: 38px 38px;
-    -webkit-mask-image: radial-gradient(78% 62% at 50% 34%, #000 22%, transparent 76%);
-    mask-image: radial-gradient(78% 62% at 50% 34%, #000 22%, transparent 76%);
-    animation: fw-raster 34s linear infinite;
-  }
-
-  .buehne-grund::after {
-    content: "";
-    position: absolute;
-    inset: -20%;
-    background:
-      radial-gradient(38% 30% at 26% 18%, rgb(var(--brand-glow) / 0.2), transparent 68%),
-      radial-gradient(42% 34% at 76% 46%, rgb(var(--brand-glow) / 0.12), transparent 70%);
-    filter: blur(20px);
-    animation: fw-atmen 16s ease-in-out infinite;
-  }
-
-  @keyframes fw-raster {
-    to { transform: translate3d(38px, 38px, 0); }
-  }
-  @keyframes fw-atmen {
-    0%, 100% { opacity: 0.85; transform: scale(1); }
-    50%      { opacity: 1;    transform: scale(1.06); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .buehne-grund::before, .buehne-grund::after { animation: none; }
-  }
-}
 
 /* =========================================================================
    AUFTAKT
@@ -1338,3 +1300,122 @@ html[data-auftakt="laeuft"] body::after {
     html[data-aufbau] .prozess .prozess-schiene[data-draw] { transform: scaleX(var(--ae, 0)); }
   }
 }
+
+/* =========================================================================
+   KOPFLEISTE
+   Volle Breite, nach der Gartenzwerg-Präsentation. Über dem Titelbild klar,
+   sonst mit Grund und Haarlinie. Der Grund mischt --color-paper, das
+   .kopf-dunkel umkehrt — über dunklen Bändern wird die Leiste dadurch von
+   selbst dunkel, ohne zweiten Satz Regeln.
+   ========================================================================= */
+.kopf {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 50;
+  color: var(--color-ink);
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color .5s var(--ease-out),
+    border-color .5s var(--ease-out),
+    color .4s var(--ease-out);
+}
+.kopf[data-grund="voll"] {
+  background-color: color-mix(in srgb, var(--color-paper) 84%, transparent);
+  border-bottom-color: var(--color-rule);
+}
+
+.kopf-link {
+  position: relative;
+  display: inline-block;
+  padding-block: 0.5rem;
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  opacity: 0.74;
+  transition: opacity .3s var(--ease-out);
+}
+.kopf-link:hover,
+.kopf-link[aria-current="page"] { opacity: 1; }
+.kopf-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.2rem;
+  height: 1.5px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform .45s var(--ease-out);
+}
+.kopf-link:hover::after { transform: scaleX(1); transform-origin: left center; }
+.kopf-link[aria-current="page"]::after { transform: scaleX(1); }
+
+.kopf-tel {
+  align-items: center;
+  gap: 0.5rem;
+  padding-block: 0.5rem;
+  font-size: 0.92rem;
+  font-weight: 500;
+  opacity: 0.78;
+  transition: opacity .3s var(--ease-out);
+}
+.kopf-tel:hover { opacity: 1; }
+
+/* Die Schaltfläche wechselt mit dem Grund die Farbe — Gold über Dunkel,
+   Tinte über Hell. Beides kommt aus --act-*, hier nur weich überblendet. */
+.kopf .kopf-akt {
+  min-height: 2.75rem;
+  padding: 0.7rem 1.15rem;
+  font-size: 0.84rem;
+  transition:
+    transform .35s var(--ease-out),
+    box-shadow .35s var(--ease-out),
+    filter .35s var(--ease-out),
+    background-color .5s var(--ease-out),
+    color .5s var(--ease-out);
+}
+
+/* =========================================================================
+   TITELBILD
+   Oben ein eigener Verlauf für die Kopfleiste, unten der tiefe für den Text.
+   Auf dem Handy steht der ganze Text über dem Bild, deshalb dort kräftiger;
+   ab 64rem belegt der Text nur die linke Hälfte, dort kommt ein seitlicher
+   Verlauf dazu und der untere wird leichter.
+   ========================================================================= */
+.titel-bild {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+.titel-verlauf {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, #0c0f14cc 0, #0c0f1400 9rem),
+    linear-gradient(to top, #0c0f14 0%, #0c0f14f5 38%, #0c0f14bf 66%, #0c0f1480 100%);
+}
+/* Lange Kennung: Die Raute bleibt vor der ersten Zeile stehen, der Text
+   bricht daneben um — sonst steht sie auf dem Handy allein über dem Text. */
+.kennung-lang { flex-wrap: nowrap; align-items: flex-start; }
+.kennung-lang::before { align-self: flex-start; margin-top: 0.42em; }
+@media (min-width: 64rem) {
+  .titel-verlauf {
+    background:
+      linear-gradient(to bottom, #0c0f14b3 0, #0c0f1400 10rem),
+      linear-gradient(to right, #0c0f14d9 0%, #0c0f1473 40%, #0c0f1400 72%),
+      linear-gradient(to top, #0c0f14 0%, #0c0f14e6 24%, #0c0f1459 52%, #0c0f1414 100%);
+  }
+}
+
+/* =========================================================================
+   SEITLICH BESCHNEIDEN
+   Der Lichtschein hinter Bildern (.schein::before, inset -6 %) und das
+   Telefon der Bühne ragen über ihren Rahmen hinaus. Bei voller Bildbreite
+   (Tablet, Handy) schob das die Seite um bis zu 12 px seitwärts. `clip`
+   statt `hidden`: kein Scroll-Container, position: sticky bleibt intakt.
+   ========================================================================= */
+main#inhalt { overflow-x: clip; }

@@ -1,43 +1,50 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import Buehne from '@/components/geraete/Buehne';
 import Pfeil from '@/components/ui/Pfeil';
-import { beleg, cta, marke } from '@/lib/inhalt';
+import { cta, marke } from '@/lib/inhalt';
 
 /**
- * Der Titelbereich als dunkle Bühne.
+ * Der Titelbereich: ein Bild vom Drehtag, randlos, die Headline unten links.
  *
- * Dunkel, weil der Rest der Seite hell ist: der Bruch beim ersten Scrollen
- * ist der stärkste Takt, den eine Seite hat. Darüber liegen zwei Ebenen, die
- * sich langsam bewegen — Punktraster und zwei warme Lichter. Beide sind
- * Grafik, kein Bild, und kosten nichts an Ladezeit.
+ * Aufbau nach der Gartenzwerg-Präsentation. Der Inhalt sitzt unten, damit
+ * das Bild oben Luft behält und der Daumen die Schaltfläche erreicht; die
+ * Kopfleiste liegt transparent darüber. Drei Verläufe statt einer flächigen
+ * Abdunklung: das Bild bleibt lesbar, der Text hat trotzdem sicheren Kontrast.
+ *
+ * Das Bild zeigt, was wir tun — vor Ort drehen —, statt es zu behaupten.
+ * Beim Auftakt stellt es scharf (data-from="fokus"), während die Blende
+ * hochfährt: die Kamera findet ihren Fokus, danach steht die Headline.
  */
-const belege = [
-  { wert: beleg.budget, nach: 2, einheit: ' €', label: 'Werbebudget' },
-  { wert: beleg.bewerbungen, nach: 0, einheit: '', label: 'Bewerbungen' },
-  { wert: beleg.anfragen, nach: 0, einheit: '', label: 'Anfragen über Google Ads' },
-  { wert: beleg.tage, nach: 0, einheit: ' Tage', label: 'bis zur Unterschrift' },
-];
-
 export default function Titelbereich() {
   return (
-    <section className="band titel-zone relative overflow-hidden pt-32 sm:pt-40">
-      <div className="buehne-grund" aria-hidden="true" />
+    <section className="band titel-zone relative isolate flex min-h-[92svh] flex-col justify-end overflow-hidden sm:min-h-[94svh]">
+      <div className="titel-bild" data-reveal data-from="fokus" aria-hidden="true">
+        <Image
+          src="/bilder/hero-drehtag.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[30%_50%] lg:object-[50%_42%]"
+        />
+      </div>
+      <div className="titel-verlauf" aria-hidden="true" />
 
-      <div className="schale relative">
-        <div className="mx-auto max-w-[56rem] text-center">
-          <p className="kennung justify-center" data-reveal>
-            Performance Marketing für Handwerk und Technik
-          </p>
+      <div className="schale relative pt-32 pb-10 sm:pb-14 lg:pb-16">
+        <p className="kennung kennung-lang text-ink-2" data-reveal>
+          Performance Marketing für Handwerk und Technik
+        </p>
 
-          <h1
-            className="mx-auto mt-7 max-w-[14ch] text-[length:var(--text-6xl)] leading-[0.94]"
-            data-split
-          >
-            Mehr Aufträge. Und die <span className="kursiv kursiv-fein">Leute</span> dafür.
-          </h1>
+        <h1
+          className="mt-6 max-w-[15ch] text-[length:var(--text-6xl)] leading-[0.95] sm:max-w-none"
+          data-split
+        >
+          Mehr Aufträge.<br className="hidden sm:inline" /> Und die <span className="kursiv kursiv-fein">Leute</span> dafür.
+        </h1>
 
+        <div className="mt-10 grid gap-8 border-t border-rule-2 pt-8 sm:mt-12 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-16">
           <p
-            className="mx-auto mt-8 max-w-[50ch] text-[length:var(--text-lg)] leading-[1.55] text-ink-2"
+            className="max-w-[52ch] text-[length:var(--text-lg)] leading-[1.55] text-ink-2"
             data-reveal
             style={{ ['--reveal-delay' as string]: '220ms' }}
           >
@@ -47,61 +54,22 @@ export default function Titelbereich() {
           </p>
 
           <div
-            className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
+            className="flex flex-col gap-4 lg:items-end"
             data-reveal
             style={{ ['--reveal-delay' as string]: '320ms' }}
           >
-            <Link href={cta.ziel} className="akt w-full sm:w-auto">
-              {cta.text}
-              <Pfeil />
-            </Link>
-            <a href={`tel:${marke.telefon}`} className="akt akt-still w-full sm:w-auto">
-              {marke.telefonText}
-            </a>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link href={cta.ziel} className="akt w-full sm:w-auto">
+                {cta.text}
+                <Pfeil />
+              </Link>
+              <a href={`tel:${marke.telefon}`} className="akt akt-still w-full sm:w-auto">
+                {marke.telefonText}
+              </a>
+            </div>
+            <p className="text-sm text-ink-3">{cta.notiz}</p>
           </div>
-
-          <p className="mt-4 text-sm text-ink-3" data-reveal style={{ ['--reveal-delay' as string]: '400ms' }}>
-            {cta.notiz}
-          </p>
         </div>
-      </div>
-
-      <div className="schale relative mt-16 pb-4 sm:mt-20" data-reveal style={{ ['--reveal-delay' as string]: '260ms' }}>
-        <Buehne />
-      </div>
-
-      {/* Beleg direkt im Titelbereich: der erste Einwand ist „behaupten kann
-          das jeder", und der wird hier schon beantwortet. */}
-      <div className="schale relative mt-16 sm:mt-20">
-        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-rule pb-4">
-          <p className="kennung kennung-strich" data-reveal>Ein Fall, vollständig belegt</p>
-          <p className="font-mono text-[0.66rem] uppercase tracking-[0.14em] text-ink-3" data-reveal>
-            WAV Westerstede · Kfz-Werkstatt
-          </p>
-        </div>
-
-        <ul className="grid grid-cols-2 pb-16 md:grid-cols-4 sm:pb-20">
-          {belege.map((z, i) => (
-            <li
-              key={z.label}
-              className="border-b border-rule py-7 pr-4 md:border-b-0 md:[&:not(:first-child)]:border-l md:[&:not(:first-child)]:border-rule md:[&:not(:first-child)]:pl-6"
-              data-reveal
-              style={{ ['--reveal-delay' as string]: `${i * 80}ms` }}
-            >
-              <p className="text-[length:var(--text-3xl)] font-extrabold leading-none tracking-[-0.045em]">
-                <span data-zahl={z.wert} data-nachkomma={z.nach}>0</span>
-                {z.einheit}
-              </p>
-              <span
-                className="mt-4 block h-px w-full origin-left"
-                style={{ background: 'var(--accent)', ['--reveal-delay' as string]: `${i * 80 + 120}ms` }}
-                data-draw
-                aria-hidden="true"
-              />
-              <p className="mt-3 max-w-[18ch] text-sm text-ink-3">{z.label}</p>
-            </li>
-          ))}
-        </ul>
       </div>
     </section>
   );

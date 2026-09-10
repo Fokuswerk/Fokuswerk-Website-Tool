@@ -1,4 +1,5 @@
 import Titelbereich from '@/components/abschnitte/Titelbereich';
+import Belege from '@/components/abschnitte/Belege';
 import Produktion from '@/components/abschnitte/Produktion';
 import Leistungen from '@/components/abschnitte/Leistungen';
 import Vorgehen from '@/components/abschnitte/Vorgehen';
@@ -12,6 +13,7 @@ export default function Startseite() {
   return (
     <>
       <Titelbereich />
+      <Belege />
       <Leistungen />
       <Vorgehen />
       <ZwischenCta />

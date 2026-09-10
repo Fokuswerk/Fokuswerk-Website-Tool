@@ -33,7 +33,8 @@ Drei Schaustücke tragen die Seite:
 
 ### Aufbau der Startseite
 
-**Titelbereich** (dunkel, mit dem Beleg im selben Band) · **01 Was wir machen** ·
+**Titelbereich** (Foto vom Drehtag, dunkel) · **Beleg** (ein Fall mit Zahlen,
+daneben die Bühne) · **01 Was wir machen** ·
 **02 Das Vorgehen** (Scroll-Sequenz) · Zwischenstopp · Filmstreifen ·
 **03 Warum das trägt** · **04 Die Fälle** · **05 Die Rechnung** · Abschluss.
 
@@ -47,14 +48,35 @@ freigegebenen Zahlen, nicht das Thema der Seite.
 
 ### Der Titelbereich
 
-Dunkel, weil der Rest hell ist: der Bruch beim ersten Scrollen ist der stärkste
-Takt, den eine Seite hat. Darüber liegen zwei Ebenen, die sich langsam bewegen —
-ein Punktraster und zwei warme Lichter (`.buehne-grund`). Beides ist Grafik,
-kein Bild, kostet nichts an Ladezeit und skaliert auf jede Bildschirmgröße.
+Aufbau nach der Gartenzwerg-Präsentation (gartenzwerg-praesentation.vercel.app),
+deren Kopfbereich der Maßstab war: ein randloses Foto, der Inhalt unten links,
+oben Luft für das Bild. Das Foto zeigt, was wir tun — vor Ort drehen —, statt
+es zu behaupten. Drei Verläufe (`.titel-verlauf`) statt einer flächigen
+Abdunklung: oben einer für die Kopfleiste, unten der tiefe für den Text, ab
+64rem zusätzlich einer von links. Auf dem Handy steht der ganze Text über dem
+Bild, deshalb ist der Verlauf dort kräftiger.
 
-Der Beleg steht im selben Band, nicht als eigener Abschnitt darunter: Der erste
+Beim Auftakt stellt das Bild scharf (`data-from="fokus"`: erst weich und
+leicht zu nah, dann klar), während die Blende hochfährt. Danach steht die
+Headline.
+
+Der Beleg steht direkt darunter als eigener Streifen (`Belege.tsx`), an der
+Stelle, an der die Vorlage ihre Vertrauensleiste hat: vier Zahlen aus dem
+Werbekonto, daneben die Bühne mit Anzeige und Karriereseite. Der erste
 Einwand ist „behaupten kann das jeder", und der wird beantwortet, bevor er
 entsteht.
+
+> **Fallstrick:** Die Regel `[data-reveal][data-from="fokus"]` muss im Stylesheet
+> **vor** `[data-reveal="shown"][data-from]` stehen und in derselben Ebene
+> (`@layer components`). Ungeschichtet oder dahinter gewinnt sie gegen die
+> shown-Regel, und das Titelbild bleibt dauerhaft unscharf.
+>
+> **Fallstrick, hat zugeschlagen:** Der Lichtschein hinter Bildern
+> (`.schein::before`, `inset: -6 %`) und das Telefon der Bühne ragen über ihren
+> Rahmen hinaus. Bei voller Bildbreite schob das die Seite seitwärts — 12 px
+> bei 800 px Breite, 1 px bei 390. Eine Regel fängt das für alle Abschnitte:
+> `main#inhalt { overflow-x: clip }`. `clip` statt `hidden`, damit `main` kein
+> Scroll-Container wird und `position: sticky` weiter greift.
 
 **Der Grund ist ein Hauch neben Reinweiß.** `#fbfaf9` statt `#ffffff`: reines
 Weiß hat kein Material. Zusammen mit dem Korn, das als feste Ebene über der
@@ -80,9 +102,11 @@ dahinter, der beim Erscheinen von links auffährt. Das ist der größte einzelne
 Unterschied zwischen „sauber gebaut" und „gestaltet" — und es wirkt nur,
 solange es bei einem Wort bleibt.
 
-**Die Kopfleiste schwebt.** Liegt unter ihr ein dunkles Band, kehrt sie
-dieselben Variablen um wie das Band (`.kopf-dunkel`), setzt aber keinen eigenen
-Grund — sonst läge sie wie ein Brett auf der Seite.
+**Die Kopfleiste liegt über dem Titelbild.** Volle Breite, transparent, bis
+gescrollt wird; dann bekommt sie Grund und Haarlinie. Der Grund mischt
+`--color-paper` — über einem dunklen Band kehrt `.kopf-dunkel` diese Variable
+um, und die Leiste wird von selbst dunkel statt als heller Balken auf Schwarz
+zu liegen.
 
 ---
 
@@ -149,10 +173,19 @@ einer Uhr.
 
 ### Kopfleiste und Menü
 
-Die Kopfleiste schwebt als Pille über der Seite und kehrt über dunklen
-Bändern ihre Farben um (`.kopf-dunkel`). Der Schalter („Menü" plus zwei
-Linien) öffnet auf jeder Bildschirmgröße dasselbe Vollbildmenü — übernommen
-aus der ersten Fassung, weil das an ihr wertig war: Einträge in voller
+Die Kopfleiste folgt der Gartenzwerg-Präsentation: volle Breite, links die
+Wortmarke, ab 64rem die Navigation als Text in der Mitte, rechts Telefon (ab
+80rem) und „Gespräch vereinbaren". Vier Zustände aus zwei Schaltern:
+
+| | über hellem Grund | über dunklem Band |
+|---|---|---|
+| **oben** (`data-grund="klar"`) | transparent, Tinte | transparent, Weiß, goldene Schaltfläche |
+| **gescrollt** (`data-grund="voll"`) | Papier 84 %, Haarlinie, dunkle Schaltfläche | Nacht 84 %, Haarlinie, goldene Schaltfläche |
+
+Unter 64rem öffnet der Schalter (zwei Linien) das Vollbildmenü; ab 64rem ist
+er weg, und ein offenes Menü schließt sich beim Verbreitern des Fensters von
+selbst. Das Menü ist aus der ersten Fassung übernommen, weil das an ihr
+wertig war: Einträge in voller
 Displaygröße, die gestaffelt aus einer Maske fahren; beim Überfahren treten
 die anderen zurück und eine Beschreibungszeile erscheint (`navigation[].zeile`
 in `inhalt.ts`); rechts Schaltfläche und Kontakt.
