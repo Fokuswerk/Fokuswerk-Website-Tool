@@ -80,16 +80,27 @@ export default function Bewegung() {
     }
 
     // --- Erscheinen -------------------------------------------------------
+    const zurueckhalten = (el: HTMLElement) =>
+      document.documentElement.hasAttribute('data-auftakt') && el.closest('.titel-zone') !== null;
+
+    const zeigen = (el: HTMLElement) => {
+      if (el.dataset.reveal !== undefined) el.dataset.reveal = 'shown';
+      if (el.dataset.split !== undefined) el.dataset.split = 'shown';
+      if (el.dataset.draw !== undefined) el.dataset.draw = 'shown';
+      if (el.dataset.zahl !== undefined) zaehlen(el);
+      beobachter.unobserve(el);
+    };
+
     const beobachter = new IntersectionObserver(
       (eintraege) => {
         for (const e of eintraege) {
           if (!e.isIntersecting) continue;
           const el = e.target as HTMLElement;
-          if (el.dataset.reveal !== undefined) el.dataset.reveal = 'shown';
-          if (el.dataset.split !== undefined) el.dataset.split = 'shown';
-          if (el.dataset.draw !== undefined) el.dataset.draw = 'shown';
-          if (el.dataset.zahl !== undefined) zaehlen(el);
-          beobachter.unobserve(el);
+          // Hinter der Blende des Auftakts nichts einblenden — sonst ist die
+          // Headline schon fertig, bevor jemand sie sieht. Freigabe kommt per
+          // Ereignis, siehe unten.
+          if (zurueckhalten(el)) continue;
+          zeigen(el);
         }
       },
       { rootMargin: '0px 0px -10% 0px', threshold: 0.15 },
@@ -98,6 +109,20 @@ export default function Bewegung() {
     document
       .querySelectorAll<HTMLElement>('[data-reveal], [data-split], [data-draw], [data-zahl]')
       .forEach((el) => beobachter.observe(el));
+
+    // Die Blende fährt hoch: alles, was in der Titelbühne schon im Bild steht,
+    // jetzt einblenden. Der Rest kommt beim Scrollen über den Beobachter.
+    const freigeben = () => {
+      document
+        .querySelectorAll<HTMLElement>(
+          '.titel-zone [data-reveal], .titel-zone [data-split], .titel-zone [data-draw], .titel-zone [data-zahl]',
+        )
+        .forEach((el) => {
+          const r = el.getBoundingClientRect();
+          if (r.top < window.innerHeight && r.bottom > 0) zeigen(el);
+        });
+    };
+    window.addEventListener('fw-auftakt-weg', freigeben);
 
     // --- Szenen: Scrollfortschritt als Variable ---------------------------
     // --p laeuft von 0 (Element betritt das Bild von unten) bis 1 (Element
@@ -161,6 +186,7 @@ export default function Bewegung() {
 
     return () => {
       beobachter.disconnect();
+      window.removeEventListener('fw-auftakt-weg', freigeben);
       window.removeEventListener('pointermove', aufZeiger);
       window.removeEventListener('scroll', szenenPlanen);
       window.removeEventListener('resize', szenenPlanen);

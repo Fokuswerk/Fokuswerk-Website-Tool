@@ -20,7 +20,12 @@ export default function Kopf() {
   const [gescrollt, setGescrollt] = useState(false);
   const [ueberBand, setUeberBand] = useState(false);
   const [offen, setOffen] = useState(false);
+  // Drei Zustände statt zwei: eingehängt (sichtbar) und aufgezogen sind
+  // getrennt. Wird das Menü gleich im offenen Zustand eingehängt, gibt es
+  // keinen Ausgangswert, von dem ein Übergang laufen könnte — es steht dann
+  // schlagartig fertig da, und die ganze Choreografie fällt aus.
   const [sichtbar, setSichtbar] = useState(false);
+  const [aufgezogen, setAufgezogen] = useState(false);
   const schalter = useRef<HTMLButtonElement>(null);
   const pfad = usePathname();
 
@@ -54,8 +59,16 @@ export default function Kopf() {
     document.body.classList.toggle('menue-offen', offen);
     if (offen) {
       setSichtbar(true);
-      return;
+      // Erst im geschlossenen Zustand einhängen, zwei Bilder später öffnen.
+      // Das erste Bild sorgt dafür, dass React eingehängt hat, das zweite,
+      // dass der Browser den geschlossenen Zustand einmal gezeichnet hat.
+      let zweites = 0;
+      const erstes = requestAnimationFrame(() => {
+        zweites = requestAnimationFrame(() => setAufgezogen(true));
+      });
+      return () => { cancelAnimationFrame(erstes); cancelAnimationFrame(zweites); };
     }
+    setAufgezogen(false);
     // Vorhang zieht sich in 0,6 s hoch, nach 0,14 s Vorlauf.
     const t = window.setTimeout(() => setSichtbar(false), 780);
     return () => window.clearTimeout(t);
@@ -131,7 +144,7 @@ export default function Kopf() {
         <div
           id="hauptmenue"
           className="overlay band"
-          data-offen={offen ? '' : undefined}
+          data-offen={aufgezogen ? '' : undefined}
           role="dialog"
           aria-modal="true"
           aria-label="Hauptmenü"

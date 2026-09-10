@@ -905,9 +905,18 @@
 }
 .auftakt-rahmen[data-scharf] .auftakt-marke { opacity: 1; filter: blur(0); }
 
-/* Während des Auftakts nicht scrollen und die Titelbühne noch nicht
-   einblenden — sie soll erst unter der Blende hervorkommen. */
-html.auftakt-laeuft { overflow: hidden; }
+/* Während des Auftakts nicht scrollen. Gesetzt wird das Attribut im
+   Seitenkopf, vor dem ersten Bild (layout.tsx). */
+html[data-auftakt] { overflow: hidden; }
+/* Vorab-Blende: deckt die Seite vom ersten Bild an, bis die Blende des
+   Auftakts selbst eingehängt ist. Ohne sie blitzt die Titelbühne kurz auf. */
+html[data-auftakt="laeuft"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: #0c0f14;
+}
 
 /* =========================================================================
    PROZESS

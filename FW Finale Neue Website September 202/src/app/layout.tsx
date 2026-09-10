@@ -55,6 +55,16 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de" className={`${archivo.variable} ${mono.variable} ${instrument.variable}`}>
+      <head>
+        {/* Ob der Auftakt läuft, fällt hier, vor dem ersten Bild — sonst blitzt
+            die Seite kurz auf, bevor die Blende eingehängt ist. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(sessionStorage.getItem('fw-auftakt')!=='1'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.setAttribute('data-auftakt','laeuft')}}catch(e){}",
+          }}
+        />
+      </head>
       <body>
         <a href="#inhalt" className="nur-sr">Zum Inhalt springen</a>
         <Kopf />

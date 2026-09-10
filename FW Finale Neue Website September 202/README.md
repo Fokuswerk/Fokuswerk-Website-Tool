@@ -203,13 +203,37 @@ Schließen läuft schneller und rückwärts: Die Einträge treten ab, dann zieht
 der Vorhang hoch. Die Verzögerungen stehen deshalb nur im geöffneten Zustand —
 im geschlossenen wären sie beim Schließen genauso lang wie beim Öffnen.
 
+> **Fehler, der vorher drin war:** Das Menü wurde gleich im offenen Zustand
+> eingehängt. Ein Übergang braucht aber einen Ausgangswert — so stand das Menü
+> schlagartig fertig da, und die ganze Choreografie fiel aus; nur die
+> Vorhangkante lief, weil sie eine Keyframe-Animation ist. `Kopf.tsx` trennt
+> deshalb *eingehängt* (`sichtbar`) von *aufgezogen*: erst geschlossen
+> einhängen, zwei Bilder später `data-offen` setzen.
+
 ### Auftakt
 
 Beim ersten Aufruf je Sitzung stehen vier Eckwinkel an den Bildschirmrändern
 und ziehen sich auf die Wortmarke zusammen — die Kamera stellt scharf. Dann
-hebt sich die Blende nach oben weg (`Intro.tsx`). Unter 1,7 Sekunden, ein Klick
-oder eine Taste überspringt, bei `prefers-reduced-motion` gar nicht. Die Seite
-darunter ist fertig gerendert, der Auftakt liegt nur darüber.
+fährt die Blende nach oben weg, und die Titelbühne baut sich darunter auf,
+**während** sie noch fährt (`Intro.tsx`). Unter 1,7 Sekunden, ein Klick oder
+eine Taste überspringt, bei `prefers-reduced-motion` gar nicht.
+
+Ablauf über ein Attribut auf `<html>`:
+
+| Zustand | Wer setzt es | Wirkung |
+|---|---|---|
+| `data-auftakt="laeuft"` | Skript im Seitenkopf, vor dem ersten Bild | Vorab-Blende deckt die Seite, kein Scrollen |
+| `data-auftakt="steht"` | `Intro.tsx` beim Einhängen | eigene Blende deckt, Vorab-Blende aus |
+| Ereignis `fw-auftakt-weg` | `Intro.tsx`, wenn die Blende hochfährt | `Bewegung.tsx` gibt die Titelbühne frei |
+| Attribut entfernt | `Intro.tsx` nach 0,62 s | Seite scrollbar |
+
+> **Fehler, der vorher drin war:** Die Titelbühne baute sich komplett hinter
+> der Blende auf — nach 1,6 s war die Headline fertig, ohne dass sie jemand
+> hatte entstehen sehen. `Bewegung.tsx` hält deshalb alles in `.titel-zone`
+> zurück, solange `data-auftakt` steht.
+>
+> Attribut statt Klasse, weil React `className` auf `<html>` verwaltet und eine
+> fremde Klasse beim nächsten Rendern entfernen würde.
 
 ### Bewegung
 Alles läuft über `Bewegung.tsx`: ein IntersectionObserver und eine

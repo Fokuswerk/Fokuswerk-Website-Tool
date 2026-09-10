@@ -6,52 +6,66 @@ import { useEffect, useState } from 'react';
  * Der Auftakt.
  *
  * Vier Eckwinkel stehen an den Bildschirmrändern und ziehen sich auf die
- * Mitte zusammen — die Kamera stellt scharf. Dort steht die Wortmarke, dann
- * hebt sich die Blende nach oben weg und gibt die Seite frei.
+ * Wortmarke zusammen — die Kamera stellt scharf. Dann fährt die Blende nach
+ * oben weg, und die Titelbühne baut sich darunter auf, während sie noch
+ * fährt.
  *
- * Regeln, damit es nicht nervt:
- * - einmal je Sitzung, nicht bei jedem Seitenwechsel
- * - insgesamt unter 1,6 Sekunden
- * - ein Klick oder eine Taste überspringt
- * - bei prefers-reduced-motion gar nicht
- * - die Seite darunter ist fertig gerendert; der Auftakt liegt nur darüber
+ * Ob der Auftakt läuft, entscheidet ein Skript im Seitenkopf (layout.tsx),
+ * noch vor dem ersten Bild: es setzt html[data-auftakt="laeuft"]. Solange das
+ * Attribut steht, deckt eine Vorab-Blende die Seite, und Bewegung.tsx hält die
+ * Titelbühne zurück. Diese Komponente übernimmt dann:
+ *   laeuft → steht   eigene Blende deckt, die Vorab-Blende geht aus
+ *   Ereignis fw-auftakt-weg   Blende fährt hoch, Titelbühne wird freigegeben
+ *   Attribut entfernt   Seite ist scrollbar
+ *
+ * Regeln: einmal je Sitzung, unter 1,7 Sekunden, ein Klick oder eine Taste
+ * überspringt, bei prefers-reduced-motion gar nicht.
  */
 export default function Intro() {
   const [phase, setPhase] = useState<'aus' | 'weit' | 'scharf' | 'weg'>('aus');
 
   useEffect(() => {
-    let schonGesehen = false;
-    try { schonGesehen = sessionStorage.getItem('fw-auftakt') === '1'; } catch {}
-    if (schonGesehen) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const html = document.documentElement;
+    const zustand = html.getAttribute('data-auftakt');
+    // „steht" ist erlaubt, damit der doppelte Effektlauf im Entwicklungsmodus
+    // den Auftakt nicht abwürgt.
+    if (zustand !== 'laeuft' && zustand !== 'steht') return;
 
     try { sessionStorage.setItem('fw-auftakt', '1'); } catch {}
-    document.documentElement.classList.add('auftakt-laeuft');
+    html.setAttribute('data-auftakt', 'steht');
     setPhase('weit');
 
-    const t1 = window.setTimeout(() => setPhase('scharf'), 80);
-    const t2 = window.setTimeout(() => setPhase('weg'), 1050);
-    const t3 = window.setTimeout(() => {
-      setPhase('aus');
-      document.documentElement.classList.remove('auftakt-laeuft');
-    }, 1650);
-
-    const ueberspringen = () => {
-      window.clearTimeout(t1); window.clearTimeout(t2); window.clearTimeout(t3);
+    let fertig = false;
+    let abschluss = 0;
+    const wegziehen = () => {
+      if (fertig) return;
+      fertig = true;
       setPhase('weg');
-      window.setTimeout(() => {
+      // Freigabe schon beim Hochfahren, nicht erst danach — die Headline
+      // soll unter der Blende hervorkommen, nicht nach ihr erscheinen.
+      window.dispatchEvent(new Event('fw-auftakt-weg'));
+      abschluss = window.setTimeout(() => {
         setPhase('aus');
-        document.documentElement.classList.remove('auftakt-laeuft');
-      }, 500);
+        html.removeAttribute('data-auftakt');
+      }, 620);
+    };
+
+    const t1 = window.setTimeout(() => setPhase('scharf'), 80);
+    const t2 = window.setTimeout(wegziehen, 1050);
+    const ueberspringen = () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      wegziehen();
     };
     window.addEventListener('pointerdown', ueberspringen, { once: true });
     window.addEventListener('keydown', ueberspringen, { once: true });
 
     return () => {
-      window.clearTimeout(t1); window.clearTimeout(t2); window.clearTimeout(t3);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(abschluss);
       window.removeEventListener('pointerdown', ueberspringen);
       window.removeEventListener('keydown', ueberspringen);
-      document.documentElement.classList.remove('auftakt-laeuft');
     };
   }, []);
 
@@ -60,11 +74,7 @@ export default function Intro() {
   const scharf = phase === 'scharf' || phase === 'weg';
 
   return (
-    <div
-      aria-hidden="true"
-      className="auftakt"
-      data-phase={phase}
-    >
+    <div aria-hidden="true" className="auftakt" data-phase={phase}>
       <div className="auftakt-rahmen" data-scharf={scharf ? '' : undefined}>
         <span className="auftakt-ecke auftakt-lo" />
         <span className="auftakt-ecke auftakt-ro" />
