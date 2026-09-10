@@ -147,6 +147,36 @@ erkennt), Bildstege zwischen den Kadern, Randbeschriftung, Vignette je Kader und
 eine warme, leicht flaue Gradation. Gezogen wird er vom Scrollstand, nicht von
 einer Uhr.
 
+### Kopfleiste und Menü
+
+Die Kopfleiste schwebt als Pille über der Seite und kehrt über dunklen
+Bändern ihre Farben um (`.kopf-dunkel`). Der Schalter („Menü" plus zwei
+Linien) öffnet auf jeder Bildschirmgröße dasselbe Vollbildmenü — übernommen
+aus der ersten Fassung, weil das an ihr wertig war: Einträge in voller
+Displaygröße, die gestaffelt aus einer Maske fahren; beim Überfahren treten
+die anderen zurück und eine Beschreibungszeile erscheint (`navigation[].zeile`
+in `inhalt.ts`); rechts Schaltfläche und Kontakt.
+
+> **Fallstrick, hat zugeschlagen:** Der Weichzeichner der Menüfläche steht als
+> **Inline-Style** in `Kopf.tsx`, nicht im Stylesheet. Im Stylesheet gesetzt
+> kam `backdrop-filter` an `.overlay-grund` nicht an — der berechnete Wert im
+> Browser war `none`, die Seite stand scharf hinter dem Menü. Die genaue
+> Ursache ist nicht geklärt (im ausgelieferten CSS taucht `backdrop-filter`
+> auf). Die Kopfleiste setzt ihren Weichzeichner ebenfalls inline und war nie
+> betroffen. Also: `backdrop-filter` inline setzen und im Browser prüfen,
+> nicht im kopflosen Testbrowser — der rendert ohne GPU.
+>
+> Zweiter Teil desselben Fehlers: Das Overlay darf kein Scroll-Container sein.
+> Gescrollt wird in `.overlay-innen`.
+
+### Auftakt
+
+Beim ersten Aufruf je Sitzung stehen vier Eckwinkel an den Bildschirmrändern
+und ziehen sich auf die Wortmarke zusammen — die Kamera stellt scharf. Dann
+hebt sich die Blende nach oben weg (`Intro.tsx`). Unter 1,7 Sekunden, ein Klick
+oder eine Taste überspringt, bei `prefers-reduced-motion` gar nicht. Die Seite
+darunter ist fertig gerendert, der Auftakt liegt nur darüber.
+
 ### Bewegung
 Alles läuft über `Bewegung.tsx`: ein IntersectionObserver und eine
 rAF-Schleife. Bewegt werden ausschließlich `transform`, `opacity`, `filter`

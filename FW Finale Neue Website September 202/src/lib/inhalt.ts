@@ -25,11 +25,13 @@ export const cta = {
   ziel: '/kontakt',
 } as const;
 
+/** Jeder Eintrag trägt eine Zeile, die im Menü beim Überfahren erscheint —
+ *  sie sagt, was hinter dem Wort steckt, bevor man klickt. */
 export const navigation = [
-  { titel: 'Leistungen', pfad: '/#arbeit' },
-  { titel: 'Vorgehen', pfad: '/#vorgehen' },
-  { titel: 'Fälle', pfad: '/fallstudien/wav-westerstede' },
-  { titel: 'Kontakt', pfad: '/kontakt' },
+  { titel: 'Leistungen', pfad: '/#arbeit', zeile: 'Kampagnen, Produktion, Seiten' },
+  { titel: 'Vorgehen', pfad: '/#vorgehen', zeile: 'Fünf Schritte, dann monatlich' },
+  { titel: 'Fallstudie', pfad: '/fallstudien/wav-westerstede', zeile: '68 Bewerbungen aus 550 €' },
+  { titel: 'Kontakt', pfad: '/kontakt', zeile: '20 Minuten am Telefon' },
 ] as const;
 
 /** Belegt aus den Werbekonten. Jede Zahl ist auf ein Konto zurückführbar. */

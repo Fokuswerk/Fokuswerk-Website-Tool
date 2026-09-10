@@ -848,3 +848,305 @@
     .buehne-grund::before, .buehne-grund::after { animation: none; }
   }
 }
+
+/* =========================================================================
+   AUFTAKT
+   Die Blende. Vier Eckwinkel ziehen sich von den Bildschirmrändern auf die
+   Mitte zusammen, die Wortmarke steht, dann hebt sich alles nach oben weg.
+   ========================================================================= */
+.auftakt {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: #0c0f14;
+  transition: transform .6s cubic-bezier(.76, 0, .24, 1), opacity .6s ease;
+}
+.auftakt[data-phase="weg"] { transform: translate3d(0, -100%, 0); }
+
+.auftakt-rahmen {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  transition: width .85s cubic-bezier(.22, 1, .36, 1), height .85s cubic-bezier(.22, 1, .36, 1);
+}
+.auftakt-rahmen[data-scharf] {
+  width: min(22rem, 70vw);
+  height: 7.5rem;
+}
+
+.auftakt-ecke {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-color: #e3b778;
+  border-style: solid;
+  border-width: 0;
+}
+.auftakt-lo { left: 0;  top: 0;    border-top-width: 2px;    border-left-width: 2px; }
+.auftakt-ro { right: 0; top: 0;    border-top-width: 2px;    border-right-width: 2px; }
+.auftakt-lu { left: 0;  bottom: 0; border-bottom-width: 2px; border-left-width: 2px; }
+.auftakt-ru { right: 0; bottom: 0; border-bottom-width: 2px; border-right-width: 2px; }
+
+.auftakt-marke {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-sans);
+  font-size: clamp(1.6rem, 1rem + 2.4vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: #fff;
+  opacity: 0;
+  filter: blur(10px);
+  transition: opacity .5s ease .45s, filter .6s ease .45s;
+}
+.auftakt-rahmen[data-scharf] .auftakt-marke { opacity: 1; filter: blur(0); }
+
+/* Während des Auftakts nicht scrollen und die Titelbühne noch nicht
+   einblenden — sie soll erst unter der Blende hervorkommen. */
+html.auftakt-laeuft { overflow: hidden; }
+
+/* =========================================================================
+   PROZESS
+   Fünf Stationen auf einer Schiene. Waagerecht ab 64rem, sonst senkrecht.
+   Die Schiene zieht sich über [data-draw], die Stationen gehen gestaffelt
+   auf, sobald die Liste erschienen ist.
+   ========================================================================= */
+@layer components {
+  .prozess {
+    position: relative;
+    display: grid;
+    gap: 2.5rem;
+    padding-left: 3.25rem;
+  }
+  .prozess-schiene {
+    position: absolute;
+    left: 1.15rem;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--accent), var(--color-rule-2));
+    transform-origin: top center;
+  }
+  /* [data-draw] zieht waagerecht auf — für die senkrechte Schiene umlenken. */
+  .prozess-schiene[data-draw] { transform: scaleY(0); }
+  .prozess-schiene[data-draw="shown"] { transform: scaleY(1); transition: transform 1.2s var(--ease-out); }
+
+  .prozess-station {
+    position: relative;
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+    transition:
+      opacity .7s var(--ease-out) calc(250ms + var(--i) * 120ms),
+      transform .7s var(--ease-out) calc(250ms + var(--i) * 120ms);
+  }
+  .prozess[data-reveal="shown"] .prozess-station { opacity: 1; transform: none; }
+
+  .prozess-punkt {
+    position: absolute;
+    left: -3.25rem;
+    top: -0.1rem;
+    display: grid;
+    place-items: center;
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: 999px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-rule-2);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 500;
+    color: var(--color-ink-2);
+    transition: background .5s var(--ease-out), color .5s var(--ease-out), border-color .5s var(--ease-out);
+    transition-delay: calc(350ms + var(--i) * 120ms);
+  }
+  .prozess[data-reveal="shown"] .prozess-punkt {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--color-paper);
+  }
+  .prozess-station:last-child .prozess-punkt { box-shadow: 0 0 0 5px rgb(var(--brand-glow) / 0.28); }
+
+  @media (min-width: 64rem) {
+    .prozess {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 2rem;
+      padding-left: 0;
+      padding-top: 3.5rem;
+    }
+    .prozess-schiene {
+      left: 1.15rem;
+      right: 1.15rem;
+      top: 1.15rem;
+      bottom: auto;
+      width: auto;
+      height: 1px;
+      background: linear-gradient(to right, var(--color-rule-2), var(--accent));
+      transform-origin: left center;
+    }
+    .prozess-schiene[data-draw] { transform: scaleX(0); }
+    .prozess-schiene[data-draw="shown"] { transform: scaleX(1); }
+    .prozess-punkt { left: 0; top: -3.5rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .prozess-station { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .prozess-schiene[data-draw] { transform: none !important; }
+  }
+}
+
+/* =========================================================================
+   KOPF: SCHALTER UND VOLLBILDMENÜ
+   Übernommen aus der ersten Fassung, ins neue System übersetzt.
+   ========================================================================= */
+@layer components {
+  /* Zwei Linien. Beim Überfahren versetzen sie sich gegeneinander, beim
+     Öffnen kreuzen sie sich. */
+  .brenner {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    height: 2.6rem;
+    padding-inline: 0.5rem 0.25rem;
+  }
+  .brenner-wort {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  @media (max-width: 30rem) { .brenner-wort { display: none; } }
+  .brenner-linien { position: relative; display: block; width: 26px; height: 11px; }
+  .brenner-linien > span {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1.5px;
+    background: currentColor;
+    transition: transform .55s var(--ease-out), width .55s var(--ease-out);
+  }
+  .brenner-linien > span:first-child { top: 0; }
+  .brenner-linien > span:last-child  { bottom: 0; }
+  .brenner:hover .brenner-linien > span:first-child { transform: translateX(-18%); width: 82%; }
+  .brenner:hover .brenner-linien > span:last-child  { transform: translateX(18%);  width: 82%; }
+  .brenner[aria-expanded="true"] .brenner-linien > span:first-child { transform: translateY(4.75px) rotate(45deg); width: 100%; }
+  .brenner[aria-expanded="true"] .brenner-linien > span:last-child  { transform: translateY(-4.75px) rotate(-45deg); width: 100%; }
+
+  /* Die Fläche zeichnet die Seite dahinter weich, statt sie zu verdecken. */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    background: transparent !important;
+  }
+  .overlay-grund {
+    position: absolute;
+    inset: 0;
+    /* Weichzeichner siehe Kopf.tsx (inline). Hier gesetzt kam er am
+       Element nicht an — berechneter Wert war none. */
+    background: rgb(12 15 20 / 0.86);
+    opacity: 0;
+    transition: opacity .6s var(--ease-out);
+  }
+  .overlay[data-offen] .overlay-grund { opacity: 1; }
+
+  .overlay-innen {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    gap: clamp(2rem, 5vw, 4rem);
+    padding-top: clamp(6.5rem, 13vh, 9rem);
+    padding-bottom: clamp(2.5rem, 6vh, 4.5rem);
+    align-content: end;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  @media (min-width: 62rem) {
+    .overlay-innen {
+      grid-template-columns: minmax(0, 1fr) minmax(16rem, 21rem);
+      column-gap: clamp(3rem, 7vw, 6rem);
+      align-items: end;
+    }
+    .overlay-augen { grid-column: 1 / -1; align-self: start; }
+  }
+  .overlay-augen {
+    opacity: 0;
+    transition: opacity .6s var(--ease-out) .2s;
+  }
+  .overlay[data-offen] .overlay-augen { opacity: 1; }
+
+  .menue { border-top: 1px solid var(--color-rule); }
+  .menue-zeile { border-bottom: 1px solid var(--color-rule); }
+
+  .menue-link {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-block: clamp(0.65rem, 1.7vw, 1.05rem);
+    transition: opacity .45s var(--ease-out), padding-left .55s var(--ease-out);
+  }
+  /* Beim Überfahren treten die anderen zurück. */
+  .menue:hover .menue-link { opacity: 0.32; }
+  .menue .menue-link:hover { opacity: 1; padding-left: clamp(0.5rem, 1.4vw, 1.1rem); }
+
+  .menue-titel {
+    display: block;
+    overflow: hidden;
+    font-size: clamp(2.4rem, 1.2rem + 4.6vw, 4.75rem);
+    font-weight: 700;
+    letter-spacing: -0.045em;
+    line-height: 1.08;
+    padding-bottom: 0.04em;
+  }
+  .menue-titel > span {
+    display: block;
+    transform: translate3d(0, 105%, 0);
+    transition: transform .85s var(--ease-out) calc(120ms + var(--i) * 65ms);
+  }
+  .overlay[data-offen] .menue-titel > span { transform: none; }
+  .menue-link[aria-current="page"] .menue-titel { color: var(--accent); }
+
+  .menue-zeile-text {
+    display: none;
+    flex: none;
+    font-size: 0.85rem;
+    color: var(--color-ink-3);
+    text-align: right;
+    opacity: 0;
+    transition: opacity .45s var(--ease-out);
+  }
+  @media (min-width: 48rem) { .menue-zeile-text { display: block; } }
+  .menue-link:hover .menue-zeile-text { opacity: 1; }
+
+  .menue-seite {
+    display: grid;
+    gap: 0.9rem;
+    align-content: end;
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+    transition: opacity .7s var(--ease-out) .35s, transform .7s var(--ease-out) .35s;
+  }
+  .overlay[data-offen] .menue-seite { opacity: 1; transform: none; }
+
+  .menue-daten {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 1rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-rule);
+  }
+  .menue-tel { font-size: clamp(1.2rem, 1rem + 0.6vw, 1.45rem); font-weight: 500; letter-spacing: -0.02em; }
+  .menue-mail { font-size: 0.95rem; color: var(--color-ink-2); }
+  .menue-tel:hover, .menue-mail:hover { color: var(--accent); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .overlay-grund, .menue-titel > span, .menue-seite, .overlay-augen,
+    .brenner-linien > span { transition: none !important; }
+    .menue-titel > span { transform: none; }
+    .menue-seite { opacity: 1; transform: none; }
+  }
+}

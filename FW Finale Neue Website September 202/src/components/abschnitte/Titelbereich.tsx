@@ -26,15 +26,14 @@ export default function Titelbereich() {
       <div className="schale relative">
         <div className="mx-auto max-w-[56rem] text-center">
           <p className="kennung justify-center" data-reveal>
-            Performance Marketing · Oldenburg
+            Performance Marketing für Handwerk und Technik
           </p>
 
           <h1
-            className="mx-auto mt-7 max-w-[15ch] text-[length:var(--text-6xl)] leading-[0.92]"
+            className="mx-auto mt-7 max-w-[14ch] text-[length:var(--text-6xl)] leading-[0.94]"
             data-split
           >
-            Kunden und Mitarbeiter.<br />
-            <span className="kursiv kursiv-fein">Nachgerechnet</span>.
+            Mehr Aufträge. Und die <span className="kursiv kursiv-fein">Leute</span> dafür.
           </h1>
 
           <p
@@ -42,9 +41,9 @@ export default function Titelbereich() {
             data-reveal
             style={{ ['--reveal-delay' as string]: '220ms' }}
           >
-            Wir produzieren, schalten und messen selbst. Am Monatsende steht,
-            was eine Anfrage gekostet hat und was eine Bewerbung — nicht, wie
-            viele Leute ein Video gesehen haben.
+            Performance Marketing auf Meta und Google — für Neukunden und für
+            Bewerber. Wir drehen selbst, schalten selbst und zeigen Ihnen jeden
+            Monat, was eine Anfrage gekostet hat.
           </p>
 
           <div

@@ -1,37 +1,44 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import { cta, marke, navigation } from '@/lib/inhalt';
 import Pfeil from '@/components/ui/Pfeil';
 
+/**
+ * Kopfleiste und Vollbildmenü.
+ *
+ * Das Menü übernimmt, was an der ersten Fassung wertig war: eine Fläche, die
+ * die Seite dahinter weichzeichnet statt sie zu verdecken; Einträge in voller
+ * Displaygröße, die gestaffelt aus einer Maske fahren; beim Überfahren treten
+ * die anderen zurück und die Beschreibungszeile erscheint; rechts eine Spalte
+ * mit Schaltfläche und Kontakt. Der Schalter besteht aus zwei Linien, die
+ * sich beim Überfahren gegeneinander versetzen und beim Öffnen kreuzen.
+ */
 export default function Kopf() {
   const [gescrollt, setGescrollt] = useState(false);
   const [ueberBand, setUeberBand] = useState(false);
   const [offen, setOffen] = useState(false);
+  const [sichtbar, setSichtbar] = useState(false);
+  const schalter = useRef<HTMLButtonElement>(null);
+  const pfad = usePathname();
 
-  // Die Leiste schwebt über dem Inhalt. Liegt unter ihr ein dunkles Band,
-  // kehrt sie dieselben Farbvariablen um wie das Band selbst — sonst steht
-  // eine weiße Kachel auf schwarzem Grund.
+  // Liegt unter der Leiste ein dunkles Band, kehrt sie dieselben Farbvariablen
+  // um wie das Band — sonst steht eine weiße Kachel auf schwarzem Grund.
   useEffect(() => {
     let laeuft = false;
     const messen = () => {
       laeuft = false;
       setGescrollt(window.scrollY > 16);
-      const baender = document.querySelectorAll<HTMLElement>('.band');
-      const linie = 52; // Mitte der Leiste
       let drin = false;
-      for (const b of baender) {
+      for (const b of document.querySelectorAll<HTMLElement>('.band')) {
         const r = b.getBoundingClientRect();
-        if (r.top <= linie && r.bottom >= linie) { drin = true; break; }
+        if (r.top <= 52 && r.bottom >= 52) { drin = true; break; }
       }
       setUeberBand(drin);
     };
-    const planen = () => {
-      if (laeuft) return;
-      laeuft = true;
-      requestAnimationFrame(messen);
-    };
+    const planen = () => { if (!laeuft) { laeuft = true; requestAnimationFrame(messen); } };
     messen();
     window.addEventListener('scroll', planen, { passive: true });
     window.addEventListener('resize', planen);
@@ -41,31 +48,47 @@ export default function Kopf() {
     };
   }, []);
 
+  // Öffnen: erst einhängen, dann im nächsten Bild die Übergänge starten.
+  // Schließen: Übergänge zurück, dann aushängen.
   useEffect(() => {
     document.body.classList.toggle('menue-offen', offen);
-    const aufTaste = (e: KeyboardEvent) => e.key === 'Escape' && setOffen(false);
+    if (offen) {
+      setSichtbar(true);
+      return;
+    }
+    const t = window.setTimeout(() => setSichtbar(false), 650);
+    return () => window.clearTimeout(t);
+  }, [offen]);
+
+  // Beim Seitenwechsel schließen.
+  useEffect(() => { setOffen(false); }, [pfad]);
+
+  useEffect(() => {
+    if (!offen) return;
+    const aufTaste = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setOffen(false); schalter.current?.focus(); }
+    };
     window.addEventListener('keydown', aufTaste);
     return () => window.removeEventListener('keydown', aufTaste);
   }, [offen]);
 
+  const dunkel = (ueberBand && !offen) || offen;
+
   return (
     <>
       <header
-        className={`fixed inset-x-0 top-0 z-50 pointer-events-none${ueberBand && !offen ? ' kopf-dunkel' : ''}`}
-        style={{ paddingTop: gescrollt ? '0.6rem' : '1.1rem', transition: 'padding-top .5s var(--ease-out)' }}
+        className={`fixed inset-x-0 top-0 z-50 pointer-events-none${dunkel ? ' kopf-dunkel' : ''}`}
+        style={{ paddingTop: gescrollt && !offen ? '0.6rem' : '1.1rem', transition: 'padding-top .5s var(--ease-out)' }}
       >
         <div className="schale">
-          {/* Schwebende Leiste statt Bandkante: sie sitzt auf der Seite, nicht
-              davor — deshalb Radius, Rand und ein Grund, der erst beim Scrollen
-              deckt. */}
           <div
             className="pointer-events-auto flex items-center gap-3 rounded-[var(--radius-lg)] px-3 py-2 sm:px-4"
             style={{
-              background: gescrollt ? 'color-mix(in srgb, var(--color-paper) 82%, transparent)' : 'transparent',
-              backdropFilter: gescrollt ? 'blur(18px) saturate(1.4)' : 'none',
-              WebkitBackdropFilter: gescrollt ? 'blur(18px) saturate(1.4)' : 'none',
-              border: `1px solid ${gescrollt ? 'var(--color-rule)' : 'transparent'}`,
-              boxShadow: gescrollt ? 'var(--shadow-lift)' : 'none',
+              background: gescrollt && !offen ? 'color-mix(in srgb, var(--color-paper) 82%, transparent)' : 'transparent',
+              backdropFilter: gescrollt && !offen ? 'blur(18px) saturate(1.4)' : 'none',
+              WebkitBackdropFilter: gescrollt && !offen ? 'blur(18px) saturate(1.4)' : 'none',
+              border: `1px solid ${gescrollt && !offen ? 'var(--color-rule)' : 'transparent'}`,
+              boxShadow: gescrollt && !offen ? 'var(--shadow-lift)' : 'none',
               transition: 'background .5s var(--ease-out), border-color .5s var(--ease-out), box-shadow .5s var(--ease-out)',
             }}
           >
@@ -74,100 +97,101 @@ export default function Kopf() {
               <span className="text-[1.05rem] font-bold tracking-[-0.035em]">Fokuswerk</span>
             </Link>
 
-            <nav className="ml-auto hidden items-center gap-1 md:flex" aria-label="Hauptmenü">
-              {navigation.map((n) => (
-                <Link
-                  key={n.pfad}
-                  href={n.pfad}
-                  className="rounded-[var(--radius-sm)] px-3 py-2 text-sm font-medium text-ink-2 transition-colors hover:bg-paper-2 hover:text-ink"
-                >
-                  {n.titel}
-                </Link>
-              ))}
-            </nav>
-
             <a
               href={`tel:${marke.telefon}`}
-              className="ml-auto hidden items-center gap-2 px-3 py-2 text-sm font-semibold md:ml-2 md:flex"
+              className="ml-auto hidden items-center gap-2 px-3 py-2 text-sm font-semibold md:flex"
             >
               <Hoerer />
               <span className="font-mono tracking-[-0.01em]">{marke.telefonText}</span>
             </a>
 
-            <Link href={cta.ziel} className="akt ml-auto !py-2.5 !px-4 text-[0.82rem] md:ml-0">
+            <Link href={cta.ziel} className="akt ml-auto !px-4 !py-2.5 text-[0.82rem] md:ml-0">
               Gespräch
               <Pfeil groesse={12} />
             </Link>
 
             <button
+              ref={schalter}
               type="button"
-              className="grid h-10 w-10 place-items-center md:hidden"
+              className="brenner"
               aria-expanded={offen}
-              aria-controls="mobilmenue"
+              aria-controls="hauptmenue"
               onClick={() => setOffen((o) => !o)}
             >
               <span className="nur-sr">{offen ? 'Menü schließen' : 'Menü öffnen'}</span>
-              <span className="relative block h-[11px] w-[22px]" aria-hidden="true">
-                <span
-                  className="absolute left-0 h-[1.5px] w-full bg-current"
-                  style={{
-                    top: 0,
-                    transform: offen ? 'translateY(4.75px) rotate(45deg)' : 'none',
-                    transition: 'transform .45s var(--ease-out)',
-                  }}
-                />
-                <span
-                  className="absolute left-0 h-[1.5px] w-full bg-current"
-                  style={{
-                    bottom: 0,
-                    transform: offen ? 'translateY(-4.75px) rotate(-45deg)' : 'none',
-                    transition: 'transform .45s var(--ease-out)',
-                  }}
-                />
-              </span>
+              <span className="brenner-wort" aria-hidden="true">{offen ? 'Schließen' : 'Menü'}</span>
+              <span className="brenner-linien" aria-hidden="true"><span /><span /></span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* Mobiles Menü */}
-      <div
-        id="mobilmenue"
-        className="fixed inset-0 z-40 md:hidden"
-        hidden={!offen}
-        style={{
-          background: 'color-mix(in srgb, var(--color-paper) 92%, transparent)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-        }}
-      >
-        <nav className="schale flex h-full flex-col justify-end gap-1 pb-10 pt-28" aria-label="Menü">
-          {navigation.map((n, i) => (
-            <Link
-              key={n.pfad}
-              href={n.pfad}
-              onClick={() => setOffen(false)}
-              className="border-b border-rule py-4 text-[2rem] font-bold tracking-[-0.04em]"
-              style={{
-                opacity: offen ? 1 : 0,
-                transform: offen ? 'none' : 'translateY(14px)',
-                transition: `opacity .6s var(--ease-out) ${i * 60 + 80}ms, transform .6s var(--ease-out) ${i * 60 + 80}ms`,
-              }}
-            >
-              {n.titel}
-            </Link>
-          ))}
-          <a href={`tel:${marke.telefon}`} className="mt-6 font-mono text-lg font-medium">
-            {marke.telefonText}
-          </a>
-          <a href={`mailto:${marke.mail}`} className="text-sm text-ink-2">{marke.mail}</a>
-        </nav>
-      </div>
+      {sichtbar && (
+        <div
+          id="hauptmenue"
+          className="overlay band"
+          data-offen={offen ? '' : undefined}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Hauptmenü"
+        >
+          {/* Der Weichzeichner steht bewusst als Inline-Style. Aus dem
+              Stylesheet kam backdrop-filter an diesem Element nicht an
+              (berechneter Wert im Browser: none) — die Fläche war nur dunkel,
+              nicht weich. Inline greift er, wie bei der Kopfleiste. */}
+          <div
+            className="overlay-grund"
+            aria-hidden="true"
+            style={{
+              backdropFilter: 'blur(36px) saturate(1.1)',
+              WebkitBackdropFilter: 'blur(36px) saturate(1.1)',
+            }}
+          />
+
+          <div className="overlay-innen schale">
+            <p className="overlay-augen kennung">
+              <span className="hidden sm:inline">Fokuswerk · Performance Marketing · </span>Oldenburg
+            </p>
+
+            <nav aria-label="Hauptmenü">
+              <ul className="menue">
+                {navigation.map((n, i) => (
+                  <li key={n.pfad} className="menue-zeile" style={{ ['--i' as string]: i }}>
+                    <Link
+                      href={n.pfad}
+                      className="menue-link"
+                      aria-current={pfad === n.pfad ? 'page' : undefined}
+                      onClick={() => setOffen(false)}
+                    >
+                      <span className="menue-titel"><span>{n.titel}</span></span>
+                      <span className="menue-zeile-text">{n.zeile}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
+            <div className="menue-seite">
+              <Link href={cta.ziel} className="akt justify-self-start" onClick={() => setOffen(false)}>
+                {cta.text}
+                <Pfeil />
+              </Link>
+              <p className="max-w-[30ch] text-sm leading-[1.55] text-ink-3">{cta.notiz}</p>
+
+              <div className="menue-daten">
+                <a href={`tel:${marke.telefon}`} className="menue-tel font-mono">{marke.telefonText}</a>
+                <a href={`mailto:${marke.mail}`} className="menue-mail">{marke.mail}</a>
+                <p className="mt-2 text-sm text-ink-3">{marke.strasse}<br />{marke.plz} {marke.ort}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
 
-/** Bildmarke: Blende. Fokus + Werk in einem Zeichen. */
+/** Bildmarke: Sucherwinkel um einen Punkt. */
 function Zeichen() {
   return (
     <span

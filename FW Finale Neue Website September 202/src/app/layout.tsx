@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Archivo, DM_Mono, Instrument_Serif } from 'next/font/google';
 import Bewegung from '@/components/Bewegung';
+import Intro from '@/components/Intro';
 import Kopf from '@/components/seite/Kopf';
 import Fuss from '@/components/seite/Fuss';
 import { marke } from '@/lib/inhalt';
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main id="inhalt">{children}</main>
         <Fuss />
         <Bewegung />
+        <Intro />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
