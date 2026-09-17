@@ -84,3 +84,15 @@ https://deine-domain.vercel.app/site/[slug]
 3. Preview-Link (`/site/[slug]`) kopieren und an den Interessenten schicken
 4. Status im Dashboard aktualisieren (Gesendet → Interessiert → Gewonnen)
 5. Jederzeit über `/dashboard/[id]/edit` anpassen
+
+---
+
+## Ordner `gluecksbringer/`
+
+Eigenständige Next.js-Anwendung: der neue Webauftritt des Vereins
+**Glücksbringer am Meer e.V.** Sie hat ein eigenes `package.json` und wird
+unabhängig vom Website-Tool gebaut und deployt (Vercel-Projekt mit
+Root-Verzeichnis `gluecksbringer`).
+
+* Technische Einrichtung: [`gluecksbringer/README.md`](gluecksbringer/README.md)
+* Inhalte pflegen: [`gluecksbringer/INHALTE-PFLEGEN.md`](gluecksbringer/INHALTE-PFLEGEN.md)
