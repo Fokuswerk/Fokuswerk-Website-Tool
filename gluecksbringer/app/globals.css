@@ -1,0 +1,303 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Glücksbringer am Meer – Designsystem
+   Farbwelt: warmes Off-White und Sand als Grund, sehr dunkles Blau als Schrift,
+   ruhiges Meeresblau als Ton, ein warmes Rot als Akzent für "Glück".
+   --------------------------------------------------------------------------- */
+
+@theme {
+  --color-paper: #fcfaf6;
+  --color-sand-50: #f7f2ea;
+  --color-sand-100: #f0e7d9;
+  --color-sand-200: #e4d8c4;
+  --color-sand-300: #d0bfa4;
+
+  --color-ink: #10293b;
+  --color-ink-70: #43596a;
+  --color-ink-50: #5b6e7c;
+
+  --color-sea: #2c6a88;
+  --color-sea-deep: #17465e;
+  --color-mist: #b9d2dd;
+  --color-mist-soft: #e2edf2;
+
+  --color-glow: #c2452e;
+  --color-glow-deep: #9c3423;
+  --color-glow-soft: #f5e2dc;
+
+  --font-display: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --text-display: clamp(2.5rem, 1.35rem + 4.6vw, 5.25rem);
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.035em;
+
+  --text-h1: clamp(2.1rem, 1.35rem + 3vw, 3.9rem);
+  --text-h1--line-height: 1.06;
+  --text-h1--letter-spacing: -0.03em;
+
+  --text-h2: clamp(1.7rem, 1.2rem + 1.9vw, 2.8rem);
+  --text-h2--line-height: 1.12;
+  --text-h2--letter-spacing: -0.025em;
+
+  --text-h3: clamp(1.25rem, 1.05rem + 0.7vw, 1.6rem);
+  --text-h3--line-height: 1.22;
+  --text-h3--letter-spacing: -0.015em;
+
+  --text-lead: clamp(1.075rem, 1rem + 0.45vw, 1.35rem);
+  --text-lead--line-height: 1.6;
+
+  --ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      scroll-behavior: auto;
+    }
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--color-glow);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-sea);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+}
+
+/* --- Layout-Hilfen ------------------------------------------------------- */
+
+@utility shell {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  max-width: 78rem;
+
+  @media (width >= 40rem) {
+    padding-inline: 2rem;
+  }
+
+  @media (width >= 80rem) {
+    padding-inline: 2.5rem;
+  }
+}
+
+@utility shell-narrow {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  max-width: 48rem;
+
+  @media (width >= 40rem) {
+    padding-inline: 2rem;
+  }
+}
+
+/* Kleiner Abschnitts-Zähler im Editorial-Stil ("01 — Wer wir sind") */
+@utility eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-sea);
+}
+
+/* --- Sanfte Einblendungen beim Scrollen ---------------------------------- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s var(--ease-soft),
+    transform 0.7s var(--ease-soft);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.reveal[data-visible="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Seitenwechsel: ruhiges Aufblenden */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.page-in {
+  animation: page-in 0.45s var(--ease-soft) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .page-in {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --- Galerie: Masonry über CSS-Spalten ----------------------------------- */
+
+.masonry {
+  column-count: 1;
+  column-gap: 1rem;
+}
+
+@media (width >= 40rem) {
+  .masonry {
+    column-count: 2;
+    column-gap: 1.5rem;
+  }
+}
+
+@media (width >= 64rem) {
+  .masonry {
+    column-count: 3;
+    column-gap: 2rem;
+  }
+}
+
+.masonry > * {
+  break-inside: avoid;
+  margin-bottom: 1rem;
+}
+
+@media (width >= 40rem) {
+  .masonry > * {
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (width >= 64rem) {
+  .masonry > * {
+    margin-bottom: 2rem;
+  }
+}
+
+/* Jahre mit wenigen Bildern bekommen weniger Spalten, damit keine Lücken entstehen. */
+@media (width >= 64rem) {
+  .masonry-zwei {
+    column-count: 2;
+  }
+}
+
+/* --- Fließtext in Rechtstexten und Beiträgen ----------------------------- */
+
+.prose-gam {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: var(--color-ink-70);
+}
+
+.prose-gam > * + * {
+  margin-top: 1.25rem;
+}
+
+.prose-gam h2 {
+  font-size: 1.5rem;
+  line-height: 1.25;
+  color: var(--color-ink);
+  margin-top: 3rem;
+}
+
+.prose-gam h3 {
+  font-size: 1.15rem;
+  color: var(--color-ink);
+  margin-top: 2rem;
+}
+
+.prose-gam strong {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+.prose-gam a {
+  color: var(--color-sea);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.prose-gam a:hover {
+  color: var(--color-glow);
+}
+
+.prose-gam ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.prose-gam ul > li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.prose-gam ul > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.7em;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background-color: var(--color-glow);
+}
