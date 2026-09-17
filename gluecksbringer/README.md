@@ -84,11 +84,15 @@ Geprüft mit Lighthouse (simuliertes Smartphone, Produktionsbuild):
 
 | Seite | Performance | Barrierefreiheit | Best Practices | SEO |
 |---|---|---|---|---|
-| Startseite | 98 | 100 | 100 | 100 |
-| Über uns | 98 | 100 | 100 | 100 |
-| Aktuelles | 97 | 100 | 100 | 100 |
-| Galerie | 94 | 100 | 100 | 100 |
+| Startseite | 99 | 100 | 100 | 100 |
+| Über uns | 96 | 100 | 100 | 100 |
+| Aktuelles | 99 | 100 | 100 | 100 |
+| Beitragsseite | 96 | 100 | 100 | 100 |
+| Galerie | 95 | 100 | 100 | 100 |
 | Unterstützen | 99 | 100 | 100 | 100 |
-| Kontakt | 98 | 100 | 100 | 100 |
+| Kontakt | 99 | 100 | 100 | 100 |
+| Impressum / Datenschutz | 98 | 100 | 100 | 100 |
+
+Cumulative Layout Shift liegt auf allen Seiten bei 0.
 
 Auf dem Desktop erreichen alle Seiten 100/100/100/100.
