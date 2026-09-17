@@ -78,6 +78,26 @@ node scripts/prepare-images.mjs <ordner>   # Bilder verkleinern und neu komprimi
 node scripts/og-bild.mjs                   # Vorschaubild für soziale Netzwerke neu erzeugen
 ```
 
+## Bewegung
+
+Die Bewegungsebene liegt gebündelt am Ende von `app/globals.css`. Alles läuft
+über `transform` und `opacity`, damit nichts nachrechnen muss und das Layout
+nicht springt.
+
+| Wo | Was |
+|---|---|
+| Überschrift der jeweiligen Seite | läuft Wort für Wort ein (`components/text-ein.tsx`) |
+| Abschnitte beim Scrollen | blenden sanft auf (`components/reveal.tsx`) |
+| Zahlen im Faktenband | rollen aus einer Maske nach oben |
+| Meeresbild auf der Startseite | ruhige Parallaxe über `animation-timeline: view()` – ohne JavaScript, Browser ohne Unterstützung zeigen das Bild einfach ruhig |
+| Fuß der Seite | zwei versetzte Wellen, dazu Puck, der leise wippt |
+| Galerie-Großansicht | Ziehen mit dem Finger blättert weiter, nach unten ziehen schließt |
+| Beiträge und Galerievorschau auf dem Smartphone | wischbare Reihen mit Punkten (`components/wischreihe.tsx`) |
+
+Wer im Betriebssystem „Bewegung reduzieren“ eingestellt hat, bekommt nichts
+davon zu sehen – die Seite bleibt vollständig bedienbar, das Blättern in der
+Galerie springt dann ohne Übergang weiter.
+
 ## Barrierefreiheit und Performance
 
 Geprüft mit Lighthouse (simuliertes Smartphone, Produktionsbuild):

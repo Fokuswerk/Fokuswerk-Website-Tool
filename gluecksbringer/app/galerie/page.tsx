@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Galerie } from "@/components/galerie";
 import { Kleeblatt } from "@/components/marke";
 import { Reveal } from "@/components/reveal";
+import { TextEin } from "@/components/text-ein";
 import { ButtonLink, PfeilRechts } from "@/components/ui";
 import { galerie, galerieBilderGesamt } from "@/content/galerie";
 
@@ -28,7 +29,10 @@ export default function GalerieSeite() {
             Galerie
           </p>
           <h1 className="mt-6 max-w-3xl text-h1 text-ink">
-            Über zehn Jahre leuchtende Kinderaugen.
+            <TextEin
+              text="Über zehn Jahre leuchtende Kinderaugen."
+              verzoegerung={100}
+            />
           </h1>
           <p className="mt-8 max-w-xl text-lead text-ink-70">
             {galerieBilderGesamt} Bilder aus unserer Arbeit – vom allerersten

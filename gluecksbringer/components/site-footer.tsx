@@ -13,10 +13,14 @@ const rechtliches = [
 export function SiteFooter() {
   return (
     <footer className="relative mt-24 overflow-hidden bg-ink text-paper sm:mt-32">
-      <Welle
-        className="absolute inset-x-0 -top-px h-6 w-[200%] text-paper sm:h-8"
+      {/* Zwei versetzte Wellen erzeugen einen ruhigen Wassereindruck. */}
+      <div
         aria-hidden="true"
-      />
+        className="pointer-events-none absolute inset-x-0 -top-px h-6 overflow-hidden sm:h-9"
+      >
+        <Welle className="welle-hinten absolute inset-x-0 top-1 h-full w-[200%] text-paper/45" />
+        <Welle className="welle-vorn absolute inset-x-0 top-0 h-full w-[200%] text-paper" />
+      </div>
 
       <div className="shell relative pt-24 pb-12 sm:pt-28">
         <div className="grid gap-14 lg:grid-cols-[1.4fr_1fr_1fr] lg:gap-10">
@@ -148,7 +152,7 @@ export function SiteFooter() {
               aria-hidden="true"
               width={40}
               height={77}
-              className="h-14 w-auto opacity-90"
+              className="puck h-14 w-auto opacity-90"
             />
             <p className="pb-1 text-xs leading-relaxed text-paper/50">
               © {new Date().getFullYear()} {verein.name}

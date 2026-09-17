@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { Kleeblatt } from "@/components/marke";
 import { Reveal } from "@/components/reveal";
+import { TextEin } from "@/components/text-ein";
 import {
   Abschnittsmarke,
   ButtonLink,
@@ -50,7 +51,10 @@ export default function UeberUns() {
             Über uns
           </p>
           <h1 className="mt-6 max-w-4xl text-h1 text-ink">
-            Aus einer Idee von sechs Müttern ist ein Verein geworden.
+            <TextEin
+              text="Aus einer Idee von sechs Müttern ist ein Verein geworden."
+              verzoegerung={100}
+            />
           </h1>
         </Reveal>
 
@@ -71,7 +75,7 @@ export default function UeberUns() {
             priority
             sizes="100vw"
             placeholder="blur"
-            className="h-[46vw] max-h-[520px] min-h-[220px] w-full object-cover object-top"
+            className="bild-ein h-[46vw] max-h-[520px] min-h-[220px] w-full object-cover object-top"
           />
         </figure>
       </Reveal>
@@ -165,8 +169,8 @@ export default function UeberUns() {
         <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-sand-200 bg-sand-200 sm:grid-cols-3">
           {werte.map((wert, index) => (
             <Reveal key={wert.titel} delay={index * 80} className="bg-paper">
-              <div className="h-full p-7 sm:p-9">
-                <Kleeblatt className="size-6 text-glow" />
+              <div className="gruppe h-full p-7 sm:p-9">
+                <Kleeblatt className="kleeblatt size-6 text-glow" />
                 <h3 className="mt-6 text-h3 text-ink">{wert.titel}</h3>
                 <p className="mt-3 text-[0.9375rem] leading-relaxed text-ink-70">
                   {wert.text}

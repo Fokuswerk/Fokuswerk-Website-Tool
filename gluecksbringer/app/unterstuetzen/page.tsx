@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Kleeblatt } from "@/components/marke";
 import { PayPalButton } from "@/components/paypal-button";
 import { Reveal } from "@/components/reveal";
+import { TextEin } from "@/components/text-ein";
 import { Spendenkonto } from "@/components/spendenkonto";
 import {
   Abschnittsmarke,
@@ -56,7 +57,10 @@ export default function Unterstuetzen() {
                 Unterstützen
               </p>
               <h1 className="mt-6 text-h1 text-ink">
-                Aus Ihrer Spende wird ein Glücksmoment.
+                <TextEin
+                  text="Aus Ihrer Spende wird ein Glücksmoment."
+                  verzoegerung={100}
+                />
               </h1>
             </Reveal>
 
@@ -84,7 +88,7 @@ export default function Unterstuetzen() {
                 priority
                 sizes="(min-width: 1024px) 45vw, 100vw"
                 placeholder="blur"
-                className="aspect-[4/3] w-full object-cover"
+                className="bild-ein aspect-[4/3] w-full object-cover"
               />
             </figure>
           </Reveal>
@@ -111,7 +115,7 @@ export default function Unterstuetzen() {
                 aria-hidden="true"
                 width={180}
                 height={346}
-                className="pointer-events-none absolute right-7 bottom-7 hidden w-20 opacity-55 sm:block lg:w-24"
+                className="puck pointer-events-none absolute right-7 bottom-7 hidden w-20 opacity-55 sm:block lg:w-24"
               />
               <div className="relative">
                 <p className="text-xs font-semibold tracking-[0.14em] text-mist uppercase">

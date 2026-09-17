@@ -12,6 +12,24 @@ type Flach = {
   jahr: string;
 };
 
+/** Ab wie viel Prozent der Breite ein Wisch als Blättern zählt. */
+const SCHWELLE_ANTEIL = 0.2;
+/** Ab welchem Tempo (px pro Millisekunde) auch ein kurzer Wisch reicht. */
+const SCHWELLE_TEMPO = 0.4;
+/** Wie weit nach unten gezogen werden muss, um die Ansicht zu schließen. */
+const SCHLIESS_WEG = 120;
+
+type Geste = {
+  startX: number;
+  startY: number;
+  startZeit: number;
+  letzteX: number;
+  letzteZeit: number;
+  tempo: number;
+  achse: "offen" | "waagerecht" | "senkrecht";
+  id: number;
+};
+
 export function Galerie({ jahre }: { jahre: GalerieJahr[] }) {
   const alle: Flach[] = jahre.flatMap((jahr) =>
     jahr.bilder.map((eintrag) => ({ ...eintrag, jahr: jahr.jahr })),
@@ -19,32 +37,83 @@ export function Galerie({ jahre }: { jahre: GalerieJahr[] }) {
 
   const [aktiv, setAktiv] = useState<number | null>(null);
   const [imBrowser, setImBrowser] = useState(false);
+  const [ruhig, setRuhig] = useState(false);
 
-  useEffect(() => setImBrowser(true), []);
+  /** Verschiebung während der Geste bzw. während der Blätter-Animation. */
+  const [zug, setZug] = useState({ x: 0, y: 0 });
+  const [animiert, setAnimiert] = useState(false);
+  const [schliesst, setSchliesst] = useState(false);
+
+  const geste = useRef<Geste | null>(null);
+  const zielRichtung = useRef(0);
+  const buehne = useRef<HTMLDivElement>(null);
   const vorherigerFokus = useRef<HTMLElement | null>(null);
   const schliessenRef = useRef<HTMLButtonElement>(null);
-  const beruehrung = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    setImBrowser(true);
+    const abfrage = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const setzen = () => setRuhig(abfrage.matches);
+    setzen();
+    abfrage.addEventListener("change", setzen);
+    return () => abfrage.removeEventListener("change", setzen);
+  }, []);
 
   const oeffnen = useCallback((index: number) => {
     vorherigerFokus.current = document.activeElement as HTMLElement | null;
+    zielRichtung.current = 0;
+    setZug({ x: 0, y: 0 });
+    setAnimiert(false);
+    setSchliesst(false);
     setAktiv(index);
   }, []);
 
   const schliessen = useCallback(() => {
     setAktiv(null);
+    setSchliesst(false);
+    setZug({ x: 0, y: 0 });
+    geste.current = null;
     vorherigerFokus.current?.focus();
   }, []);
 
+  /** Blättert mit einer gleitenden Bewegung zum nächsten oder vorherigen Bild. */
   const blaettern = useCallback(
     (richtung: 1 | -1) => {
-      setAktiv((index) => {
-        if (index === null) return index;
-        return (index + richtung + alle.length) % alle.length;
-      });
+      if (zielRichtung.current !== 0) return;
+
+      if (ruhig) {
+        setAktiv((index) =>
+          index === null
+            ? index
+            : (index + richtung + alle.length) % alle.length,
+        );
+        return;
+      }
+
+      const breite = buehne.current?.clientWidth ?? window.innerWidth;
+      zielRichtung.current = richtung;
+      setAnimiert(true);
+      setZug({ x: -richtung * breite, y: 0 });
     },
-    [alle.length],
+    [alle.length, ruhig],
   );
 
+  /** Nach der Blätter-Animation den Index übernehmen und ohne Sprung zurücksetzen. */
+  const animationFertig = useCallback(() => {
+    const richtung = zielRichtung.current;
+    if (richtung === 0) {
+      setAnimiert(false);
+      return;
+    }
+    zielRichtung.current = 0;
+    setAktiv((index) =>
+      index === null ? index : (index + richtung + alle.length) % alle.length,
+    );
+    setAnimiert(false);
+    setZug({ x: 0, y: 0 });
+  }, [alle.length]);
+
+  // Tastatur, Scroll-Sperre und Fokus
   useEffect(() => {
     if (aktiv === null) return;
 
@@ -65,7 +134,92 @@ export function Galerie({ jahre }: { jahre: GalerieJahr[] }) {
     };
   }, [aktiv, blaettern, schliessen]);
 
+  // --- Zeigergesten (Finger, Stift und Maus) -------------------------------
+
+  function gesteStart(event: React.PointerEvent) {
+    if (animiert || zielRichtung.current !== 0) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+
+    geste.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      startZeit: event.timeStamp,
+      letzteX: event.clientX,
+      letzteZeit: event.timeStamp,
+      tempo: 0,
+      achse: "offen",
+      id: event.pointerId,
+    };
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+  }
+
+  function gesteBewegung(event: React.PointerEvent) {
+    const g = geste.current;
+    if (!g || g.id !== event.pointerId) return;
+
+    const dx = event.clientX - g.startX;
+    const dy = event.clientY - g.startY;
+
+    if (g.achse === "offen") {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      g.achse = Math.abs(dx) > Math.abs(dy) ? "waagerecht" : "senkrecht";
+    }
+
+    const zeitDelta = event.timeStamp - g.letzteZeit;
+    if (zeitDelta > 0) {
+      g.tempo = (event.clientX - g.letzteX) / zeitDelta;
+      g.letzteX = event.clientX;
+      g.letzteZeit = event.timeStamp;
+    }
+
+    if (g.achse === "waagerecht") {
+      setZug({ x: dx, y: 0 });
+    } else {
+      // Nach oben ziehen federt zurück, nach unten schließt die Ansicht.
+      setZug({ x: 0, y: dy > 0 ? dy : dy * 0.25 });
+    }
+  }
+
+  function gesteEnde(event: React.PointerEvent) {
+    const g = geste.current;
+    if (!g || g.id !== event.pointerId) return;
+    geste.current = null;
+
+    const dx = event.clientX - g.startX;
+    const dy = event.clientY - g.startY;
+    const breite = buehne.current?.clientWidth ?? window.innerWidth;
+
+    if (g.achse === "waagerecht") {
+      const weitGenug = Math.abs(dx) > breite * SCHWELLE_ANTEIL;
+      const schnellGenug = Math.abs(g.tempo) > SCHWELLE_TEMPO;
+
+      if (weitGenug || schnellGenug) {
+        blaettern(dx < 0 ? 1 : -1);
+        return;
+      }
+    }
+
+    if (g.achse === "senkrecht" && dy > SCHLIESS_WEG) {
+      setSchliesst(true);
+      setAnimiert(true);
+      setZug({ x: 0, y: window.innerHeight * 0.5 });
+      window.setTimeout(schliessen, ruhig ? 0 : 280);
+      return;
+    }
+
+    // Nicht weit genug: zurückfedern
+    setAnimiert(true);
+    setZug({ x: 0, y: 0 });
+  }
+
   const aktuell = aktiv === null ? null : alle[aktiv];
+  const vorheriges =
+    aktiv === null ? null : alle[(aktiv - 1 + alle.length) % alle.length];
+  const naechstes = aktiv === null ? null : alle[(aktiv + 1) % alle.length];
+
+  const zieht = geste.current !== null;
+  const verblassen = schliesst ? 0 : Math.max(0, 1 - Math.max(0, zug.y) / 420);
+
   let laufenderIndex = 0;
 
   return (
@@ -137,35 +291,31 @@ export function Galerie({ jahre }: { jahre: GalerieJahr[] }) {
               role="dialog"
               aria-modal="true"
               aria-label={`Bild ${(aktiv ?? 0) + 1} von ${alle.length}: ${aktuell.alt}`}
-              className="fixed inset-0 z-[100] flex flex-col bg-ink/96 backdrop-blur-sm"
+              className="fixed inset-0 z-[100] flex touch-none flex-col select-none"
               onClick={(event) => {
                 if (event.target === event.currentTarget) schliessen();
               }}
-              onTouchStart={(event) => {
-                const punkt = event.changedTouches[0];
-                beruehrung.current = { x: punkt.clientX, y: punkt.clientY };
-              }}
-              onTouchEnd={(event) => {
-                const start = beruehrung.current;
-                if (!start) return;
-                const punkt = event.changedTouches[0];
-                const dx = punkt.clientX - start.x;
-                const dy = punkt.clientY - start.y;
-                if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) {
-                  blaettern(dx < 0 ? 1 : -1);
-                }
-                beruehrung.current = null;
-              }}
             >
-              <div className="flex items-center justify-between gap-4 px-4 py-4 text-paper sm:px-6">
-                <p className="text-xs font-medium tracking-[0.12em] text-paper/60 uppercase tabular-nums">
+              {/* Eigener Hintergrund statt Pseudo-Element: verlässlich in allen
+                  Browsern und beim Herunterziehen sauber ausblendbar. */}
+              <div
+                aria-hidden="true"
+                className={`absolute inset-0 bg-ink ${ruhig ? "" : "hintergrund-ein"}`}
+                style={{
+                  opacity: verblassen,
+                  transition: zieht ? "none" : "opacity 0.3s linear",
+                }}
+              />
+              {/* Kopfzeile */}
+              <div className="relative z-10 flex items-center justify-between gap-4 px-4 py-4 text-paper sm:px-6">
+                <p className="text-xs font-medium tracking-[0.12em] text-paper/70 uppercase tabular-nums">
                   {aktuell.jahr} · {(aktiv ?? 0) + 1} / {alle.length}
                 </p>
                 <button
                   ref={schliessenRef}
                   type="button"
                   onClick={schliessen}
-                  className="inline-flex size-11 items-center justify-center rounded-full border border-paper/20 transition-colors hover:bg-paper/10"
+                  className="inline-flex size-11 items-center justify-center rounded-full border border-paper/25 transition-colors hover:bg-paper/10"
                 >
                   <span className="sr-only">Ansicht schließen</span>
                   <svg
@@ -184,20 +334,54 @@ export function Galerie({ jahre }: { jahre: GalerieJahr[] }) {
                 </button>
               </div>
 
-              <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 sm:px-16">
-                <Image
-                  key={aktuell.bild.src}
-                  src={aktuell.bild}
-                  alt={aktuell.alt}
-                  sizes="100vw"
-                  placeholder="blur"
-                  className="max-h-full w-auto max-w-full object-contain"
-                />
+              {/* Bühne mit drei Plätzen: vorheriges, aktuelles, nächstes Bild */}
+              <div
+                ref={buehne}
+                className="relative z-10 flex min-h-0 flex-1 items-center overflow-hidden"
+                onPointerDown={gesteStart}
+                onPointerMove={gesteBewegung}
+                onPointerUp={gesteEnde}
+                onPointerCancel={gesteEnde}
+              >
+                <div
+                  className="flex h-full w-full will-change-transform"
+                  onTransitionEnd={(event) => {
+                    if (event.propertyName === "transform") animationFertig();
+                  }}
+                  style={{
+                    transform: `translate3d(calc(-100% + ${zug.x}px), ${zug.y}px, 0) scale(${
+                      zug.y > 0 ? Math.max(0.82, 1 - zug.y / 1600) : 1
+                    })`,
+                    transition:
+                      animiert && !ruhig
+                        ? "transform 0.42s cubic-bezier(0.22, 0.61, 0.36, 1)"
+                        : "none",
+                  }}
+                >
+                  {[vorheriges, aktuell, naechstes].map((eintrag, platz) => (
+                    <div
+                      key={`${platz}-${eintrag?.bild.src}`}
+                      className="flex h-full w-full shrink-0 items-center justify-center px-3 sm:px-20"
+                      aria-hidden={platz !== 1}
+                    >
+                      {eintrag ? (
+                        <Image
+                          src={eintrag.bild}
+                          alt={platz === 1 ? eintrag.alt : ""}
+                          sizes="100vw"
+                          placeholder="blur"
+                          draggable={false}
+                          className="pointer-events-none max-h-full w-auto max-w-full rounded-sm object-contain"
+                        />
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
 
                 <button
                   type="button"
                   onClick={() => blaettern(-1)}
-                  className="absolute left-2 hidden size-12 items-center justify-center rounded-full border border-paper/20 text-paper transition-colors hover:bg-paper/10 sm:inline-flex"
+                  className="pfeil absolute left-3 hidden size-12 items-center justify-center rounded-full border border-paper/25 text-paper backdrop-blur-sm transition-[background-color,transform] duration-300 ease-[var(--ease-soft)] hover:-translate-x-0.5 hover:bg-paper/10 sm:inline-flex"
                 >
                   <span className="sr-only">Vorheriges Bild</span>
                   <svg
@@ -218,7 +402,7 @@ export function Galerie({ jahre }: { jahre: GalerieJahr[] }) {
                 <button
                   type="button"
                   onClick={() => blaettern(1)}
-                  className="absolute right-2 hidden size-12 items-center justify-center rounded-full border border-paper/20 text-paper transition-colors hover:bg-paper/10 sm:inline-flex"
+                  className="pfeil absolute right-3 hidden size-12 items-center justify-center rounded-full border border-paper/25 text-paper backdrop-blur-sm transition-[background-color,transform] duration-300 ease-[var(--ease-soft)] hover:translate-x-0.5 hover:bg-paper/10 sm:inline-flex"
                 >
                   <span className="sr-only">Nächstes Bild</span>
                   <svg
@@ -238,12 +422,34 @@ export function Galerie({ jahre }: { jahre: GalerieJahr[] }) {
                 </button>
               </div>
 
-              <div className="px-5 pt-5 pb-8 text-center sm:px-10">
-                <p className="mx-auto max-w-2xl text-sm leading-relaxed text-paper/80">
-                  {aktuell.unterschrift ?? aktuell.alt}
+              {/* Bildunterschrift und Fortschritt */}
+              <div className="relative z-10 px-5 pt-5 pb-7 text-center sm:px-10">
+                <p
+                  key={aktuell.bild.src}
+                  className={ruhig ? "" : "unterschrift-ein"}
+                  style={{ margin: "0 auto", maxWidth: "42rem" }}
+                >
+                  <span className="text-sm leading-relaxed text-paper/85">
+                    {aktuell.unterschrift ?? aktuell.alt}
+                  </span>
                 </p>
-                <p className="mt-3 text-xs text-paper/45 sm:hidden">
-                  Zum Blättern wischen
+
+                <div
+                  aria-hidden="true"
+                  className="mx-auto mt-5 h-px w-40 overflow-hidden rounded-full bg-paper/20"
+                >
+                  <span
+                    className="block h-full bg-paper/70 transition-[width] duration-500 ease-[var(--ease-soft)]"
+                    style={{
+                      width: `${(((aktiv ?? 0) + 1) / alle.length) * 100}%`,
+                    }}
+                  />
+                </div>
+
+                <p className="mt-3 text-xs text-paper/55 sm:hidden">
+                  {zieht
+                    ? "Loslassen zum Blättern"
+                    : "Wischen zum Blättern · nach unten zum Schließen"}
                 </p>
               </div>
             </div>,

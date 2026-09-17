@@ -4,6 +4,8 @@ import Link from "next/link";
 import { BeitragKarte, FolgenKarte } from "@/components/beitrag-karte";
 import { Kleeblatt } from "@/components/marke";
 import { Reveal } from "@/components/reveal";
+import { TextEin } from "@/components/text-ein";
+import { Wischreihe } from "@/components/wischreihe";
 import { PfeilRechts } from "@/components/ui";
 import { beitraegeSortiert } from "@/content/aktuelles";
 
@@ -31,7 +33,10 @@ export default function AktuellesUebersicht() {
             Aktuelles
           </p>
           <h1 className="mt-6 max-w-3xl text-h1 text-ink">
-            Was bei den Glücksbringern gerade passiert.
+            <TextEin
+              text="Was bei den Glücksbringern gerade passiert."
+              verzoegerung={100}
+            />
           </h1>
           <p className="mt-8 max-w-xl text-lead text-ink-70">
             Berichte von unseren Aktionen, vom Wunschbaum am Meer und aus dem
@@ -101,15 +106,17 @@ export default function AktuellesUebersicht() {
           Weitere Beiträge
         </h2>
 
-        <div className="mt-12 grid gap-12 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
-          {weitere.map((beitrag, index) => (
-            <Reveal key={beitrag.slug} delay={index * 90}>
-              <BeitragKarte beitrag={beitrag} />
+        <div className="mt-12">
+          <Wischreihe label="Weitere Beiträge">
+            {weitere.map((beitrag, index) => (
+              <Reveal key={beitrag.slug} delay={index * 90}>
+                <BeitragKarte beitrag={beitrag} />
+              </Reveal>
+            ))}
+            <Reveal delay={weitere.length * 90}>
+              <FolgenKarte />
             </Reveal>
-          ))}
-          <Reveal delay={weitere.length * 90}>
-            <FolgenKarte />
-          </Reveal>
+          </Wischreihe>
         </div>
       </section>
     </>

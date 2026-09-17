@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BeitragKarte } from "@/components/beitrag-karte";
 import { Reveal } from "@/components/reveal";
+import { Wischreihe } from "@/components/wischreihe";
 import { Spendenkonto } from "@/components/spendenkonto";
 import { ButtonLink, PfeilRechts } from "@/components/ui";
 import {
@@ -178,7 +179,7 @@ export default async function BeitragSeite({ params }: Props) {
               priority
               sizes="(min-width: 768px) 46rem, 92vw"
               placeholder="blur"
-              className="w-full"
+              className="bild-ein w-full"
             />
           </div>
         </figure>
@@ -208,12 +209,14 @@ export default async function BeitragSeite({ params }: Props) {
           <h2 className="border-t border-sand-200 pt-6 text-xs font-semibold tracking-[0.14em] text-sea uppercase">
             Weitere Beiträge
           </h2>
-          <div className="mt-12 grid gap-12 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
-            {weitere.map((eintrag, index) => (
-              <Reveal key={eintrag.slug} delay={index * 90}>
-                <BeitragKarte beitrag={eintrag} />
-              </Reveal>
-            ))}
+          <div className="mt-12">
+            <Wischreihe label="Weitere Beiträge" raster="sm:grid-cols-2">
+              {weitere.map((eintrag, index) => (
+                <Reveal key={eintrag.slug} delay={index * 90}>
+                  <BeitragKarte beitrag={eintrag} />
+                </Reveal>
+              ))}
+            </Wischreihe>
           </div>
         </section>
       ) : null}

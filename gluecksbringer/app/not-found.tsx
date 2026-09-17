@@ -34,7 +34,7 @@ export default function NichtGefunden() {
             alt="Puck, das Maskottchen der Glücksbringer am Meer."
             width={200}
             height={385}
-            className="h-auto w-44"
+            className="puck h-auto w-44"
           />
         </div>
       </div>

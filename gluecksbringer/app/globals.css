@@ -301,3 +301,230 @@
   border-radius: 9999px;
   background-color: var(--color-glow);
 }
+
+/* ===========================================================================
+   Bewegung
+   Alles läuft ausschließlich über transform und opacity, damit die Seite auch
+   auf älteren Geräten flüssig bleibt. Wer im Betriebssystem "Bewegung
+   reduzieren" eingestellt hat, sieht am Ende dieser Datei: nichts davon.
+   =========================================================================== */
+
+/* --- Wortweises Einlaufen von Überschriften ------------------------------ */
+
+@keyframes wort-ein {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.42em, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.wort {
+  display: inline-block;
+  animation: wort-ein 0.85s var(--ease-soft) both;
+  animation-delay: var(--wort-verzoegerung, 0ms);
+  will-change: transform, opacity;
+}
+
+/* --- Zahlen rollen aus einer Maske nach oben ------------------------------ */
+
+.zahl-maske {
+  display: block;
+  overflow: hidden;
+  padding-block: 0.08em;
+}
+
+.zahl {
+  display: block;
+  transform: translate3d(0, 110%, 0);
+  transition: transform 1.1s var(--ease-soft);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal[data-visible="true"] .zahl {
+  transform: none;
+}
+
+/* --- Bilder blenden leicht heran ----------------------------------------- */
+
+@keyframes bild-ein {
+  from {
+    opacity: 0;
+    transform: scale(1.055);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.bild-ein {
+  animation: bild-ein 1.5s var(--ease-soft) both;
+}
+
+/* --- Parallaxe beim Scrollen ---------------------------------------------
+   Nutzt scroll-gesteuerte Animationen. Browser ohne Unterstützung zeigen das
+   Bild einfach unbewegt – es wird dafür kein JavaScript geladen. */
+
+.parallax-rahmen {
+  overflow: hidden;
+}
+
+@supports (animation-timeline: view()) {
+  @keyframes parallax-zug {
+    from {
+      transform: translate3d(0, -4%, 0) scale(1.09);
+    }
+    to {
+      transform: translate3d(0, 4%, 0) scale(1.09);
+    }
+  }
+
+  .parallax-bild {
+    animation: parallax-zug linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+}
+
+/* --- Wellenbewegung am Fuß der Seite ------------------------------------- */
+
+@keyframes wellen-zug {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.welle-vorn {
+  animation: wellen-zug 26s linear infinite;
+}
+
+.welle-hinten {
+  animation: wellen-zug 41s linear infinite reverse;
+}
+
+/* --- Puck wippt leise ----------------------------------------------------- */
+
+@keyframes puck-wippen {
+  0%,
+  100% {
+    transform: rotate(-1.8deg) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: rotate(1.8deg) translate3d(0, -4px, 0);
+  }
+}
+
+.puck {
+  transform-origin: 50% 92%;
+  animation: puck-wippen 6s ease-in-out infinite;
+}
+
+/* --- Kleeblatt dreht sich beim Überfahren einer Karte -------------------- */
+
+.kleeblatt {
+  transition: transform 0.9s var(--ease-soft);
+}
+
+.gruppe:hover .kleeblatt,
+.gruppe:focus-within .kleeblatt {
+  transform: rotate(90deg);
+}
+
+/* --- Galerie-Großansicht -------------------------------------------------- */
+
+@keyframes hintergrund-ein {
+  from {
+    opacity: 0;
+  }
+}
+
+.hintergrund-ein {
+  animation: hintergrund-ein 0.3s var(--ease-soft);
+}
+
+@keyframes unterschrift-ein {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.unterschrift-ein {
+  animation: unterschrift-ein 0.5s var(--ease-soft) both;
+}
+
+/* --- Wischreihen auf dem Smartphone -------------------------------------- */
+
+.wischreihe {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1.25rem;
+  padding-inline: 1.25rem;
+  margin-inline: -1.25rem;
+  padding-bottom: 0.5rem;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.wischreihe::-webkit-scrollbar {
+  display: none;
+}
+
+.wischreihe > * {
+  flex: 0 0 82%;
+  scroll-snap-align: start;
+}
+
+@media (width >= 40rem) {
+  .wischreihe {
+    display: grid;
+    gap: 2rem;
+    overflow: visible;
+    padding-inline: 0;
+    margin-inline: 0;
+  }
+
+  .wischreihe > * {
+    flex: initial;
+  }
+}
+
+/* --- Bewegung reduzieren ------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .wort,
+  .bild-ein,
+  .hintergrund-ein,
+  .unterschrift-ein {
+    animation: none;
+  }
+
+  .welle-vorn,
+  .welle-hinten,
+  .puck,
+  .parallax-bild {
+    animation: none !important;
+  }
+
+  .zahl {
+    transform: none;
+    transition: none;
+  }
+
+  .kleeblatt {
+    transition: none;
+  }
+}

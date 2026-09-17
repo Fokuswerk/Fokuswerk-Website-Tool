@@ -5,6 +5,8 @@ import { Kleeblatt } from "@/components/marke";
 import { PayPalButton } from "@/components/paypal-button";
 import { Reveal } from "@/components/reveal";
 import { Spendenkonto } from "@/components/spendenkonto";
+import { TextEin } from "@/components/text-ein";
+import { Wischreihe } from "@/components/wischreihe";
 import {
   Abschnittsmarke,
   ButtonLink,
@@ -66,7 +68,10 @@ export default function Startseite() {
 
               <Reveal delay={60}>
                 <h1 className="mt-6 text-display text-ink">
-                  Gemeinsam schenken wir Kindern ein Stück&nbsp;Glück.
+                  <TextEin
+                    text="Gemeinsam schenken wir Kindern ein Stück Glück."
+                    verzoegerung={120}
+                  />
                 </h1>
               </Reveal>
 
@@ -107,7 +112,7 @@ export default function Startseite() {
                     priority
                     sizes="(min-width: 1024px) 55vw, 100vw"
                     placeholder="blur"
-                    className="aspect-[4/5] w-full object-cover object-center sm:aspect-[16/11] lg:aspect-[5/4]"
+                    className="bild-ein aspect-[4/5] w-full object-cover object-center sm:aspect-[16/11] lg:aspect-[5/4]"
                   />
                 </div>
                 <figcaption className="mt-3 max-w-md text-sm text-ink-50">
@@ -172,8 +177,8 @@ export default function Startseite() {
         <dl className="grid gap-10 py-12 sm:grid-cols-3 sm:gap-8 sm:py-14">
           {fakten.map((fakt, index) => (
             <Reveal key={fakt.wert} delay={index * 90} className="sm:px-2">
-              <dt className="font-[family-name:var(--font-display)] text-[2.75rem] leading-none font-semibold tracking-[-0.04em] text-sea tabular-nums sm:text-[3.25rem]">
-                {fakt.wert}
+              <dt className="zahl-maske font-[family-name:var(--font-display)] text-[2.75rem] leading-none font-semibold tracking-[-0.04em] text-sea tabular-nums sm:text-[3.25rem]">
+                <span className="zahl">{fakt.wert}</span>
               </dt>
               <dd className="mt-4 max-w-[22ch] text-[0.9375rem] leading-relaxed text-ink-70">
                 {fakt.label}
@@ -225,13 +230,13 @@ export default function Startseite() {
         </div>
 
         <Reveal delay={120}>
-          <figure className="mt-14 sm:mt-20">
+          <figure className="parallax-rahmen mt-14 h-[46vw] max-h-[440px] min-h-[210px] sm:mt-20">
             <Image
               src={bilder.meerKleeblatt}
               alt="Blick über das Zwischenahner Meer mit Segelbooten, im Vordergrund ein vierblättriges Kleeblatt mit einem Marienkäfer."
               sizes="100vw"
               placeholder="blur"
-              className="h-[42vw] max-h-[420px] min-h-[200px] w-full object-cover"
+              className="parallax-bild h-full w-full object-cover"
             />
           </figure>
         </Reveal>
@@ -348,25 +353,27 @@ export default function Startseite() {
           </div>
         </Reveal>
 
-        <div className="mt-12 grid gap-5 sm:grid-cols-3 sm:gap-6">
-          {galerieVorschau.map((eintrag, index) => (
-            <Reveal key={eintrag.bild.src} delay={index * 90}>
-              <Link
-                href="/galerie"
-                className={`group block overflow-hidden rounded-xl bg-sand-100 ${
-                  index === 1 ? "sm:mt-12" : index === 2 ? "sm:mt-6" : ""
-                }`}
-              >
-                <Image
-                  src={eintrag.bild}
-                  alt={eintrag.alt}
-                  sizes="(min-width: 640px) 31vw, 92vw"
-                  placeholder="blur"
-                  className="aspect-[4/5] w-full object-cover transition-transform duration-[900ms] ease-[var(--ease-soft)] group-hover:scale-[1.04]"
-                />
-              </Link>
-            </Reveal>
-          ))}
+        <div className="mt-12">
+          <Wischreihe raster="sm:grid-cols-3" label="Bilder aus der Galerie">
+            {galerieVorschau.map((eintrag, index) => (
+              <Reveal key={eintrag.bild.src} delay={index * 90}>
+                <Link
+                  href="/galerie"
+                  className={`group block overflow-hidden rounded-xl bg-sand-100 ${
+                    index === 1 ? "sm:mt-12" : index === 2 ? "sm:mt-6" : ""
+                  }`}
+                >
+                  <Image
+                    src={eintrag.bild}
+                    alt={eintrag.alt}
+                    sizes="(min-width: 640px) 31vw, 82vw"
+                    placeholder="blur"
+                    className="aspect-[4/5] w-full object-cover transition-transform duration-[900ms] ease-[var(--ease-soft)] group-hover:scale-[1.04]"
+                  />
+                </Link>
+              </Reveal>
+            ))}
+          </Wischreihe>
         </div>
       </section>
 
@@ -431,15 +438,17 @@ export default function Startseite() {
           </article>
         </Reveal>
 
-        <div className="mt-16 grid gap-10 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
-          {weitere.map((beitrag, index) => (
-            <Reveal key={beitrag.slug} delay={index * 90}>
-              <BeitragKarte beitrag={beitrag} />
+        <div className="mt-16">
+          <Wischreihe label="Weitere Beiträge">
+            {weitere.map((beitrag, index) => (
+              <Reveal key={beitrag.slug} delay={index * 90}>
+                <BeitragKarte beitrag={beitrag} />
+              </Reveal>
+            ))}
+            <Reveal delay={weitere.length * 90}>
+              <FolgenKarte />
             </Reveal>
-          ))}
-          <Reveal delay={weitere.length * 90}>
-            <FolgenKarte />
-          </Reveal>
+          </Wischreihe>
         </div>
       </section>
 

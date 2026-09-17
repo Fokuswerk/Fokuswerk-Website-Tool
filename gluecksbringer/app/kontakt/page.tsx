@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { KontaktFormular } from "@/components/kontakt-formular";
 import { Kleeblatt } from "@/components/marke";
 import { Reveal } from "@/components/reveal";
+import { TextEin } from "@/components/text-ein";
 import { Abschnittsmarke, ButtonLink, PfeilRechts } from "@/components/ui";
 import { ansprechpartner, verein } from "@/content/verein";
 
@@ -32,7 +33,10 @@ export default function Kontakt() {
             Kontakt
           </p>
           <h1 className="mt-6 max-w-3xl text-h1 text-ink">
-            Schreiben Sie uns – wir freuen uns über jede Nachricht.
+            <TextEin
+              text="Schreiben Sie uns – wir freuen uns über jede Nachricht."
+              verzoegerung={100}
+            />
           </h1>
           <p className="mt-8 max-w-xl text-lead text-ink-70">
             Ob Sie eine Frage zum Wunschbaum haben, mithelfen möchten oder von
