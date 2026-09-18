@@ -98,16 +98,24 @@ function BlockAusgabe({ block }: { block: Block }) {
         </div>
       );
 
-    case "bild":
+    case "bild": {
+      // Kleine Vorlagen – etwa gezeichnete Logos – werden nie hochskaliert,
+      // sondern mittig auf der Fläche gezeigt. Sonst werden sie unscharf.
+      const klein = block.bild.width < 640;
       return (
         <figure className="mt-10">
-          <div className="overflow-hidden rounded-2xl bg-sand-100">
+          <div
+            className={`overflow-hidden rounded-2xl bg-sand-100 ${
+              klein ? "flex justify-center px-6 py-8 sm:py-12" : ""
+            }`}
+          >
             <Image
               src={block.bild}
               alt={block.alt}
               sizes="(min-width: 768px) 46rem, 92vw"
               placeholder="blur"
-              className="w-full"
+              style={klein ? { maxWidth: block.bild.width } : undefined}
+              className={klein ? "h-auto w-full" : "w-full"}
             />
           </div>
           {block.unterschrift ? (
@@ -117,6 +125,7 @@ function BlockAusgabe({ block }: { block: Block }) {
           ) : null}
         </figure>
       );
+    }
   }
 }
 

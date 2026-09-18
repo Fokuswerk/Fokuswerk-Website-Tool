@@ -1,6 +1,5 @@
-import Image from "next/image";
+import { Puck } from "@/components/puck";
 import { ButtonLink, PfeilRechts } from "@/components/ui";
-import { bilder } from "@/content/bilder";
 
 export default function NichtGefunden() {
   return (
@@ -29,12 +28,10 @@ export default function NichtGefunden() {
         </div>
 
         <div className="hidden justify-center lg:flex">
-          <Image
-            src={bilder.puck}
+          <Puck
+            wippt
             alt="Puck, das Maskottchen der Glücksbringer am Meer."
-            width={200}
-            height={385}
-            className="puck h-auto w-44"
+            className="h-auto w-48"
           />
         </div>
       </div>

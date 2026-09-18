@@ -18,10 +18,11 @@ import wunschbaum2025Wunschkarten from "@/assets/bilder/wunschbaum-2025-wunschka
 import wunschbaum2025Vorbereitung from "@/assets/bilder/wunschbaum-2025-vorbereitung.jpg";
 import wunschbaum2025Plakat from "@/assets/bilder/wunschbaum-2025-plakat.jpg";
 import wunschbaum2025Banner from "@/assets/bilder/wunschbaum-2025-banner.jpg";
+import puckPortraet from "@/assets/bilder/puck-portraet.jpg";
 import wunschbaumDigital from "@/assets/bilder/wunschbaum-digital.png";
 import vereinTeam from "@/assets/bilder/verein-team.jpg";
 import geschenkuebergabe2024 from "@/assets/bilder/geschenkuebergabe-2024.jpg";
-import meerKleeblatt from "@/assets/bilder/zwischenahner-meer-kleeblatt.jpg";
+import meerAbend from "@/assets/bilder/zwischenahner-meer-abend.jpg";
 import partnerWeinbar from "@/assets/bilder/partner-weinbar.jpg";
 import puck from "@/assets/bilder/puck.png";
 
@@ -56,10 +57,11 @@ export const bilder = {
   wunschbaum2025Vorbereitung,
   wunschbaum2025Plakat,
   wunschbaum2025Banner,
+  puckPortraet,
   wunschbaumDigital,
   vereinTeam,
   geschenkuebergabe2024,
-  meerKleeblatt,
+  meerAbend,
   partnerWeinbar,
   puck,
   g2011ErsteGeschenke,

@@ -62,9 +62,21 @@ export default function Impressum() {
 
         <h2>Bildnachweis</h2>
         <p>
-          Sämtliche Fotos auf dieser Website stammen aus der Arbeit des Vereins
-          Glücksbringer am Meer e.V. und wurden vom bisherigen Webauftritt
-          übernommen.
+          Die Fotos aus der Vereinsarbeit sowie die Zeichnung des Maskottchens
+          „Puck“ stammen aus dem Archiv des Vereins Glücksbringer am Meer e.V.
+        </p>
+        <p>
+          Die Aufnahme des Zwischenahner Meers auf der Startseite: „Abend am
+          Zwischenahner Meer (2024)“ von JoachimKohler-HB, über Wikimedia
+          Commons, lizenziert unter{" "}
+          <a
+            href="https://creativecommons.org/licenses/by-sa/4.0/deed.de"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            CC BY-SA 4.0
+          </a>
+          . Das Bild wurde für die Verwendung auf dieser Seite beschnitten.
         </p>
 
         <h2>Haftung für Inhalte</h2>

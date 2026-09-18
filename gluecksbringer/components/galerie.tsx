@@ -249,18 +249,22 @@ export function Galerie({ jahre }: { jahre: GalerieJahr[] }) {
                 jahr.bilder.length === 1
                   ? "sm:max-w-xl"
                   : jahr.bilder.length === 2
-                    ? "masonry masonry-zwei"
-                    : "masonry"
+                    ? "bildraster bildraster-zwei"
+                    : "bildraster"
               }
             >
               {jahr.bilder.map((eintrag) => {
                 const index = laufenderIndex++;
                 return (
-                  <figure key={eintrag.bild.src}>
+                  <figure key={eintrag.bild.src} className="flex flex-col">
                     <button
                       type="button"
                       onClick={() => oeffnen(index)}
-                      className="group block w-full overflow-hidden rounded-xl bg-sand-100"
+                      className={`group block w-full overflow-hidden rounded-xl ${
+                        eintrag.einpassen
+                          ? "flex items-center justify-center bg-sand-50 p-4"
+                          : "bg-sand-100"
+                      }`}
                     >
                       <Image
                         src={eintrag.bild}
@@ -269,7 +273,17 @@ export function Galerie({ jahre }: { jahre: GalerieJahr[] }) {
                         priority={index === 0}
                         sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 92vw"
                         placeholder="blur"
-                        className="h-auto w-full transition-transform duration-[900ms] ease-[var(--ease-soft)] group-hover:scale-[1.035]"
+                        // Gezeichnete Vorlagen nie über ihre Originalgröße ziehen.
+                        style={
+                          eintrag.einpassen
+                            ? { maxWidth: eintrag.bild.width }
+                            : undefined
+                        }
+                        className={`transition-transform duration-[900ms] ease-[var(--ease-soft)] group-hover:scale-[1.035] ${
+                          eintrag.einpassen
+                            ? "aspect-[4/3] w-full object-contain"
+                            : "aspect-[4/3] w-full object-cover"
+                        }`}
                       />
                     </button>
                     {eintrag.unterschrift ? (
@@ -371,7 +385,8 @@ export function Galerie({ jahre }: { jahre: GalerieJahr[] }) {
                           sizes="100vw"
                           placeholder="blur"
                           draggable={false}
-                          className="pointer-events-none max-h-full w-auto max-w-full rounded-sm object-contain"
+                          style={{ maxWidth: eintrag.bild.width }}
+                          className="pointer-events-none max-h-full w-auto rounded-sm object-contain"
                         />
                       ) : null}
                     </div>

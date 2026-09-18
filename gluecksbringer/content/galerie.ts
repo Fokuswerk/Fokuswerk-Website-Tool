@@ -18,6 +18,11 @@ export type GalerieBild = {
   unterschrift?: string;
   /** Beschreibung für Screenreader und Suchmaschinen. */
   alt: string;
+  /**
+   * Plakate und Zeichnungen werden vollständig in die Kachel eingepasst statt
+   * beschnitten – bei ihnen zählt das ganze Blatt, nicht der Ausschnitt.
+   */
+  einpassen?: boolean;
 };
 
 export type GalerieJahr = {
@@ -48,6 +53,7 @@ export const galerie: GalerieJahr[] = [
       },
       {
         bild: bilder.wunschbaum2025Plakat,
+        einpassen: true,
         unterschrift: "Mach mit! Das Plakat zum 15. Wunschbaum am Meer.",
         alt: "Grünes Plakat zum 15. Wunschbaum am Meer 2025 mit allen Terminen.",
       },
@@ -208,6 +214,7 @@ export const galerie: GalerieJahr[] = [
       },
       {
         bild: bilder.g2011Weihnachtslogo,
+        einpassen: true,
         unterschrift: "unser erstes Weihnachtslogo",
         alt: "Das erste Weihnachtslogo: eine gezeichnete Christbaumkugel mit dem Maskottchen Puck.",
       },

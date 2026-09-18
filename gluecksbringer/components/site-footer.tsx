@@ -1,8 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
-import { bilder } from "@/content/bilder";
 import { navigation, verein } from "@/content/verein";
-import { Welle } from "./marke";
+import { Puck } from "./puck";
 import { PfeilRechts } from "./ui";
 
 const rechtliches = [
@@ -12,17 +10,8 @@ const rechtliches = [
 
 export function SiteFooter() {
   return (
-    <footer className="relative mt-24 overflow-hidden bg-ink text-paper sm:mt-32">
-      {/* Zwei versetzte Wellen erzeugen einen ruhigen Wassereindruck. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 -top-px h-6 overflow-hidden sm:h-9"
-      >
-        <Welle className="welle-hinten absolute inset-x-0 top-1 h-full w-[200%] text-paper/45" />
-        <Welle className="welle-vorn absolute inset-x-0 top-0 h-full w-[200%] text-paper" />
-      </div>
-
-      <div className="shell relative pt-24 pb-12 sm:pt-28">
+    <footer className="relative mt-24 bg-ink text-paper sm:mt-32">
+      <div className="shell relative pt-20 pb-12 sm:pt-24">
         <div className="grid gap-14 lg:grid-cols-[1.4fr_1fr_1fr] lg:gap-10">
           <div className="max-w-sm">
             <p className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-[-0.025em]">
@@ -145,15 +134,9 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-16 flex flex-col gap-6 border-t border-paper/12 pt-8 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex items-end gap-4">
-            <Image
-              src={bilder.puck}
-              alt=""
-              aria-hidden="true"
-              width={40}
-              height={77}
-              className="puck h-14 w-auto opacity-90"
-            />
+          <div className="flex items-end gap-5">
+            {/* Puck steht auf der Grundlinie und verabschiedet – ganze Figur, nicht angeschnitten. */}
+            <Puck wippt className="h-20 w-auto sm:h-24" />
             <p className="pb-1 text-xs leading-relaxed text-paper/50">
               © {new Date().getFullYear()} {verein.name}
               <br />

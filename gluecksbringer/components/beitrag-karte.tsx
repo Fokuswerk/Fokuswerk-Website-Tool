@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Beitrag } from "@/content/aktuelles";
 import { verein } from "@/content/verein";
+import { Kleeblatt } from "./marke";
 import { PfeilRechts } from "./ui";
 
 export function BeitragKarte({ beitrag }: { beitrag: Beitrag }) {
@@ -57,24 +58,30 @@ export function BeitragKarte({ beitrag }: { beitrag: Beitrag }) {
   );
 }
 
-/** Füllt die dritte Spalte, solange es nur wenige Beiträge gibt. */
+/** Füllt die dritte Spalte, solange es nur wenige Beiträge gibt.
+ *  Gleicher Aufbau wie eine Beitragskarte – Bildfläche oben, dann Text –
+ *  damit die Reihe nicht aus dem Takt gerät. */
 export function FolgenKarte() {
   return (
-    <aside className="flex h-full flex-col justify-between rounded-xl border border-sand-200 bg-sand-50 p-7">
-      <div>
-        <p className="text-xs font-semibold tracking-[0.1em] text-sea uppercase">
-          Nichts verpassen
-        </p>
-        <h3 className="mt-4 text-h3 text-ink">
-          Die kurzen Neuigkeiten teilen wir bei Facebook und Instagram.
-        </h3>
-        <p className="mt-3 text-[0.9375rem] leading-relaxed text-ink-70">
-          Dort zeigen wir, was zwischen den Aktionen passiert – und wann der
-          nächste Wunschbaum steht.
-        </p>
+    <aside className="flex h-full flex-col">
+      <div className="flex aspect-[3/2] w-full items-center justify-center overflow-hidden rounded-xl bg-ink">
+        <Kleeblatt className="size-14 text-glow" />
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-3">
+      <p className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold tracking-[0.1em] text-sea uppercase">
+        <span>Nichts verpassen</span>
+      </p>
+
+      <h3 className="mt-3 text-h3 text-ink">
+        Die kurzen Neuigkeiten stehen bei Facebook und Instagram.
+      </h3>
+
+      <p className="mt-3 text-[0.9375rem] leading-relaxed text-ink-70">
+        Dort zeigen wir, was zwischen den Aktionen passiert – und wann der
+        nächste Wunschbaum steht.
+      </p>
+
+      <div className="mt-5 flex flex-wrap gap-3">
         <a
           href={verein.social.facebook}
           target="_blank"

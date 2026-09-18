@@ -3,7 +3,9 @@ import Link from "next/link";
 import { BeitragKarte, FolgenKarte } from "@/components/beitrag-karte";
 import { Kleeblatt } from "@/components/marke";
 import { PayPalButton } from "@/components/paypal-button";
+import { Puck } from "@/components/puck";
 import { Reveal } from "@/components/reveal";
+import { SatzEin } from "@/components/satz-ein";
 import { Spendenkonto } from "@/components/spendenkonto";
 import { TextEin } from "@/components/text-ein";
 import { Wischreihe } from "@/components/wischreihe";
@@ -45,12 +47,18 @@ const wegEinesWunsches = [
 
 export default function Startseite() {
   const [featured, ...weitere] = beitraegeSortiert;
-  // 2014 Schwimmkurs, 2013 Wunschbaum mit Kindern, 2011 Geschenkausgabe
+
+  // Drei Bilder, die den Bogen von 2011 bis heute spannen: der erste Baum,
+  // der Baum mit Plakat, die Wunschkarten von 2025. Über die Bildnamen
+  // gewählt, damit die Auswahl beim Umsortieren der Galerie stehen bleibt.
+  const alleBilder = galerie.flatMap((jahr) => jahr.bilder);
   const galerieVorschau = [
-    galerie[4].bilder[0],
-    galerie[5].bilder[4],
-    galerie[7].bilder[4],
-  ];
+    bilder.g2011BaumGeschmueckt,
+    bilder.g2015Wunschbaum,
+    bilder.wunschbaum2025Wunschkarten,
+  ]
+    .map((bild) => alleBilder.find((eintrag) => eintrag.bild.src === bild.src))
+    .filter((eintrag): eintrag is (typeof alleBilder)[number] => Boolean(eintrag));
 
   return (
     <>
@@ -77,11 +85,10 @@ export default function Startseite() {
 
               <Reveal delay={120}>
                 <p className="mt-7 max-w-lg text-lead text-ink-70">
-                  Wir sind ein ehrenamtlicher Verein aus Bad Zwischenahn. Seit
-                  2011 setzen wir uns für Kinder ein, deren Familien wenig haben
-                  – mit dem Wunschbaum am Meer, mit Grundausstattung zur
-                  Einschulung, mit Sommerglücks&shy;gutscheinen und mit
-                  individuellen Hilfen für Kinder in Not.
+                  Seit 2011 sorgen wir dafür, dass Kinder aus Familien mit wenig
+                  Geld nicht die sind, bei denen zuerst gespart wird. Zu
+                  Weihnachten, zum Schulstart, in den Sommerferien – und dann,
+                  wenn es schnell gehen muss. Ehrenamtlich, aus Bad Zwischenahn.
                 </p>
               </Reveal>
 
@@ -104,18 +111,25 @@ export default function Startseite() {
             </div>
 
             <Reveal delay={120}>
-              <figure className="relative">
-                <div className="overflow-hidden rounded-2xl bg-sand-100">
-                  <Image
-                    src={bilder.wunschbaum2025Team}
-                    alt="Das Team der Glücksbringer am Meer steht mit verpackten Geschenken vor dem geschmückten Wunschbaum in der Bibliothek am Meer."
-                    priority
-                    sizes="(min-width: 1024px) 55vw, 100vw"
-                    placeholder="blur"
-                    className="bild-ein aspect-[4/5] w-full object-cover object-center sm:aspect-[16/11] lg:aspect-[5/4]"
+              <figure>
+                <div className="relative">
+                  <div className="overflow-hidden rounded-2xl bg-sand-100">
+                    <Image
+                      src={bilder.wunschbaum2025Team}
+                      alt="Das Team der Glücksbringer am Meer steht mit verpackten Geschenken vor dem geschmückten Wunschbaum in der Bibliothek am Meer."
+                      priority
+                      sizes="(min-width: 1024px) 55vw, 100vw"
+                      placeholder="blur"
+                      className="bild-ein aspect-[4/5] w-full object-cover object-center sm:aspect-[16/11] lg:aspect-[5/4]"
+                    />
+                  </div>
+                  {/* Puck steht auf der Bildkante – das Zeichen, das der Verein seit 2011 benutzt. */}
+                  <Puck
+                    wippt
+                    className="pointer-events-none absolute bottom-0 -left-4 hidden h-28 w-auto translate-y-[26%] drop-shadow-[0_16px_30px_rgba(16,41,59,0.20)] sm:block lg:-left-7 lg:h-36"
                   />
                 </div>
-                <figcaption className="mt-3 max-w-md text-sm text-ink-50">
+                <figcaption className="mt-5 max-w-md text-sm text-ink-50 sm:mt-9 sm:pl-24 lg:pl-28">
                   Der 15. Wunschbaum am Meer, kurz vor der Eröffnung in der
                   Bibliothek am Meer.
                 </figcaption>
@@ -153,22 +167,27 @@ export default function Startseite() {
               </p>
             </Reveal>
 
-            <Reveal delay={200}>
-              <figure className="mt-10 overflow-hidden rounded-2xl bg-sand-100">
-                <Image
-                  src={bilder.vereinTeam}
-                  alt="Sieben Frauen des Vereins Glücksbringer am Meer stehen lächelnd nebeneinander."
-                  sizes="(min-width: 1024px) 60vw, 100vw"
-                  placeholder="blur"
-                  className="w-full"
-                />
-              </figure>
-              <p className="mt-3 text-sm text-ink-50">
-                Die Glücksbringer am Meer – ehrenamtlich, seit 2011.
-              </p>
-            </Reveal>
           </div>
         </div>
+
+        {/* Das Gruppenbild läuft über beide Spalten – sonst bleibt links eine
+            große leere Fläche stehen. */}
+        <Reveal delay={200}>
+          <figure className="mt-12 sm:mt-16">
+            <div className="overflow-hidden rounded-2xl bg-sand-100">
+              <Image
+                src={bilder.vereinTeam}
+                alt="Sieben Frauen des Vereins Glücksbringer am Meer stehen lächelnd nebeneinander."
+                sizes="(min-width: 1024px) 78rem, 100vw"
+                placeholder="blur"
+                className="w-full"
+              />
+            </div>
+            <figcaption className="mt-3 text-sm text-ink-50">
+              Die Glücksbringer am Meer – ehrenamtlich, seit 2011.
+            </figcaption>
+          </figure>
+        </Reveal>
       </section>
 
       {/* -------------------------------------------------------- Fakten-Band */}
@@ -196,30 +215,42 @@ export default function Startseite() {
             <Abschnittsmarke nummer="02">Warum es uns gibt</Abschnittsmarke>
           </Reveal>
 
-          <div className="mt-8 grid gap-12 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-end lg:gap-16">
-            <Reveal delay={60}>
-              <blockquote className="text-h1 text-ink">
-                <p>
-                  „Alle unsere Aktionen sind nur durch Spenden möglich –{" "}
-                  <span className="text-glow">
-                    wir erhalten keine öffentlichen Fördermittel.
-                  </span>
-                  “
-                </p>
-              </blockquote>
-            </Reveal>
+          {/* Beide Spalten beginnen auf derselben Linie – die Aussage links steht
+              in festen Zeilen, damit sie nicht zerfranst umbricht. */}
+          <div className="mt-9 grid gap-10 border-t border-sand-200 pt-10 lg:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] lg:items-start lg:gap-16 lg:pt-12">
+            <p className="font-[family-name:var(--font-display)] text-[clamp(1.85rem,1.1rem+2.5vw,3rem)] leading-[1.1] font-semibold tracking-[-0.03em] text-ink">
+              {/* Jede Zeile ein eigener Block – so bricht die Aussage genau dort um,
+                  wo sie es soll, und nicht irgendwo in der Mitte. */}
+              <span className="block">
+                <SatzEin text="Wir haben kein Budget." />
+              </span>
+              <span className="block">
+                <SatzEin text="Wir haben" verzoegerung={280} />
+                <span> </span>
+                <SatzEin
+                  text="Bad Zwischenahn."
+                  verzoegerung={420}
+                  className="text-glow"
+                />
+              </span>
+            </p>
 
             <Reveal delay={140}>
-              <div className="lg:pb-3">
+              <div>
                 <p className="text-[1.0625rem] leading-relaxed text-ink-70">
-                  Das heißt: Jede Aktion, jedes Geschenk und jeder Schwimmkurs
-                  entsteht, weil Menschen aus Bad Zwischenahn und Umgebung
-                  mitmachen. Deshalb erzählen wir hier von unserer Arbeit – und
-                  deshalb ist jede Spende unmittelbar sichtbar.
+                  Keine öffentlichen Fördermittel, kein Etat, auf den wir
+                  zurückgreifen könnten. Jedes Geschenk, jeder Schulranzen und
+                  jeder Schwimmkurs entsteht, weil jemand von hier mitmacht.
+                </p>
+                <p className="mt-4 text-[1.0625rem] leading-relaxed text-ink">
+                  <strong className="font-semibold">
+                    Alle unsere Aktionen sind nur durch Spenden möglich.
+                  </strong>{" "}
+                  Dieser Satz ist bei uns keine Floskel, sondern die Rechnung.
                 </p>
                 <Link
                   href="/unterstuetzen"
-                  className="group mt-6 inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
+                  className="group mt-7 inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
                 >
                   So können Sie helfen
                   <PfeilRechts className="transition-transform duration-300 ease-[var(--ease-soft)] group-hover:translate-x-1" />
@@ -230,14 +261,27 @@ export default function Startseite() {
         </div>
 
         <Reveal delay={120}>
-          <figure className="parallax-rahmen mt-14 h-[46vw] max-h-[440px] min-h-[210px] sm:mt-20">
-            <Image
-              src={bilder.meerKleeblatt}
-              alt="Blick über das Zwischenahner Meer mit Segelbooten, im Vordergrund ein vierblättriges Kleeblatt mit einem Marienkäfer."
-              sizes="100vw"
-              placeholder="blur"
-              className="parallax-bild h-full w-full object-cover"
-            />
+          <figure className="mt-16 sm:mt-20">
+            <div className="parallax-rahmen aspect-[4/3] w-full sm:aspect-[2/1] lg:aspect-[12/5]">
+              <Image
+                src={bilder.meerAbend}
+                alt="Abendlicht über dem Zwischenahner Meer: Möwen sitzen auf dem weißen Geländer eines Stegs, dahinter liegt das gegenüberliegende Ufer."
+                sizes="100vw"
+                placeholder="blur"
+                className="parallax-bild h-full w-full object-cover object-[50%_42%]"
+              />
+            </div>
+            <figcaption className="shell mt-3 text-xs text-ink-50 sm:text-right">
+              Abend am Zwischenahner Meer. Foto: JoachimKohler-HB,{" "}
+              <a
+                href="https://creativecommons.org/licenses/by-sa/4.0/deed.de"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline decoration-ink-50/40 underline-offset-2 transition-colors hover:text-ink"
+              >
+                CC BY-SA 4.0
+              </a>
+            </figcaption>
           </figure>
         </Reveal>
       </section>
@@ -248,7 +292,10 @@ export default function Startseite() {
           <div className="max-w-2xl">
             <Abschnittsmarke nummer="03">Was wir machen</Abschnittsmarke>
             <h2 className="mt-5 text-h2 text-ink">
-              Vier Projekte, ein Ziel: dass Kinder nicht außen vor bleiben.
+              <SatzEin
+                text="Vier Projekte, ein Ziel: dass Kinder nicht außen vor bleiben."
+                schritt={48}
+              />
             </h2>
           </div>
         </Reveal>
@@ -278,7 +325,7 @@ export default function Startseite() {
             <Reveal>
               <Abschnittsmarke nummer="04">Wem wir helfen</Abschnittsmarke>
               <h2 className="mt-5 text-h2 text-ink">
-                Wie aus einem Wunsch ein Geschenk wird.
+                <SatzEin text="Wie aus einem Wunsch ein Geschenk wird." />
               </h2>
               <p className="mt-6 max-w-md text-[1.0625rem] leading-relaxed text-ink-70">
                 Unser größtes Projekt ist der Wunschbaum am Meer. Er richtet
@@ -359,9 +406,7 @@ export default function Startseite() {
               <Reveal key={eintrag.bild.src} delay={index * 90}>
                 <Link
                   href="/galerie"
-                  className={`group block overflow-hidden rounded-xl bg-sand-100 ${
-                    index === 1 ? "sm:mt-12" : index === 2 ? "sm:mt-6" : ""
-                  }`}
+                  className="group block overflow-hidden rounded-xl bg-sand-100"
                 >
                   <Image
                     src={eintrag.bild}
@@ -465,12 +510,13 @@ export default function Startseite() {
                     Wie kann ich helfen?
                   </p>
                   <h2 className="mt-6 text-h1">
-                    Aus Ihrer Unterstützung wird ein Glücksmoment.
+                    <SatzEin text="Mit 25 Euro hängt eine Karte weniger am Baum." />
                   </h2>
                   <p className="mt-6 max-w-lg text-lead text-paper/70">
-                    Ob einmalig oder regelmäßig, ob zehn Euro oder ein
-                    abgepflückter Wunsch: Bei uns arbeiten alle ehrenamtlich –
-                    Ihre Spende kommt bei den Kindern in unserer Gemeinde an.
+                    So viel darf ein Weihnachtswunsch bei uns kosten. Was darüber
+                    hinaus zusammenkommt, wird zum Schulranzen im August, zum
+                    Schwimmkurs im Sommer, zur Hilfe an dem Tag, an dem sie
+                    gebraucht wird. Bei uns arbeitet niemand gegen Bezahlung.
                   </p>
                 </Reveal>
 
@@ -503,7 +549,7 @@ export default function Startseite() {
           <Reveal>
             <Abschnittsmarke nummer="08">Wer uns unterstützt</Abschnittsmarke>
             <h2 className="mt-5 text-h2 text-ink">
-              Danke an alle, die mitmachen.
+              <SatzEin text="Danke an alle, die mitmachen." />
             </h2>
             <p className="mt-6 max-w-sm text-[1rem] leading-relaxed text-ink-70">
               Ohne Helferinnen und Helfer, Familien, die Gemeinde und viele

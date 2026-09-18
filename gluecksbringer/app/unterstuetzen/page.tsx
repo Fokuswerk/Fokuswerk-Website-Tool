@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { Kleeblatt } from "@/components/marke";
 import { PayPalButton } from "@/components/paypal-button";
+import { Puck } from "@/components/puck";
 import { Reveal } from "@/components/reveal";
 import { TextEin } from "@/components/text-ein";
 import { Spendenkonto } from "@/components/spendenkonto";
@@ -58,7 +59,7 @@ export default function Unterstuetzen() {
               </p>
               <h1 className="mt-6 text-h1 text-ink">
                 <TextEin
-                  text="Aus Ihrer Spende wird ein Glücksmoment."
+                  text="Von Ihnen zum Kind ist es hier ein Schritt."
                   verzoegerung={100}
                 />
               </h1>
@@ -66,9 +67,10 @@ export default function Unterstuetzen() {
 
             <Reveal delay={80}>
               <p className="mt-8 max-w-xl text-lead text-ink-70">
-                Wir arbeiten alle ehrenamtlich. Was gespendet wird, fließt in
-                unsere Aktionen für Kinder in Bad Zwischenahn – in
-                Weihnachtsgeschenke, in Schulranzen, in Ferienerlebnisse und in
+                Keine Geschäftsstelle, keine Gehälter, kein Verwaltungsweg. Was
+                gespendet wird, fließt in unsere Aktionen für Kinder in Bad
+                Zwischenahn – in Weihnachtsgeschenke, in Schulranzen, in
+                Ferienerlebnisse und in
                 Hilfe, wenn es schnell gehen muss.
               </p>
             </Reveal>
@@ -109,13 +111,10 @@ export default function Unterstuetzen() {
         <div className="mt-12 grid gap-6 lg:grid-cols-2 lg:gap-8">
           <Reveal>
             <div className="relative flex h-full flex-col justify-between overflow-hidden rounded-2xl bg-ink p-8 text-paper sm:p-10">
-              <Image
-                src={bilder.puck}
-                alt=""
-                aria-hidden="true"
-                width={180}
-                height={346}
-                className="puck pointer-events-none absolute right-7 bottom-7 hidden w-20 opacity-55 sm:block lg:w-24"
+              {/* Puck steht ganz in der Karte – nicht angeschnitten am Rand. */}
+              <Puck
+                wippt
+                className="pointer-events-none absolute right-8 -bottom-2 hidden w-24 opacity-90 sm:block lg:w-28"
               />
               <div className="relative">
                 <p className="text-xs font-semibold tracking-[0.14em] text-mist uppercase">

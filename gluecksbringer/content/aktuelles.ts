@@ -133,9 +133,9 @@ export const beitraege: Beitrag[] = [
     datumLabel: "Oktober 2025",
     teaser:
       "Unsere Webseite bekommt einen neuen Auftritt – und unser Maskottchen tritt dabei aus der Weihnachtskugel heraus.",
-    bild: bilder.wunschbaum2025Banner,
+    bild: bilder.puckPortraet,
     bildAlt:
-      "Banner „Mach mit! 15. Wunschbaum am Meer“ mit dem Maskottchen Puck in einer Weihnachtskugel.",
+      "Puck, das gezeichnete Maskottchen des Vereins: ein Mädchen mit roter Mütze und rotem Kittel.",
     inhalt: [
       {
         typ: "absatz",

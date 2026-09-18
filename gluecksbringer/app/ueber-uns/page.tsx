@@ -67,16 +67,24 @@ export default function UeberUns() {
         </Reveal>
       </section>
 
+      {/* Die Aufnahme ist 1200 px breit. Über die volle Fensterbreite gezogen
+          wäre sie unscharf und würde zu einem schmalen Streifen beschnitten –
+          deshalb steht sie im Satzspiegel und in ihrem eigenen Seitenverhältnis. */}
       <Reveal delay={120}>
-        <figure className="mt-14 sm:mt-20">
-          <Image
-            src={bilder.vereinTeam}
-            alt="Sieben Frauen des Vereins Glücksbringer am Meer stehen lächelnd nebeneinander."
-            priority
-            sizes="100vw"
-            placeholder="blur"
-            className="bild-ein h-[46vw] max-h-[520px] min-h-[220px] w-full object-cover object-top"
-          />
+        <figure className="shell mt-14 sm:mt-20">
+          <div className="overflow-hidden rounded-2xl bg-sand-100">
+            <Image
+              src={bilder.vereinTeam}
+              alt="Sieben Frauen des Vereins Glücksbringer am Meer stehen lächelnd nebeneinander."
+              priority
+              sizes="(min-width: 80rem) 73rem, 100vw"
+              placeholder="blur"
+              className="bild-ein w-full"
+            />
+          </div>
+          <figcaption className="mt-3 text-sm text-ink-50">
+            Die Glücksbringer am Meer – ehrenamtlich, seit 2011.
+          </figcaption>
         </figure>
       </Reveal>
 

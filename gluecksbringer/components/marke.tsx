@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Puck } from "./puck";
 
 /** Handgezeichnete Wellenlinie – das wiederkehrende Motiv der Marke. */
 export function Welle({ className = "" }: { className?: string }) {
@@ -68,17 +69,27 @@ export function Wortmarke({
     <Link
       href="/"
       onClick={onClick}
-      className={`group inline-flex items-baseline gap-2 ${className}`}
+      className={`group inline-flex items-center gap-2 sm:gap-2.5 ${className}`}
     >
-      <span className="font-[family-name:var(--font-display)] text-[0.9875rem] leading-none font-semibold tracking-[-0.02em] text-ink min-[400px]:text-[1.0625rem] sm:text-[1.1875rem]">
-        Glücksbringer
-        <span className="relative ml-[0.3em] text-sea">
-          am&nbsp;Meer
-          <Welle className="absolute -bottom-[0.3em] left-0 h-[0.2em] w-full text-glow/55 transition-transform duration-500 ease-[var(--ease-soft)] group-hover:translate-y-[1px]" />
+      {/* Puck steht in der Kopfleiste – das Zeichen, das der Verein seit 2011 benutzt. */}
+      <Puck
+        variante="kopf"
+        className="h-9 w-auto shrink-0 transition-transform duration-500 ease-[var(--ease-soft)] group-hover:-translate-y-0.5 group-hover:rotate-[-4deg] sm:h-8"
+      />
+      {/* Auf schmalen Schirmen zweizeilig, damit die Marke neben Puck und der
+          Schaltfläche Platz behält; ab 640 px steht sie wieder in einer Zeile. */}
+      <span className="flex items-baseline gap-2">
+        <span className="font-[family-name:var(--font-display)] text-[0.9375rem] leading-[1.12] font-semibold tracking-[-0.02em] text-ink sm:text-[1.1875rem] sm:leading-none">
+          Glücksbringer
+          <br className="sm:hidden" />
+          <span className="relative text-sea sm:ml-[0.3em]">
+            am&nbsp;Meer
+            <Welle className="absolute -bottom-[0.28em] left-0 h-[0.2em] w-full text-glow/55 transition-transform duration-500 ease-[var(--ease-soft)] group-hover:translate-y-[1px]" />
+          </span>
         </span>
-      </span>
-      <span className="hidden text-[0.65rem] font-medium tracking-[0.08em] text-ink-50 uppercase min-[420px]:inline">
-        e.V.
+        <span className="hidden text-[0.65rem] font-medium tracking-[0.08em] text-ink-50 uppercase sm:inline">
+          e.V.
+        </span>
       </span>
     </Link>
   );
