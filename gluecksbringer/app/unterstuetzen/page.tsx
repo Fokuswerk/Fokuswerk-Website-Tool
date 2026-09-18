@@ -214,7 +214,7 @@ export default function Unterstuetzen() {
                   {...(weg.link.href.startsWith("http")
                     ? { target: "_blank", rel: "noopener noreferrer" }
                     : {})}
-                  className="group mt-7 inline-flex items-center gap-2 self-start text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
+                  className="group mt-6 inline-flex items-center gap-2 self-start py-1.5 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
                 >
                   {weg.link.label}
                   <PfeilRechts className="transition-transform duration-300 ease-[var(--ease-soft)] group-hover:translate-x-1" />

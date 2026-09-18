@@ -60,6 +60,16 @@ export default function Impressum() {
           {verein.anschrift.plz} {verein.anschrift.ort}
         </p>
 
+        <h2>Gestaltung und Umsetzung</h2>
+        <p>
+          Diese Website wurde dem Verein von der{" "}
+          <a href="https://fokuswerk.de" target="_blank" rel="noopener">
+            Fokuswerk GbR
+          </a>{" "}
+          gestaltet, umgesetzt und gespendet. Für sämtliche Inhalte ist allein
+          der Verein Glücksbringer am Meer e.V. verantwortlich.
+        </p>
+
         <h2>Bildnachweis</h2>
         <p>
           Die Fotos aus der Vereinsarbeit sowie die Zeichnung des Maskottchens

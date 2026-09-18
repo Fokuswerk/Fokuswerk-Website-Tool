@@ -81,12 +81,12 @@ export function SiteFooter() {
             <h2 className="text-xs font-semibold tracking-[0.14em] text-mist uppercase">
               Seiten
             </h2>
-            <ul className="mt-5 space-y-3 text-[0.9375rem]">
+            <ul className="mt-3 text-[0.9375rem]">
               {navigation.map((eintrag) => (
                 <li key={eintrag.href}>
                   <Link
                     href={eintrag.href}
-                    className="text-paper/75 transition-colors duration-200 hover:text-paper"
+                    className="block py-2 text-paper/75 transition-colors duration-200 hover:text-paper"
                   >
                     {eintrag.label}
                   </Link>
@@ -95,7 +95,7 @@ export function SiteFooter() {
               <li>
                 <Link
                   href="/unterstuetzen"
-                  className="text-paper/75 transition-colors duration-200 hover:text-paper"
+                  className="block py-2 text-paper/75 transition-colors duration-200 hover:text-paper"
                 >
                   Unterstützen
                 </Link>
@@ -149,7 +149,7 @@ export function SiteFooter() {
               <li key={eintrag.href}>
                 <Link
                   href={eintrag.href}
-                  className="transition-colors hover:text-paper"
+                  className="block py-2 transition-colors hover:text-paper"
                 >
                   {eintrag.label}
                 </Link>
@@ -157,6 +157,20 @@ export function SiteFooter() {
             ))}
           </ul>
         </div>
+
+        {/* Wer die Seite gemacht hat – der Verein hat sie geschenkt bekommen. */}
+        <p className="mt-8 border-t border-paper/10 pt-6 text-center text-xs text-paper/45">
+          Gestaltet und gespendet von{" "}
+          <a
+            href="https://fokuswerk.de"
+            target="_blank"
+            rel="noopener"
+            className="inline-block py-1 font-medium text-paper/75 underline decoration-paper/25 underline-offset-4 transition-colors hover:text-paper hover:decoration-paper"
+          >
+            Fokuswerk
+          </a>
+          , Agentur für Websites aus Oldenburg.
+        </p>
       </div>
     </footer>
   );

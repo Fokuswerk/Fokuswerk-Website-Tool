@@ -50,7 +50,7 @@ export function BeitragKarte({ beitrag }: { beitrag: Beitrag }) {
 
       <Link
         href={`/aktuelles/${beitrag.slug}`}
-        className="mt-5 inline-flex items-center gap-2 self-start text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
+        className="mt-5 inline-flex items-center gap-2 self-start py-1.5 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
       >
         Mehr erfahren
         <PfeilRechts className="transition-transform duration-300 ease-[var(--ease-soft)] group-hover:translate-x-1" />

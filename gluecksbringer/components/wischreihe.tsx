@@ -86,7 +86,7 @@ export function Wischreihe({
               onClick={() => springen(index)}
               aria-label={`Zu Eintrag ${index + 1} von ${anzahl}`}
               aria-current={index === aktiv ? "true" : undefined}
-              className="p-2"
+              className="grid size-11 place-items-center"
             >
               <span
                 className={`block h-1.5 rounded-full transition-all duration-500 ease-[var(--ease-soft)] ${

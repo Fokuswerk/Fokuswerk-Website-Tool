@@ -45,6 +45,7 @@ export function SiteHeader() {
     pfad === href || pfad.startsWith(`${href}/`);
 
   return (
+    <>
     <header
       data-scrolled={gescrollt}
       className="fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-500 ease-[var(--ease-soft)] data-[scrolled=true]:bg-paper/88 data-[scrolled=true]:shadow-[0_1px_0_rgba(16,41,59,0.08)] data-[scrolled=true]:backdrop-blur-md"
@@ -122,8 +123,14 @@ export function SiteHeader() {
           </div>
         </div>
       </div>
+    </header>
 
-      {/* Mobile Navigation */}
+      {/*
+        Mobile Navigation – bewusst außerhalb von <header>.
+        Die Leiste bekommt beim Scrollen einen Weichzeichner; ein Element mit
+        backdrop-filter wird für alles darin zum Bezugsrahmen, das Menü wäre
+        dann nur so hoch wie die Leiste und läge durchsichtig über der Seite.
+      */}
       <div
         id="mobilmenue"
         data-offen={menueOffen}
@@ -173,6 +180,6 @@ export function SiteHeader() {
           </nav>
         </div>
       </div>
-    </header>
+    </>
   );
 }

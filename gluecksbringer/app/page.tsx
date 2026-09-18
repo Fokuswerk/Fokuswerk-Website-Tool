@@ -258,7 +258,7 @@ export default async function Startseite() {
                 </p>
                 <Link
                   href="/unterstuetzen"
-                  className="group mt-7 inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
+                  className="group mt-7 inline-flex items-center gap-2 py-1.5 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
                 >
                   So können Sie helfen
                   <PfeilRechts className="transition-transform duration-300 ease-[var(--ease-soft)] group-hover:translate-x-1" />
@@ -433,7 +433,7 @@ export default async function Startseite() {
 
                   <Link
                     href="/aktuelles/puck-stellt-sich-vor"
-                    className="group inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
+                    className="group inline-flex items-center gap-2 py-1.5 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
                   >
                     Puck stellt sich vor
                     <PfeilRechts className="transition-transform duration-300 ease-[var(--ease-soft)] group-hover:translate-x-1" />
@@ -459,7 +459,7 @@ export default async function Startseite() {
             </div>
             <Link
               href="/galerie"
-              className="group inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
+              className="group inline-flex items-center gap-2 py-1.5 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
             >
               Zur Galerie
               <PfeilRechts className="transition-transform duration-300 ease-[var(--ease-soft)] group-hover:translate-x-1" />
@@ -541,7 +541,7 @@ export default async function Startseite() {
               </p>
               <Link
                 href={`/aktuelles/${featured.slug}`}
-                className="group mt-7 inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
+                className="group mt-7 inline-flex items-center gap-2 py-1.5 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
               >
                 Mehr erfahren
                 <PfeilRechts className="transition-transform duration-300 ease-[var(--ease-soft)] group-hover:translate-x-1" />
