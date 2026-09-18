@@ -431,6 +431,16 @@
   transform: rotate(90deg);
 }
 
+/* Puck als Marke einer Kachel: schaut beim Überfahren kurz auf. */
+.puck-marke {
+  transition: transform 0.55s var(--ease-soft);
+}
+
+.gruppe:hover .puck-marke,
+.gruppe:focus-within .puck-marke {
+  transform: translateY(-3px) rotate(-5deg);
+}
+
 /* --- Galerie-Großansicht -------------------------------------------------- */
 
 @keyframes hintergrund-ein {
@@ -516,7 +526,8 @@
     transition: none;
   }
 
-  .kleeblatt {
+  .kleeblatt,
+  .puck-marke {
     transition: none;
   }
 }

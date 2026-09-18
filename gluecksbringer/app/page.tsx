@@ -378,6 +378,65 @@ export default function Startseite() {
         </div>
       </section>
 
+      {/* --------------------------------------------------- Puck stellt sich vor */}
+      <section className="shell mt-24 sm:mt-32">
+        <Reveal>
+          <div className="overflow-hidden rounded-3xl bg-sand-50 px-6 py-12 sm:px-12 sm:py-14 lg:px-16">
+            <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-16">
+              <div className="flex justify-center lg:justify-start">
+                <Puck
+                  wippt
+                  alt="Puck, das Maskottchen des Vereins: ein Mädchen mit roter Mütze und rotem Kittel."
+                  className="h-56 w-auto sm:h-72 lg:h-80"
+                />
+              </div>
+
+              <div>
+                <p className="eyebrow">
+                  <Kleeblatt className="size-4 text-glow" />
+                  Unser Maskottchen
+                </p>
+                <h2 className="mt-5 text-h2 text-ink">
+                  <SatzEin text="Das ist Puck." />
+                </h2>
+                <p className="mt-5 max-w-xl text-[1.0625rem] leading-relaxed text-ink-70">
+                  Puck begleitet den Wunschbaum am Meer seit vielen Jahren: als
+                  kleine Figur auf jeder Wunschkarte, auf den Plakaten und auf
+                  dem allerersten Weihnachtslogo des Vereins. Wer in Bad
+                  Zwischenahn eine Karte vom Baum nimmt, hat sie längst in der
+                  Hand gehabt.
+                </p>
+
+                <div className="mt-8 flex flex-wrap items-center gap-6">
+                  <figure className="flex items-center gap-4">
+                    <Image
+                      src={bilder.g2011Weihnachtslogo}
+                      alt="Das erste Weihnachtslogo des Vereins: eine gezeichnete Christbaumkugel mit Puck und einem Geschenk."
+                      placeholder="blur"
+                      sizes="120px"
+                      className="h-auto w-[84px] rounded-lg"
+                    />
+                    <figcaption className="text-sm leading-relaxed text-ink-50">
+                      Das erste Weihnachtslogo,
+                      <br />
+                      gezeichnet 2011.
+                    </figcaption>
+                  </figure>
+
+                  <Link
+                    href="/aktuelles/puck-stellt-sich-vor"
+                    className="group inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
+                  >
+                    Puck stellt sich vor
+                    <PfeilRechts className="transition-transform duration-300 ease-[var(--ease-soft)] group-hover:translate-x-1" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
       {/* ------------------------------------------- 05 Was bisher entstand */}
       <section className="shell mt-28 sm:mt-36">
         <Reveal>

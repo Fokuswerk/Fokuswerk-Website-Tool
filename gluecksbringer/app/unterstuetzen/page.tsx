@@ -177,8 +177,9 @@ export default function Unterstuetzen() {
             },
           ].map((punkt, index) => (
             <Reveal key={punkt.titel} delay={index * 80}>
-              <div>
-                <h3 className="text-h3 text-ink">{punkt.titel}</h3>
+              <div className="gruppe">
+                <Puck variante="kopf" className="puck-marke h-9 w-auto" />
+                <h3 className="mt-5 text-h3 text-ink">{punkt.titel}</h3>
                 <p className="mt-3 text-[0.9375rem] leading-relaxed text-ink-70">
                   {punkt.text}
                 </p>

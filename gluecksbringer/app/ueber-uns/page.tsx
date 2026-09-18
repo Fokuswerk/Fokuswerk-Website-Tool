@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Kleeblatt } from "@/components/marke";
+import { Puck } from "@/components/puck";
 import { Reveal } from "@/components/reveal";
 import { TextEin } from "@/components/text-ein";
 import {
@@ -178,7 +179,7 @@ export default function UeberUns() {
           {werte.map((wert, index) => (
             <Reveal key={wert.titel} delay={index * 80} className="bg-paper">
               <div className="gruppe h-full p-7 sm:p-9">
-                <Kleeblatt className="kleeblatt size-6 text-glow" />
+                <Puck variante="kopf" className="puck-marke h-9 w-auto" />
                 <h3 className="mt-6 text-h3 text-ink">{wert.titel}</h3>
                 <p className="mt-3 text-[0.9375rem] leading-relaxed text-ink-70">
                   {wert.text}
