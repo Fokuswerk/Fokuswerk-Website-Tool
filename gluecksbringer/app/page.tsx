@@ -71,10 +71,10 @@ export default async function Startseite() {
   return (
     <>
       {/* ---------------------------------------------------------------- Hero */}
-      <section className="relative pt-24 sm:pt-28 lg:pt-32">
+      <section className="relative pt-20 sm:pt-28 lg:pt-32">
         <div className="shell">
-          <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16">
-            <div className="pt-6 lg:pt-0">
+          <div className="grid items-center gap-7 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-16">
+            <div className="pt-2 sm:pt-6 lg:pt-0">
               <Reveal>
                 <p className="eyebrow">
                   <Kleeblatt className="size-4 text-glow" />
@@ -118,7 +118,9 @@ export default async function Startseite() {
               </Reveal>
             </div>
 
-            <Reveal delay={120}>
+            {/* Auf dem Handy steht das Bild oben: sonst füllt der Text den
+                ersten Bildschirm allein und das Foto beginnt erst darunter. */}
+            <Reveal delay={120} className="order-first lg:order-none">
               <figure>
                 <div className="relative">
                   <div className="overflow-hidden rounded-2xl bg-sand-100">
@@ -128,16 +130,16 @@ export default async function Startseite() {
                       priority
                       sizes="(min-width: 1024px) 55vw, 100vw"
                       placeholder="blur"
-                      className="bild-ein aspect-[4/5] w-full object-cover object-center sm:aspect-[16/11] lg:aspect-[5/4]"
+                      className="bild-ein aspect-[3/2] w-full object-cover object-center sm:aspect-[16/11] lg:aspect-[5/4]"
                     />
                   </div>
                   {/* Puck steht auf der Bildkante – das Zeichen, das der Verein seit 2011 benutzt. */}
                   <Puck
                     wippt
-                    className="pointer-events-none absolute bottom-0 -left-4 hidden h-28 w-auto translate-y-[26%] drop-shadow-[0_16px_30px_rgba(16,41,59,0.20)] sm:block lg:-left-7 lg:h-36"
+                    className="pointer-events-none absolute -bottom-1 -left-3 h-24 w-auto translate-y-[26%] drop-shadow-[0_16px_30px_rgba(16,41,59,0.20)] sm:bottom-0 sm:-left-4 sm:h-28 lg:-left-7 lg:h-36"
                   />
                 </div>
-                <figcaption className="mt-5 max-w-md text-sm text-ink-50 sm:mt-9 sm:pl-24 lg:pl-28">
+                <figcaption className="mt-4 max-w-md pl-20 text-sm text-ink-50 sm:mt-9 sm:pl-24 lg:pl-28">
                   Der 15. Wunschbaum am Meer, kurz vor der Eröffnung in der
                   Bibliothek am Meer.
                 </figcaption>
