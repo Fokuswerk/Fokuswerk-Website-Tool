@@ -4,7 +4,11 @@ import { Kleeblatt } from "@/components/marke";
 import { Reveal } from "@/components/reveal";
 import { TextEin } from "@/components/text-ein";
 import { ButtonLink, PfeilRechts } from "@/components/ui";
-import { galerie, galerieBilderGesamt } from "@/content/galerie";
+import { galerieAnzahl, galerieLaden } from "@/content/laden";
+
+/** Neue Inhalte aus der Verwaltung erscheinen spätestens nach einer Minute;
+ *  beim Speichern im Verwaltungsbereich wird die Seite zusätzlich sofort erneuert. */
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Galerie",
@@ -19,7 +23,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function GalerieSeite() {
+export default async function GalerieSeite() {
+  const galerie = await galerieLaden();
+  const galerieBilderGesamt = await galerieAnzahl(galerie);
+
   return (
     <>
       <section className="shell pt-32 sm:pt-36 lg:pt-40">

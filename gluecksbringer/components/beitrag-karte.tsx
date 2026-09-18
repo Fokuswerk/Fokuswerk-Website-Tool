@@ -4,6 +4,7 @@ import type { Beitrag } from "@/content/aktuelles";
 import { verein } from "@/content/verein";
 import { Kleeblatt } from "./marke";
 import { PfeilRechts } from "./ui";
+import { platzhalter } from "@/lib/bild";
 
 export function BeitragKarte({ beitrag }: { beitrag: Beitrag }) {
   return (
@@ -16,7 +17,7 @@ export function BeitragKarte({ beitrag }: { beitrag: Beitrag }) {
           src={beitrag.bild}
           alt={beitrag.bildAlt}
           sizes="(min-width: 1024px) 31vw, (min-width: 640px) 46vw, 92vw"
-          placeholder="blur"
+          placeholder={platzhalter(beitrag.bild)}
           style={
             beitrag.bildPosition
               ? { objectPosition: beitrag.bildPosition }

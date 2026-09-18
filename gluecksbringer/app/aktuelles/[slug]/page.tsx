@@ -7,22 +7,34 @@ import { Reveal } from "@/components/reveal";
 import { Wischreihe } from "@/components/wischreihe";
 import { Spendenkonto } from "@/components/spendenkonto";
 import { ButtonLink, PfeilRechts } from "@/components/ui";
-import {
-  beitraegeSortiert,
-  beitragNachSlug,
-  type Block,
-} from "@/content/aktuelles";
+import { type Block } from "@/content/aktuelles";
+import { beitraegeLaden } from "@/content/laden";
 import { siteUrl, verein } from "@/content/verein";
+import { platzhalter } from "@/lib/bild";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return beitraegeSortiert.map((beitrag) => ({ slug: beitrag.slug }));
+/** Beiträge, die nach dem Bauen dazukommen, werden bei der ersten Anfrage
+ *  erzeugt und danach zwischengespeichert. */
+export const dynamicParams = true;
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  const beitraege = await beitraegeLaden();
+  return beitraege.map((beitrag) => ({ slug: beitrag.slug }));
+}
+
+async function beitragHolen(slug: string) {
+  const beitraege = await beitraegeLaden();
+  return {
+    beitrag: beitraege.find((eintrag) => eintrag.slug === slug),
+    alle: beitraege,
+  };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const beitrag = beitragNachSlug(slug);
+  const { beitrag } = await beitragHolen(slug);
 
   if (!beitrag) return { title: "Beitrag nicht gefunden" };
 
@@ -113,7 +125,7 @@ function BlockAusgabe({ block }: { block: Block }) {
               src={block.bild}
               alt={block.alt}
               sizes="(min-width: 768px) 46rem, 92vw"
-              placeholder="blur"
+              placeholder={platzhalter(block.bild)}
               style={klein ? { maxWidth: block.bild.width } : undefined}
               className={klein ? "h-auto w-full" : "w-full"}
             />
@@ -131,13 +143,11 @@ function BlockAusgabe({ block }: { block: Block }) {
 
 export default async function BeitragSeite({ params }: Props) {
   const { slug } = await params;
-  const beitrag = beitragNachSlug(slug);
+  const { beitrag, alle } = await beitragHolen(slug);
 
   if (!beitrag) notFound();
 
-  const weitere = beitraegeSortiert.filter(
-    (eintrag) => eintrag.slug !== beitrag.slug,
-  );
+  const weitere = alle.filter((eintrag) => eintrag.slug !== beitrag.slug);
 
   const artikelSchema = {
     "@context": "https://schema.org",
@@ -187,7 +197,7 @@ export default async function BeitragSeite({ params }: Props) {
               alt={beitrag.bildAlt}
               priority
               sizes="(min-width: 768px) 46rem, 92vw"
-              placeholder="blur"
+              placeholder={platzhalter(beitrag.bild)}
               className="bild-ein w-full"
             />
           </div>

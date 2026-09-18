@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { GalerieJahr } from "@/content/galerie";
+import { platzhalter } from "@/lib/bild";
 
 type Flach = {
   bild: GalerieJahr["bilder"][number]["bild"];
@@ -272,7 +273,7 @@ export function Galerie({ jahre }: { jahre: GalerieJahr[] }) {
                         // Das erste Bild steht im sichtbaren Bereich und wird vorgeladen.
                         priority={index === 0}
                         sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 92vw"
-                        placeholder="blur"
+                        placeholder={platzhalter(eintrag.bild)}
                         // Gezeichnete Vorlagen nie über ihre Originalgröße ziehen.
                         style={
                           eintrag.einpassen
@@ -383,7 +384,7 @@ export function Galerie({ jahre }: { jahre: GalerieJahr[] }) {
                           src={eintrag.bild}
                           alt={platz === 1 ? eintrag.alt : ""}
                           sizes="100vw"
-                          placeholder="blur"
+                          placeholder={platzhalter(eintrag.bild)}
                           draggable={false}
                           style={{ maxWidth: eintrag.bild.width }}
                           className="pointer-events-none max-h-full w-auto rounded-sm object-contain"

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Figtree, Inter } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { NurWebsite } from "@/components/website-rahmen";
 import { siteUrl, verein } from "@/content/verein";
 import "./globals.css";
 
@@ -100,9 +101,13 @@ export default function RootLayout({
             __html: JSON.stringify(organisationSchema),
           }}
         />
-        <SiteHeader />
+        <NurWebsite>
+          <SiteHeader />
+        </NurWebsite>
         <main id="inhalt">{children}</main>
-        <SiteFooter />
+        <NurWebsite>
+          <SiteFooter />
+        </NurWebsite>
       </body>
     </html>
   );

@@ -98,7 +98,29 @@ export default function Datenschutz() {
           zur Verbesserung unseres Angebots.
         </p>
 
-        <h2>5. Verwendung von Cookies</h2>
+        <h2>5. Bilder und Beiträge aus der Inhaltsverwaltung</h2>
+        <p>
+          Damit wir Fotos und Neuigkeiten selbst pflegen können, nutzen wir die
+          Plattform <strong>Supabase</strong> (Supabase, Inc., 970 Toa Payoh
+          North, Singapur). Dort liegen die von uns hochgeladenen Bilder und
+          die Texte der Beiträge – also ausschließlich Inhalte des Vereins,
+          keine Daten unserer Besucherinnen und Besucher.
+        </p>
+        <p>
+          Wenn Sie eine Seite mit einem solchen Bild aufrufen, wird das Bild von
+          den Servern des Anbieters geladen. Dabei wird Ihre IP-Adresse
+          technisch bedingt übermittelt. Rechtsgrundlage ist Art. 6 Abs. 1
+          lit. f DSGVO – unser berechtigtes Interesse an einer Website, die der
+          Verein ohne fremde Hilfe aktuell halten kann. Mit dem Anbieter besteht
+          ein Vertrag zur Auftragsverarbeitung nach Art. 28 DSGVO.
+        </p>
+        <p>
+          Der Bereich zum Pflegen der Inhalte ist passwortgeschützt und nur für
+          Mitglieder des Vereins zugänglich. Er wird von Suchmaschinen nicht
+          erfasst.
+        </p>
+
+        <h2>6. Verwendung von Cookies</h2>
         <p>
           Unsere Webseite verwendet teilweise sogenannte Cookies. Cookies sind
           kleine Textdateien, die auf Ihrem Endgerät gespeichert werden und die
@@ -111,7 +133,7 @@ export default function Datenschutz() {
           eingeschränkt sein.
         </p>
 
-        <h2>6. Links zu externen Webseiten</h2>
+        <h2>7. Links zu externen Webseiten</h2>
         <p>
           Unsere Webseite kann Links zu externen Seiten enthalten, auf deren
           Inhalte wir keinen Einfluss haben.
@@ -125,7 +147,7 @@ export default function Datenschutz() {
           stets der jeweilige Anbieter verantwortlich.
         </p>
 
-        <h2>7. Ihre Rechte</h2>
+        <h2>8. Ihre Rechte</h2>
         <p>Sie haben jederzeit das Recht auf:</p>
         <ul>
           <li>
@@ -160,7 +182,7 @@ export default function Datenschutz() {
           </a>
         </p>
 
-        <h2>8. SSL- bzw. TLS-Verschlüsselung</h2>
+        <h2>9. SSL- bzw. TLS-Verschlüsselung</h2>
         <p>
           Diese Seite nutzt aus Sicherheitsgründen und zum Schutz vertraulicher
           Inhalte eine SSL- bzw. TLS-Verschlüsselung.
@@ -170,7 +192,7 @@ export default function Datenschutz() {
           Ihrer Browserzeile und an der Adresszeile, die mit „https://“ beginnt.
         </p>
 
-        <h2>9. Aktualität und Änderung dieser Datenschutzerklärung</h2>
+        <h2>10. Aktualität und Änderung dieser Datenschutzerklärung</h2>
         <p>
           Diese Datenschutzerklärung ist aktuell gültig und hat den Stand
           Oktober 2025.

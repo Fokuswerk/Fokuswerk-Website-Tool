@@ -1,8 +1,84 @@
 # Inhalte pflegen
 
-Diese Anleitung richtet sich an den Verein. Alle Texte und Bilder liegen in
-wenigen Dateien im Ordner `content/`. Wer eine Datei ändert und speichert,
-veröffentlicht damit die neue Fassung – Vercel baut die Seite automatisch neu.
+Es gibt zwei Wege, Inhalte zu ändern. Der erste ist für den Verein gedacht,
+der zweite für alle, die am Quelltext arbeiten.
+
+---
+
+## Der bequeme Weg: im Browser unter `/admin`
+
+Wenn ein Zugang eingerichtet ist (siehe „Zugang einrichten“ weiter unten),
+öffnen Sie **`ihre-adresse.de/admin`**, melden sich mit E-Mail und Passwort an
+und pflegen alles direkt im Browser:
+
+### Fotos in die Galerie
+
+1. Auf **Galerie** klicken.
+2. Das **Jahr** eintragen, unter dem die Bilder erscheinen sollen.
+3. Auf **Datei auswählen** klicken und beliebig viele Fotos auf einmal
+   markieren. Große Handyfotos werden automatisch verkleinert – Sie müssen
+   nichts vorbereiten.
+4. Unter jedem Bild stehen zwei Felder:
+   - **Bildunterschrift** – steht sichtbar unter dem Foto, darf leer bleiben.
+   - **Bildbeschreibung** – was auf dem Bild zu sehen ist. Blinde Menschen
+     bekommen diesen Text vorgelesen, und Suchmaschinen lesen ihn mit.
+     Bitte immer ausfüllen.
+5. Das Häkchen **„Ganz zeigen statt zuschneiden"** ist für Plakate und
+   Zeichnungen gedacht, die man vollständig sehen muss.
+
+Was Sie eintippen, wird gespeichert, sobald Sie das Feld verlassen. Ein
+Speichern-Knopf ist nicht nötig.
+
+### Einen Beitrag schreiben
+
+1. Auf **Beiträge → Neuer Beitrag** klicken.
+2. **Titel** eingeben – die Adresse der Seite entsteht automatisch daraus.
+3. **Datum** und **Kategorie** wählen, einen kurzen **Anreißer** schreiben
+   (zwei bis drei Sätze; sie stehen in der Übersicht unter dem Titel).
+4. Ein **Aufmacherbild** hochladen und beschreiben.
+5. Unter **Text** die Bausteine zusammensetzen: Absatz, Zwischenüberschrift,
+   Aufzählung, hervorgehobener Satz oder ein Bild. Mit den Pfeilen lassen sich
+   Bausteine verschieben.
+6. Unten: Häkchen bei **„Auf der Website zeigen"** setzen und auf
+   **Speichern** klicken.
+
+Ohne das Häkchen bleibt der Beitrag ein Entwurf – Sie können also in Ruhe
+daran arbeiten und ihn später freischalten. In der Liste steht bei Entwürfen
+ein entsprechender Hinweis.
+
+Gespeicherte Änderungen sind sofort auf der Website zu sehen.
+
+### Zugang einrichten
+
+Einmalig, am besten durch die Person, die die Website betreut:
+
+1. Auf [supabase.com](https://supabase.com) ein kostenloses Projekt anlegen
+   (Region Frankfurt wählen).
+2. Im **SQL Editor** die Datei `supabase/01_schema.sql` aus diesem Ordner
+   einfügen und ausführen. Damit entstehen die Tabellen und der Bildordner.
+3. Unter **Project Settings → API** die beiden Werte kopieren und bei Vercel
+   als Umgebungsvariablen eintragen:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Unter **Authentication → Users → Add user** die Zugänge für den Verein
+   anlegen (E-Mail und Passwort, Haken bei „Auto Confirm User"). Eine
+   öffentliche Registrierung gibt es bewusst nicht.
+5. Einmal neu ausrollen.
+
+Solange diese beiden Werte fehlen, funktioniert die Website ganz normal – sie
+zeigt dann ausschließlich die Inhalte aus dem Ordner `content/`.
+
+**Wichtig:** Die Beiträge und Bilder, die schon in `content/` stehen, bleiben
+immer erhalten. Die Verwaltung legt neue Inhalte obendrauf. Wer einen alten
+Beitrag überarbeiten möchte, legt ihn in der Verwaltung mit derselben Adresse
+(`slug`) noch einmal an – dann gilt die neue Fassung.
+
+---
+
+## Der zweite Weg: direkt im Quelltext
+
+Alles, was unten steht, gilt weiterhin. Die Dateien in `content/` sind die
+Grundlage der Website und lassen sich jederzeit von Hand pflegen.
 
 > **Faustregel:** Nur das ändern, was zwischen `"` Anführungszeichen steht.
 > Kommas und geschweifte Klammern bitte so lassen, wie sie sind.

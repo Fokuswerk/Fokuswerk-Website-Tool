@@ -15,11 +15,15 @@ import {
   PfeilRechts,
   Trennlinie,
 } from "@/components/ui";
-import { beitraegeSortiert } from "@/content/aktuelles";
 import { bilder } from "@/content/bilder";
-import { galerie } from "@/content/galerie";
+import { beitraegeLaden, galerieLaden } from "@/content/laden";
 import { projekte, unterstuetzer } from "@/content/projekte";
 import { verein } from "@/content/verein";
+import { platzhalter } from "@/lib/bild";
+
+/** Neue Inhalte aus der Verwaltung erscheinen spätestens nach einer Minute;
+ *  beim Speichern im Verwaltungsbereich wird die Seite zusätzlich sofort erneuert. */
+export const revalidate = 60;
 
 const fakten = [
   { wert: "2011", label: "gegründet von sechs Müttern aus Bad Zwischenahn" },
@@ -45,7 +49,11 @@ const wegEinesWunsches = [
   },
 ];
 
-export default function Startseite() {
+export default async function Startseite() {
+  const [beitraegeSortiert, galerie] = await Promise.all([
+    beitraegeLaden(),
+    galerieLaden(),
+  ]);
   const [featured, ...weitere] = beitraegeSortiert;
 
   // Drei Bilder, die den Bogen von 2011 bis heute spannen: der erste Baum,
@@ -471,7 +479,7 @@ export default function Startseite() {
                     src={eintrag.bild}
                     alt={eintrag.alt}
                     sizes="(min-width: 640px) 31vw, 82vw"
-                    placeholder="blur"
+                    placeholder={platzhalter(eintrag.bild)}
                     className="aspect-[4/5] w-full object-cover transition-transform duration-[900ms] ease-[var(--ease-soft)] group-hover:scale-[1.04]"
                   />
                 </Link>
@@ -502,7 +510,7 @@ export default function Startseite() {
                 src={featured.bild}
                 alt={featured.bildAlt}
                 sizes="(min-width: 1024px) 55vw, 100vw"
-                placeholder="blur"
+                placeholder={platzhalter(featured.bild)}
                 style={
                   featured.bildPosition
                     ? { objectPosition: featured.bildPosition }

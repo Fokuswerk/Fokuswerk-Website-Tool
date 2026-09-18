@@ -17,8 +17,11 @@ Auftritt des Vereins und wurden unverändert übernommen.
 | Hosting | Vercel |
 
 Die Seiten werden beim Bauen vollständig als statisches HTML erzeugt.
-Es gibt keine Datenbank und kein CMS – die Inhalte liegen als TypeScript-Dateien
-im Ordner `content/`.
+Die Inhalte liegen als TypeScript-Dateien im Ordner `content/`. Darüber hinaus
+gibt es unter `/admin` eine schlanke Inhaltsverwaltung, mit der der Verein
+selbst Fotos hochladen und Beiträge schreiben kann (Supabase, siehe unten).
+Sie ist optional: ohne hinterlegtes Projekt verhält sich die Website exakt so
+wie vorher.
 
 ## Lokal starten
 
@@ -40,6 +43,7 @@ npm run typecheck  # TypeScript prüfen
 
 ```
 app/                 Seiten (eine Datei je Route)
+  admin/               Inhaltsverwaltung (passwortgeschützt, noindex)
   page.tsx             Startseite
   ueber-uns/           Über uns
   aktuelles/           Übersicht + Beitragsseiten (/aktuelles/[slug])
@@ -51,6 +55,8 @@ app/                 Seiten (eine Datei je Route)
   globals.css          Farben, Schriftgrößen, Abstände
 components/          wiederverwendbare Bausteine
 content/             ► hier werden Inhalte gepflegt (siehe INHALTE-PFLEGEN.md)
+  laden.ts             führt eingebaute und selbst angelegte Inhalte zusammen
+supabase/01_schema.sql Tabellen, Zugriffsregeln und Bildordner der Verwaltung
 assets/bilder/       Bilddateien
 scripts/             einmalige Hilfsskripte (Bildaufbereitung, Vorschaubild)
 ```
@@ -64,6 +70,8 @@ E-Mail-Adresse als direkter Weg).
 | Variable | Zweck |
 |---|---|
 | `NEXT_PUBLIC_SITE_URL` | Adresse der Seite, z. B. `https://gluecksbringer-am-meer.de`. Wird für Canonical-Links, Sitemap und Vorschaubilder gebraucht. |
+| `NEXT_PUBLIC_SUPABASE_URL` | Projektadresse der Inhaltsverwaltung. Fehlt sie, zeigt die Seite ausschließlich die Inhalte aus `content/`. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Öffentlicher Schlüssel desselben Projekts. |
 | `RESEND_API_KEY` | API-Schlüssel von [resend.com](https://resend.com) für den Versand des Kontaktformulars. |
 | `KONTAKT_ABSENDER` | Verifizierte Absenderadresse, z. B. `website@gluecksbringer-am-meer.de`. |
 | `KONTAKT_EMPFAENGER` | Zieladresse der Formularnachrichten. Standard: `info@gluecksbringer-am-meer.de`. |

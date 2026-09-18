@@ -7,7 +7,12 @@ import { Reveal } from "@/components/reveal";
 import { TextEin } from "@/components/text-ein";
 import { Wischreihe } from "@/components/wischreihe";
 import { PfeilRechts } from "@/components/ui";
-import { beitraegeSortiert } from "@/content/aktuelles";
+import { beitraegeLaden } from "@/content/laden";
+import { platzhalter } from "@/lib/bild";
+
+/** Neue Inhalte aus der Verwaltung erscheinen spätestens nach einer Minute;
+ *  beim Speichern im Verwaltungsbereich wird die Seite zusätzlich sofort erneuert. */
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Aktuelles",
@@ -21,7 +26,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AktuellesUebersicht() {
+export default async function AktuellesUebersicht() {
+  const beitraegeSortiert = await beitraegeLaden();
   const [featured, ...weitere] = beitraegeSortiert;
 
   return (
@@ -58,7 +64,7 @@ export default function AktuellesUebersicht() {
                 alt={featured.bildAlt}
                 priority
                 sizes="(min-width: 1024px) 58vw, 100vw"
-                placeholder="blur"
+                placeholder={platzhalter(featured.bild)}
                 style={
                   featured.bildPosition
                     ? { objectPosition: featured.bildPosition }

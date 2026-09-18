@@ -1,8 +1,11 @@
 import type { MetadataRoute } from "next";
-import { beitraege } from "@/content/aktuelles";
+import { beitraegeLaden } from "@/content/laden";
 import { siteUrl } from "@/content/verein";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const revalidate = 3600;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const beitraege = await beitraegeLaden();
   const seiten: {
     pfad: string;
     prioritaet: number;
