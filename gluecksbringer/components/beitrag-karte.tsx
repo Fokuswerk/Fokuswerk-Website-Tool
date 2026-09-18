@@ -66,7 +66,7 @@ export function FolgenKarte() {
   return (
     <aside className="flex h-full flex-col">
       <div className="flex aspect-[3/2] w-full items-center justify-center overflow-hidden rounded-xl bg-ink">
-        <Kleeblatt className="size-14 text-glow" />
+        <Kleeblatt className="size-14 text-glow-hell" />
       </div>
 
       <p className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold tracking-[0.1em] text-sea uppercase">

@@ -155,7 +155,7 @@ function Inhalt({ client }: { client: SupabaseClient }) {
           <p className="mt-5 text-[0.9375rem] font-medium text-sea">{fortschritt}</p>
         ) : null}
         {fehler ? (
-          <p className="mt-5 rounded-lg bg-glow-soft px-4 py-3 text-sm text-glow-deep">
+          <p className="mt-5 rounded-lg bg-alarm-soft px-4 py-3 text-sm text-alarm">
             {fehler}
           </p>
         ) : null}

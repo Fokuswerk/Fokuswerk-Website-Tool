@@ -71,7 +71,7 @@ function Liste({ client }: { client: SupabaseClient }) {
       </div>
 
       {fehler ? (
-        <p className="rounded-lg bg-glow-soft px-4 py-3 text-sm text-glow-deep">
+        <p className="rounded-lg bg-alarm-soft px-4 py-3 text-sm text-alarm">
           {fehler}
         </p>
       ) : null}

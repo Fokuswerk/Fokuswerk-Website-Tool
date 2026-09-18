@@ -392,7 +392,7 @@ function Formular({ client }: { client: SupabaseClient }) {
 
         {meldung ? <span className="text-[0.9375rem] text-sea">{meldung}</span> : null}
         {fehler ? (
-          <span className="text-[0.9375rem] text-glow-deep">{fehler}</span>
+          <span className="text-[0.9375rem] text-alarm">{fehler}</span>
         ) : null}
       </div>
     </div>

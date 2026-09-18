@@ -3,7 +3,7 @@
 /* ---------------------------------------------------------------------------
    Glücksbringer am Meer – Designsystem
    Farbwelt: warmes Off-White und Sand als Grund, sehr dunkles Blau als Schrift,
-   ruhiges Meeresblau als Ton, ein warmes Rot als Akzent für "Glück".
+   ruhiges Meeresblau als Ton, Kleegrün als Akzent für "Glück".
    --------------------------------------------------------------------------- */
 
 @theme {
@@ -22,9 +22,17 @@
   --color-mist: #b9d2dd;
   --color-mist-soft: #e2edf2;
 
-  --color-glow: #c2452e;
-  --color-glow-deep: #9c3423;
-  --color-glow-soft: #f5e2dc;
+  /* Kleegrün – aus dem Grün der Wunschbaum-Plakate (#90b050) abgeleitet und
+     so weit abgedunkelt, dass weiße Schrift darauf gut lesbar bleibt (5,5:1). */
+  --color-glow: #4a7429;
+  --color-glow-deep: #3a5c20;
+  --color-glow-soft: #e9f0df;
+  /* Auf dunklem Grund braucht das Grün Licht – näher am Plakatgrün. */
+  --color-glow-hell: #9ec46b;
+
+  /* Rot bleibt dem Maskottchen und echten Fehlermeldungen vorbehalten. */
+  --color-alarm: #b3261e;
+  --color-alarm-soft: #fbeceb;
 
   --font-display: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;

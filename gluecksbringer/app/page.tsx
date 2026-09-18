@@ -572,7 +572,7 @@ export default async function Startseite() {
               <div>
                 <Reveal>
                   <p className="eyebrow text-mist">
-                    <span className="text-glow tabular-nums">07</span>
+                    <span className="text-glow-hell tabular-nums">07</span>
                     <span aria-hidden="true" className="h-px w-6 bg-paper/25" />
                     Wie kann ich helfen?
                   </p>

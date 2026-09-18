@@ -32,7 +32,7 @@ export function KontaktFormular() {
       {zustand.status === "fehler" && zustand.meldung ? (
         <p
           role="alert"
-          className="rounded-xl border border-glow/30 bg-glow-soft/60 px-4 py-3 text-[0.9375rem] text-glow-deep"
+          className="rounded-xl border border-alarm/30 bg-alarm-soft px-4 py-3 text-[0.9375rem] text-alarm"
         >
           {zustand.meldung}
         </p>
