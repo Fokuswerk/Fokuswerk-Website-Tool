@@ -1,0 +1,191 @@
+/* ==========================================================================
+   Hero — genau ein Bildschirm, dunkle Markenfläche, Wasserband, Einstieg
+   ========================================================================== */
+
+/* Genau ein Bildschirm. Alle Polster bleiben Vielfache von 8 — flexibel ist
+   allein das Wasserband, das den Rest der Höhe aufnimmt. */
+/* section.hero statt .hero — sonst gewinnt .auf-dunkel mit seinem Graphit. */
+section.hero {
+  position: relative;
+  /* Die Kopfleiste ist sticky und belegt Fluss. Der Hero wird um ihre Höhe
+     hochgezogen, damit er wirklich einen Bildschirm misst — die Leiste liegt
+     dann über ihm, oben ist der Platz dafür schon eingerechnet. */
+  /* +1px: die Leiste trägt unten eine Haarlinie, die zu ihrer Höhe zählt. */
+  margin-block-start: calc((var(--kopf-hoch) + 1px) * -1);
+  /* Unten bleibt Platz für die feste Leiste, die nur mobil erscheint. */
+  min-height: calc(100svh - var(--leiste-unten));
+  /* Raster statt Flex: die beiden Textzeilen bekommen ihre Inhaltshöhe,
+     das Wasserband nimmt exakt den Rest. Sollte der Inhalt einmal mehr
+     brauchen, wächst der Hero mit, statt etwas abzuschneiden. */
+  display: grid;
+  grid-template-rows: auto minmax(96px, 1fr) auto;
+  background: var(--tiefe);
+  overflow: hidden;
+}
+
+/* Aussage ---------------------------------------------------------------- */
+
+.hero-oben {
+  padding-block-start: calc(var(--kopf-hoch) + var(--r5));
+  padding-block-end: var(--r5);
+}
+
+.hero-mikro {
+  display: flex; align-items: center; gap: var(--r2);
+  font-size: var(--grad-marke);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--kalk) 62%, var(--tiefe));
+  margin: 0 0 var(--r4);
+}
+.hero-ort {
+  position: relative;
+  padding-inline-start: var(--r3);
+  color: var(--kalk);
+}
+.hero-ort::before {
+  content: ""; position: absolute; left: 0; top: 50%;
+  width: var(--r2); height: 1px; background: var(--marine-hell);
+}
+
+.hero-titel { max-width: 16ch; color: var(--kalk); }
+
+.hero-fuss {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--r8);
+  margin-block-start: var(--r5);
+}
+
+.hero-blei {
+  font-size: var(--grad-text);
+  line-height: 1.65;
+  max-width: 56ch;
+  color: color-mix(in oklab, var(--kalk) 78%, var(--tiefe));
+}
+
+.hero-knoepfe { display: flex; gap: var(--r2); flex: none; }
+.hero-ruf { gap: 10px; }
+
+/* Das Wasserband --------------------------------------------------------- */
+
+.hero-band {
+  position: relative;
+  min-height: 96px;
+  border-block-start: 1px solid var(--marine-hell);
+}
+.hero-band img { object-fit: cover; object-position: center 38%; }
+/* Unterkante sacht in die Fläche zurückführen, damit der Einstieg ruhig sitzt */
+.hero-band::after {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 40%;
+  background: linear-gradient(to bottom, transparent, var(--tiefe));
+  pointer-events: none;
+}
+
+/* Projekt-Einstieg ------------------------------------------------------- */
+
+.hero-einstieg { padding-block: var(--r4) var(--r6); }
+.hero-einstieg-marke { color: color-mix(in oklab, var(--kalk) 62%, var(--tiefe)); margin-block-end: var(--r2); }
+
+.hero-wahl {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gasse);
+}
+
+.hero-wahl-punkt {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--r2);
+  padding-block-start: var(--r2);
+  border-block-start: 1px solid color-mix(in oklab, var(--kalk) 26%, transparent);
+  color: var(--kalk);
+  transition: border-color var(--zeit-kurz) ease-out;
+}
+.hero-wahl-punkt:hover { border-block-start-color: var(--marine-hell); }
+
+.hero-wahl-name { font-size: var(--grad-4); font-weight: 600; letter-spacing: -0.02em; }
+.hero-wahl-zusatz {
+  grid-column: 1 / -1;
+  font-size: var(--grad-marke);
+  line-height: 1.5;
+  color: color-mix(in oklab, var(--kalk) 58%, var(--tiefe));
+}
+.hero-wahl-pfeil { color: var(--marine-hell); transition: transform var(--zeit-kurz) ease-out; }
+.hero-wahl-punkt:hover .hero-wahl-pfeil { transform: translateX(5px); }
+
+/* Belegzeile direkt unter dem Hero --------------------------------------- */
+
+.belege {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gasse);
+  padding-block: var(--r6);
+  border-block-end: var(--strich);
+}
+.belege > li { display: flex; align-items: baseline; gap: var(--r2); }
+.beleg-punkt { width: 5px; height: 5px; border-radius: var(--kante-pille); background: var(--marine); flex: none; transform: translateY(-3px); }
+.beleg-text { font-size: var(--grad-klein); }
+.beleg-text strong { font-weight: 600; }
+
+/* Breakpoints ------------------------------------------------------------ */
+
+/* Breite Fenster mit wenig Höhe (Laptop 1024×768): eine Stufe enger,
+   weiterhin ausschließlich Vielfache von 8. */
+@media (min-width: 1024px) and (max-height: 860px) {
+  .hero-oben { padding-block-start: calc(var(--kopf-hoch) + var(--r5)); padding-block-end: var(--r5); }
+  .hero-mikro { margin-block-end: var(--r3); }
+  .hero-fuss { margin-block-start: var(--r4); }
+  .hero-einstieg { padding-block: var(--r3) var(--r5); }
+  .hero-wahl-zusatz { display: none; }
+}
+
+@media (max-width: 1023px) { .hero-wahl-zusatz { display: none; } }
+
+@media (max-width: 1023px) {
+  .hero-oben { padding-block-start: calc(var(--kopf-hoch) + var(--r6)); padding-block-end: var(--r4); }
+  .hero-fuss { grid-template-columns: 1fr; gap: var(--r4); align-items: start; }
+  .hero-wahl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--r3) var(--gasse); }
+  .hero-einstieg { padding-block: var(--r3) var(--r5); }
+}
+
+@media (max-width: 767px) {
+  .hero-oben { padding-block-start: calc(var(--kopf-hoch) + var(--r4)); padding-block-end: var(--r4); }
+  .hero-mikro { flex-direction: column; align-items: flex-start; gap: var(--r-fein); margin-block-end: var(--r3); }
+  .hero-ort { padding-inline-start: 0; }
+  .hero-ort::before { display: none; }
+  .hero-titel { max-width: 12ch; }
+  .hero-fuss { margin-block-start: var(--r3); gap: var(--r3); }
+  .hero-knoepfe { display: grid; grid-template-columns: 1fr 1fr; gap: var(--r1); }
+  .hero-knoepfe .knopf { justify-content: center; padding-inline: var(--r2); }
+  .hero-ruf { gap: 6px; }
+  .hero { grid-template-rows: auto minmax(88px, 1fr) auto; }
+  .hero-band { min-height: 88px; }
+  /* Vier Einstiege in einer Reihe — nur die Namen, damit der Hero
+     ein Bildschirm bleibt. */
+  .hero-wahl { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--r1); }
+  .hero-wahl-punkt { grid-template-columns: minmax(0, 1fr); }
+  .hero-wahl-name { font-size: var(--grad-text); }
+  .hero-wahl-pfeil { display: none; }
+  .hero-einstieg { padding-block: var(--r3) var(--r4); }
+  .hero-wahl { gap: var(--r2) var(--gasse); }
+  .hero-wahl-zusatz { display: none; }
+  .hero-wahl-punkt { padding-block-start: var(--r1); }
+  .belege { grid-template-columns: 1fr; gap: var(--r2); padding-block: var(--r5); }
+}
+
+/* Der zweite Satz der Einleitung entfällt auf schmalen Geräten, damit der
+   Hero ein Bildschirm bleibt. */
+.hero-blei-zwei { display: inline; }
+@media (max-width: 767px) { .hero-blei-zwei { display: none; } }
+
+/* Sehr niedrige Fenster: lieber mitwachsen als quetschen. */
+@media (max-height: 600px) {
+  .hero { min-height: auto; }
+  .hero-band { min-height: 120px; }
+}

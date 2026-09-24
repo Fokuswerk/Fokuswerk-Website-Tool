@@ -4,13 +4,14 @@ import Niveau from "@/components/Niveau";
 import Auftritt from "@/components/Auftritt";
 import Bild from "@/components/Bild";
 import Projektberater from "@/components/Projektberater";
+import Hero from "@/components/Hero";
 import { betrieb } from "@/daten/betrieb";
 import { leistungen } from "@/daten/leistungen";
 
 const belege = [
-  { zahl: "1962", einheit: "", label: "Gegründet", satz: "Rudolf Brouwer beginnt am 22. Januar in der Garage seines Vaters in Nordmoslesfehn." },
-  { zahl: "500", einheit: "m²", label: "Ausstellung", satz: "Bad und Pool zum Anfassen — in dieser Größe seit 1996, zuletzt 2020 umgebaut." },
-  { zahl: "24", einheit: "h", label: "Notdienst", satz: "Fällt die Heizung am Wochenende aus, bleibt der Betrieb erreichbar." },
+  { titel: "Familienbetrieb seit 1962", satz: "gegründet von Rudolf Brouwer, geführt von Roelf und Wolfgang Brouwer" },
+  { titel: "Meisterbetrieb", satz: "Installateur- und Heizungsbauerhandwerk, Oldenburger Straße 209" },
+  { titel: "24-Stunden-Heizungsnotdienst", satz: "auch am Wochenende erreichbar" },
 ];
 
 const aufgaben = [
@@ -48,57 +49,18 @@ const baeder = [
 export default function Startseite() {
   return (
     <>
-      {/* ================= Hero ================= */}
-      <section className="hero">
-        <div className="bahn">
-          <p className="marke hero-marke sacht">
-            Bad · Heizung · Energie · Pool <span className="hero-ort">— Wardenburg</span>
-          </p>
+      <Hero />
 
-          <h1 className="hero-titel">
-            <span className="zeile"><span style={{ "--verzug": "80ms" } as React.CSSProperties}>Erst ansehen.</span></span>
-            <span className="zeile"><span style={{ "--verzug": "200ms" } as React.CSSProperties}>Dann entscheiden.</span></span>
-          </h1>
-
-          <div className="hero-linie sacht" style={{ "--verzug": "420ms" } as React.CSSProperties}>
-            <p className="blei satz hero-blei">
-              Über 500 Quadratmeter Ausstellung für Bad und Pool, am Ortseingang von {betrieb.ort}.
-              Seit {betrieb.gruendung} plant, baut und wartet dieser Familienbetrieb Bäder, Heizungen
-              und Schwimmbäder — und koordiniert die anderen Gewerke gleich mit.
-            </p>
-            <div className="hero-knoepfe">
-              <Link href="/kontakt#anfrage" className="knopf">Projekt anfragen</Link>
-              <Link href="/ausstellung" className="knopf knopf-still">Ausstellung ansehen</Link>
-            </div>
-          </div>
-
-          {/* Triptychon: der Raum, das Detail, das Ergebnis */}
-          <div className="hero-bilder">
-            <figure className="hero-bild blende" style={{ "--verzug": "540ms" } as React.CSSProperties}>
-              <Image src="/bilder/hero-raum.webp" alt="Blick in den Ausstellungsraum der Rudolf Brouwer GmbH mit Treppe und Duschabtrennungen" width={620} height={454} sizes="(max-width: 767px) 92vw, 41vw" priority />
-              <figcaption className="marke">Der Raum</figcaption>
-            </figure>
-            <figure className="hero-bild blende" style={{ "--verzug": "660ms" } as React.CSSProperties}>
-              <Image src="/bilder/hero-detail.webp" alt="Kupferrohre, Fittings und eine Rohrzange auf einer technischen Zeichnung" width={660} height={611} sizes="(max-width: 767px) 92vw, 32vw" priority />
-              <figcaption className="marke">Das Detail</figcaption>
-            </figure>
-            <figure className="hero-bild blende" style={{ "--verzug": "780ms" } as React.CSSProperties}>
-              <Image src="/bilder/hero-bad.webp" alt="Fertiggestelltes Badezimmer mit Doppelwaschtisch, Holzfront und beleuchtetem Spiegel" width={512} height={644} sizes="(max-width: 767px) 92vw, 23vw" />
-              <figcaption className="marke">Das Ergebnis</figcaption>
-            </figure>
-          </div>
-
-          {/* Belege auf der Niveaulinie */}
-          <ul className="belege">
-            {belege.map((b) => (
-              <li key={b.label}>
-                <span className="beleg-zahl jahr">{b.zahl}<span className="beleg-einheit">{b.einheit}</span></span>
-                <span className="marke beleg-label">{b.label}</span>
-                <span className="still beleg-satz">{b.satz}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+      {/* Belegzeile — drei belegte Tatsachen, direkt unter dem Hero */}
+      <section className="bahn">
+        <ul className="belege">
+          {belege.map((b) => (
+            <li key={b.titel}>
+              <span className="beleg-punkt" aria-hidden="true" />
+              <span className="beleg-text"><strong>{b.titel}</strong> — <span className="still">{b.satz}</span></span>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {/* ================= Die Aufgabe ================= */}

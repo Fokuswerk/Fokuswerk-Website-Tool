@@ -20,6 +20,7 @@ export default function Kopfleiste() {
   const [gescrollt, setGescrollt] = useState(false);
   const [menue, setMenue] = useState(false);        // mobiles Vollbildmenü
   const [klappe, setKlappe] = useState(false);      // Leistungen-Panel (Desktop)
+  const [ueberHero, setUeberHero] = useState(false); // Leiste liegt auf dunklem Hero
   const zeitgeber = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -30,6 +31,19 @@ export default function Kopfleiste() {
   }, []);
 
   useEffect(() => { setMenue(false); setKlappe(false); }, [pfad]);
+
+  /* Liegt unter der Leiste ein dunkler Hero, wird sie durchsichtig und hell.
+     Erkannt wird das an [data-heroblende] — so muss keine Route gepflegt werden. */
+  useEffect(() => {
+    const hero = document.querySelector("[data-heroblende]");
+    if (!hero) { setUeberHero(false); return; }
+    const beobachter = new IntersectionObserver(
+      ([eintrag]) => setUeberHero(eintrag.isIntersecting),
+      { rootMargin: "-120px 0px 0px 0px", threshold: 0 }
+    );
+    beobachter.observe(hero);
+    return () => beobachter.disconnect();
+  }, [pfad]);
 
   useEffect(() => {
     document.body.style.overflow = menue ? "hidden" : "";
@@ -51,7 +65,11 @@ export default function Kopfleiste() {
     <>
       <a className="sprung" href="#inhalt">Zum Inhalt springen</a>
 
-      <header className="kopf" data-eng={gescrollt ? "ja" : "nein"}>
+      <header
+        className="kopf"
+        data-eng={gescrollt ? "ja" : "nein"}
+        data-hell={ueberHero && !menue ? "ja" : "nein"}
+      >
         {/* Nebenleiste: Anschrift links, Notdienst und Rufnummer rechts */}
         <div className="kopf-neben">
           <div className="bahn kopf-neben-inhalt">
@@ -70,7 +88,8 @@ export default function Kopfleiste() {
         <div className="kopf-haupt">
           <div className="bahn kopf-haupt-inhalt">
             <Link href="/" className="kopf-marke" aria-label={`${betrieb.name} — zur Startseite`}>
-              <Image src="/bilder/logo.png" alt="" width={300} height={121} priority />
+              <Image src="/bilder/logo.png" alt="" width={300} height={121} priority className="kopf-logo-dunkel" />
+              <Image src="/bilder/logo-hell.png" alt="" width={300} height={121} priority className="kopf-logo-hell" />
             </Link>
 
             <nav className="kopf-nav" aria-label="Hauptnavigation">

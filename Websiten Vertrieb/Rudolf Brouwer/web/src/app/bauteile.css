@@ -62,11 +62,11 @@
   position: absolute; left: 0; right: 0; top: 100%;
   background: var(--kalk); border-block-end: var(--strich);
   overflow: hidden;
-  display: grid; grid-template-rows: 0fr;
+  display: grid; grid-template-rows: minmax(0, 0fr);
   transition: grid-template-rows var(--zeit-mittel) var(--ruhig);
   box-shadow: 0 18px 32px -28px rgb(22 24 27 / 0.3);
 }
-.kopf-panel[data-auf="ja"] { grid-template-rows: 1fr; }
+.kopf-panel[data-auf="ja"] { grid-template-rows: minmax(0, 1fr); }
 .kopf-panel-inhalt {
   min-height: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--gasse);
   padding-block: var(--r5);
@@ -184,3 +184,43 @@
   .fuss-kopf { flex-direction: column; gap: var(--r5); }
   .fuss-ruf { align-items: flex-start; text-align: left; }
 }
+
+/* ==========================================================================
+   Kopfleiste über dunklem Hero: durchsichtig und hell.
+   Beim Scrollen kippt sie zurück auf die helle Leiste.
+   ========================================================================== */
+
+.kopf-logo-hell { display: none; }
+
+.kopf[data-hell="ja"] {
+  background: transparent;
+  border-block-end-color: transparent;
+  color: var(--kalk);
+}
+.kopf[data-hell="ja"] .kopf-neben { border-block-end-color: color-mix(in oklab, var(--kalk) 20%, transparent); }
+.kopf[data-hell="ja"] .kopf-neben-inhalt .still,
+.kopf[data-hell="ja"] .kopf-notdienst { color: color-mix(in oklab, var(--kalk) 68%, transparent); }
+.kopf[data-hell="ja"] .kopf-notdienst:hover { color: var(--kalk); }
+.kopf[data-hell="ja"] .kopf-punkt { background: var(--marine-hell); }
+.kopf[data-hell="ja"] .kopf-ruf,
+.kopf[data-hell="ja"] .kopf-link { color: var(--kalk); }
+.kopf[data-hell="ja"] .kopf-link::after { background: var(--kalk); }
+.kopf[data-hell="ja"] .kopf-schalter span { background: var(--kalk); }
+.kopf[data-hell="ja"] .kopf-logo-dunkel { display: none; }
+.kopf[data-hell="ja"] .kopf-logo-hell { display: block; }
+.kopf[data-hell="ja"] .kopf-knopf {
+  background: transparent;
+  border-color: color-mix(in oklab, var(--kalk) 44%, transparent);
+  color: var(--kalk);
+}
+.kopf[data-hell="ja"] .kopf-knopf:hover { background: var(--kalk); border-color: var(--kalk); color: var(--graphit); }
+.kopf[data-hell="ja"] :focus-visible { outline-color: var(--kalk); }
+
+.kopf[data-hell="ja"] .kopf-panel { background: var(--tiefe); box-shadow: none; }
+.kopf[data-hell="ja"] .kopf-panel-punkt { border-block-start-color: color-mix(in oklab, var(--kalk) 26%, transparent); }
+.kopf[data-hell="ja"] .kopf-panel-punkt:hover { border-block-start-color: var(--marine-hell); }
+.kopf[data-hell="ja"] .kopf-panel-titel { color: var(--kalk); }
+.kopf[data-hell="ja"] .kopf-panel-gewerk,
+.kopf[data-hell="ja"] .kopf-panel .marke { color: color-mix(in oklab, var(--kalk) 60%, var(--tiefe)); }
+
+.kopf { transition: background var(--zeit-kurz) ease-out, border-color var(--zeit-kurz) ease-out; }

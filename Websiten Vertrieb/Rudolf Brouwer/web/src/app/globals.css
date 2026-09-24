@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./bauteile.css";
+@import "./hero.css";
 @import "./seiten.css";
 
 /* ==========================================================================
@@ -19,17 +20,21 @@
   --linie:      color-mix(in oklab, var(--graphit) 15%, var(--kalk));
   --kalk-tief:  color-mix(in oklab, var(--graphit) 5%,  var(--kalk));
   --marine-still: color-mix(in oklab, var(--marine) 8%, var(--kalk));
+  --tiefe: color-mix(in oklab, var(--marine) 14%, var(--graphit));
+  --marine-hell: color-mix(in oklab, var(--marine) 52%, var(--kalk));
+  --kopf-hoch: 114px;   /* Nebenleiste 38 + Hauptleiste 76 */
+  --leiste-unten: 0px;  /* feste Leiste am unteren Rand, nur mobil */
 
   /* --- Schrift: zwei Familien ------------------------------------------- */
   --schrift: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
   --serif:   var(--font-newsreader), Georgia, serif;
 
-  --grad-1: clamp(2.5rem, 5vw, 4.5rem);      /* H1   40 → 72 */
-  --grad-2: clamp(1.9rem, 3.3vw, 3.25rem);   /* H2   30 → 52 */
-  --grad-3: clamp(1.25rem, 1.7vw, 2rem);     /* H3   20 → 32 */
-  --grad-4: clamp(1.05rem, 1.2vw, 1.3rem);   /* H4   17 → 21 */
-  --grad-text: clamp(1rem, 0.42vw + 0.9rem, 1.0625rem);  /* 16 → 17 */
-  --grad-klein: 0.9375rem;                   /* 15 */
+  --grad-1: clamp(2.5rem, 6vw, 4.75rem);     /* H1   40 → 76 */
+  --grad-2: clamp(2rem, 3.4vw, 3.25rem);     /* H2   32 → 52 */
+  --grad-3: clamp(1.5rem, 1.9vw, 2rem);      /* H3   24 → 32 */
+  --grad-4: clamp(1.1875rem, 1.3vw, 1.375rem); /* Kartentitel 19 → 22 */
+  --grad-text: 1.0625rem;                    /* Fließtext 17, auch mobil */
+  --grad-klein: 0.9375rem;                   /* Sekundärtext 15 */
   --grad-marke: 0.75rem;                     /* 12 — Versal-Label */
 
   /* --- Raum: nur diese Werte -------------------------------------------- */
@@ -58,7 +63,8 @@
 }
 
 @media (max-width: 1023px) { :root { --rand: 24px; --takt: var(--r9); } }
-@media (max-width: 767px)  { :root { --rand: 16px; --takt: var(--r8); --gasse: 16px; } }
+
+@media (max-width: 767px)  { :root { --rand: 16px; --takt: var(--r8); --gasse: 16px; --kopf-hoch: 102px; --leiste-unten: 54px; } }
 
 @theme inline {
   --color-graphit: var(--graphit);
@@ -94,10 +100,10 @@ body {
 }
 
 h1, h2, h3, h4 { margin: 0; font-weight: 600; text-wrap: balance; hyphens: none; }
-h1 { font-size: var(--grad-1); line-height: 1.02; letter-spacing: -0.03em; }
+h1 { font-size: var(--grad-1); line-height: 1.0; letter-spacing: -0.03em; }
 h2 { font-size: var(--grad-2); line-height: 1.05; letter-spacing: -0.025em; }
 h3 { font-size: var(--grad-3); line-height: 1.15; letter-spacing: -0.02em; }
-h4 { font-size: var(--grad-4); line-height: 1.25; letter-spacing: -0.015em; }
+h4 { font-size: var(--grad-4); line-height: 1.25; letter-spacing: -0.02em; }
 p  { margin: 0; }
 ul, ol { margin: 0; padding: 0; }
 img, svg, video { display: block; max-width: 100%; }
