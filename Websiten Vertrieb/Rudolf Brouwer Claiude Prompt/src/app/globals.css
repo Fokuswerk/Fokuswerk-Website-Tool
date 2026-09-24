@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/* ── Designsystem ────────────────────────────────────────────────
+   Vier Farben, zwei Schriften, ein Raster.
+   Alle Abstände sind Vielfache von 8.
+──────────────────────────────────────────────────────────────── */
+
+@theme {
+  --color-tief: #101a38;      /* Dunkel  — Markenblau, tief */
+  --color-tiefer: #0b1229;    /* Dunkel  — Abstufung für Flächen */
+  --color-papier: #f4f1e9;    /* Hell    — warmes Off-White */
+  --color-papier-2: #eae5d9;  /* Hell    — Abstufung */
+  --color-mittel: #7c8299;    /* Mittelton */
+  --color-kupfer: #c2703a;    /* Akzent  — nur Hauptaktionen */
+
+  --font-sans: var(--schrift-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--schrift-mono), ui-monospace, monospace;
+
+  --radius-kante: 2px;
+  --radius-block: 12px;
+}
+
+:root {
+  --rand: 24px;             /* Seitenrand  */
+  --sektion: 96px;          /* Abstand oben = unten, überall gleich */
+}
+@media (min-width: 768px) {
+  :root { --rand: 40px; --sektion: 120px; }
+}
+@media (min-width: 1280px) {
+  :root { --rand: 64px; --sektion: 144px; }
+}
+
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--color-papier);
+  color: var(--color-tief);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.6;
+  font-feature-settings: "ss01", "cv05";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Typografische Stufen ─────────────────────────────────────── */
+.t-h1 { font-size: clamp(34px, 6.4vw, 72px); line-height: 1.0;  letter-spacing: -0.03em; font-weight: 600; }
+.t-h2 { font-size: clamp(28px, 4.2vw, 50px); line-height: 1.04; letter-spacing: -0.025em; font-weight: 600; }
+.t-h3 { font-size: clamp(24px, 2.4vw, 30px); line-height: 1.1;  letter-spacing: -0.02em; font-weight: 600; }
+.t-karte { font-size: 21px; line-height: 1.2; letter-spacing: -0.015em; font-weight: 600; }
+.t-text { font-size: 17px; line-height: 1.6; }
+.t-label {
+  font-family: var(--font-mono);
+  font-size: 15px; line-height: 1.2;
+  letter-spacing: 0.16em; text-transform: uppercase; font-weight: 500;
+}
+.t-zahl { font-variant-numeric: tabular-nums; letter-spacing: -0.04em; }
+
+.mass { max-width: 68ch; }   /* Fließtext höchstens ~75 Zeichen */
+
+/* ── Raster ───────────────────────────────────────────────────── */
+.huelle { width: 100%; padding-inline: var(--rand); }
+.bahn   { width: 100%; max-width: 1312px; margin-inline: auto; }
+.sektion { padding-block: var(--sektion); }
+
+/* ── Fokus ────────────────────────────────────────────────────── */
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-kupfer);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.auf-dunkel :focus-visible { outline-color: #e9a87c; }
+
+/* ── Bewegung ─────────────────────────────────────────────────── */
+.anlauf { opacity: 0; transform: translateY(20px); }
+.anlauf-an { opacity: 1; transform: none; transition: opacity 500ms cubic-bezier(.2,.7,.3,1), transform 500ms cubic-bezier(.2,.7,.3,1); }
+
+@keyframes stufe {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+.stufe { opacity: 0; animation: stufe 600ms cubic-bezier(.2,.7,.3,1) forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .stufe, .anlauf, .anlauf-an { animation: none !important; opacity: 1 !important; transform: none !important; transition: none !important; }
+  *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
