@@ -3,47 +3,56 @@ import Image from "next/image";
 import { betrieb } from "@/daten/betrieb";
 
 /**
- * Der Hero ist eine Bühne, genau einen Bildschirm hoch.
+ * Der Hero ist eine Bühne: ein vollflächiges Foto, darüber ein Overlay aus
+ * dem Markenton, darauf helle Typografie. Genau einen Bildschirm hoch.
  *
- * Aufbau von oben nach unten:
- *   dunkle Markenfläche → Aussage → zwei Aktionen → das Wasserband →
- *   der Projekt-Einstieg.
- *
- * Das Wasserband ist zugleich das Motiv der ganzen Seite: die Linie zwischen
- * Wärme und Wasser. Es läuft randlos durch, bleibt aber ein Band — das
- * Bildmaterial des Betriebs endet bei 1170 px, ein formatfüllendes Foto wäre
- * unscharf. Als schmaler Streifen bleibt es scharf und wird zum Motiv.
+ * Die Aussage sitzt unten links, der Projekt-Einstieg rechts daneben —
+ * darüber bleibt das Bild frei.
  */
 
 const einstieg = [
-  { weg: "/leistungen/badsanierung", name: "Bad", zusatz: "Planen, sanieren, koordinieren" },
-  { weg: "/leistungen/heizung", name: "Heizung", zusatz: "Erneuern und auslegen" },
-  { weg: "/leistungen/energie", name: "Energie", zusatz: "Wärme aus der Sonne" },
-  { weg: "/leistungen/pool-wellness", name: "Pool", zusatz: "Becken und Technik" },
+  { weg: "/leistungen/badsanierung", name: "Bad" },
+  { weg: "/leistungen/heizung", name: "Heizung" },
+  { weg: "/leistungen/energie", name: "Energie" },
+  { weg: "/leistungen/pool-wellness", name: "Pool" },
 ];
 
 export default function Hero() {
   return (
     <section className="hero auf-dunkel" data-heroblende>
+      {/* Bild */}
+      <div className="hero-bild">
+        <Image
+          src="/bilder/hero-wasser.webp"
+          alt="Regendusche mit fallendem Wasser vor dunkel gefliester Wand"
+          fill
+          sizes="100vw"
+          priority
+          quality={82}
+        />
+      </div>
+      <div className="hero-schleier" aria-hidden="true" />
+
       {/* Aussage */}
-      <div className="bahn hero-oben">
-        <p className="hero-mikro sacht">
-          Bad · Heizung · Energie · Pool
-          <span className="hero-ort">Wardenburg</span>
-        </p>
+      <div className="bahn hero-inhalt">
+        <div className="hero-satz">
+          <p className="hero-mikro sacht">
+            Bad · Heizung · Energie · Pool
+            <span className="hero-ort">Wardenburg</span>
+          </p>
 
-        <h1 className="hero-titel">
-          <span className="zeile"><span style={{ "--verzug": "90ms" } as React.CSSProperties}>Wärme und Wasser.</span></span>
-          <span className="zeile"><span style={{ "--verzug": "210ms" } as React.CSSProperties}>Seit 1962.</span></span>
-        </h1>
+          <h1 className="hero-titel">
+            <span className="zeile"><span style={{ "--verzug": "90ms" } as React.CSSProperties}>Wärme und Wasser.</span></span>
+            <span className="zeile"><span style={{ "--verzug": "210ms" } as React.CSSProperties}>Seit 1962.</span></span>
+          </h1>
 
-        <div className="hero-fuss sacht" style={{ "--verzug": "430ms" } as React.CSSProperties}>
-          <p className="hero-blei">
+          <p className="hero-blei sacht" style={{ "--verzug": "430ms" } as React.CSSProperties}>
             Bad, Heizung, Energie und Schwimmbad aus einem Haus in {betrieb.ort}.
             Über 500 Quadratmeter eigene Ausstellung
             <span className="hero-blei-zwei"> — und ein Ansprechpartner für alle Gewerke</span>.
           </p>
-          <div className="hero-knoepfe">
+
+          <div className="hero-knoepfe sacht" style={{ "--verzug": "530ms" } as React.CSSProperties}>
             <Link href="/kontakt#anfrage" className="knopf">Projekt anfragen</Link>
             <a href={`tel:${betrieb.telefonRoh}`} className="knopf knopf-still hero-ruf">
               <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
@@ -53,36 +62,33 @@ export default function Hero() {
             </a>
           </div>
         </div>
+
+        {/* Projekt-Einstieg */}
+        <div className="hero-einstieg sacht" style={{ "--verzug": "640ms" } as React.CSSProperties}>
+          <p className="marke hero-einstieg-marke">Was möchten Sie umsetzen?</p>
+          <ul className="hero-wahl">
+            {einstieg.map((e) => (
+              <li key={e.weg}>
+                <Link href={e.weg} className="hero-wahl-punkt">
+                  <span className="hero-wahl-name">{e.name}</span>
+                  <svg className="hero-wahl-pfeil" width="15" height="8" viewBox="0 0 16 8" fill="none" aria-hidden="true">
+                    <path d="M0 4h14M11 1l3 3-3 3" stroke="currentColor" strokeWidth="1.3" />
+                  </svg>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
-      {/* Das Wasserband — randlos, mit der Niveaulinie als Oberkante */}
-      <div className="hero-band">
-        <Image
-          src="/bilder/regendusche.webp"
-          alt="Regendusche über dunklen Fliesen, fallendes Wasser"
-          fill
-          sizes="100vw"
-          priority
-          quality={86}
-        />
-      </div>
-
-      {/* Projekt-Einstieg */}
-      <div className="bahn hero-einstieg">
-        <p className="marke hero-einstieg-marke">Was möchten Sie umsetzen?</p>
-        <ul className="hero-wahl">
-          {einstieg.map((e, i) => (
-            <li key={e.weg} style={{ "--verzug": `${620 + i * 70}ms` } as React.CSSProperties}>
-              <Link href={e.weg} className="hero-wahl-punkt sacht">
-                <span className="hero-wahl-name">{e.name}</span>
-                <span className="hero-wahl-zusatz">{e.zusatz}</span>
-                <svg className="hero-wahl-pfeil" width="16" height="8" viewBox="0 0 16 8" fill="none" aria-hidden="true">
-                  <path d="M0 4h14M11 1l3 3-3 3" stroke="currentColor" strokeWidth="1.2" />
-                </svg>
-              </Link>
-            </li>
-          ))}
-        </ul>
+      {/* Hinweis nach unten */}
+      <div className="bahn hero-weiter">
+        <a href="#belege" className="hero-weiter-punkt">
+          <svg width="12" height="16" viewBox="0 0 12 16" fill="none" aria-hidden="true">
+            <path d="M6 0v14M1 9l5 5 5-5" stroke="currentColor" strokeWidth="1.3" />
+          </svg>
+          Was wir übernehmen
+        </a>
       </div>
     </section>
   );

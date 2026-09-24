@@ -52,7 +52,7 @@ export default function Startseite() {
       <Hero />
 
       {/* Belegzeile — drei belegte Tatsachen, direkt unter dem Hero */}
-      <section className="bahn">
+      <section className="bahn" id="belege">
         <ul className="belege">
           {belege.map((b) => (
             <li key={b.titel}>

@@ -1,34 +1,54 @@
 /* ==========================================================================
-   Hero — genau ein Bildschirm, dunkle Markenfläche, Wasserband, Einstieg
+   Hero — vollflächiges Foto, Overlay aus dem Markenton, genau ein Bildschirm
    ========================================================================== */
 
-/* Genau ein Bildschirm. Alle Polster bleiben Vielfache von 8 — flexibel ist
-   allein das Wasserband, das den Rest der Höhe aufnimmt. */
-/* section.hero statt .hero — sonst gewinnt .auf-dunkel mit seinem Graphit. */
 section.hero {
   position: relative;
-  /* Die Kopfleiste ist sticky und belegt Fluss. Der Hero wird um ihre Höhe
-     hochgezogen, damit er wirklich einen Bildschirm misst — die Leiste liegt
-     dann über ihm, oben ist der Platz dafür schon eingerechnet. */
-  /* +1px: die Leiste trägt unten eine Haarlinie, die zu ihrer Höhe zählt. */
+  isolation: isolate;
+  /* +1px: die Kopfleiste trägt unten eine Haarlinie, die zu ihrer Höhe zählt.
+     Sie ist sticky und belegt Fluss — der Hero wird darunter gezogen. */
   margin-block-start: calc((var(--kopf-hoch) + 1px) * -1);
-  /* Unten bleibt Platz für die feste Leiste, die nur mobil erscheint. */
   min-height: calc(100svh - var(--leiste-unten));
-  /* Raster statt Flex: die beiden Textzeilen bekommen ihre Inhaltshöhe,
-     das Wasserband nimmt exakt den Rest. Sollte der Inhalt einmal mehr
-     brauchen, wächst der Hero mit, statt etwas abzuschneiden. */
   display: grid;
-  grid-template-rows: auto minmax(96px, 1fr) auto;
-  background: var(--tiefe);
+  grid-template-rows: 1fr auto auto;
   overflow: hidden;
+  background: var(--tiefe);
 }
 
-/* Aussage ---------------------------------------------------------------- */
+.hero-bild { position: absolute; inset: 0; z-index: -2; }
+/* Gespiegelt: so liegt der helle Duschkopf rechts und die dunkle
+   Fliesenwand links unter der Schrift. Im Motiv steht kein Text,
+   die Spiegelung fällt also nicht auf. */
+.hero-bild img { width: 100%; height: 100%; object-fit: cover; object-position: 42% 42%; transform: scaleX(-1); }
 
-.hero-oben {
-  padding-block-start: calc(var(--kopf-hoch) + var(--r5));
-  padding-block-end: var(--r5);
+/* Kontrolliertes Overlay: unten dicht genug für Text, oben offen fürs Bild. */
+.hero-schleier {
+  position: absolute; inset: 0; z-index: -1;
+  background:
+    linear-gradient(to top,
+      color-mix(in oklab, var(--tiefe) 92%, transparent) 0%,
+      color-mix(in oklab, var(--tiefe) 84%, transparent) 28%,
+      color-mix(in oklab, var(--tiefe) 52%, transparent) 56%,
+      color-mix(in oklab, var(--tiefe) 26%, transparent) 76%,
+      color-mix(in oklab, var(--tiefe) 66%, transparent) 100%),
+    linear-gradient(to right,
+      color-mix(in oklab, var(--tiefe) 66%, transparent) 0%,
+      color-mix(in oklab, var(--tiefe) 20%, transparent) 54%,
+      transparent 100%);
 }
+
+/* Inhalt ---------------------------------------------------------------- */
+
+.hero-inhalt {
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--r9);
+  padding-block-end: var(--r6);
+}
+
+.hero-satz { max-width: 780px; }
 
 .hero-mikro {
   display: flex; align-items: center; gap: var(--r2);
@@ -36,95 +56,85 @@ section.hero {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: color-mix(in oklab, var(--kalk) 62%, var(--tiefe));
-  margin: 0 0 var(--r4);
+  color: color-mix(in oklab, var(--kalk) 74%, var(--tiefe));
+  margin: 0 0 var(--r3);
 }
-.hero-ort {
-  position: relative;
-  padding-inline-start: var(--r3);
-  color: var(--kalk);
-}
+.hero-ort { position: relative; padding-inline-start: var(--r3); color: var(--kalk); }
 .hero-ort::before {
   content: ""; position: absolute; left: 0; top: 50%;
   width: var(--r2); height: 1px; background: var(--marine-hell);
 }
 
-.hero-titel { max-width: 16ch; color: var(--kalk); }
-
-.hero-fuss {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: var(--r8);
-  margin-block-start: var(--r5);
-}
+.hero-titel { max-width: none; color: var(--kalk); text-shadow: 0 1px 24px color-mix(in oklab, var(--tiefe) 55%, transparent); }
 
 .hero-blei {
   font-size: var(--grad-text);
   line-height: 1.65;
-  max-width: 56ch;
-  color: color-mix(in oklab, var(--kalk) 78%, var(--tiefe));
+  max-width: 54ch;
+  margin-block-start: var(--r4);
+  color: color-mix(in oklab, var(--kalk) 86%, var(--tiefe));
 }
 
-.hero-knoepfe { display: flex; gap: var(--r2); flex: none; }
+.hero-knoepfe { display: flex; gap: var(--r2); margin-block-start: var(--r5); }
 .hero-ruf { gap: 10px; }
 
-/* Das Wasserband --------------------------------------------------------- */
-
-.hero-band {
-  position: relative;
-  min-height: 96px;
-  border-block-start: 1px solid var(--marine-hell);
+/* Auf dem dunklen Foto trägt Marineblau nicht — die Hauptaktion wird hell. */
+.hero .knopf:not(.knopf-still) {
+  background: var(--kalk);
+  border-color: var(--kalk);
+  color: var(--graphit);
 }
-.hero-band img { object-fit: cover; object-position: center 38%; }
-/* Unterkante sacht in die Fläche zurückführen, damit der Einstieg ruhig sitzt */
-.hero-band::after {
-  content: ""; position: absolute; inset: auto 0 0 0; height: 40%;
-  background: linear-gradient(to bottom, transparent, var(--tiefe));
-  pointer-events: none;
+.hero .knopf:not(.knopf-still):hover {
+  background: color-mix(in oklab, var(--kalk) 86%, var(--marine));
+  border-color: color-mix(in oklab, var(--kalk) 86%, var(--marine));
 }
+.hero .knopf-still {
+  border-color: color-mix(in oklab, var(--kalk) 46%, transparent);
+  background: color-mix(in oklab, var(--tiefe) 42%, transparent);
+  backdrop-filter: blur(2px);
+}
+.hero .knopf-still:hover { border-color: var(--kalk); background: color-mix(in oklab, var(--tiefe) 64%, transparent); }
 
 /* Projekt-Einstieg ------------------------------------------------------- */
 
-.hero-einstieg { padding-block: var(--r4) var(--r6); }
-.hero-einstieg-marke { color: color-mix(in oklab, var(--kalk) 62%, var(--tiefe)); margin-block-end: var(--r2); }
+.hero-einstieg { flex: none; min-width: 268px; }
+.hero-einstieg-marke { color: color-mix(in oklab, var(--kalk) 74%, var(--tiefe)); margin-block-end: var(--r2); }
 
-.hero-wahl {
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--gasse);
-}
+.hero-wahl { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: var(--r1); }
 
 .hero-wahl-punkt {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: var(--r2);
-  padding-block-start: var(--r2);
-  border-block-start: 1px solid color-mix(in oklab, var(--kalk) 26%, transparent);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--r2);
+  padding: 14px var(--r2);
+  border: 1px solid color-mix(in oklab, var(--kalk) 32%, transparent);
+  border-radius: var(--kante-klein);
+  background: color-mix(in oklab, var(--tiefe) 46%, transparent);
+  backdrop-filter: blur(3px);
   color: var(--kalk);
-  transition: border-color var(--zeit-kurz) ease-out;
+  transition: background var(--zeit-kurz) ease-out, border-color var(--zeit-kurz) ease-out;
 }
-.hero-wahl-punkt:hover { border-block-start-color: var(--marine-hell); }
+.hero-wahl-punkt:hover { background: var(--marine); border-color: var(--marine); }
+.hero-wahl-name { font-size: var(--grad-klein); font-weight: 600; letter-spacing: -0.01em; }
+.hero-wahl-pfeil { color: var(--marine-hell); transition: transform var(--zeit-kurz) ease-out; flex: none; }
+.hero-wahl-punkt:hover .hero-wahl-pfeil { transform: translateX(4px); color: var(--kalk); }
 
-.hero-wahl-name { font-size: var(--grad-4); font-weight: 600; letter-spacing: -0.02em; }
-.hero-wahl-zusatz {
-  grid-column: 1 / -1;
-  font-size: var(--grad-marke);
-  line-height: 1.5;
-  color: color-mix(in oklab, var(--kalk) 58%, var(--tiefe));
+/* Hinweis nach unten ----------------------------------------------------- */
+
+.hero-weiter { grid-row: 3; padding-block-end: var(--r5); }
+.hero-weiter-punkt {
+  display: inline-flex; align-items: center; gap: var(--r2);
+  font-size: var(--grad-marke); font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+  color: color-mix(in oklab, var(--kalk) 68%, var(--tiefe));
+  min-height: 24px;
 }
-.hero-wahl-pfeil { color: var(--marine-hell); transition: transform var(--zeit-kurz) ease-out; }
-.hero-wahl-punkt:hover .hero-wahl-pfeil { transform: translateX(5px); }
+.hero-weiter-punkt:hover { color: var(--kalk); }
+.hero-weiter-punkt svg { animation: winken 2.6s var(--ruhig) infinite; }
+@keyframes winken { 0%, 72%, 100% { transform: translateY(0); } 84% { transform: translateY(3px); } }
 
-/* Belegzeile direkt unter dem Hero --------------------------------------- */
+/* Belegzeile ------------------------------------------------------------- */
 
 .belege {
   list-style: none;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--gasse);
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gasse);
   padding-block: var(--r6);
   border-block-end: var(--strich);
 }
@@ -135,57 +145,32 @@ section.hero {
 
 /* Breakpoints ------------------------------------------------------------ */
 
-/* Breite Fenster mit wenig Höhe (Laptop 1024×768): eine Stufe enger,
-   weiterhin ausschließlich Vielfache von 8. */
-@media (min-width: 1024px) and (max-height: 860px) {
-  .hero-oben { padding-block-start: calc(var(--kopf-hoch) + var(--r5)); padding-block-end: var(--r5); }
-  .hero-mikro { margin-block-end: var(--r3); }
-  .hero-fuss { margin-block-start: var(--r4); }
-  .hero-einstieg { padding-block: var(--r3) var(--r5); }
-  .hero-wahl-zusatz { display: none; }
-}
-
-@media (max-width: 1023px) { .hero-wahl-zusatz { display: none; } }
-
-@media (max-width: 1023px) {
-  .hero-oben { padding-block-start: calc(var(--kopf-hoch) + var(--r6)); padding-block-end: var(--r4); }
-  .hero-fuss { grid-template-columns: 1fr; gap: var(--r4); align-items: start; }
-  .hero-wahl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--r3) var(--gasse); }
-  .hero-einstieg { padding-block: var(--r3) var(--r5); }
+@media (max-width: 1099px) {
+  .hero-inhalt { grid-template-columns: 1fr; gap: var(--r6); align-items: start; }
+  .hero-einstieg { min-width: 0; }
+  .hero-wahl { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
 @media (max-width: 767px) {
-  .hero-oben { padding-block-start: calc(var(--kopf-hoch) + var(--r4)); padding-block-end: var(--r4); }
+  .hero-bild img { object-position: 42% 40%; }
   .hero-mikro { flex-direction: column; align-items: flex-start; gap: var(--r-fein); margin-block-end: var(--r3); }
   .hero-ort { padding-inline-start: 0; }
   .hero-ort::before { display: none; }
-  .hero-titel { max-width: 12ch; }
-  .hero-fuss { margin-block-start: var(--r3); gap: var(--r3); }
-  .hero-knoepfe { display: grid; grid-template-columns: 1fr 1fr; gap: var(--r1); }
+  .hero-titel { max-width: none; }
+  .hero-blei { margin-block-start: var(--r3); }
+  .hero-knoepfe { display: grid; grid-template-columns: 1fr 1fr; gap: var(--r1); margin-block-start: var(--r4); }
   .hero-knoepfe .knopf { justify-content: center; padding-inline: var(--r2); }
   .hero-ruf { gap: 6px; }
-  .hero { grid-template-rows: auto minmax(88px, 1fr) auto; }
-  .hero-band { min-height: 88px; }
-  /* Vier Einstiege in einer Reihe — nur die Namen, damit der Hero
-     ein Bildschirm bleibt. */
-  .hero-wahl { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--r1); }
-  .hero-wahl-punkt { grid-template-columns: minmax(0, 1fr); }
-  .hero-wahl-name { font-size: var(--grad-text); }
+  .hero-inhalt { gap: var(--r5); padding-block-end: var(--r4); }
+  .hero-wahl { gap: var(--r1); }
+  .hero-wahl-punkt { padding: 12px var(--r2); }
   .hero-wahl-pfeil { display: none; }
-  .hero-einstieg { padding-block: var(--r3) var(--r4); }
-  .hero-wahl { gap: var(--r2) var(--gasse); }
-  .hero-wahl-zusatz { display: none; }
-  .hero-wahl-punkt { padding-block-start: var(--r1); }
+  .hero-wahl-name { font-size: var(--grad-marke); letter-spacing: 0; }
+  .hero-weiter { display: none; }
   .belege { grid-template-columns: 1fr; gap: var(--r2); padding-block: var(--r5); }
 }
 
-/* Der zweite Satz der Einleitung entfällt auf schmalen Geräten, damit der
-   Hero ein Bildschirm bleibt. */
 .hero-blei-zwei { display: inline; }
 @media (max-width: 767px) { .hero-blei-zwei { display: none; } }
 
-/* Sehr niedrige Fenster: lieber mitwachsen als quetschen. */
-@media (max-height: 600px) {
-  .hero { min-height: auto; }
-  .hero-band { min-height: 120px; }
-}
+@media (prefers-reduced-motion: reduce) { .hero-weiter-punkt svg { animation: none; } }
