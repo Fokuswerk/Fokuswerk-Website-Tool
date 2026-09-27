@@ -14,31 +14,38 @@ noindex-Vorschau.
 
 ## Was gelöscht wurde
 
+Das Projekt enthält keine Gestaltung und keine Daten mehr. Geprüft, nicht angenommen:
+0 Komponenten · 0 Farbtoken · 0 Textstile · 0 Linkstile · 0 CMS-Collections ·
+0 Layout-Templates · 0 Design-Seiten · 0 Textknoten.
+
 | | |
 |---|---|
-| Seiteninhalte | alle 9 Seiten geleert (Startseite, Über uns, Kontakt, Unsere Arbeit, Case-Study-Detailseite, Impressum, AGB, DSGVO, 404) |
-| Layout-Templates | „FW 2026" und „Main" — damit sind Navigation und Fußzeile weg |
-| Komponenten | 33 Stück: FW Knopf, FW Navigation, FW Fußzeile, FW Frage, FW Registerzeile, Preloader, Logo, Cursor, Buttons, Karten, Akkordeons |
+| Seiten | alle bis auf die Startseite sind weg; die Startseite ist leer |
+| Layout-Templates | „FW 2026" und „Main" — damit auch Navigation und Fußzeile |
+| Komponenten | 33 Stück |
 | Farbtoken | alle 36 |
 | Textstile | alle 62, inklusive der an fokuswerk.de gemessenen FW-Metrik |
 | Linkstile | alle 5 |
 | CMS | Collection „Case Studies" mit vier Einträgen |
-| Canvas-Seiten | Branding, Gallery, Documentation, Start Here |
+| Canvas- und Design-Seiten | Branding, Gallery, Documentation, Start Here |
 | Favicon & OG-Bild | die Reste der gekauften Vorlage |
 
-Übrig sind nur noch die leeren Seitengerüste mit ihren drei Breakpoints. Titel und
-Beschreibung der Seite stehen noch — die waren inhaltlich richtig.
+## Zwei Grenzen, die Framer setzt
 
-## Was ich nicht löschen konnte
+- **Die Startseite `/` lässt sich nicht entfernen.** Der Versuch wird abgewiesen:
+  `FramerPluginError: The home page cannot be removed`. Jede Framer-Site braucht eine. Sie ist
+  leer, drei Breakpoints, sonst nichts.
+- **Bilder lassen sich über die Plugin-API nicht löschen.** Die API kennt `uploadImage`,
+  `addImage` und `uploadFiles` — aber keine einzige Methode, um Assets aufzulisten oder zu
+  entfernen. Der Medienbereich ist nur im Framer-Editor erreichbar (Assets-Panel,
+  Rechtsklick → löschen). Alle Bild-URLs stehen in `Bestand.md`, falls doch noch eines
+  gebraucht wird.
 
-- **Die Seiten selbst.** Framer lässt den Agenten keine Seiten entfernen. Wenn die Struktur
-  auch weg soll, musst du die Seiten im Editor löschen.
-- **Die Detailseite `/unsere-arbeit/:Case Studies`** hängt jetzt an einer gelöschten
-  Collection und ist damit kaputt. Die sollte als Erstes raus.
-- **Die Bilddateien** liegen weiter im Medienbereich des Projekts. Der Agent kommt an den
-  Medienbereich nicht heran; wegwerfen geht nur im Editor.
-
----
+**Nebenbefund für den Neuaufbau:** Dass die API `uploadImage`/`addImage` hat, widerspricht der
+bisherigen Annahme, über den Agenten ließen sich keine Dateien hochladen. Ob sich damit
+tatsächlich lokale Dateien aus dem Agenten heraus hochladen lassen, ist **ungetestet** — beim
+nächsten Mal zuerst mit einem Bild ausprobieren, bevor wieder mit Platzhaltern gearbeitet wird.
+Das würde die offenen Punkte Porträts, Showreel, Favicon und OG-Bild auf einen Schlag lösen.
 
 ## Was gesichert ist
 
