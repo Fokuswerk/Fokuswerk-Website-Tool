@@ -1,11 +1,19 @@
-# Fokuswerk — neue Website (Framer-Projekt „FW neu“)
+# Fokuswerk — neue Website (Framer-Projekt „FW neu")
+
+**Stand 27.09.2026: Die Startseite ist leer.** Sechs Entwurfsrunden sind abgerissen worden —
+der Kunde hat auf Null gesetzt und sucht Referenzseiten heraus, an denen der Neubau sich
+orientieren soll. Navigation, Fußzeile, Farbtoken, Textstile, Komponenten, CMS und alle Bilder
+liegen unverändert im Projekt.
+
+**→ Der vollständige Bestand steht in [`Bestand.md`](Bestand.md):** belegte Zahlen, die acht
+gebauten Seiten mit Adressen, alle Bild-URLs, das freigegebene Kundenzitat, sämtliche Texte,
+Token, Textstile und Komponenten. Wer neu anfängt, fängt dort an — nicht bei der Recherche.
 
 **Vorschau:** https://frank-site-485713.framer.app/ · steht auf **noindex**
 **Projekt:** https://framer.com/projects/FW-neu--YPv6DX0m4fRLwI6tlnjF-h7ell
 
-Das Projekt ist eine Kopie der Live-Seite. fokuswerk.de bleibt unberührt.
-Neu gebaut ist **die Startseite** (Stand: Runde 6, Galerie-Aufbau). Über uns, Unsere Arbeit, Kontakt und die
-Rechtstexte hängen noch am alten Seitenlayout „Main“ und sehen aus wie vorher.
+Das Projekt ist eine Kopie der Live-Seite. fokuswerk.de bleibt unberührt. Die übrigen Seiten
+(Über uns, Unsere Arbeit, Kontakt, Rechtstexte) hängen weiter am alten Seitenlayout „Main".
 
 ---
 
@@ -17,10 +25,11 @@ mehr beworben. Der Leitsatz oben — „Mehr Anfragen. Nicht mehr Follower.“ �
 gegen Content-Agenturen ab und spricht das Zielkundenprofil aus `Strategie Fokuswerk/ICP.md`
 an: hochpreisig, notwendiger Bedarf, Wachstumsabsicht.
 
-**Farbe.** Creme-Weiß ist raus. Grund ist Weiß, Schrift ein warmes Fast-Schwarz (#121110),
-Markenfarbe **Zinnober #E1341B**. Zinnober trägt eine ganze Fläche (der Abschluss-Block),
-markiert Zahlen und Zwischenüberschriften und erscheint beim Überfahren dunkler Knöpfe.
-Primärknöpfe bleiben dunkel bzw. weiß — knallige Pillen wirken billig.
+**Farbe.** Creme-Weiß ist raus (Entscheidung des Kunden). Grund ist Weiß, Schrift ein warmes
+Fast-Schwarz **#17161B**, Markenfarbe seit Runde 5 **Orange #FF6A1F** (vorher Zinnober
+#E1341B). Orange darf eine ganze Fläche tragen; Primärknöpfe bleiben dunkel bzw. weiß —
+knallige Pillen wirken billig. **Offen, ob das nach dem Abriss so bleibt** — das entscheidet
+sich an den Referenzseiten.
 
 **Schrift.** Inter und Source Serif 4, **mit exakt der Metrik der alten Seite** — die ist
 an fokuswerk.de gemessen, nicht geschätzt: Überschriften −0,06 em, Serifen-Akzent kursiv in
@@ -33,67 +42,28 @@ Inline-Schrift und eigenen Größen je Breakpoint. Und: Ein `SET` einer Schrifte
 dem Elternknoten löscht sie aus allen Läufen — danach den Serifen-Lauf neu setzen, sonst
 verschmelzen die Läufe.
 
-**Aufbau nach FITZ67.** Volle Leiste über dem Auftakt, Text- und Kennzahlenblock unten hinter
-einer Haarlinie, Register mit Haarlinien statt Kacheln, große Zahlen mit Versalien-Labels.
+**Aufbau.** Offen. FITZ67 war sechs Runden lang der Maßstab und hat nicht getragen. Der
+Neubau richtet sich nach den Referenzseiten, die der Kunde aussucht.
 
 ---
 
-## Was auf der Startseite steht
+## Was bisher versucht wurde (und warum es abgerissen wurde)
 
-Seit Runde 6 trägt die **Galerie der gebauten Seiten** die Seite. Aus vierzehn gleich
-gebauten Bändern sind sieben Abschnitte geworden; die Seite ist von 13.200 px auf
-9.800 px geschrumpft.
+Sechs Runden, alle verworfen. Die Kurzfassung, damit der Neubau nicht dieselben Wege geht:
 
-| # | Abschnitt | Inhalt |
+| Runde | Was gebaut wurde | Rückmeldung |
 |---|---|---|
-| 1 | Auftakt | randloses Foto mit Parallax, Claim, Haarlinie, die drei Hebel als stille Zeile — keine Zahlen, keine Knöpfe |
-| — | Kunden | acht echte Kundenlogos als schmaler Streifen |
-| 2 | Arbeiten | **das Rückgrat**: acht gebaute Seiten in ungleichen Zeilen (1 groß · 7/5 · 5/7 · 3 klein), verlinkt auf die Live-Adressen |
-| 3 | Beweis | dunkler runder Block: drei hochzählende Kennzahlen aus dem CMS, darunter die Rechenkette als waagerechte Stationsreihe |
-| 4 | Arbeitsweise | drei Leistungen als Bildkarten, darunter die vier Ablaufschritte in einer Reihe |
-| 5 | Agentur | zwei Porträts, darunter das Haubner-Zitat in einer dunklen Karte |
-| 6 | Fragen | sechs Einwände in **zwei Spalten** statt untereinander |
-| 7 | Kontakt | Zinnober-Fläche, Erstgespräch, Telefonnummer, „30 Minuten“ als Kennzahl |
+| 1 | Creme-Weiß, Typo-Auftakt auf flacher Fläche | Farbe raus, wirkt billig |
+| 2 | Weiß + Zinnober, FITZ67-Aufbau, Bild-Auftakt | „extrem billig, zu unaufgeräumt" |
+| 3 | Jede Sektion eigene Komposition, Nummerierung 01–09 | weiter nicht getroffen |
+| 4 | Runde Ecken, Squircle, eingerückte Farbblöcke, Schatten | „alles noch so kantig" war damit erledigt, der Rest nicht |
+| 5 | Orange statt Zinnober, Scroll-Bewegung, FITZ67-Stimme | Layout blieb unangetastet |
+| 6 | Aufbau neu: 14 Bänder → 7 Abschnitte, Galerie als Rückgrat | „das ist noch nichts" — alles auf Null |
 
-Dazu: Ladeanimation, Navigation und Fußzeile aus dem Layout-Template „FW 2026“ — unverändert.
-
----
-
-## Was Runde 6 geändert hat
-
-Rückmeldung war: „Das Layout ist doch immer noch dasselbe.“ Stimmte — die Runden 2 bis 5
-haben Radien, Farben, Schrift und Bewegung angefasst, aber nie den Aufbau. Vierzehn
-Abschnitte liefen nach demselben Muster: Nummer, Überschrift mit Akzent, Inhalt, nächstes
-Band.
-
-Gewählte Richtung (vom Kunden entschieden): **Arbeiten zuerst, Galerie als Rückgrat.**
-
-- **Die Nummerierung 01–09 ist weg.** Sie war der Grund, warum alles gleich aussah.
-- **Der Auftakt ist entkernt.** Vorher Kennerzeile, Headline, Haarlinie, Satz und drei
-  Kennzahlen. Jetzt Claim, ein Satz und die drei Hebel als Punktzeile. Die Kennzahlen sind
-  in den Beweis-Abschnitt gewandert, wo sie hingehören.
-- **Die Galerie ist keine Kachelwand mehr.** Vorher ein 4×2-Raster mit gleich großen
-  Karten. Jetzt vier Zeilen mit ungleichen Breiten — eine große Seite oben, dann 7/5, dann
-  5/7, dann drei kleine. Das ist der eine Abschnitt, der die Seite trägt.
-- **Drei Abschnitte sind zu einem geworden.** „Auf einen Blick“, „Performance“ und das
-  Rechenbeispiel stecken jetzt zusammen im dunklen Beweis-Block. Die Rechenkette läuft
-  waagerecht statt senkrecht.
-- **Leistungen und Ablauf teilen sich einen Abschnitt.** Das Register mit Bild beim
-  Überfahren ist raus; die drei Leistungen sind Bildkarten, deren Bild immer sichtbar ist.
-- **Agentur und Stimme teilen sich einen Abschnitt**, das Zitat sitzt als dunkle Karte
-  darunter.
-- **Die Fragen stehen in zwei Spalten.**
-- **Gelöscht:** die vier Content-Case-Studies aus dem CMS. Content soll laut Positionierung
-  nicht beworben werden; der dritte Leistungsblock verweist auf `/unsere-arbeit`.
-
-Die Anker der Navigation (`#leistungen`, `#websites`, `#performance`) hängen an den neuen
-Abschnitten. Genau ein `h1`, sechs `h2` — im Quelltext geprüft, nicht geraten.
-
-**Neu gelernt:** Bildschirmfotos einzelner Knoten zeigen die **Ladeanimation als Überlagerung**,
-solange sie sichtbar ist. Zum Prüfen den Vorspann kurz auf unsichtbar setzen — und hinterher
-wieder einschalten. Und: der Zähler (`Counter`) liefert im Bildschirmfoto eine zufällige
-Zwischenstufe („+7 %“). Das ist kein Fehler; live zählt er auf 156, 72 und 69 hoch. Geprüft
-per JS auf der veröffentlichten Seite, nicht am Bild.
+**Was daraus zu lernen ist:** Das Problem lag nie an Details, die nachgeschärft wurden. Sechs
+Runden lang wurde innerhalb derselben Formensprache variiert. Der Neubau sollte deshalb an
+**konkreten Referenzseiten** ansetzen, die der Kunde selbst aussucht — nicht an einer weiteren
+Interpretation der bisherigen Richtung.
 
 ---
 
