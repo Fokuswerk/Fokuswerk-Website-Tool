@@ -1,0 +1,174 @@
+{
+ "token": {
+  "tinte": "27d6c6c2-14dd-4e36-9e63-62c960c866cc",
+  "tinte80": "22069604-3921-46ed-8796-584ed79a4067",
+  "tinte60": "49fd75c3-d4f8-4298-8c2f-15347d0f9856",
+  "tinte40": "b9228f4f-57c1-4758-9b23-5e2c571c5ff4",
+  "tinte16": "112bd3e6-a98f-49de-8f3f-da68ae8ffa75",
+  "tinte08": "36dbdf72-97fc-4781-8822-69c472071ddd",
+  "papier": "241910db-5361-4abc-a189-9b05fcffd0c3",
+  "papierRein": "5a7ac898-7b05-4ca9-b3ad-e73037ebf142",
+  "papier64": "8c75aa11-c760-47e8-b21b-3c31da199fb3",
+  "papier40": "5529ab13-d600-4003-9a2a-e0204247a6ac",
+  "papier16": "358ca465-3b38-4916-bf92-c5e3373afecc",
+  "papier08": "86f5850b-06e2-4dd7-a118-2335b5db1d2a",
+  "signal": "f4dd38fc-12f9-45c2-914a-26147aaba59c",
+  "signalTief": "3d3c9fc3-52ef-49b8-af90-8eafc42394fe",
+  "signal16": "517807c4-a42b-44f4-9090-d65cdc63b7df"
+ },
+ "bilder": {
+  "arbeitsplatz": [
+   {
+    "url": "https://images.unsplash.com/photo-1505860422494-8782515c5341?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=1600",
+    "alt": "closed clear glass window"
+   },
+   {
+    "url": "https://images.unsplash.com/photo-1735216212987-7e42a58fba9a?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=1600",
+    "alt": "A cat sitting on the floor next to a window"
+   },
+   {
+    "url": "https://images.unsplash.com/photo-1773625688491-6110ff9f1e4f?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=1600",
+    "alt": "Sunlight streams through blinds onto wooden desks"
+   }
+  ],
+  "portraet": [
+   {
+    "url": "https://images.unsplash.com/photo-1763551229518-4a529c865e00?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=900",
+    "alt": "Black and white portrait of a woman with blonde hair"
+   },
+   {
+    "url": "https://images.unsplash.com/photo-1784651988968-8e66442d058c?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=900",
+    "alt": "A man in a cream ribbed shirt and glasses"
+   },
+   {
+    "url": "https://images.unsplash.com/photo-1772714601004-23b94ae3913d?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=900",
+    "alt": "Woman in beige suit sitting on a white chair"
+   },
+   {
+    "url": "https://images.unsplash.com/photo-1763551229890-64e97d845251?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=900",
+    "alt": "Woman in a long brown dress posing"
+   }
+  ],
+  "produktion": [
+   {
+    "url": "https://images.unsplash.com/photo-1612544409025-e1f6a56c1152?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=1600",
+    "alt": "A film crew working on a large soundstage with lighting equipment and cameras"
+   },
+   {
+    "url": "https://images.unsplash.com/photo-1632187981988-40f3cbaeef5e?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=1600",
+    "alt": "a group of people standing around a camera set up"
+   },
+   {
+    "url": "https://images.unsplash.com/photo-1632187989763-c9c620420b4d?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=1600",
+    "alt": "a group of people standing around a camera set up"
+   }
+  ],
+  "standort": [
+   {
+    "url": "https://images.unsplash.com/photo-1681415987806-b0d5dbca7115?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=1600",
+    "alt": "a man walking down a street next to tall buildings"
+   },
+   {
+    "url": "https://images.unsplash.com/photo-1554309637-93b26a4f6699?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=1600",
+    "alt": "parked vehicles parked beside buildings"
+   },
+   {
+    "url": "https://images.unsplash.com/photo-1706427887608-df80f0fd03b3?crop=entropy&cs=srgb&fm=jpg&ixlib=rb-4.1.0&q=85&w=1600",
+    "alt": "a street lined with tall buildings under a cloudy sky"
+   }
+  ]
+ },
+ "komponenten": {
+  "Knopf": "FGiX6iPcm",
+  "Navigation": "HsKb8QGrI",
+  "Fußzeile": "V7MKw4smK",
+  "Leistungswähler": "QtHewS1qc",
+  "Arbeit": "fweceizQ5",
+  "Frage": "bgFb2_wyj"
+ },
+ "layoutTemplate": {
+  "id": "kydvDx4Fl",
+  "desktop": "sCRIa6vSU",
+  "tablet": "nTupyIOA7",
+  "phone": "WQlUT7pJk",
+  "navInstanz": "uAjBuKHoR",
+  "fussInstanz": "Cp8r6pSe3",
+  "overlay": "Syy0trUD3",
+  "overlayPanel": "AFGP1otJf"
+ },
+ "seiten": {
+  "/": "augiA20Il",
+  "/leistungen/performance-marketing": "ZIc2gW4Ab",
+  "/leistungen/websites": "PeHy7T8HV",
+  "/leistungen/content": "CBtBjok8K",
+  "/arbeiten": "Kq_tFbbWO",
+  "/agentur": "vAl7QwZpf",
+  "/kontakt": "zawxWx4c6",
+  "/impressum": "vukhxmfTl",
+  "/agb": "k1ZfpE4q6",
+  "/datenschutz": "wRKRbdGIn"
+ },
+ "startseite": {
+  "desktop": "WQLkyLRf1",
+  "abschnitte": [
+   {
+    "id": "zBEhCeLEZ",
+    "name": "01 Auftakt"
+   },
+   {
+    "id": "oV6br1yom",
+    "name": "02 Kunden"
+   },
+   {
+    "id": "ZHkRvwlnW",
+    "name": "03 System"
+   },
+   {
+    "id": "TL6mjnr7_",
+    "name": "04 Leistungen"
+   },
+   {
+    "id": "iwr2fpHHS",
+    "name": "05 Arbeiten"
+   },
+   {
+    "id": "Fjl9epLLl",
+    "name": "06 Beratung"
+   },
+   {
+    "id": "y_GNc1Ru4",
+    "name": "07 Zahlen"
+   },
+   {
+    "id": "kdl7m9Rzo",
+    "name": "08 Stimme"
+   },
+   {
+    "id": "oChWTsLgU",
+    "name": "09 Agentur"
+   },
+   {
+    "id": "rha0bcuGq",
+    "name": "10 Fragen"
+   },
+   {
+    "id": "uQzcUyeMt",
+    "name": "11 Abschluss"
+   }
+  ]
+ },
+ "textstile": {
+  "Display XL": "kZfx7O7qw",
+  "Display": "Au8MPeQ4C",
+  "Titel": "m2nSxuRe3",
+  "Titel S": "BIqzBp73e",
+  "Titel XS": "H_SudUFZE",
+  "Fließtext Groß": "sR548SIcq",
+  "Fließtext": "gt_if3KlZ",
+  "Marke": "GOM8Dd_lJ",
+  "Kennzahl": "QQ4f5QluN",
+  "Kennzahl S": "g4MLh312_",
+  "Zitat": "Etbg6GnL1",
+  "Beschriftung": "xOUHrDfGU"
+ }
+}
