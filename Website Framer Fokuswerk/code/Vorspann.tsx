@@ -117,23 +117,25 @@ export default function Vorspann(props: VorspannProps) {
         if (statisch) return
         const lauf = async () => {
             if (reduziert) {
-                logoSteuer.set({ opacity: 1, filter: "blur(0px)", scale: 1 })
+                logoSteuer.set({ opacity: 1, scale: 1 })
                 klammer.set({ opacity: 1, scale: 1 })
                 return
             }
             const d = kurz.current ? 0.35 : 0.9
-            logoSteuer.start({ opacity: 1, filter: "blur(0px)", scale: 1, transition: { duration: d, ease: [0.16, 1, 0.3, 1] } })
+            logoSteuer.start({ opacity: 1, scale: 1, transition: { duration: d, ease: [0.16, 1, 0.3, 1] } })
             await klammer.start({ opacity: 1, scale: 1, transition: { delay: d * 0.55, type: "spring", stiffness: 260, damping: 17 } })
             await klammer.start({ opacity: [1, 0.25, 1, 0.25, 1], transition: { duration: kurz.current ? 0.25 : 0.45 } })
         }
         lauf()
     }, [statisch, reduziert])
 
-    // Auslauf: Klammern weiten sich, Fläche fährt nach oben weg
+    // Auslauf: Klammern weiten sich, Fläche fährt nach oben weg.
+    // Bewusst ohne blur und clipPath: beide zwingen den Browser zum Neuzeichnen auf dem
+    // Hauptthread, und genau das ruckelte auf dem Handy, während die Seite noch lud.
     useEffect(() => {
         if (!weg) return
         klammer.start({ opacity: 0, scale: 1.5, transition: { duration: 0.5, ease: [0.4, 0, 0.2, 1] } })
-        logoSteuer.start({ opacity: 0, scale: 0.94, filter: "blur(6px)", transition: { duration: 0.45, ease: [0.4, 0, 0.2, 1] } })
+        logoSteuer.start({ opacity: 0, scale: 0.94, transition: { duration: 0.45, ease: [0.4, 0, 0.2, 1] } })
         // Einblendungen der Seite schon starten, während die Fläche wegfährt
         const t = window.setTimeout(melden, reduziert ? 0 : 380)
         return () => window.clearTimeout(t)
@@ -145,9 +147,9 @@ export default function Vorspann(props: VorspannProps) {
         <motion.div
             aria-hidden="true"
             data-vorspann="an"
-            initial={{ clipPath: "inset(0% 0% 0% 0%)" }}
-            animate={weg ? { clipPath: "inset(0% 0% 100% 0%)" } : { clipPath: "inset(0% 0% 0% 0%)" }}
-            transition={{ duration: reduziert ? 0.3 : 0.95, ease: KURVE, delay: reduziert ? 0 : 0.25 }}
+            initial={{ y: 0 }}
+            animate={weg ? { y: "-100%" } : { y: 0 }}
+            transition={{ duration: reduziert ? 0.3 : 0.8, ease: KURVE, delay: reduziert ? 0 : 0.25 }}
             onAnimationComplete={() => {
                 if (weg) {
                     setAus(true)
@@ -185,7 +187,7 @@ export default function Vorspann(props: VorspannProps) {
                     {/* Logo als Maske statt <img>: sieht gleich aus (einfarbiges PNG), zählt aber nicht als
                         größtes Element der Seite — sonst misst Google die Ladezeit am Vorspann statt am Inhalt */}
                     <motion.div
-                        initial={{ opacity: 0, filter: "blur(18px)", scale: 1.06 }}
+                        initial={{ opacity: 0, scale: 1.06 }}
                         animate={logoSteuer}
                         style={{
                             position: "absolute",
@@ -225,7 +227,7 @@ export default function Vorspann(props: VorspannProps) {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
                     <div style={{ width: 160, height: 1, background: "rgba(245,243,239,0.14)", overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${Math.round(fortschritt * 100)}%`, background: akzent, transition: "width 0.25s ease-out" }} />
+                        <div style={{ height: "100%", width: "100%", background: akzent, transformOrigin: "0% 50%", transform: `scaleX(${fortschritt.toFixed(3)})`, transition: "transform 0.25s ease-out", willChange: "transform" }} />
                     </div>
                     <span
                         style={{

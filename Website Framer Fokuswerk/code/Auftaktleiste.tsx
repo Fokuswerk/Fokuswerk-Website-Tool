@@ -113,7 +113,10 @@ export default function Auftaktleiste(props: AuftaktleisteProps) {
         return () => ro.disconnect()
     }, [])
     const schmal = breite < 700
-    const belege = (props.belege && props.belege.length ? props.belege : STANDARD).slice(0, 3)
+    // Drei Belege nebeneinander lassen auf dem Handy je rund 120 px — der dritte wurde dort
+    // abgeschnitten. Zwei haben Platz, und dieselben Zahlen stehen weiter unten im Abschnitt
+    // „Ergebnisse" noch einmal in Ruhe.
+    const belege = (props.belege && props.belege.length ? props.belege : STANDARD).slice(0, schmal ? 2 : 3)
     const [los, setLos] = useState(statisch)
     useEffect(() => (statisch ? undefined : nachVorspann(() => setLos(true))), [statisch])
 

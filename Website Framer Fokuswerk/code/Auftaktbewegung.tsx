@@ -10,6 +10,24 @@ import { animate, useMotionValue, useScroll, useTransform, useSpring, useReduced
 // Der Kundenbereich schiebt sich als Blatt darüber (liegt im Layout, nicht hier).
 // Fortschritt p = 0 oben, 1 nach einer Fensterhöhe Scrollweg.
 
+// Auf dem Handy wird aus dem Schärfezug ein Einblenden über die Deckkraft: ein scrollgebundener
+// blur() zwingt den Browser bei jedem Bild zum Neuzeichnen mehrerer Textzeilen — genau das
+// ruckelte beim ersten Wischen. x, y und opacity laufen dagegen auf der GPU.
+function useSchmal(): boolean {
+    const [schmal, setSchmal] = useState(() =>
+        typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(max-width: 809px)").matches
+    )
+    useEffect(() => {
+        if (typeof window === "undefined" || !window.matchMedia) return
+        const mq = window.matchMedia("(max-width: 809px)")
+        const an = () => setSchmal(mq.matches)
+        an()
+        mq.addEventListener?.("change", an)
+        return () => mq.removeEventListener?.("change", an)
+    }, [])
+    return schmal
+}
+
 function useFortschritt(): MotionValue<number> {
     const { scrollY } = useScroll()
     const [hoehe, setHoehe] = useState(900)
@@ -83,13 +101,15 @@ function zeilenOverride(z: Zeile) {
             const p = useFortschritt()
             const e = useEinblenden(z.verzoegerung)
             const reduziert = useReducedMotion()
+            const schmal = useSchmal()
             const y = useTransform([p, e] as any, ([pv, ev]: number[]) => pv * -z.hoch + (1 - ev) * 34)
             const x = useTransform(p, (pv: number) => pv * z.seit)
             const opacity = useTransform([p, e] as any, ([pv, ev]: number[]) => {
                 const t = Math.max(0, Math.min(1, (pv - z.weg[0]) / (z.weg[1] - z.weg[0])))
-                // Einblenden nur über Unschärfe und Position — die Deckkraft bleibt 1, damit der
-                // Text sofort als gezeichnet zählt (LCP); unter der Ladeanimation sieht man ihn ohnehin nicht
-                return 1 - t
+                // Auf breiten Flächen übernimmt die Unschärfe das Einblenden und die Deckkraft
+                // bleibt 1, damit der Text sofort als gezeichnet zählt (LCP). Auf dem Handy gibt
+                // es keine Unschärfe, dort blendet die Deckkraft ein.
+                return schmal ? ev * (1 - t) : 1 - t
             })
             const filter = useTransform([p, e] as any, ([pv, ev]: number[]) => {
                 const t = Math.max(0, Math.min(1, (pv - z.weg[0]) / (z.weg[1] - z.weg[0])))
@@ -98,7 +118,7 @@ function zeilenOverride(z: Zeile) {
                 return `blur(${b.toFixed(2)}px)`
             })
             if (reduziert) return <Component {...props} />
-            return <Component {...props} style={{ ...props.style, x, y, opacity, filter }} />
+            return <Component {...props} style={{ ...props.style, x, y, opacity, filter: schmal ? "none" : filter }} />
         }
 }
 
