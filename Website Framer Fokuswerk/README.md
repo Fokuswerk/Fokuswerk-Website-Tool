@@ -192,6 +192,23 @@ Jetzt auf allen drei Breakpoints:
 Live gemessen (Chromium, 375 px): Glas nach ~0,1 s halb drin, erste Zeile steigt ab Frame 1 mit.
 Ein deckender Grund (Zwischenstand) wirkte „billig" — nicht wieder einführen.
 
+**Nachtrag — Antippen eines Menüpunkts ließ das Glas „zerfallen" (Version `5c6988b1f`):**
+Im Simulator-Video (30 fps) verlor das Glas im ersten Bild nach dem Tippen die Unschärfe, die
+Seite stand gestochen scharf unter den weißen Menütexten, dann blendete alles aus. Ursache ist
+**nicht** der Exit-Effekt, sondern Framers Seitenwechsel per `document.startViewTransition`:
+der Browser fotografiert die alte Seite ab und blendet das Standbild aus — Safari nimmt
+`backdrop-filter` nicht mit ins Standbild. Lösung im Custom Code (`headEnd`,
+`<script id="fokuswerk-menue-wechsel">`): Liegt beim Seitenwechsel ein Knoten
+`[data-framer-name="Glas"]` im DOM (Menü offen), wird `skipTransition()` gerufen. Die neue Seite
+liegt sofort darunter, das echte Menü fährt mit Unschärfe nach rechts heraus. Alle anderen
+Seitenwechsel behalten die Überblendung.
+
+Dazu der Exit wie bei Bauwerk: Glas und Inhalt fahren in 0,38 s (`0.7,0,0.84,0`) nach rechts
+heraus, **ohne** Deckkraft-Änderung (Ausblenden kostet in Safari ebenfalls die Unschärfe);
+Kopf, Liste, Fuß, Menüzeilen haben keinen eigenen Exit mehr. Einfahrt jetzt 1,2 s, Zeilen 0,95 s
+mit 0,05 s Staffel. Gemessen im Video: Tipp → 5 Bilder Glas mit Unschärfe + orangem Punkt →
+neue Seite darunter, Panel nach ~0,2 s draußen.
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 
