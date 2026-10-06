@@ -117,8 +117,14 @@ es braucht einen echten Klick), und seine Knoten heißen `Mitte`, `Liste`, `Zeil
 
 Dort stand `padding: 24px 72px 24px 150px` aus dem Desktop-Entwurf, und im selben horizontalen
 Stack liegt ein 460 px breites Logo — bei `space-between` drückte es die Menüpunkte auf dem
-Handy weit nach rechts (170 px links gegen 39 px rechts). Jetzt: Polster symmetrisch 20 px,
-`stackDistribution: center`, Logo auf dem Handy aus. Gemessen 104 px zu 104 px. Das Overlay hängt an einem Framer-Event und ist
+Handy weit nach rechts (170 px links gegen 39 px rechts). Jetzt linksbündig: Polster
+`24px 20px 24px 0px` (der äußere Rahmen bringt die 20 px links schon mit),
+`stackDistribution: start`, Logo auf dem Handy aus. Menüpunkte und Kontaktdaten stehen beide
+bei 20 px.
+
+Der orange Einlauf über den Menüpunkten lief über `transition: tween … 0.75s`. Auf dem Handy
+startet der Seitenwechsel nach rund 250 ms — der Balken blieb auf einem Drittel stehen und sah
+nach einem Fehler aus. Jetzt 0,28 s auf beiden Varianten (`wxElhapjS`, `iIHKKqEEk`). Das Overlay hängt an einem Framer-Event und ist
   über die Plugin-API nicht erreichbar (weder als Komponente noch als Frame auffindbar) — das
   muss im Framer-Editor von Hand ergänzt werden.
 - Zwischen Kontaktkarte und Fuß-Handlungsaufruf steht rund ein halber Bildschirm leer.
