@@ -150,6 +150,12 @@ Die neue Seite lädt nach rund 250 ms, das Menü lag also noch darüber. Daher �
 doppelt". Jetzt blendet alles in 0,16 s aus, das Glas in 0,2 s — nach 0,24 s ist das Menü weg,
 bevor die neue Seite erscheint.
 
+**Warum „Texte kommen zu spät" nicht über die Texte zu lösen war:** Gemessen haben die Menüzeilen
+ab 6 ms durchgehend volle Deckkraft — sie werden gar nicht verzögert eingeblendet. Sichtbar
+werden sie erst, wenn das Glas dahinter deckt: heller Text auf hellem Seitengrund. Ihre eigene
+Dauer zu kürzen brachte deshalb nichts. Der Hebel ist allein das Glas, jetzt 0,13 s statt 0,22 s:
+80 % Deckung nach 31 ms statt 85 ms, 95 % nach 62 ms statt 140 ms.
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 
