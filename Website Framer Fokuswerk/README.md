@@ -133,6 +133,18 @@ Gemessen über alle drei Wege — Startseite oben, Startseite gescrollt, Unterse
 Leiste↔Overlay jeweils **0/0**, Schließkreuz rechtsbündig bei 32 px wie der MENÜ-Knopf,
 Menüpunkte und Kontaktdaten bei 32 px.
 
+**Nachtrag — Öffnen fühlte sich an wie ein Hänger, Schließen überlagerte die neue Seite:**
+
+Beim Öffnen war das Glas nach 0,26 s da, der Inhalt startete aber erst bei 0,55–0,8 s — dazwischen
+stand ein leerer grauer Bildschirm. Jetzt setzt der Inhalt praktisch mit dem Glas ein
+(Verzögerungen 0,02–0,06 s), alles steht nach 0,40 s.
+
+Beim Schließen war es gravierender: Das Glas brauchte `0.6s` Dauer plus `0.1s` Verzögerung und
+fuhr dabei 1600 px nach rechts — und **die Menüpunkte hatten überhaupt keinen Exit-Effekt**.
+Die neue Seite lädt nach rund 250 ms, das Menü lag also noch darüber. Daher „kurz alles
+doppelt". Jetzt blendet alles in 0,16 s aus, das Glas in 0,2 s — nach 0,24 s ist das Menü weg,
+bevor die neue Seite erscheint.
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 
