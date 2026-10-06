@@ -87,7 +87,6 @@ export const team = [
   "Ilka Lipskoch",
   "Margit Neumann",
   "Tanja Pfeiffer-Pahmeier",
-  "Chris Terlunen",
 ] as const;
 
 export const navigation = [

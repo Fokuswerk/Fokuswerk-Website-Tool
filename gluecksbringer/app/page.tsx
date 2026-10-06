@@ -63,7 +63,7 @@ export default async function Startseite() {
   const galerieVorschau = [
     bilder.g2011BaumGeschmueckt,
     bilder.g2015Wunschbaum,
-    bilder.wunschbaum2025Wunschkarten,
+    bilder.geschenkuebergabe2024,
   ]
     .map((bild) => alleBilder.find((eintrag) => eintrag.bild.src === bild.src))
     .filter((eintrag): eintrag is (typeof alleBilder)[number] => Boolean(eintrag));
@@ -125,8 +125,8 @@ export default async function Startseite() {
                 <div className="relative">
                   <div className="overflow-hidden rounded-2xl bg-sand-100">
                     <Image
-                      src={bilder.wunschbaum2025Team}
-                      alt="Das Team der Glücksbringer am Meer steht mit verpackten Geschenken vor dem geschmückten Wunschbaum in der Bibliothek am Meer."
+                      src={bilder.wunschbaum2025Wunschkarten}
+                      alt="Zwei Ehrenamtliche der Glücksbringer am Meer hängen beschriftete Wunschkarten an den beleuchteten Weihnachtsbaum in der Bibliothek am Meer."
                       priority
                       sizes="(min-width: 1024px) 55vw, 100vw"
                       placeholder="blur"
@@ -140,8 +140,8 @@ export default async function Startseite() {
                   />
                 </div>
                 <figcaption className="mt-4 max-w-md pl-20 text-sm text-ink-50 sm:mt-9 sm:pl-24 lg:pl-28">
-                  Der 15. Wunschbaum am Meer, kurz vor der Eröffnung in der
-                  Bibliothek am Meer.
+                  Der 15. Wunschbaum am Meer wird in der Bibliothek am Meer
+                  mit Wunschkarten bestückt.
                 </figcaption>
               </figure>
             </Reveal>
@@ -543,6 +543,7 @@ export default async function Startseite() {
               </p>
               <Link
                 href={`/aktuelles/${featured.slug}`}
+                aria-label={`Mehr erfahren: ${featured.titel}`}
                 className="group mt-7 inline-flex items-center gap-2 py-1.5 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
               >
                 Mehr erfahren

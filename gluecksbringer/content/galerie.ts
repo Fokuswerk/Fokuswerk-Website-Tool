@@ -37,11 +37,6 @@ export const galerie: GalerieJahr[] = [
     einleitung: "Der 15. Wunschbaum am Meer in der Bibliothek am Meer.",
     bilder: [
       {
-        bild: bilder.wunschbaum2025Team,
-        unterschrift: "Der Wunschbaum steht – und die ersten Geschenke auch.",
-        alt: "Sechs Ehrenamtliche der Glücksbringer am Meer stehen mit verpackten Geschenken vor dem geschmückten Wunschbaum.",
-      },
-      {
         bild: bilder.wunschbaum2025Wunschkarten,
         unterschrift: "Jede Karte steht für den Wunsch eines Kindes.",
         alt: "Zwei Ehrenamtliche hängen beschriftete Wunschkarten an den beleuchteten Weihnachtsbaum.",

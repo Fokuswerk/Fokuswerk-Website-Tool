@@ -96,6 +96,7 @@ export default async function AktuellesUebersicht() {
               </p>
               <Link
                 href={`/aktuelles/${featured.slug}`}
+                aria-label={`Mehr erfahren: ${featured.titel}`}
                 className="group mt-7 inline-flex items-center gap-2 py-1.5 text-[0.9375rem] font-semibold text-sea transition-colors hover:text-glow"
               >
                 Mehr erfahren

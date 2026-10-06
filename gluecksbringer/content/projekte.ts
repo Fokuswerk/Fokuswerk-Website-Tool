@@ -93,9 +93,9 @@ export const meilensteine: Meilenstein[] = [
     jahr: "2025",
     titel: "Der 15. Wunschbaum am Meer",
     text: "Der Wunschbaum steht in der Bibliothek am Meer – und zusätzlich digital unter wunschbaum-bz.de. Den Baum spendet in diesem Jahr Jackelin Cordes von der Weinbar in Bad Zwischenahn.",
-    bild: bilder.wunschbaum2025Team,
+    bild: bilder.wunschbaum2025Vorbereitung,
     bildAlt:
-      "Das Team der Glücksbringer am Meer mit verpackten Geschenken vor dem Wunschbaum 2025.",
+      "Zwei Ehrenamtliche beschriften an einem Tisch die Wunschkarten für den Wunschbaum 2025.",
   },
 ];
 

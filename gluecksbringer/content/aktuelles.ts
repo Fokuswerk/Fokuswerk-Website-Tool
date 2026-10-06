@@ -97,9 +97,9 @@ export const beitraege: Beitrag[] = [
     datumLabel: "15. November 2025",
     teaser:
       "Aufgestellt, liebevoll geschmückt und mit vielen Wunschkarten bestückt – und gespendet hat den Baum in diesem Jahr die Weinbar in Bad Zwischenahn.",
-    bild: bilder.wunschbaum2025Team,
+    bild: bilder.wunschbaum2025Wunschkarten,
     bildAlt:
-      "Das Team der Glücksbringer am Meer steht mit verpackten Geschenken vor dem geschmückten Wunschbaum.",
+      "Zwei Ehrenamtliche hängen beschriftete Wunschkarten an den beleuchteten Wunschbaum.",
     inhalt: [
       {
         typ: "absatz",

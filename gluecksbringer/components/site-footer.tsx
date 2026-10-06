@@ -6,6 +6,7 @@ import { PfeilRechts } from "./ui";
 const rechtliches = [
   { href: "/impressum", label: "Impressum" },
   { href: "/datenschutz", label: "Datenschutz" },
+  { href: "/barrierefreiheit", label: "Barrierefreiheit" },
 ];
 
 export function SiteFooter() {
@@ -159,7 +160,7 @@ export function SiteFooter() {
         </div>
 
         {/* Wer die Seite gemacht hat – der Verein hat sie geschenkt bekommen. */}
-        <p className="mt-8 border-t border-paper/10 pt-6 text-center text-xs text-paper/45">
+        <p className="mt-8 border-t border-paper/10 pt-6 text-center text-xs text-paper/55">
           Gestaltet und gespendet von{" "}
           <a
             href="https://fokuswerk.de"

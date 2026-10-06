@@ -13,7 +13,6 @@
  * Vorschau – dadurch springt das Layout beim Laden nicht.
  */
 
-import wunschbaum2025Team from "@/assets/bilder/wunschbaum-2025-team.jpg";
 import wunschbaum2025Wunschkarten from "@/assets/bilder/wunschbaum-2025-wunschkarten.jpg";
 import wunschbaum2025Vorbereitung from "@/assets/bilder/wunschbaum-2025-vorbereitung.jpg";
 import wunschbaum2025Plakat from "@/assets/bilder/wunschbaum-2025-plakat.jpg";
@@ -52,7 +51,6 @@ import g2015Wunschbaum from "@/assets/bilder/2015-wunschbaum.jpg";
 import g2017Geschenke from "@/assets/bilder/2017-geschenke.jpg";
 
 export const bilder = {
-  wunschbaum2025Team,
   wunschbaum2025Wunschkarten,
   wunschbaum2025Vorbereitung,
   wunschbaum2025Plakat,

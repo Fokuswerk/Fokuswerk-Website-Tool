@@ -106,7 +106,32 @@ Wer im Betriebssystem „Bewegung reduzieren“ eingestellt hat, bekommt nichts
 davon zu sehen – die Seite bleibt vollständig bedienbar, das Blättern in der
 Galerie springt dann ohne Übergang weiter.
 
-## Barrierefreiheit und Performance
+## Barrierefreiheit
+
+Angestrebt ist **WCAG 2.2, Stufe AA**. Die öffentliche Erklärung dazu steht
+unter `/barrierefreiheit`.
+
+Vor jeder Veröffentlichung prüfen:
+
+```bash
+npm run build && npm run start   # und in einem zweiten Fenster:
+node qa/a11y.mjs                 # axe über alle Seiten, zwei Engines, zwei Breiten
+```
+
+Was die automatische Prüfung nicht abdeckt und deshalb von Hand geprüft wird:
+Bedienung nur mit der Tastatur, sichtbarer Fokus, Vergrößerung auf 200 %,
+erhöhte Textabstände, Verhalten bei „Bewegung reduzieren" und ob die
+Bildbeschreibungen inhaltlich stimmen.
+
+Zwei Dinge, die beim Weiterbauen leicht kaputtgehen:
+
+- **Keine Dauerbewegung.** Was von selbst startet und länger als fünf Sekunden
+  läuft, bräuchte eine Schaltfläche zum Anhalten (WCAG 2.2.2). Pucks Wippen ist
+  deshalb auf zwei Durchläufe begrenzt.
+- **Sichtbarer Text muss im zugänglichen Namen vorkommen** (WCAG 2.5.3). Ein
+  `aria-label` darf den sichtbaren Text ergänzen, nicht ersetzen.
+
+## Performance
 
 Geprüft mit Lighthouse (simuliertes Smartphone, Produktionsbuild):
 

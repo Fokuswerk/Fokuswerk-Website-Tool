@@ -20,6 +20,9 @@ function Kopieren({ wert, label }: { wert: string; label: string }) {
     <button
       type="button"
       onClick={kopieren}
+      // Der Wechsel auf "Kopiert" wird vorgelesen, sonst bliebe der Erfolg
+      // für Screenreader unbemerkt.
+      aria-live="polite"
       className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-current/25 px-3 py-1 text-xs font-semibold transition-colors duration-200 hover:bg-current/[0.07]"
     >
       {kopiert ? (
@@ -38,6 +41,7 @@ function Kopieren({ wert, label }: { wert: string; label: string }) {
               strokeLinejoin="round"
             />
           </svg>
+          <span className="sr-only">{label} </span>
           Kopiert
         </>
       ) : (
@@ -64,8 +68,8 @@ function Kopieren({ wert, label }: { wert: string; label: string }) {
               strokeLinecap="round"
             />
           </svg>
-          <span className="sr-only">{label} kopieren</span>
-          <span aria-hidden="true">Kopieren</span>
+          <span className="sr-only">{label} </span>
+          Kopieren
         </>
       )}
     </button>

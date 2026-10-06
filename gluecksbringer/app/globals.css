@@ -63,6 +63,12 @@
   :root {
     color-scheme: light;
     scroll-behavior: smooth;
+    /*
+      Die Kopfleiste steht fest am oberen Rand. Ohne diesen Abstand schiebt
+      sie beim Springen zu einem Anker – und beim Durchtabben – das Ziel unter
+      sich (WCAG 2.2, 2.4.11 "Fokus nicht verdeckt").
+    */
+    scroll-padding-top: 6.5rem;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -423,9 +429,16 @@
   }
 }
 
+/*
+  Puck wippt beim Erscheinen zweimal und steht dann still.
+  Bewegung, die von selbst startet und länger als fünf Sekunden läuft,
+  bräuchte nach WCAG 2.2.2 eine Schaltfläche zum Anhalten. Zwei Durchläufe
+  à 2,2 Sekunden bleiben darunter – und wirken ohnehin lebendiger als ein
+  Dauerwippen.
+*/
 .puck {
   transform-origin: 50% 92%;
-  animation: puck-wippen 6s ease-in-out infinite;
+  animation: puck-wippen 2.2s ease-in-out 2 both;
 }
 
 /* --- Kleeblatt dreht sich beim Überfahren einer Karte -------------------- */

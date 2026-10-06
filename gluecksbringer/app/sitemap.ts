@@ -19,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { pfad: "/kontakt", prioritaet: 0.7, frequenz: "yearly" },
     { pfad: "/impressum", prioritaet: 0.2, frequenz: "yearly" },
     { pfad: "/datenschutz", prioritaet: 0.2, frequenz: "yearly" },
+    { pfad: "/barrierefreiheit", prioritaet: 0.3, frequenz: "yearly" },
   ];
 
   return [
