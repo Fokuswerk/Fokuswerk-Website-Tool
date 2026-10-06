@@ -165,11 +165,32 @@ die helle Seite durch und die weißen Menütexte stehen auf schwachem Kontrast. 
 jetzt 94 % Deckung und kein Hintergrund-Blur (`WQlUT7pJkBND1pXN03`) — der Kontrast steht sofort.
 Das DSL-Attribut heißt `backgroundBlur`, nicht `backdropFilter`.
 
-**Korrektur am selben Tag:** 94 % ohne Blur war schlechter — die restlichen 6 % zeigen den
-Auftakt dahinter gestochen scharf (weiße Schrift auf dunklem Grund schlägt durch), das sah nach
-„kompletter Hintergrund sichtbar" aus. Handy und Tablet haben jetzt einen **voll deckenden**
-Grund `rgb(53,53,53)` ohne Blur; Glas und Menütexte blenden gemeinsam in 0,13–0,14 s ein, nichts
-scheint mehr durch. Der Desktop behält das Bauwerk-Glas (72 % + 40 px Blur).
+**Endstand 06.10. abends — Bauwerk-Ablauf, nur schneller (Version `0ba56f93a`):**
+Das deckende Grau war falsch, gewünscht ist Bauwerks Glasfahrt. Bauwerk per Sampler
+nachgemessen (Handy, 375 px): **Glas und Inhalt sind ein Panel** und fahren gemeinsam von
+rechts rein (`translateX 100 % → 0`, ~2 s, Ease-out wie `0.16,1,0.3,1`), Glas `30 %` Tönung +
+`blur(40px)`. Die Menüpunkte sitzen *auf* dem Panel und sind deshalb vom ersten Frame an
+sichtbar; zusätzlich steigen sie gestaffelt aus `overflow: hidden`-Masken (~0,1 s Staffel),
+der Fuß blendet zuletzt ein.
+
+**Die eigentliche Ursache für „Text kommt zu spät":** Die Menüpunkt-Instanzen (`U904Ypyyp`,
+`Wf38hkLku`, `SJHK8g8it`, `UsMcgwKt0`, `wHEHW7Omt`, `YLEK6re4v`, je Breakpoint mit Präfix
+`WQlUT7pJk`/`nTupyIOA7`) hatten ein eigenes Steigen aus der Maske: `y 96`, **1,25 s, Start erst
+bei 0,38–0,73 s**. Alle früheren Messungen haben nur die Deckkraft geprüft — die war ja 1 —
+und das Steigen übersehen. Das Glas lief außerdem getrennt vom Inhalt.
+
+Jetzt auf allen drei Breakpoints:
+
+| Teil | Effekt |
+|---|---|
+| Glas `BND1pXN03` | `rgba(53,53,53,.72)` + 40 px Blur, fährt `x 400/1200/1600 → 0` (Handy/Tablet/Desktop) in 0,9 s |
+| Inhalt `Zs2um6APD` | fährt identisch mit dem Glas, Exit 0,16 s Ausblenden |
+| Kopf, Liste | kein eigener Effekt mehr (reiten auf dem Panel) |
+| Menüzeilen | steigen aus der Maske, `y 44` (Handy) bzw. `72`, 0,75 s, Start 0 / 0,04 / … / 0,20 s |
+| Fuß, Logo | Einblenden ab 0,25 s bzw. 0,2 s |
+
+Live gemessen (Chromium, 375 px): Glas nach ~0,1 s halb drin, erste Zeile steigt ab Frame 1 mit.
+Ein deckender Grund (Zwischenstand) wirkte „billig" — nicht wieder einführen.
 
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
