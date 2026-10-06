@@ -165,6 +165,12 @@ die helle Seite durch und die weißen Menütexte stehen auf schwachem Kontrast. 
 jetzt 94 % Deckung und kein Hintergrund-Blur (`WQlUT7pJkBND1pXN03`) — der Kontrast steht sofort.
 Das DSL-Attribut heißt `backgroundBlur`, nicht `backdropFilter`.
 
+**Korrektur am selben Tag:** 94 % ohne Blur war schlechter — die restlichen 6 % zeigen den
+Auftakt dahinter gestochen scharf (weiße Schrift auf dunklem Grund schlägt durch), das sah nach
+„kompletter Hintergrund sichtbar" aus. Handy und Tablet haben jetzt einen **voll deckenden**
+Grund `rgb(53,53,53)` ohne Blur; Glas und Menütexte blenden gemeinsam in 0,13–0,14 s ein, nichts
+scheint mehr durch. Der Desktop behält das Bauwerk-Glas (72 % + 40 px Blur).
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 
