@@ -156,6 +156,15 @@ werden sie erst, wenn das Glas dahinter deckt: heller Text auf hellem Seitengrun
 Dauer zu kürzen brachte deshalb nichts. Der Hebel ist allein das Glas, jetzt 0,13 s statt 0,22 s:
 80 % Deckung nach 31 ms statt 85 ms, 95 % nach 62 ms statt 140 ms.
 
+**Und warum auch das Glas-Timing nichts half — die eigentliche Ursache:** Gemessen ab
+Fingerkontakt ist der Klick nach 2 ms registriert, das Glas nach 24 ms im DOM und nach 110 ms
+voll. Da ist technisch nichts zu holen. Das Glas war aber `rgba(53,53,53,0.72)` mit
+`backdrop-filter: blur(40px)` — nur 72 % deckend, und Safari braucht für einen 40-px-Blur über
+den ganzen Bildschirm mehrere Frames *nach* dem Ende der Deckkraft-Animation. Bis dahin scheint
+die helle Seite durch und die weißen Menütexte stehen auf schwachem Kontrast. Auf dem Handy
+jetzt 94 % Deckung und kein Hintergrund-Blur (`WQlUT7pJkBND1pXN03`) — der Kontrast steht sofort.
+Das DSL-Attribut heißt `backgroundBlur`, nicht `backdropFilter`.
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 
