@@ -105,7 +105,20 @@ nicht erwünscht und ist zurückgenommen.
 
 **Noch offen auf dem Handy:**
 
-- Im Menü-Overlay fehlt „Projekt besprechen“ (die Handlungsleiste deckt den Weg inzwischen ab, im Menü wäre er trotzdem richtig). Das Overlay hängt an einem Framer-Event und ist
+- Im Menü-Overlay fehlt „Projekt besprechen“ (die Handlungsleiste deckt den Weg inzwischen ab,
+  im Menü wäre er trotzdem richtig).
+
+**Das Menü-Overlay ist doch erreichbar** — die frühere Notiz war falsch. Es wird nur dann ins
+DOM gehängt, wenn man den MENÜ-Knopf wirklich anklickt (ein `.click()` per Skript reicht nicht,
+es braucht einen echten Klick), und seine Knoten heißen `Mitte`, `Liste`, `Zeile <Name>` — nicht
+„Menü“, deshalb lief die Namenssuche ins Leere. Findbar über
+`getNodesWithType("FrameNode")` plus Namensfilter. Die Handy-Variante von `Mitte` ist
+`WQlUT7pJkmYyL7LUCk`.
+
+Dort stand `padding: 24px 72px 24px 150px` aus dem Desktop-Entwurf, und im selben horizontalen
+Stack liegt ein 460 px breites Logo — bei `space-between` drückte es die Menüpunkte auf dem
+Handy weit nach rechts (170 px links gegen 39 px rechts). Jetzt: Polster symmetrisch 20 px,
+`stackDistribution: center`, Logo auf dem Handy aus. Gemessen 104 px zu 104 px. Das Overlay hängt an einem Framer-Event und ist
   über die Plugin-API nicht erreichbar (weder als Komponente noch als Frame auffindbar) — das
   muss im Framer-Editor von Hand ergänzt werden.
 - Zwischen Kontaktkarte und Fuß-Handlungsaufruf steht rund ein halber Bildschirm leer.
