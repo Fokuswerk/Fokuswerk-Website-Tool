@@ -136,8 +136,13 @@ Menüpunkte und Kontaktdaten bei 32 px.
 **Nachtrag — Öffnen fühlte sich an wie ein Hänger, Schließen überlagerte die neue Seite:**
 
 Beim Öffnen war das Glas nach 0,26 s da, der Inhalt startete aber erst bei 0,55–0,8 s — dazwischen
-stand ein leerer grauer Bildschirm. Jetzt setzt der Inhalt praktisch mit dem Glas ein
-(Verzögerungen 0,02–0,06 s), alles steht nach 0,40 s.
+stand ein leerer grauer Bildschirm.
+
+Zwischenstand (Inhalt ab 0,02–0,06 s, fertig bei 0,40 s) war noch nicht genug: Gemessen erreicht
+das Glas durch die stark anziehende Kurve `0.22,1,0.36,1` schon nach **104 ms 89 % Deckkraft**,
+während die letzte Menüzeile erst bei 400 ms stand. Diese 140 ms spürt man als Nachlauf.
+Jetzt starten Glas, Kopf und Liste alle bei 0 s, die Staffel ist auf 0,012 s herunter und der
+Weg von unten auf 6 px: letzte Zeile fertig bei 0,26 s, Glas bei 0,22 s — faktisch gleichauf.
 
 Beim Schließen war es gravierender: Das Glas brauchte `0.6s` Dauer plus `0.1s` Verzögerung und
 fuhr dabei 1600 px nach rechts — und **die Menüpunkte hatten überhaupt keinen Exit-Effekt**.
