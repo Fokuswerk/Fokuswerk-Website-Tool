@@ -51,9 +51,36 @@ Die Startseite auf dem Handy durchgescrollt und die Befunde abgearbeitet. Behobe
 | Leistungsbühne, Websites | drei Pillen stapelten sich über die Browser-Vorschau | auf dem Handy weg — dieselben Punkte stehen als Liste in der Karte |
 | sieben Abschnitte | halb verdeckte Riesenüberschriften („Kunden“, „Leistungen“, …) | auf dem Handy ausgeblendet; das Marke-Etikett führt |
 
+### Conversion-Durchgang 06.10.2026
+
+Auf die Frage „trägt die Seite jemanden bis zur Anfrage?“ zuerst gemessen statt geraten
+(iPhone-Viewport 375 × 812):
+
+| | vorher | nachher |
+|---|---|---|
+| Seitenlänge | 18.142 px (22,3 Bildschirme) | 15.835 px (19,5) |
+| Abschnitt „Arbeiten“ | 5.053 px (6,2 Bildschirme) | 3,4 Bildschirme |
+| Strecke ohne Handlungsaufruf | **18,8 Bildschirme** (518 px → 15.773 px) | keine |
+
+Der teuerste Befund war die mittlere Zeile: Zwischen dem Knopf im Auftakt und dem nächsten im
+Abschluss lagen 18,8 Bildschirme. Wer bei „Arbeiten“ überzeugt war, musste zehn Bildschirme
+weiterscrollen, um sich melden zu können.
+
+**Gebaut:**
+
+- `Handlungsleiste.tsx` — feste Leiste am unteren Rand, nur unter 810 px Fensterbreite. Fährt
+  ein, sobald der Auftakt oben raus ist, und zieht sich zurück, sobald `#kontakt` im Bild ist
+  (dort stehen die eigentlichen Knöpfe). Links „Anrufen“ als `tel:`-Link, rechts
+  „Projekt besprechen“ nach `/kontakt`. Beachtet `env(safe-area-inset-bottom)`.
+  Liegt als Instanz `MWX6jdoOO` im Desktop-Breakpoint der Startseite — sie blendet sich selbst
+  nach Fensterbreite aus, deshalb genügt eine Instanz für alle Breakpoints.
+- Arbeitsschau zeigt auf dem Handy erst vier Kacheln, dann „Weitere 6 Arbeiten zeigen“.
+- Arbeitsschau rechnet vor der ersten Messung mit der Fensterbreite statt pauschal 1200 px —
+  vorher rendete sie kurz alle zehn Kacheln in Desktop-Breite und sprang dann zurecht.
+
 **Noch offen auf dem Handy:**
 
-- Im Menü-Overlay fehlt „Projekt besprechen“. Das Overlay hängt an einem Framer-Event und ist
+- Im Menü-Overlay fehlt „Projekt besprechen“ (die Handlungsleiste deckt den Weg inzwischen ab, im Menü wäre er trotzdem richtig). Das Overlay hängt an einem Framer-Event und ist
   über die Plugin-API nicht erreichbar (weder als Komponente noch als Frame auffindbar) — das
   muss im Framer-Editor von Hand ergänzt werden.
 - Zwischen Kontaktkarte und Fuß-Handlungsaufruf steht rund ein halber Bildschirm leer.
@@ -62,7 +89,7 @@ Die Startseite auf dem Handy durchgescrollt und die Befunde abgearbeitet. Behobe
 ## Offen
 
 - Unterseiten und Rechtstexte sind leer (Texte für Impressum/AGB/Datenschutz in `Seitentexte.md`).
-- Kontaktformular fehlt; „Projekt besprechen“ im Abschluss öffnet vorerst eine Mail.
+- ~~Kontaktformular fehlt~~ — /kontakt hat ein Formular (16 Felder) und die Nummer ist ein `tel:`-Link.
 - Echte Porträts, Showreel, Favicon, OG-Bild; das Bild der Kundenstimme ist ein Beispielbild.
 
 ---

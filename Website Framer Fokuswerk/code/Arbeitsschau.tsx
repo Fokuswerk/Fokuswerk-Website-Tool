@@ -823,11 +823,21 @@ export default function Arbeitsschau(props: ArbeitsschauProps) {
     const [filter, setFilter] = useState<Filter>(start)
     const [ref, m] = useMass<HTMLDivElement>()
     useEffect(() => setFilter(start), [start])
-    const breite = m.b || 1200
+    // Vor der ersten Messung galt pauschal 1200 px — auf dem Handy rendert das Raster dann
+    // kurz alle zehn Kacheln in Desktop-Breite und springt erst danach zurecht. Solange noch
+    // nicht gemessen ist, zählt deshalb die Fensterbreite.
+    const breite = m.b || (typeof window !== "undefined" ? Math.min(window.innerWidth, 1200) : 1200)
     const spalten = breite >= 1000 ? 12 : breite >= 640 ? 6 : 1
     const schmal = spalten === 1
     const reihe = spalten === 12 ? 138 : 150
     const liste = useMemo(() => KACHELN.filter((k) => filter === "alle" || k.art === filter), [filter])
+    // Auf dem Handy standen hier zehn Kacheln am Stück — über sechs Bildschirme Scrollweg,
+    // bevor irgendetwas anderes kommt. Erst vier zeigen, den Rest auf Wunsch.
+    const ERST = 4
+    const [alleZeigen, setAlleZeigen] = useState(false)
+    useEffect(() => setAlleZeigen(false), [filter])
+    const gekuerzt = schmal && !alleZeigen && liste.length > ERST
+    const sichtbar = gekuerzt ? liste.slice(0, ERST) : liste
 
     return (
         <div ref={ref} style={{ ...style, position: "relative", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 28 }}>
@@ -843,11 +853,34 @@ export default function Arbeitsschau(props: ArbeitsschauProps) {
                 }}
             >
                 <AnimatePresence mode="popLayout" initial={false}>
-                    {liste.map((k, i) => (
+                    {sichtbar.map((k, i) => (
                         <Feld key={k.id} k={k} index={i} spalten={spalten} reihe={reihe} schmal={schmal} akzent={akzent} beispiel={beispielHinweis} statisch={statisch} />
                     ))}
                 </AnimatePresence>
             </div>
+            {gekuerzt ? (
+                <button
+                    type="button"
+                    onClick={() => setAlleZeigen(true)}
+                    style={{
+                        ...text(13.5, PAPIER, 500),
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 9,
+                        padding: "13px 20px",
+                        borderRadius: 99,
+                        background: "rgba(245,243,239,0.06)",
+                        border: `1px solid ${LINIE}`,
+                        cursor: "pointer",
+                        WebkitTapHighlightColor: "transparent",
+                    }}
+                >
+                    Weitere {liste.length - ERST} Arbeiten zeigen
+                    <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M8 3v10M3.5 8.5 8 13l4.5-4.5" fill="none" stroke={akzent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                </button>
+            ) : null}
             {beispielHinweis ? (
                 <p style={{ ...text(12.5, "rgba(245,243,239,0.4)"), textAlign: "center", maxWidth: 560 }}>
                     Die Websites sind echte Kundenprojekte. Firmen und Zahlen in den Werbe- und Foto-Kacheln sind Beispiele — so sieht es aus, wenn wir für Sie arbeiten.
