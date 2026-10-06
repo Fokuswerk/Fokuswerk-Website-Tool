@@ -1,16 +1,73 @@
 # Fokuswerk — neue Website (Framer-Projekt „FW neu")
 
-**Stand 27.09.2026: Das Projekt ist vollständig leer.** Auf Ansage des Kunden („hau das
-Design komplett leer und lösche alle Daten, wir fangen komplett neu an") wurde alles
-entfernt — nicht nur die Startseite, sondern das gesamte Designsystem und das CMS.
+**Stand 28.09.2026: Startseite neu gebaut nach dem Relaunch-Prompt und neun Referenzseiten,
+Runde 2 nach Rückmeldung umgesetzt.** Details je Referenz und Mechanik: [`Referenzen.md`](Referenzen.md).
 
-**fokuswerk.de ist davon nicht betroffen.** „FW neu" war immer nur eine Kopie auf einer
-noindex-Vorschau.
-
-**Vorschau:** https://frank-site-485713.framer.app/ (leer)
+**Vorschau:** https://frank-site-485713.framer.app/ (noindex)
 **Projekt:** https://framer.com/projects/FW-neu--YPv6DX0m4fRLwI6tlnjF-h7ell
+**fokuswerk.de ist davon nicht betroffen.**
+
+## Quelltexte der Code-Bausteine
+
+Alle Code-Komponenten liegen zusätzlich als Datei in [`code/`](code/) — Framer ist die Quelle
+für den Live-Stand, der Ordner ist die Sicherung und macht Änderungen nachvollziehbar.
+
+| Datei | Zweck |
+|---|---|
+| `Netzfeld.tsx` | Netz im Auftakt (Spector-Mesh, Wölbung am Zeiger) |
+| `Kundenrad.tsx` | Kundenlogos auf einem 3D-Ring |
+| `Leistungsfelder.tsx` | Drei Leistungsfelder (Homy-Prinzip), Akkordeon auf dem Handy |
+| `Arbeitsraster.tsx` | Umschalter Websites/Kampagnen: 3×2-Raster mit wachsender Kachel bzw. Anzeigenvorschauen mit Kennzahlen |
+| `Pfeil.tsx` | Langer Pfeil für Knöpfe und Links |
+| `Navigation.tsx` | Override: Leiste erst nach 40 px Scroll, vorher transparent |
+| `Glaskante.tsx` | Flüssiges Glas am unteren Rand (progressive Unschärfe, Tönung folgt dem Abschnitt, Brechung in Chromium); blendet am Seitenende aus |
+| `Sanftscroll.tsx` | Ersetzt Framers „Smooth Scroll“ (Lenis): neue Seite startet oben, Anker fahren den Abschnitt an |
+| `Auftaktbewegung.tsx` | Overrides im Auftakt: Einblenden + scrollgebundenes Zurücktreten (Karte, Foto-Zoom, Zeilen driften) |
+| `Systemkette.tsx` | Positionierung: vier Bausteine setzen sich beim Scrollen zur Kette zusammen (Beispielwerte) |
+| `Leistungsbuehne.tsx` | Leistungen: drei Karten mit Szenen (Anzeigen-Stapel, echte Seiten im Browser, Filmstreifen) |
+| `Szenenkarte.tsx` | Szene aus der Leistungsbühne als Bildkarte für die Köpfe der Leistungsseiten |
+| `Fokusklammer.tsx` | AF-Klammern, die sich im Auftakt auf „System.“ legen |
+| `Auftaktleiste.tsx` | Scroll-Hinweis + drei belegte Ergebnisse unten im Auftakt |
+| `Vorspann.tsx` | Ladeanimation beim ersten Laden (Logo + Fokus-Klammern + Ladelinie), Signal an den Auftakt |
+| `Lichtfeld.tsx` | Abschluss-Hintergrund: Punktraster, das unter einem Lichtkegel am Zeiger aufleuchtet |
+
+Einspielen: `framer.getCodeFiles()` → `datei.setFileContent(code)`, vorher
+`framer.typecheckCode(name, code)`.
+
+## Handy-Durchgang 06.10.2026 (iOS-Simulator, iPhone 17)
+
+Die Startseite auf dem Handy durchgescrollt und die Befunde abgearbeitet. Behoben:
+
+| Stelle | Befund | Behebung |
+|---|---|---|
+| Kundenrad | alle Logo-Kacheln blieben leer | `loading="lazy"` raus — im 3D-Transform rechnet iOS Safari die Lage falsch und lädt nie |
+| Systemkette | vier Schritte mit je drei Zeilen Fließtext = Textwand | auf dem Handy nur Nummer, Titel, Kennzahl; der Abschnitt darunter sagt es in ganzen Sätzen |
+| Arbeitsschau, alle Köpfe | Untertitel nach zwei Zeilen mit „…“ abgeschnitten | Zeilenbegrenzung entfernt, Kachelhöhen entsprechend nachgezogen |
+| Arbeitsschau, Instagram | Story-Vollbild mit Knopf im Foto — als Instagram-Anzeige nicht erkennbar | echte Feed-Anzeige: Kopfzeile, Motiv, Handlungsbalken, Aktionsleiste, „Gefällt … Mal“, Bildtext; Post an die Kachelhöhe gebunden |
+| Arbeitsschau, Trichter | „Impressionen“ lief unter den Balken | auf dem Handy Beschriftung über dem Balken, Quote rechts daneben |
+| Arbeitsschau, Filmstreifen | Kopftext unlesbar auf hellem Motiv | Verlauf oben kräftiger, Titel und Untertitel mit Schatten |
+| Arbeitsschau, WAV-Browser | „Zum Durchscrollen überfahren“ ohne Mauszeiger, Öffnen-Knopf unsichtbar | eigener Handy-Text, Knopf dort dauerhaft sichtbar |
+| Leistungsbühne, Anzeige | „WERKSTATT-HARMS.DE“ überlappte „Termin anfragen“ | Domain bricht nicht mehr um |
+| Leistungsbühne, Websites | drei Pillen stapelten sich über die Browser-Vorschau | auf dem Handy weg — dieselben Punkte stehen als Liste in der Karte |
+| sieben Abschnitte | halb verdeckte Riesenüberschriften („Kunden“, „Leistungen“, …) | auf dem Handy ausgeblendet; das Marke-Etikett führt |
+
+**Noch offen auf dem Handy:**
+
+- Im Menü-Overlay fehlt „Projekt besprechen“. Das Overlay hängt an einem Framer-Event und ist
+  über die Plugin-API nicht erreichbar (weder als Komponente noch als Frame auffindbar) — das
+  muss im Framer-Editor von Hand ergänzt werden.
+- Zwischen Kontaktkarte und Fuß-Handlungsaufruf steht rund ein halber Bildschirm leer.
+- Die Fußzeile ist eine lange einspaltige Linkliste; zweispaltig wäre ruhiger.
+
+## Offen
+
+- Unterseiten und Rechtstexte sind leer (Texte für Impressum/AGB/Datenschutz in `Seitentexte.md`).
+- Kontaktformular fehlt; „Projekt besprechen“ im Abschluss öffnet vorerst eine Mail.
+- Echte Porträts, Showreel, Favicon, OG-Bild; das Bild der Kundenstimme ist ein Beispielbild.
 
 ---
+
+## Historie: Leerung am 27.09.2026
 
 ## Was gelöscht wurde
 
