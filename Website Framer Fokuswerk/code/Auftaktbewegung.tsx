@@ -14,9 +14,9 @@ import { animate, useMotionValue, useScroll, useTransform, useSpring, useReduced
 // blur() zwingt den Browser bei jedem Bild zum Neuzeichnen mehrerer Textzeilen — genau das
 // ruckelte beim ersten Wischen. x, y und opacity laufen dagegen auf der GPU.
 function useSchmal(): boolean {
-    const [schmal, setSchmal] = useState(() =>
-        typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(max-width: 809px)").matches
-    )
+    // Bewusst mit false starten: der Startwert muss auf Server und Client gleich sein,
+    // sonst gibt es einen Hydration-Mismatch. Der Effekt korrigiert gleich nach dem Mount.
+    const [schmal, setSchmal] = useState(false)
     useEffect(() => {
         if (typeof window === "undefined" || !window.matchMedia) return
         const mq = window.matchMedia("(max-width: 809px)")

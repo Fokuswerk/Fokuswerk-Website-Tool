@@ -78,6 +78,31 @@ weiterscrollen, um sich melden zu können.
 - Arbeitsschau rechnet vor der ersten Messung mit der Fensterbreite statt pauschal 1200 px —
   vorher rendete sie kurz alle zehn Kacheln in Desktop-Breite und sprang dann zurecht.
 
+### Hydration-Fehler 06.10.2026 — behoben
+
+Nach dem Versuch, den Layout-Sprung der Arbeitsschau zu vermeiden, stand die halbe Startseite
+still: Der Auftakt blieb unscharf (`blur(20px)` eingefroren), alle Zähler zeigten `+0 %`,
+scrollgebundene Overrides reagierten nicht. In der Konsole: **React #418 / #422**,
+Server/Client-Mismatch, ausgelöst am „Weitere Arbeiten zeigen"-Knopf in `Arbeitsschau.mjs`.
+
+Ursache: `window.innerWidth` bzw. `window.matchMedia` wurden **beim ersten Rendern** gelesen.
+Der Server kennt kein `window` und rendert Desktop (kein Knopf), der Browser rendert Handy
+(Knopf) — React verwirft daraufhin den Baum, und Komponenten, die damit nichts zu tun haben,
+bleiben auf dem Server-Stand hängen.
+
+Richtig ist ein `montiert`-Flag: Server und erster Client-Durchlauf liefern dasselbe, erst der
+Effekt danach misst. Betraf `Arbeitsschau.tsx` (Spaltenzahl) und `Auftaktbewegung.tsx`
+(`useSchmal`). Der kurze Layout-Sprung beim Laden ist der Preis dafür.
+
+**Merke:** Im iOS-Simulator sieht man nur das Symptom. Solche Fehler findet man nur im Browser
+mit Konsolenzugriff — mobilen Viewport setzen und auf `Minified React error` filtern.
+
+### Überschriften: zurück auf den Originalstil
+
+Die „Geisterzeilen" (56–84 px, 7–16 % Deckkraft, auf 40–60 px Höhe beschnitten) sind der
+gewünschte Look und bleiben so. Der Zwischenstand mit 30-px-Überschriften in voller Farbe war
+nicht erwünscht und ist zurückgenommen.
+
 **Noch offen auf dem Handy:**
 
 - Im Menü-Overlay fehlt „Projekt besprechen“ (die Handlungsleiste deckt den Weg inzwischen ab, im Menü wäre er trotzdem richtig). Das Overlay hängt an einem Framer-Event und ist

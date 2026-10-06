@@ -200,49 +200,56 @@ function Baustein(props: { g: Glied; i: number; p: MotionValue<number>; akzent: 
     )
 }
 
-// ---------- Handy: ruhige Zeitleiste statt scrollgesteuerter Karten ----------
-// Auf schmalen Breiten waren vier Karten mit Unschärfe, Drehung und Minigrafiken zu wuchtig und
-// ruckelten beim Scrollen. Und auch die erste Zeitleiste war noch zu voll: Titel plus drei Zeilen
-// Fließtext plus Kennzahl, vier Mal untereinander — eine Textwand, durch die niemand liest.
-// Hier trägt die Kennzahl die Aussage: Nummer, Titel, Zahl. Der Erklärtext entfällt auf dem Handy,
-// der Abschnitt darunter sagt dasselbe in ganzen Sätzen.
+// ---------- Handy: zweispaltige Aufstellung statt Diagramm ----------
+// Vorgeschichte: erst vier scrollgesteuerte Karten (zu wuchtig, ruckelte), dann eine Zeitleiste
+// mit Kreisen, Verbindungslinie und je drei Textgrößen pro Schritt. Auch die las sich wie ein
+// technisches Schaubild — vier verschachtelte Blöcke, zwei Etiketten in der Kopfzeile.
+// Jetzt: eine Zeile je Schritt. Links was passiert, rechts was dabei herauskommt, dazwischen
+// eine feine Linie. Keine Kreise, keine Verschachtelung, ein Etikett.
 
 function KompaktKette(props: { liste: Glied[]; akzent: string; beispielHinweis: boolean; statisch: boolean; reduziert: boolean }) {
     const { liste, akzent, beispielHinweis, statisch, reduziert } = props
     const ruhig = statisch || reduziert
     return (
         <div style={{ position: "relative" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, fontSize: 11, fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase" }}>
-                <span style={{ color: akzent, whiteSpace: "nowrap" }}>Alles greift ineinander</span>
-                {beispielHinweis && <span style={{ color: "rgba(245,243,239,0.32)", whiteSpace: "nowrap" }}>Beispielwerte</span>}
+            <div style={{ marginBottom: 16, fontSize: 11, fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase", color: akzent }}>
+                Alles greift ineinander
             </div>
-            {liste.map((g, i) => {
-                const letzte = i === liste.length - 1
-                return (
-                    <motion.div
-                        key={i}
-                        initial={ruhig ? false : { opacity: 0, y: 10 }}
-                        whileInView={ruhig ? undefined : { opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ duration: 0.5, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
-                        style={{ display: "grid", gridTemplateColumns: "26px 1fr", columnGap: 13 }}
-                    >
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                            <span style={{ width: 26, height: 26, borderRadius: 26, border: `1px solid rgba(255,90,31,0.5)`, color: akzent, fontSize: 10, fontWeight: 600, letterSpacing: "0.04em", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            {liste.map((g, i) => (
+                <motion.div
+                    key={i}
+                    initial={ruhig ? false : { opacity: 0, y: 8 }}
+                    whileInView={ruhig ? undefined : { opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.6 }}
+                    transition={{ duration: 0.45, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr auto",
+                        alignItems: "baseline",
+                        columnGap: 14,
+                        padding: "13px 0",
+                        borderTop: i === 0 ? "none" : `1px solid ${LINIE}`,
+                    }}
+                >
+                    <span style={{ minWidth: 0 }}>
+                        <span style={{ fontSize: 16, fontWeight: 500, letterSpacing: "-0.025em", lineHeight: 1.25, color: PAPIER }}>
+                            <span style={{ color: akzent, fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", marginRight: 8, verticalAlign: "1px" }}>
                                 {String(i + 1).padStart(2, "0")}
                             </span>
-                            {!letzte && <span style={{ flex: 1, width: 1, marginTop: 5, background: `linear-gradient(${akzent}, rgba(255,90,31,0.18))` }} />}
-                        </div>
-                        <div style={{ paddingBottom: letzte ? 2 : 20, display: "grid", gap: 3 }}>
-                            <span style={{ fontSize: 16.5, fontWeight: 500, letterSpacing: "-0.03em", lineHeight: 1.2, color: PAPIER, marginTop: 3 }}>{g.titel}</span>
-                            <span style={{ display: "flex", alignItems: "baseline", gap: 7, flexWrap: "wrap" }}>
-                                <span style={{ fontSize: 21, fontWeight: 500, letterSpacing: "-0.045em", color: PAPIER, fontVariantNumeric: "tabular-nums" }}>{g.wert}</span>
-                                <span style={{ fontSize: 12.5, color: GRAU, letterSpacing: "-0.005em" }}>{g.einheit}</span>
-                            </span>
-                        </div>
-                    </motion.div>
-                )
-            })}
+                            {g.titel}
+                        </span>
+                        <span style={{ display: "block", fontSize: 12.5, lineHeight: 1.35, letterSpacing: "-0.005em", color: GRAU, marginTop: 2 }}>{g.einheit}</span>
+                    </span>
+                    <span style={{ fontSize: 20, fontWeight: 500, letterSpacing: "-0.04em", color: PAPIER, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", textAlign: "right" }}>
+                        {g.wert}
+                    </span>
+                </motion.div>
+            ))}
+            {beispielHinweis && (
+                <div style={{ marginTop: 14, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(245,243,239,0.3)" }}>
+                    Beispielwerte
+                </div>
+            )}
         </div>
     )
 }

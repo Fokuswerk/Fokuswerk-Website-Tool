@@ -823,10 +823,13 @@ export default function Arbeitsschau(props: ArbeitsschauProps) {
     const [filter, setFilter] = useState<Filter>(start)
     const [ref, m] = useMass<HTMLDivElement>()
     useEffect(() => setFilter(start), [start])
-    // Vor der ersten Messung galt pauschal 1200 px — auf dem Handy rendert das Raster dann
-    // kurz alle zehn Kacheln in Desktop-Breite und springt erst danach zurecht. Solange noch
-    // nicht gemessen ist, zählt deshalb die Fensterbreite.
-    const breite = m.b || (typeof window !== "undefined" ? Math.min(window.innerWidth, 1200) : 1200)
+    // Die Fensterbreite darf erst nach dem Mount einfliessen. Liest man sie schon beim ersten
+    // Rendern, liefert der Server (kein window) ein anderes Raster als der Browser — React
+    // meldet einen Hydration-Mismatch und verwirft den Baum: Zaehler bleiben auf 0, Overrides
+    // laufen nicht mehr, die halbe Seite friert auf dem Server-Stand ein.
+    const [montiert, setMontiert] = useState(false)
+    useEffect(() => setMontiert(true), [])
+    const breite = montiert ? m.b || 1200 : 1200
     const spalten = breite >= 1000 ? 12 : breite >= 640 ? 6 : 1
     const schmal = spalten === 1
     const reihe = spalten === 12 ? 138 : 150
