@@ -103,6 +103,39 @@ Die „Geisterzeilen" (56–84 px, 7–16 % Deckkraft, auf 40–60 px Höhe besc
 gewünschte Look und bleiben so. Der Zwischenstand mit 30-px-Überschriften in voller Farbe war
 nicht erwünscht und ist zurückgenommen.
 
+### Menü: Choreografie und Logo-Sprung (06.10.2026)
+
+Das Overlay lebt in `FixedOverlayNode [Syy0trUD3]`. Die Einblendzeiten waren so:
+
+| Teil | Start | Dauer | fertig bei |
+|---|---|---|---|
+| Glas (grauer Grund) | 0 s | 1,5 s | 1,50 s |
+| Kopf | 0,55 s | 0,7 s | 1,25 s |
+| Logo | 0,55 s | 1,6 s | 2,15 s |
+| Fuß | 0,8 s | 0,8 s | 1,60 s |
+| **Menüpunkte** | — | **gar keiner** | **sofort** |
+
+Daher der Eindruck „nicht gleichmäßig": Die Menüpunkte hatten keinen Effekt und standen vor dem
+grauen Grund da, und bis alles saß vergingen 2,15 s. Jetzt in Reihenfolge und unter einer halben
+Sekunde: Glas 0,3 s → Kopf 0,06/0,28 → Liste 0,10/0,30 mit `stagger 0.025s` → Fuß 0,20/0,28.
+Das Glas blendet nur noch ein, statt 1600 px weit anzufahren.
+
+**Der Logo-Sprung hatte zwei Ursachen:**
+
+1. Der Kopf des Overlays trug auf dem Handy `padding: 18px 20px` — die Marke saß bei x=20/y=23,
+   die der Leiste bei x=32/y=33. Jetzt `28px 32px`, beide liegen übereinander.
+2. Die Navigationsleiste selbst wechselt beim Scrollen die Variante: `Oben` hat `padding: 28px`,
+   `Leiste` hatte `20px` — die Wortmarke sprang also schon beim bloßen Scrollen 8 px hoch, und
+   das Overlay konnte nicht beiden Positionen folgen. Beide Varianten stehen jetzt auf 28 px
+   (`er7vQ1cVw`).
+
+Gemessen über alle drei Wege — Startseite oben, Startseite gescrollt, Unterseite: Versatz
+Leiste↔Overlay jeweils **0/0**, Schließkreuz rechtsbündig bei 32 px wie der MENÜ-Knopf,
+Menüpunkte und Kontaktdaten bei 32 px.
+
+**Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
+neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
+
 **Noch offen auf dem Handy:**
 
 - Im Menü-Overlay fehlt „Projekt besprechen“ (die Handlungsleiste deckt den Weg inzwischen ab,
