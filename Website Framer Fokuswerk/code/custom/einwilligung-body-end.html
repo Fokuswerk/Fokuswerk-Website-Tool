@@ -1,0 +1,73 @@
+<style id="fokuswerk-einwilligung">
+/* Einwilligungs-Hinweis für Google Analytics. Analytics lädt NUR nach „Zustimmen“. Der Hinweis erscheint
+   erst bei der ersten Interaktion (Scrollen, Tippen, Maus) – er belastet den Seitenaufbau nicht.
+   „Ablehnen“ und „Zustimmen“ sind bewusst gleichwertig gestaltet. */
+#fw-ew { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 2147482500; max-width: 400px; margin-left: auto; box-sizing: border-box;
+  background: rgb(30, 28, 27); color: rgb(245, 243, 239); border: 1px solid rgba(245, 243, 239, .12); border-radius: 18px; padding: 18px 18px 16px;
+  font: 400 13px/1.55 Inter, "Inter Placeholder", system-ui, sans-serif; box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .55);
+  opacity: 0; transform: translate3d(0, 14px, 0); transition: opacity .3s ease, transform .55s cubic-bezier(.16, 1, .3, 1); }
+#fw-ew.fw-an { opacity: 1; transform: none; }
+#fw-ew b { display: block; margin-bottom: 6px; font-weight: 500; font-size: 14px; letter-spacing: -.01em; }
+#fw-ew p { margin: 0 0 14px; color: rgba(245, 243, 239, .72); }
+#fw-ew a { color: rgb(245, 243, 239); text-decoration: underline; text-underline-offset: 2px; }
+#fw-ew .fw-ew-k { display: flex; gap: 8px; }
+#fw-ew button { flex: 1; font: 500 13px/1 Inter, "Inter Placeholder", system-ui, sans-serif; padding: 13px 14px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(245, 243, 239, .3); background: transparent; color: rgb(245, 243, 239); transition: background .2s, color .2s; }
+#fw-ew button:hover, #fw-ew button:focus-visible { background: rgb(245, 243, 239); color: rgb(22, 20, 19); outline: none; }
+@media (max-width: 809.98px) { #fw-ew { bottom: 92px; } } /* über der Handlungsleiste */
+@media (prefers-reduced-motion: reduce) { #fw-ew { transition: none; } }
+</style>
+<script id="fokuswerk-einwilligung-skript">
+(function () {
+  var SCHLUESSEL = "fw-einwilligung", ID = "G-NGN7HYSSP8";
+  function lesen() { try { return localStorage.getItem(SCHLUESSEL); } catch (e) { return null; } }
+  function analytics() {
+    if (window.__fwGa) return; window.__fwGa = 1;
+    window["ga-disable-" + ID] = false;
+    // Solange Framer Analytics noch selbst einbindet (Site Settings), nicht doppelt laden.
+    if (document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) return;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag("js", new Date()); window.gtag("config", ID);
+    var s = document.createElement("script"); s.async = true; s.src = "https://www.googletagmanager.com/gtag/js?id=" + ID; document.head.appendChild(s);
+  }
+  function cookiesLoeschen() {
+    window["ga-disable-" + ID] = true;
+    document.cookie.split(";").forEach(function (c) {
+      var n = c.split("=")[0].trim();
+      if (/^_ga/.test(n)) ["", "; domain=" + location.hostname, "; domain=." + location.hostname.replace(/^www\./, "")].forEach(function (d) {
+        document.cookie = n + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/" + d;
+      });
+    });
+  }
+  function schliessen(box) { box.classList.remove("fw-an"); setTimeout(function () { box.remove(); }, 350); }
+  function speichern(wert, box) {
+    var vorher = lesen();
+    try { localStorage.setItem(SCHLUESSEL, wert); localStorage.setItem(SCHLUESSEL + "-datum", new Date().toISOString()); } catch (e) {}
+    schliessen(box);
+    if (wert === "ja") analytics(); else { cookiesLoeschen(); if (vorher === "ja") location.reload(); }
+  }
+  function zeigen() {
+    if (document.getElementById("fw-ew")) return;
+    var box = document.createElement("div");
+    box.id = "fw-ew"; box.setAttribute("role", "dialog"); box.setAttribute("aria-live", "polite"); box.setAttribute("aria-label", "Einwilligung für Statistik");
+    box.innerHTML = '<b>Statistik nur mit Ihrer Zustimmung</b><p>Mit Google Analytics sehen wir, wie unsere Website genutzt wird, und können sie verbessern. Das setzt Cookies und überträgt Daten an Google. <a href="/datenschutz">Datenschutzerklärung</a></p><div class="fw-ew-k"><button type="button" data-w="nein">Ablehnen</button><button type="button" data-w="ja">Zustimmen</button></div>';
+    box.addEventListener("click", function (e) { var w = e.target.getAttribute && e.target.getAttribute("data-w"); if (w) speichern(w, box); });
+    document.body.appendChild(box);
+    requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add("fw-an"); }); });
+  }
+  window.fwCookieEinstellungen = zeigen;
+  // „Cookie-Einstellungen“ (Fuß, Datenschutzerklärung) öffnet den Hinweis erneut
+  document.addEventListener("click", function (e) {
+    var a = e.target && e.target.closest && e.target.closest('a[href*="#cookie-einstellungen"]');
+    if (!a) return; e.preventDefault(); e.stopPropagation(); zeigen();
+  }, true);
+  var wahl = lesen();
+  if (wahl === "ja") analytics();
+  else if (!wahl) {
+    var ereignisse = ["scroll", "pointerdown", "keydown", "mousemove", "touchstart", "wheel"];
+    var los = function () { ereignisse.forEach(function (n) { window.removeEventListener(n, los, true); }); setTimeout(zeigen, 500); };
+    ereignisse.forEach(function (n) { window.addEventListener(n, los, { capture: true, passive: true }); });
+  }
+})();
+</script>

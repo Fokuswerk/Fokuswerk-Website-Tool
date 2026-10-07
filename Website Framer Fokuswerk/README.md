@@ -316,6 +316,21 @@ Stand unter PSI-Drosselung (×14): 67–71, TBT 1,1–1,5 s (Hydration der Start
   lädt ohne Einwilligung (rechtlich angreifbar) und kostet lokal gemessen ~6 Punkte (TBT −700 ms).
   Per API nicht änderbar.
 
+**Einwilligung für Google Analytics (07.10., Version `b60e8551d`):** Entscheidung Thees: Vorspann
+bleibt (kostet gemessen ~7 Punkte Handy / 3 Desktop), Analytics nur nach Zustimmung.
+- `code/custom/einwilligung-body-end.html` (bodyEnd): Hinweis erscheint erst bei der ersten
+  Interaktion (scroll/pointerdown/keydown/mousemove/touchstart/wheel), „Ablehnen“ und „Zustimmen“
+  gleichwertig, Wahl in `localStorage` (`fw-einwilligung` + Datum). Bei „ja“ lädt gtag `G-NGN7HYSSP8`
+  — nicht doppelt, solange Framers eigene Einbindung noch aktiv ist. Widerruf löscht `_ga*`-Cookies.
+- Fuß: neuer Link „Cookie-Einstellungen“ → `/datenschutz#cookie-einstellungen` (Skript fängt den
+  Klick ab und öffnet den Hinweis). Sprungziel = Textkarte der Datenschutzseite.
+- Datenschutzerklärung: neuer Abschnitt „5. Webanalyse mit Google Analytics (nur mit Ihrer
+  Einwilligung)“, Folgeabschnitte 6–10, Widerruf um „Cookie-Einstellungen“ ergänzt. Entwurf —
+  rechtlich prüfen lassen.
+- **Offen bei Thees:** GA-ID in Framer → Site Settings → Analytics entfernen. Bis dahin lädt Framer
+  Analytics weiterhin ohne Einwilligung.
+- Lokale Messung: ohne Analytics Handy +4–6, Desktop +2; ohne Vorspann zusätzlich Handy +7, Desktop +3.
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 
