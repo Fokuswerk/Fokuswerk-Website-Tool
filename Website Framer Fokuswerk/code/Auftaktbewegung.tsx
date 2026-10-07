@@ -108,8 +108,10 @@ function zeilenOverride(z: Zeile) {
                 const t = Math.max(0, Math.min(1, (pv - z.weg[0]) / (z.weg[1] - z.weg[0])))
                 // Auf breiten Flächen übernimmt die Unschärfe das Einblenden und die Deckkraft
                 // bleibt 1, damit der Text sofort als gezeichnet zählt (LCP). Auf dem Handy gibt
-                // es keine Unschärfe, dort blendet die Deckkraft ein.
-                return schmal ? ev * (1 - t) : 1 - t
+                // es keine Unschärfe, dort blendet die Deckkraft ein — aber ab 8 %, nicht ab 0:
+                // Text mit Deckkraft 0 gilt als nicht gezeichnet, dann zählte Google den Untertitel
+                // erst nach dem Vorspann (LCP 6–7 s statt 1,2 s). Unter dem Vorspann sieht man es nicht.
+                return schmal ? (0.08 + 0.92 * ev) * (1 - t) : 1 - t
             })
             const filter = useTransform([p, e] as any, ([pv, ev]: number[]) => {
                 const t = Math.max(0, Math.min(1, (pv - z.weg[0]) / (z.weg[1] - z.weg[0])))

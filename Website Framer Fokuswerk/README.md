@@ -241,6 +241,21 @@ Leistung 88–90, LCP 1,2 s, TBT 200–280 ms, Barrierefreiheit 96, Best Practic
 Lazy-Loading ergänzt in `Arbeitsschau.tsx` (2 Bilder) und `Arbeitsraster.tsx` (Logos);
 das Kundenrad bewusst ohne (3D-Transform, iOS lädt sonst nie).
 
+**Nachtrag 07.10. — PageSpeed-Streuung und Kontrast (Version `997f21189`):**
+- *LCP sprang zwischen 1,2 s und 6–7 s.* LCP-Element ist der Untertitel im Auftakt. Im SSR-HTML
+  ist er sichtbar (nur unscharf), nach der Hydration setzte `Auftaktbewegung.tsx` ihn auf dem
+  Handy auf Deckkraft **0** bis nach dem Vorspann → je nach Messung zählte das späte Einblenden.
+  Jetzt startet er auf dem Handy bei 8 % (unter dem Vorspann unsichtbar). Drei Läufe danach:
+  Leistung 86/90/90, LCP 1,2–1,4 s — auch *mit* Editor.
+- *Kontrastfehler (Barrierefreiheit 96):* gemeldet wurden die orangen Wisch-Kopien
+  („Beschriftung Farbe“) in Knopf, Verweis, Navpunkt, Menüpunkt — per Maske versteckt, das
+  versteht die Prüfung nicht. Ruhezustand jetzt `opacity 0`, Hover-Varianten `1` (20 Knoten).
+  Barrierefreiheit 100.
+- *Bearbeiten-Stift:* auf `framer.app`-Adressen laut Framer-Hilfe für **alle** Besucher, nicht
+  abschaltbar; auf eigener Domain nur für Projektmitglieder. PageSpeed auf der Vorschau rechnet
+  dessen Skripte (castleSDK, render-*.mjs, ~4 MB) in die Blockierzeit ein.
+- *SEO 69:* nur `noindex` (Meta + `x-robots-tag`), gewollt bis zum Livegang.
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 
