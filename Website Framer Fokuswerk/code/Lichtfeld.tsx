@@ -50,8 +50,19 @@ export default function Lichtfeld(props: LichtfeldProps) {
             mx.set((e.clientX - r.left) / Math.max(1, r.width))
             my.set((e.clientY - r.top) / Math.max(1, r.height))
         }
+        // Nur rechnen, solange der Abschluss im Bild ist – vorher lief die Schleife ab dem Laden in
+        // jedem Bild mit und zeichnete die Fläche neu, obwohl sie ganz unten liegt.
+        let sichtbar = false
+        const io = typeof IntersectionObserver !== "undefined"
+            ? new IntersectionObserver((e) => {
+                  const war = sichtbar
+                  sichtbar = e.some((x) => x.isIntersecting)
+                  if (sichtbar && !war) { cancelAnimationFrame(raf); raf = requestAnimationFrame(lauf) }
+              }, { rootMargin: "200px 0px" })
+            : null
         // Eigenbewegung, solange kein Zeiger da war (oder seit 2,5 s keiner)
         const lauf = (t: number) => {
+            if (io && !sichtbar) return
             raf = requestAnimationFrame(lauf)
             if (reduziert || t - zuletzt < 2500) return
             const s = (t - t0) / 1000
@@ -59,9 +70,11 @@ export default function Lichtfeld(props: LichtfeldProps) {
             my.set(0.5 + Math.sin(s * 0.53 + 1.3) * 0.28)
         }
         window.addEventListener("pointermove", bewegung, { passive: true })
-        raf = requestAnimationFrame(lauf)
+        if (io) io.observe(flaeche)
+        else raf = requestAnimationFrame(lauf)
         return () => {
             window.removeEventListener("pointermove", bewegung)
+            io?.disconnect()
             cancelAnimationFrame(raf)
         }
     }, [statisch, reduziert])

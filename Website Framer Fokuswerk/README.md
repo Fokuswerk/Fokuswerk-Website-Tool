@@ -282,6 +282,21 @@ simulierte LCP von 6,7–8,3 s kommt aus dem „Netzwerkabhängigkeitsbaum“: k
 Außerdem: Netz (`Netzfeld.tsx`) auf Touch/Handy aus, Scroll-Hinweis läuft 3× statt endlos.
 Stand unter PSI-Drosselung (×14): 67–71, TBT 1,1–1,5 s (Hydration der Startseite).
 
+**Startseite verschlankt + Grundlast-Test (07.10., Version `30a34028e`):**
+- *Doppelte Ausgabe:* Framer liefert Blöcke, die je Breakpoint abweichen, mehrfach aus
+  (`ssr-variant`). Fuß: Handy nutzt jetzt dieselbe Variante „Fußzeile“ wie Tablet/Desktop, die
+  einzige Abweichung (Rechtliches untereinander) macht CSS im Custom Code (`fokuswerk-fuss`).
+  Systemkette: Handy-Texte („4 von 100 Besuchern…“) auf alle Breakpoints übernommen (per
+  `node.setAttributes({controls})`, die DSL kann keine Objekt-Listen). Ergebnis: SSR-HTML
+  2.025 → 1.757 Elemente, auf dem Handy unsichtbar ausgeliefert 472 → 204, −49 KB.
+- *Lichtfeld* rechnet nur noch im Bild (IntersectionObserver) — Hauptthread nach dem Laden −30 %.
+- *Grundlast-Test:* Kunden, Leistungen, Arbeiten auf dem Handy testweise ausgeblendet (DOM
+  1.269 → 696): Gesamt-Rechenzeit −35 %, **Blockierzeit unverändert 1,40 s, Note 70**. Die
+  Blockierzeit ist Framers Laufzeit beim Start (React/Motion), nicht unser Inhalt — weiteres
+  Streichen von Inhalten bringt für PageSpeed nichts. Sichtbarkeit danach wiederhergestellt.
+- Hydration betrifft die unsichtbaren ssr-Varianten nicht (DOM im Browser vorher wie nachher
+  ~1.270) — die Doppelungen kosteten nur Ladegröße.
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 
