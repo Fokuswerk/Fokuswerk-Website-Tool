@@ -331,6 +331,13 @@ bleibt (kostet gemessen ~7 Punkte Handy / 3 Desktop), Analytics nur nach Zustimm
   Analytics weiterhin ohne Einwilligung.
 - Lokale Messung: ohne Analytics Handy +4–6, Desktop +2; ohne Vorspann zusätzlich Handy +7, Desktop +3.
 
+**Stand 07.10. mittags — was noch geht und was nicht:** PSI 11:44 Handy 73 (TBT 20 ms, LCP 5,3 s,
+SI 5,3 s), Desktop 86 (streut 86–94). Lokal (Standard-Lighthouse) Handy 95. Framer gibt alle
+Bildflächen ohne `loading="lazy"` aus (z. B. „Stimme“ 114 KB, „Gespräch“, Porträts) — gemessen bringt
+deren Aufschub aber nichts (72–76 mit wie ohne). Messbar bleiben nur noch: Analytics-ID aus Framers
+Site Settings entfernen (+4–6 Handy) und der Vorspann (~7 Handy, bewusst behalten). Weitere
+Code-Optimierung liegt im Rauschen von PSI (±10).
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 
