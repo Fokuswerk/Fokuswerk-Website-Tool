@@ -143,7 +143,7 @@ export default function Auftaktleiste(props: AuftaktleisteProps) {
                             style={{ position: "absolute", left: 0, width: 1, height: 14, background: akzent }}
                             initial={{ top: -14 }}
                             animate={statisch || reduziert ? { top: 12 } : { top: [-14, 38] }}
-                            transition={{ duration: 1.6, repeat: Infinity, ease: [0.65, 0, 0.35, 1] }}
+                            transition={{ duration: 1.6, repeat: 3, ease: [0.65, 0, 0.35, 1] }} // dreimal, dann Ruhe: Endlos-Bewegung hält den Speed Index offen
                         />
                     </span>
                     {hinweis}

@@ -273,6 +273,15 @@ stand die Seite auf langsamen Geräten so lange grau, wie das JavaScript braucht
   LCP 1,3–1,5 s, TBT 1,1–1,5 s. Rest-Blockierzeit = Hochfahren der Seite (eine Aufgabe ~1,1 s:
   React/Motion), Speed Index begrenzt durch Endlos-Animationen im Auftakt (Scroll-Hinweis).
 
+**PageSpeed auf framer.app — Beweis für die Editor-Kette (07.10., 10:00):** PageSpeed selbst
+ausgelesen: LCP-Element = Untertitel, *beobachtet* nach 10 ms TTFB + 700 ms Darstellung. Der
+simulierte LCP von 6,7–8,3 s kommt aus dem „Netzwerkabhängigkeitsbaum“: kritischer Pfad 6.850 ms
+über `canvas-sandbox-on-page.mjs`, `canvas-sa….css` (app.framerstatic.com) und React von
+`site-….framercanvas.com` — Framers On-Page-Editor, der auf framer.app für alle Besucher lädt
+(im Lauf öffnet sich sogar sein Dialog „Edit page“). Auf eigener Domain lädt er nicht.
+Außerdem: Netz (`Netzfeld.tsx`) auf Touch/Handy aus, Scroll-Hinweis läuft 3× statt endlos.
+Stand unter PSI-Drosselung (×14): 67–71, TBT 1,1–1,5 s (Hydration der Startseite).
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 

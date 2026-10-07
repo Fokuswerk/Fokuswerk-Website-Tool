@@ -165,6 +165,9 @@ export default function Netzfeld(props: NetzfeldProps) {
         const huelle = huelleRef.current
         const lw = leinwandRef.current
         if (!huelle || !lw || typeof window === "undefined") return
+        // Auf Touch-Geräten/Handy gibt es keinen Zeiger – das Netz stand dort nur still, kostete aber
+        // beim Laden Bild-Dekodierung, Helligkeitsmessung und Triangulierung (Blockierzeit). Aus.
+        if (window.matchMedia?.("(hover: none), (max-width: 809.98px)").matches) return
         const ctx = lw.getContext("2d", { alpha: true })
         if (!ctx) return
 
