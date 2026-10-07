@@ -209,6 +209,38 @@ Kopf, Liste, Fuß, Menüzeilen haben keinen eigenen Exit mehr. Einfahrt jetzt 1,
 mit 0,05 s Staffel. Gemessen im Video: Tipp → 5 Bilder Glas mit Unschärfe + orangem Punkt →
 neue Seite darunter, Panel nach ~0,2 s draußen.
 
+**Runde 07.10.2026 — Bauwerk-Wertigkeit, flüssig auf dem Handy, PageSpeed (Version `15714aa58`):**
+
+*Warum es ruckelte:* Framers Appear-Effekte setzen `transform` per JavaScript in jedem Bild
+(gemessen: keine einzige WAAPI-Animation, nur Inline-Styles). Ist das Handy kurz beschäftigt,
+hakt die Fahrt. Deshalb laufen **Ein- und Ausfahrt jetzt als CSS-Animationen** aus dem Custom
+Code (`<style id="fokuswerk-menue">`) — die rechnet die Grafikkarte. Framer-Effekte der Menü-
+Ebenen: `enter = null`, `exit` hält das Overlay nur 0,7 s im DOM (ohne Bewegung).
+
+| Teil | CSS |
+|---|---|
+| Glas + Inhalt | `translateX(100% → 0)` 1,5 s `cubic-bezier(.16,1,.3,1)` |
+| Zeilen | steigen aus der Maske `translateY(108% → 0)` 1,15 s, Start 0,12 s, Staffel 0,06 s |
+| Fuß / Logo | Einblenden + 18 px, ab 0,55 s |
+| Schließen | `html.fw-menue-zu` (gesetzt per `pointerup` auf ✕/Link im Menü) → nach rechts, 0,45 s |
+
+*Wertigkeit wie Bauwerk:* Glas `rgba(22,20,19,.5)` + `blur(40px) saturate(150%)` statt flachem
+Grau 72 % — die Farben des Auftakts leuchten verschwommen durch. Liste luftiger (Abstand
+12/14/18 px), Textstil „Menü“ Inter **400** statt 500, `-0.035em`, Zeilenhöhe 1,14.
+
+*Vorspann (`code/Vorspann.tsx`):* Balken und Prozentzahl per Ref statt React-State, alle
+Bewegungen als `transform`-Strings (Motion gibt sie an WAAPI ab), Feder durch Kurve ersetzt,
+Mindestzeit 1,1 s, höchstens 0,3 s Warten auf Bilder (vorher bis 3,8 s). Neu: graue Vorfläche
+im Custom Code (`<style id="fokuswerk-vorhang">`, `html:not(.fw-vorspann-da)::after`) — vorher
+blitzte die Seite kurz auf, bevor der Vorspann per JS erschien.
+
+*PageSpeed:* Der Wert der `framer.app`-Vorschau ist verfälscht — dort lädt Framer den
+Bearbeiten-Stift mit **4,2 MB / 334 Anfragen** (auf eigener Domain nicht, gegengeprüft an
+wav-wst.de). SEO 69 = ausschließlich `noindex`. Lighthouse mobil mit gesperrtem Editor (wie live):
+Leistung 88–90, LCP 1,2 s, TBT 200–280 ms, Barrierefreiheit 96, Best Practices 96.
+Lazy-Loading ergänzt in `Arbeitsschau.tsx` (2 Bilder) und `Arbeitsraster.tsx` (Logos);
+das Kundenrad bewusst ohne (3D-Transform, iOS lädt sonst nie).
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 

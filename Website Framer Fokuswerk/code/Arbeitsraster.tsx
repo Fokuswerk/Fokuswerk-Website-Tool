@@ -437,7 +437,7 @@ function Anzeige(props: { k: Kampagne; breite: number; hoehe: number; gehoben: b
                 {/* Kopf wie im Feed */}
                 <div style={{ position: "absolute", left: 12, right: 12, top: 14, display: "flex", alignItems: "center", gap: 8 }}>
                     <div style={{ width: 28, height: 28, borderRadius: 999, background: PAPIER, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
-                        {k.logo?.src ? <img src={k.logo.src} alt={`Logo ${k.kunde ?? ""}`.trim()} style={{ width: "78%", height: "78%", objectFit: "contain" }} /> : null}
+                        {k.logo?.src ? <img src={k.logo.src} alt={`Logo ${k.kunde ?? ""}`.trim()} loading="lazy" decoding="async" style={{ width: "78%", height: "78%", objectFit: "contain" }} /> : null}
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
                         <span style={{ fontFamily: SCHRIFT, fontWeight: 600, fontSize: 12.5, letterSpacing: "-0.01em", color: PAPIER, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{k.kunde}</span>

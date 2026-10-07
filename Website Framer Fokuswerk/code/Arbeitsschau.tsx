@@ -348,7 +348,7 @@ export function MetaAnzeige(props: { los: boolean; akzent: string; beispiel: boo
                     </div>
                     {/* Motiv im Hochformat 4:5 */}
                     <div style={{ position: "relative", width: "100%", aspectRatio: eng ? "1 / 1" : "4 / 5", background: "#eee" }}>
-                        <img src={props.bild ?? BILD("photo-1691571026798-1c5819901996")} alt="Beispielmotiv" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img src={props.bild ?? BILD("photo-1691571026798-1c5819901996")} alt="Beispielmotiv" loading="lazy" decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                     {/* Handlungsbalken */}
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "11px 12px", background: "rgba(28,28,30,0.04)", borderTop: `1px solid ${KANTE_IG}`, borderBottom: `1px solid ${KANTE_IG}` }}>
@@ -637,7 +637,7 @@ function Reel(props: { los: boolean; akzent: string; beispiel: boolean }) {
     const { los, akzent, beispiel } = props
     return (
         <div style={{ position: "relative", height: "100%", margin: -20, borderRadius: 16, overflow: "hidden" }}>
-            <img src={BILD("photo-1758767355046-1986dda2d967", 800)} alt="Beispielmotiv Werkstatt" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src={BILD("photo-1758767355046-1986dda2d967", 800)} alt="Beispielmotiv Werkstatt" loading="lazy" decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.62) 16%, rgba(0,0,0,0.18) 34%, rgba(0,0,0,0.12) 55%, rgba(0,0,0,0.85) 100%)" }} />
             <div style={{ position: "absolute", left: 20, right: 20, top: 20 }}>
                 <Kopf art="content" titel="Videos aus dem Arbeitsalltag" firma="Werkstatt Harms: kurze Clips für Instagram und Anzeigen." beispiel={beispiel} akzent={akzent} hell />
