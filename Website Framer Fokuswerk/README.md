@@ -357,6 +357,28 @@ nichts sendet). Lösung:
 - PSI danach: Handy 72 (TBT 0 ms, LCP 6,1 s, SI 5,1 s), Desktop 91 (TBT 0 ms). Rest-LCP = Lantern
   rechnet Framers Modul-Preloads (~400 KB, ganz oben im Kopf) ein; beobachtet LCP 0,21 s.
 
+**Conversion-Durchgang 07.10. (Version `853cea641`) — Weg zur Anfrage:**
+Gemessen nach dem Maßstab „Scrollweg zwischen zwei Handlungsaufrufen" (Handy, 390 px):
+
+| Seite | Länge | größte Lücke vorher | nachher |
+|---|---|---|---|
+| /leistungen | 16,1 Bildschirme | **11,5** | 0 |
+| / | 18,9 | 7,1 (Leiste deckte ab) | 0 |
+| /ratgeber | 15,4 | 3,1 | 0 |
+| /arbeiten | 9,7 | 0,7 | 0 |
+
+- **Ursache:** Die `Handlungsleiste` lag nur auf der **Startseite**, nicht im Layout — alle 19
+  Unterseiten hatten keine. Jetzt im Layout `kydvDx4Fl` (Instanz `elGYhfXig`, Repliken je
+  Breakpoint), die drei Home-Instanzen gelöscht. Gilt damit für alle 20 Seiten.
+- **Zwei Ausnahmen im Baustein ergänzt** (`code/Handlungsleiste.tsx`): nie auf der Zielseite
+  selbst (`/kontakt` — Pfadvergleich mit `hauptZiel`) und nie, solange ein Formular im Bild ist.
+  Geprüft: erscheint auf /, /leistungen, /arbeiten, /agentur, /ratgeber nach dem Auftakt,
+  bleibt auf /kontakt durchgehend aus.
+- **Telefon ist kein Pflichtfeld mehr** (`Mi208cugj`), Etikett „TELEFON (OPTIONAL)".
+  Pflicht bleiben Name + E-Mail. Rückgängig: `formInputRequired="true"` + Etikett zurück.
+- Formular ist sonst sauber: 7 sichtbare Felder, die weiteren 11 sind Framers Spamfallen.
+- Googlebot sieht unverändert dasselbe wie ein Besucher (9.261 Zeichen, 2 Strukturdaten-Blöcke).
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 

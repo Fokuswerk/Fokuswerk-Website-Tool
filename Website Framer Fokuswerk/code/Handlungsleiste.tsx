@@ -12,6 +12,11 @@ import { useEffect, useRef, useState, type CSSProperties } from "react"
 // Die Leiste schließt diese Lücke: Sie fährt ein, sobald der Auftakt oben raus ist, und zieht
 // sich wieder zurück, sobald der Abschluss im Bild ist — dort stehen die eigentlichen Knöpfe,
 // und zwei Angebote übereinander wären Lärm. Auf Tablet und Desktop erscheint sie nie.
+//
+// Sie liegt im Layout und gilt damit für alle Seiten (vorher nur Startseite: /leistungen hatte
+// 11,5 Bildschirme ohne jede Möglichkeit, sich zu melden). Zwei Ausnahmen halten sie zurück:
+// auf der Zielseite selbst (/kontakt — dort ist man schon) und wenn ein Formular im Bild ist,
+// damit sie nie ein Feld verdeckt.
 
 interface HandlungsleisteProps {
     anrufText: string
@@ -75,10 +80,23 @@ export default function Handlungsleiste(props: HandlungsleisteProps) {
             beobachter.observe(ziel)
         }
 
+        // Auf der Zielseite selbst wäre der Knopf sinnlos ("Projekt besprechen" auf /kontakt)
+        const aufZielseite = () => {
+            const weg = (s: string) => (s || "").split(/[?#]/)[0].replace(/\/+$/, "") || "/"
+            return weg(window.location.pathname) === weg(hauptZiel)
+        }
+
+        // Kein Knopf über einem Formular, das gerade ausgefüllt wird
+        const formularImBild = () =>
+            Array.from(document.querySelectorAll("form")).some((f) => {
+                const r = f.getBoundingClientRect()
+                return r.height > 2 && r.top < window.innerHeight && r.bottom > 0
+            })
+
         const pruefen = () => {
             const schmal = window.innerWidth < BRUCH
             const weitGenug = window.scrollY > window.innerHeight * schwelle
-            setZeigen(schmal && weitGenug && !amAbschluss.current)
+            setZeigen(schmal && weitGenug && !amAbschluss.current && !aufZielseite() && !formularImBild())
         }
 
         pruefen()
@@ -105,7 +123,7 @@ export default function Handlungsleiste(props: HandlungsleisteProps) {
             mo?.disconnect()
             spaet.forEach((t) => window.clearTimeout(t))
         }
-    }, [statisch, schwelle, abschlussAnker])
+    }, [statisch, schwelle, abschlussAnker, hauptZiel])
 
     const knopf: CSSProperties = {
         fontFamily: SCHRIFT,
