@@ -59,6 +59,15 @@ const PFEIL_L =
 const PFEIL_R =
     "M23.3428 0.292744C22.9522 -0.097482 22.3191 -0.0976804 21.9287 0.292744C21.5383 0.683169 21.5385 1.31626 21.9287 1.70681L26.5859 6.36403H1C0.447716 6.36403 0 6.81175 0 7.36403C0 7.91632 0.447716 8.36403 1 8.36403H26.5859L21.9287 13.0213C21.5385 13.4118 21.5383 14.0449 21.9287 14.4353C22.3191 14.8257 22.9522 14.8256 23.3428 14.4353L29.707 8.07106C30.0976 7.68054 30.0976 7.04753 29.707 6.657L23.3428 0.292744Z"
 
+// Logos werden höchstens ~380 px breit gezeigt, die Originale sind 2500 × 1000 px (bis 67 KB je Logo).
+// Framer liefert per scale-down-to eine verkleinerte Fassung (~5 KB). Ohne srcSet, sonst wählt der
+// Browser mangels sizes-Angabe wieder das Original. Bewusst ohne loading="lazy" (3D-Ring, iOS lädt sonst nie).
+function klein(src?: string): string | undefined {
+    if (!src || !src.includes("framerusercontent.com/images/")) return src
+    const basis = src.split("?")[0]
+    return `${basis}?scale-down-to=512`
+}
+
 function Karte(props: {
     index: number
     winkel: number
@@ -120,12 +129,11 @@ function Karte(props: {
                 }}
             >
                 <img
-                    src={logo.bild?.src}
-                    srcSet={logo.bild?.srcSet}
+                    src={klein(logo.bild?.src)}
                     alt={logo.bild?.alt || logo.name || ""}
                     draggable={false}
                     decoding="async"
-                    fetchPriority={props.index < 6 ? "high" : "auto"}
+                    fetchPriority="low"
                     style={{ width: "100%", height: "100%", objectFit: "contain", userSelect: "none", pointerEvents: "none" }}
                 />
             </div>

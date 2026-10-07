@@ -297,6 +297,25 @@ Stand unter PSI-Drosselung (×14): 67–71, TBT 1,1–1,5 s (Hydration der Start
 - Hydration betrifft die unsichtbaren ssr-Varianten nicht (DOM im Browser vorher wie nachher
   ~1.270) — die Doppelungen kosteten nur Ladegröße.
 
+**Bestwerte-Runde 07.10. (Version `7fb9314fe`):**
+- *Editor auf der Vorschau aus:* `code/custom/editor-vorschau-head-start.html` (headStart). Nur auf
+  `*.framer.app` schreibt ein Inline-Skript eine Import-Map, die `https://framer.com/edit/init.mjs`
+  auf ein leeres Modul umleitet. Framer lädt den Editor sonst für JEDEN Besucher (Code in
+  `script_main`: `EditorBar: … import("https://framer.com/edit/init.mjs")`, Ausnahme nur Bot-UA).
+  Auf fokuswerk.de greift die Map nicht. Effekt bei Google: kritischer Pfad 6.850 → 510 ms.
+- *Bilder erst bei Annäherung:* Leistungsbühne lädt Hintergründe/Bilder erst ab 900 px Abstand
+  (Context `BilderAn`, Platzhalter grau). Beim Laden 2 statt 12 dieser Bilder.
+- *Kundenlogos:* `?scale-down-to=512` statt 2500×1000-Original (44 KB → 3,7 KB je Logo),
+  `fetchPriority="low"`, weiterhin ohne lazy (3D-Ring).
+- *Vorspann-Logo* ohne Preload, verkleinerte Fassung.
+- *Schrift:* Textstil „Menü“ lief seit der Bauwerk-Runde auf Google-Fonts-Inter (112 KB beim
+  Laden). Jetzt Framers Inter (`fontName="Inter" fontWeight="400"` per DSL, Selektor `Inter`).
+- *PageSpeed bei Google:* Handy 34 → 58–70 (streut ±10, Blockierzeit 60–620 ms ohne Änderung),
+  Desktop 94 / Barrierefreiheit 100 / Best Practices 100 / SEO 69 (nur noindex).
+- *Offen, Entscheidung Thees:* Google Analytics (`G-NGN7HYSSP8`) kommt aus Framers Site-Settings,
+  lädt ohne Einwilligung (rechtlich angreifbar) und kostet lokal gemessen ~6 Punkte (TBT −700 ms).
+  Per API nicht änderbar.
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 

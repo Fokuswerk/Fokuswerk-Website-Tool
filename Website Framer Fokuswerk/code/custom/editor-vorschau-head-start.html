@@ -1,0 +1,8 @@
+<script id="fokuswerk-ohne-editor">
+/* Nur auf der framer.app-Vorschau: Framers On-Page-Editor (framer.com/edit/init.mjs) lädt dort für
+   JEDEN Besucher ~4 MB (castleSDK, canvas-sandbox, framercanvas-React) und PageSpeed rechnet das als
+   kritischen Pfad ein (LCP 7–8 s, Blockierzeit +1–2 s). Eine Import-Map leitet den Aufruf auf ein
+   leeres Modul um. Auf der eigenen Domain (fokuswerk.de) greift das nicht – dort bleibt der
+   Bearbeiten-Knopf für eingeloggte Projektmitglieder erhalten. */
+if (/\.framer\.app$/i.test(location.hostname)) document.write('<script type="importmap">{"imports":{"https://framer.com/edit/init.mjs":"data:text/javascript,export%20const%20createEditorBar%3D()%3D%3E()%3D%3Enull%3B"}}<\/script>');
+</script>

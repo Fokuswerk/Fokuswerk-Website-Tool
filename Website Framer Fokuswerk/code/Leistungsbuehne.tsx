@@ -1,6 +1,6 @@
 import { addPropertyControls, ControlType, useIsStaticRenderer } from "framer"
 import { motion, useInView, useReducedMotion, useMotionValue } from "framer-motion"
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
 
 // Leistungsbühne — die drei Leistungen als Karten mit gezeichneten Szenen statt Stockfotos.
 // Performance (groß, dunkel): Anzeigen-Stapel, der sich selbst durchblättert, dazu Kennzahlen.
@@ -48,6 +48,15 @@ const BILDER = {
     werkzeug: U("photo-1608613304899-ea8098577e38"),
     wav: "https://framerusercontent.com/images/ArC0EnCXXAPEbwWsXDR5b7YS2eg.webp",
     glanzwerk: "https://framerusercontent.com/images/D5H2GC4EWAAp7sGmDPH80jVOXB4.webp",
+}
+
+// Bilder erst laden, wenn die Bühne näherkommt. CSS-Hintergründe lädt der Browser sonst sofort beim
+// Seitenaufbau – PageSpeed rechnet alles, was vor dem ersten Inhalt startet, in den LCP ein.
+const BilderAn = createContext(false)
+const LEER = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+const PLATZHALTER = "rgba(127,127,127,0.14)"
+function useHintergrund(url: string): string {
+    return useContext(BilderAn) ? `url(${url}) center/cover` : PLATZHALTER
 }
 
 const STANDARD: Record<"performance" | "websites" | "content", Leistung> = {
@@ -142,6 +151,7 @@ function Beispiel(props: { hell?: boolean }) {
 // ---------- Szene 1: Anzeigen-Stapel ----------
 
 function MetaKarte(props: { akzent: string }) {
+    const werkstatt = useHintergrund(BILDER.werkstatt)
     return (
         <div style={{ width: "100%", height: "100%", background: HELL, color: TINTE, display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px" }}>
@@ -152,7 +162,7 @@ function MetaKarte(props: { akzent: string }) {
                 </div>
             </div>
             <div style={{ fontSize: 11.5, lineHeight: 1.4, padding: "0 12px 9px", letterSpacing: "-0.01em" }}>Inspektion vor dem Urlaub? Termin in zwei Minuten anfragen — auch am Samstag.</div>
-            <div style={{ flex: 1, background: `url(${BILDER.werkstatt}) center/cover` }} />
+            <div style={{ flex: 1, background: werkstatt }} />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 12px", background: "rgb(242,241,238)" }}>
                 <div style={{ display: "grid", lineHeight: 1.2, minWidth: 0 }}>
                     <span style={{ fontSize: 9, color: "rgba(14,15,18,0.5)", letterSpacing: "0.04em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>WERKSTATT-HARMS.DE</span>
@@ -198,8 +208,9 @@ function GoogleKarte() {
 }
 
 function StoryKarte(props: { akzent: string }) {
+    const tischler = useHintergrund(BILDER.tischler)
     return (
-        <div style={{ position: "relative", width: "100%", height: "100%", background: `url(${BILDER.tischler}) center/cover`, color: HELL }}>
+        <div style={{ position: "relative", width: "100%", height: "100%", background: tischler, color: HELL }}>
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.75) 100%)" }} />
             <div style={{ position: "absolute", left: 10, right: 10, top: 8, display: "flex", gap: 3 }}>
                 {[1, 0.35, 0.35].map((o, k) => (
@@ -308,10 +319,11 @@ export function Anzeigenstapel(props: { akzent: string; aktiv: boolean; los: boo
 function Rolle(props: { bild: string; alt: string; hoehe: number; dauer: number; laeuft: boolean; statisch: boolean }) {
     const { bild, alt, hoehe, dauer, laeuft, statisch } = props
     const reduziert = useReducedMotion()
+    const bilderAn = useContext(BilderAn)
     return (
         <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
             <motion.img
-                src={bild}
+                src={bilderAn || statisch ? bild : LEER}
                 alt={alt}
                 draggable={false}
                 loading="lazy"
@@ -422,6 +434,7 @@ export function Filmstreifen(props: { aktiv: boolean; schmal: boolean; statisch:
     ]
     const w = schmal ? 118 : 150
     const h = Math.round((w * 16) / 9)
+    const bilderAn = useContext(BilderAn)
     const gap = 10
     const reihe = [...clips, ...clips]
     const strecke = clips.length * (w + gap)
@@ -444,7 +457,7 @@ export function Filmstreifen(props: { aktiv: boolean; schmal: boolean; statisch:
         <div style={{ position: "absolute", inset: 0, overflow: "hidden", display: "flex", alignItems: "center" }}>
             <motion.div style={{ display: "flex", gap, x: lauf, paddingLeft: 16 }}>
                 {reihe.map((c, i) => (
-                    <div key={i} style={{ position: "relative", width: w, height: h, borderRadius: 12, overflow: "hidden", flexShrink: 0, background: `url(${c.b}) center/cover`, boxShadow: "0 20px 30px -20px rgba(0,0,0,0.6)" }}>
+                    <div key={i} style={{ position: "relative", width: w, height: h, borderRadius: 12, overflow: "hidden", flexShrink: 0, background: bilderAn ? `url(${c.b}) center/cover` : PLATZHALTER, boxShadow: "0 20px 30px -20px rgba(0,0,0,0.6)" }}>
                         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.6) 100%)" }} />
                         <span style={{ position: "absolute", left: 8, top: 8, fontSize: 9.5, fontWeight: 600, color: HELL, letterSpacing: "0.06em", textTransform: "uppercase", opacity: 0.9 }}>{c.n}</span>
                         <div style={{ position: "absolute", left: 8, right: 8, bottom: 9, display: "flex", alignItems: "center", gap: 6 }}>
@@ -593,6 +606,16 @@ export default function Leistungsbuehne(props: LeistungsbuehneProps) {
     const { akzent = "rgb(255, 90, 31)", beispielHinweis = true, style } = props
     const statisch = useIsStaticRenderer()
     const [ref, breite] = useBreite<HTMLDivElement>()
+    const [bilderAn, setBilderAn] = useState(false)
+    useEffect(() => {
+        const el = ref.current
+        if (!el || typeof IntersectionObserver === "undefined") return setBilderAn(true)
+        const io = new IntersectionObserver((e) => {
+            if (e.some((x) => x.isIntersecting)) { setBilderAn(true); io.disconnect() }
+        }, { rootMargin: "900px 0px" })
+        io.observe(el)
+        return () => io.disconnect()
+    }, [])
     const perf = mitStandard(props.werbung, STANDARD.performance)
     const web = mitStandard(props.website, STANDARD.websites)
     const con = mitStandard(props.fotos, STANDARD.content)
@@ -602,6 +625,7 @@ export default function Leistungsbuehne(props: LeistungsbuehneProps) {
     const schmal = breite < 700
 
     return (
+        <BilderAn.Provider value={bilderAn || statisch}>
         <div
             ref={ref}
             style={{
@@ -656,6 +680,7 @@ export default function Leistungsbuehne(props: LeistungsbuehneProps) {
                 szene={(aktiv) => <Filmstreifen aktiv={aktiv} schmal={!gross} statisch={statisch} akzent={akzent} />}
             />
         </div>
+        </BilderAn.Provider>
     )
 }
 
