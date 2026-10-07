@@ -1,0 +1,38 @@
+<link rel="preload" as="image" href="https://framerusercontent.com/images/42gH3mHn5IlpD08SdYTVCXNlUvA.png">
+<style id="fokuswerk-vorspann">
+/* Vorspann als reines HTML/CSS (Body-Start). Läuft ab dem ersten Bild und unabhängig vom
+   JavaScript: früher entstand er erst nach dem Hochfahren von Framer – auf langsamen Handys und in
+   PageSpeed stand die Seite dadurch Sekunden lang grau (Speed Index 14 s). Ablauf wie zuvor:
+   Logo zieht scharf, Klammern rasten ein und blinken, Ladelinie läuft, Fläche fährt nach oben. */
+#fw-vorspann { --k: 1; position: fixed; inset: 0; z-index: 2147483000; background: rgb(53,53,53); display: flex; align-items: center; justify-content: center; will-change: transform;
+  animation: fwVsWeg calc(var(--k) * .75s) cubic-bezier(.76,0,.24,1) calc(var(--k) * 1.32s) forwards; }
+#fw-vorspann.fw-kurz { --k: .45; }
+#fw-vorspann .fw-raster { position: absolute; inset: 0; opacity: .05; background-image: radial-gradient(circle, rgba(245,243,239,.9) 1px, transparent 1.6px); background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 55% 55% at 50% 50%, #000 0%, transparent 75%); mask-image: radial-gradient(ellipse 55% 55% at 50% 50%, #000 0%, transparent 75%); }
+#fw-vorspann .fw-mitte { position: relative; display: flex; flex-direction: column; align-items: center; gap: 34px; }
+#fw-vorspann .fw-marke { position: relative; width: min(46vw, 240px); aspect-ratio: 2465 / 960; }
+#fw-vorspann .fw-logo { position: absolute; inset: 0; background: rgb(245,243,239); will-change: transform, opacity;
+  -webkit-mask: url(https://framerusercontent.com/images/42gH3mHn5IlpD08SdYTVCXNlUvA.png) center / contain no-repeat; mask: url(https://framerusercontent.com/images/42gH3mHn5IlpD08SdYTVCXNlUvA.png) center / contain no-repeat;
+  opacity: 0; transform: scale(1.06);
+  animation: fwVsLogoEin calc(var(--k) * .7s) cubic-bezier(.16,1,.3,1) forwards, fwVsLogoAus calc(var(--k) * .4s) cubic-bezier(.4,0,.2,1) calc(var(--k) * 1.2s) forwards; }
+#fw-vorspann .fw-klammern { position: absolute; left: -14%; right: -14%; top: -24%; bottom: -24%; opacity: 0; transform: scale(1.6); will-change: transform, opacity;
+  animation: fwVsKlEin calc(var(--k) * .55s) cubic-bezier(.34,1.56,.64,1) calc(var(--k) * .3s) forwards, fwVsKlBlink calc(var(--k) * .36s) linear calc(var(--k) * .85s), fwVsKlAus calc(var(--k) * .45s) cubic-bezier(.4,0,.2,1) calc(var(--k) * 1.2s) forwards; }
+#fw-vorspann .fw-klammern i { position: absolute; width: 18px; height: 18px; border: 0 solid rgb(255,90,31); }
+#fw-vorspann .fw-klammern i:nth-child(1) { left: 0; top: 0; border-left-width: 2px; border-top-width: 2px; }
+#fw-vorspann .fw-klammern i:nth-child(2) { right: 0; top: 0; border-right-width: 2px; border-top-width: 2px; }
+#fw-vorspann .fw-klammern i:nth-child(3) { left: 0; bottom: 0; border-left-width: 2px; border-bottom-width: 2px; }
+#fw-vorspann .fw-klammern i:nth-child(4) { right: 0; bottom: 0; border-right-width: 2px; border-bottom-width: 2px; }
+#fw-vorspann .fw-stand { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+#fw-vorspann .fw-linie { width: 160px; height: 1px; background: rgba(245,243,239,.14); overflow: hidden; }
+#fw-vorspann .fw-linie b { display: block; height: 100%; background: rgb(255,90,31); transform-origin: 0 50%; transform: scaleX(0); will-change: transform;
+  animation: fwVsLinie calc(var(--k) * 1.1s) cubic-bezier(.3,.1,.3,1) calc(var(--k) * .05s) forwards; }
+#fw-vorspann .fw-zahl { font: 500 10.5px/1 Inter, "Inter Placeholder", system-ui, sans-serif; letter-spacing: .2em; color: rgba(245,243,239,.45); font-variant-numeric: tabular-nums; }
+@keyframes fwVsWeg { to { transform: translate3d(0,-100%,0); visibility: hidden; } }
+@keyframes fwVsLogoEin { to { opacity: 1; transform: scale(1); } }
+@keyframes fwVsLogoAus { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.94); } }
+@keyframes fwVsKlEin { to { opacity: 1; transform: scale(1); } }
+@keyframes fwVsKlBlink { 0%,50%,100% { opacity: 1; } 25%,75% { opacity: .25; } }
+@keyframes fwVsKlAus { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(1.5); } }
+@keyframes fwVsLinie { to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { #fw-vorspann { display: none; } }
+</style>

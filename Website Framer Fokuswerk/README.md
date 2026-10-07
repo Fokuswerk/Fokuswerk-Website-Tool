@@ -256,6 +256,23 @@ das Kundenrad bewusst ohne (3D-Transform, iOS lädt sonst nie).
   dessen Skripte (castleSDK, render-*.mjs, ~4 MB) in die Blockierzeit ein.
 - *SEO 69:* nur `noindex` (Meta + `x-robots-tag`), gewollt bis zum Livegang.
 
+**Speed-Runde 07.10. vormittags (Version `d63fdf45c`):**
+PageSpeed zeigte 32–35 (LCP 7 s, Speed Index 14 s). Ursache: Der Vorspann war eine
+Code-Komponente und startete erst nach dem Hochfahren von Framer. Mit der grauen Vorfläche
+stand die Seite auf langsamen Geräten so lange grau, wie das JavaScript brauchte.
+- **Vorspann jetzt reines HTML/CSS** im Custom Code (`code/custom/vorspann-head.html` → headEnd,
+  `code/custom/vorspann-body.html` → bodyStart). Läuft ab dem ersten Bild auf fester Zeitachse
+  (fertig nach ~2,1 s, kurze Fassung ×0,45 ab dem zweiten Aufruf), Prozentzahl per Inline-Skript
+  (Safari animiert CSS-Zahlen nur sprunghaft), Signal `fokuswerk:vorspann-ende` nach 1,52 s.
+  Die Code-Komponente `Vorspann` ist aus dem Layout entfernt (`DEL uRrlXRcSC`), die Datei bleibt
+  als Sicherung.
+- **Auftakt fertig im HTML:** `useEinblenden` startet bei 1. Läuft der Vorspann beim Hochfahren
+  noch, wird unter ihm auf 0 gesetzt und eingeblendet; ist er schon weg, bleibt der Text stehen.
+- Ergebniszahlen und Fokus-Klammern kommen früher (Zählen 1,0 s statt 1,6 s, Klammern 0,7 s).
+- Lighthouse mobil mit CPU-Drosselung ×14 (≈ PageSpeed-Rechner), *mit* Editor: 67–71,
+  LCP 1,3–1,5 s, TBT 1,1–1,5 s. Rest-Blockierzeit = Hochfahren der Seite (eine Aufgabe ~1,1 s:
+  React/Motion), Speed Index begrenzt durch Endlos-Animationen im Auftakt (Scroll-Hinweis).
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 

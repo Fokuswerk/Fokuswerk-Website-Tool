@@ -1,0 +1,28 @@
+<div id="fw-vorspann" data-vorspann="an" aria-hidden="true"><div class="fw-raster"></div><div class="fw-mitte"><div class="fw-marke"><div class="fw-logo"></div><div class="fw-klammern"><i></i><i></i><i></i><i></i></div></div><div class="fw-stand"><div class="fw-linie"><b></b></div><span class="fw-zahl">FOKUS 0 %</span></div></div></div>
+<script>
+/* Zeitsteuerung des Vorspanns: zweiter Aufruf in der Sitzung = kurze Fassung, Scrollen gesperrt
+   solange er steht, Signal "fokuswerk:vorspann-ende" (darauf warten die Einblendungen im Auftakt). */
+(function () {
+  var el = document.getElementById("fw-vorspann"), h = document.documentElement;
+  if (!el) return;
+  var still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches, k = 1;
+  try { if (sessionStorage.getItem("fokuswerk-vorspann") === "1") k = 0.45; sessionStorage.setItem("fokuswerk-vorspann", "1"); } catch (e) {}
+  if (k < 1) el.classList.add("fw-kurz");
+  var signal = still ? 0 : 1520 * k, ende = still ? 0 : 2100 * k;
+  h.style.overflow = "hidden";
+  window.__vorspannEndeZeit = performance.now() + signal;
+  setTimeout(function () {
+    window.__vorspannEnde = true;
+    h.style.overflow = "";
+    window.dispatchEvent(new Event("fokuswerk:vorspann-ende"));
+  }, signal);
+  // Prozentzahl im Gleichlauf mit der Ladelinie (Safari animiert CSS-Zahlen nur sprunghaft)
+  var zahl = el.querySelector(".fw-zahl"), t0 = performance.now() + 50 * k, dauer = 1100 * k;
+  (function schritt() {
+    var x = Math.max(0, Math.min(1, (performance.now() - t0) / dauer)), v = 1 - Math.pow(1 - x, 2.2);
+    zahl.textContent = "FOKUS " + Math.round(v * 100) + " %";
+    if (x < 1) setTimeout(schritt, 50);
+  })();
+  setTimeout(function () { el.remove(); }, ende);
+})();
+</script>

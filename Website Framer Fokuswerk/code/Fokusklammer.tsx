@@ -84,7 +84,7 @@ function findeWort(wurzel: HTMLElement, wort: string, ausser: HTMLElement | null
  * @framerSupportedLayoutHeight any
  */
 export default function Fokusklammer(props: FokusklammerProps) {
-    const { wort = "System.", farbe = "rgb(255, 90, 31)", verzoegerung = 1.5, style } = props
+    const { wort = "System.", farbe = "rgb(255, 90, 31)", verzoegerung = 0.7, style } = props
     const statisch = useIsStaticRenderer()
     const reduziert = useReducedMotion()
     const ref = useRef<HTMLDivElement>(null)
@@ -221,5 +221,5 @@ export default function Fokusklammer(props: FokusklammerProps) {
 addPropertyControls(Fokusklammer, {
     wort: { type: ControlType.String, title: "Wort", defaultValue: "System." },
     farbe: { type: ControlType.Color, title: "Farbe", defaultValue: "rgb(255, 90, 31)" },
-    verzoegerung: { type: ControlType.Number, title: "Verzögerung", defaultValue: 1.5, min: 0, max: 5, step: 0.1, unit: "s" },
+    verzoegerung: { type: ControlType.Number, title: "Verzögerung", defaultValue: 0.7, min: 0, max: 5, step: 0.1, unit: "s" },
 })

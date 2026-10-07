@@ -67,7 +67,7 @@ function Zahl(props: { b: Beleg; verzug: number; statisch: boolean }) {
         let raf = 0
         let start = 0
         const lauf = (t: number) => {
-            const p = Math.max(0, Math.min(1, (t - start) / 1600))
+            const p = Math.max(0, Math.min(1, (t - start) / 1000))
             setW(Math.round(b.wert * (1 - Math.pow(1 - p, 4))))
             if (p < 1) raf = requestAnimationFrame(lauf)
         }
@@ -155,7 +155,7 @@ export default function Auftaktleiste(props: AuftaktleisteProps) {
                         key={i}
                         initial={statisch ? false : { opacity: 0, y: 14, filter: "blur(8px)" }}
                         animate={los ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
-                        transition={{ duration: 0.9, delay: 0.9 + i * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                        transition={{ duration: 0.8, delay: 0.35 + i * 0.1, ease: [0.16, 1, 0.3, 1] }}
                         style={{
                             flex: schmal ? 1 : "0 0 auto",
                             minWidth: 0,
@@ -168,7 +168,7 @@ export default function Auftaktleiste(props: AuftaktleisteProps) {
                         }}
                     >
                         <span style={{ fontSize: schmal ? 22 : 30, fontWeight: 500, letterSpacing: "-0.05em", lineHeight: 1 }}>
-                            <Zahl b={b} verzug={1 + i * 0.12} statisch={statisch} />
+                            <Zahl b={b} verzug={0.4 + i * 0.1} statisch={statisch} />
                         </span>
                         <span style={{ fontSize: schmal ? 11 : 12.5, lineHeight: 1.3, color: "rgba(245,243,239,0.72)", letterSpacing: "-0.01em" }}>{b.text}</span>
                         <span style={{ fontSize: schmal ? 9.5 : 10.5, fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(245,243,239,0.42)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.kunde}</span>

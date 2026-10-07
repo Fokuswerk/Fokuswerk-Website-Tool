@@ -1,5 +1,5 @@
 import type { ComponentType } from "react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { animate, useMotionValue, useScroll, useTransform, useSpring, useReducedMotion, type MotionValue } from "framer-motion"
 
 // Auftaktbewegung — Einblenden und scrollgebundene Tiefe im Auftakt (Overrides).
@@ -71,11 +71,21 @@ function nachVorspann(fn: () => void): () => void {
     }
 }
 
-// Einblenden beim Laden: 0 → 1 nach Verzögerung (erst wenn die Ladeanimation weg ist)
+// Einblenden beim Laden: 0 → 1 nach Verzögerung (erst wenn die Ladeanimation weg ist).
+// Server und erstes Rendern starten bei 1 (fertiger Zustand): Ist das Gerät langsam und der
+// Vorspann (reines HTML/CSS) schon weg, bevor Framer hochgefahren ist, steht der Text einfach da –
+// kein unscharfer Zwischenstand, kein später Einblender. Läuft der Vorspann noch, wird unter ihm
+// auf 0 gesetzt und danach eingeblendet. Bei Seitenwechseln innerhalb der Seite läuft es wie gehabt.
+let hydriert = false
 function useEinblenden(verzoegerung: number): MotionValue<number> {
-    const e = useMotionValue(0)
+    const beiHydration = useRef(!hydriert)
+    const e = useMotionValue(beiHydration.current ? 1 : 0)
     useEffect(() => {
+        hydriert = true
         let a: { stop: () => void } | null = null
+        const laeuft = !!document.querySelector('[data-vorspann="an"]') && !window.__vorspannEnde
+        if (beiHydration.current && !laeuft) return // Vorspann schon vorbei: fertig stehen lassen
+        e.set(0)
         const ab = nachVorspann(() => {
             a = animate(e, 1, { duration: 1.5, delay: verzoegerung, ease: [0.16, 1, 0.3, 1] })
         })
@@ -109,8 +119,7 @@ function zeilenOverride(z: Zeile) {
                 // Auf breiten Flächen übernimmt die Unschärfe das Einblenden und die Deckkraft
                 // bleibt 1, damit der Text sofort als gezeichnet zählt (LCP). Auf dem Handy gibt
                 // es keine Unschärfe, dort blendet die Deckkraft ein — aber ab 8 %, nicht ab 0:
-                // Text mit Deckkraft 0 gilt als nicht gezeichnet, dann zählte Google den Untertitel
-                // erst nach dem Vorspann (LCP 6–7 s statt 1,2 s). Unter dem Vorspann sieht man es nicht.
+                // Text mit Deckkraft 0 gilt als nicht gezeichnet (LCP). Unter dem Vorspann sieht man es nicht.
                 return schmal ? (0.08 + 0.92 * ev) * (1 - t) : 1 - t
             })
             const filter = useTransform([p, e] as any, ([pv, ev]: number[]) => {
