@@ -1,5 +1,6 @@
 <style id="fokuswerk-einwilligung">
-/* Einwilligungs-Hinweis für Google Analytics. Analytics lädt NUR nach „Zustimmen“. Der Hinweis erscheint
+/* Einwilligungs-Hinweis für Google Analytics. Analytics lädt NUR nach „Zustimmen“ (Framers eigener
+   Tag wird ohne Einwilligung von der Schleuse im Kopf abgefangen, siehe schleuse-*.html). Der Hinweis erscheint
    erst bei der ersten Interaktion (Scrollen, Tippen, Maus) – er belastet den Seitenaufbau nicht.
    „Ablehnen“ und „Zustimmen“ sind bewusst gleichwertig gestaltet. */
 #fw-ew { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 2147482500; max-width: 400px; margin-left: auto; box-sizing: border-box;
@@ -24,12 +25,17 @@
   function analytics() {
     if (window.__fwGa) return; window.__fwGa = 1;
     window["ga-disable-" + ID] = false;
-    // Solange Framer Analytics noch selbst einbindet (Site Settings), nicht doppelt laden.
+    // Framers Tag ist schon aktiv (Einwilligung lag beim Laden vor) → nichts tun.
     if (document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) return;
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = function () { window.dataLayer.push(arguments); };
-    window.gtag("js", new Date()); window.gtag("config", ID);
-    var s = document.createElement("script"); s.async = true; s.src = "https://www.googletagmanager.com/gtag/js?id=" + ID; document.head.appendChild(s);
+    // Framer hat gtag('js')/gtag('config') bereits in die dataLayer gelegt → nur das Skript nachladen,
+    // sonst doppelte Seitenaufrufe. Fehlt Framers Einbindung (ID entfernt), selbst konfigurieren.
+    var framerKonfig = window.dataLayer && window.dataLayer.some(function (e) { return e && e[0] === "config"; });
+    if (!framerKonfig) {
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+      window.gtag("js", new Date()); window.gtag("config", ID);
+    }
+    var s = document.createElement("script"); s.async = true; s.src = window.__fwGtagSrc || ("https://www.googletagmanager.com/gtag/js?id=" + ID); document.head.appendChild(s);
   }
   function cookiesLoeschen() {
     window["ga-disable-" + ID] = true;

@@ -1,0 +1,20 @@
+<noscript id="fw-schleuse-zu"></noscript>
+<script id="fokuswerk-schleuse-zu">
+/* Schleuse zu: Inhalt der Schleuse (reiner Text) neu einlesen, alles außer Framers gtag-Tag zurück in
+   den Kopf (z. B. Framers Besucherstatistik events.framer.com). */
+(function () {
+  var n = document.getElementById("fw-schleuse"); if (!n) return;
+  var t = document.createElement("template"); t.innerHTML = n.textContent || "";
+  Array.prototype.slice.call(t.content.childNodes).forEach(function (k) {
+    if (k.nodeName === "SCRIPT") {
+      var src = k.getAttribute("src") || "";
+      if (/googletagmanager\.com\/gtag\/js/.test(src)) { window.__fwGtagSrc = src; return; }
+      var s = document.createElement("script");
+      for (var i = 0; i < k.attributes.length; i++) s.setAttribute(k.attributes[i].name, k.attributes[i].value);
+      if (k.text) s.text = k.text;
+      document.head.appendChild(s);
+    } else if (k.nodeType === 1 && !/^(HEAD|BODY|HTML)$/.test(k.nodeName)) document.head.appendChild(k);
+  });
+  n.parentNode.removeChild(n);
+})();
+</script>

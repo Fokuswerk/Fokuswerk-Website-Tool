@@ -338,6 +338,25 @@ deren Aufschub aber nichts (72–76 mit wie ohne). Messbar bleiben nur noch: Ana
 Site Settings entfernen (+4–6 Handy) und der Vorspann (~7 Handy, bewusst behalten). Weitere
 Code-Optimierung liegt im Rauschen von PSI (±10).
 
+**Analytics-Schleuse (07.10. mittags, Version `509807857`) — ID bleibt in Framer:** Thees will die
+GA-ID in den Site Settings behalten. Framer setzt `<script async src="…gtag/js?id=G-NGN7HYSSP8">`
+direkt nach dem headEnd-Custom-Code (davor schon ein Inline-Stub mit `gtag('config')`, der allein
+nichts sendet). Lösung:
+- `code/custom/schleuse-head-ende.html` = LETZTES im headEnd: ohne Einwilligung
+  `document.write('<noscript id="fw-schleuse">')` → bei aktivem JS ist alles bis zum nächsten
+  `</noscript>` reiner Text (gtag wird weder geladen noch ausgeführt).
+- `code/custom/schleuse-body-start.html` = ERSTES im bodyStart: `<noscript id="fw-schleuse-zu"></noscript>`
+  schließt (ein einzelnes `</template>`/`</noscript>` entfernt Framer beim Ausliefern — samt
+  Kommentaren! Erster Versuch mit `<template>` hat die Seite ~3 Min. geleert, sofort zurückgerollt).
+  Danach liest ein Skript den Text neu ein und hängt alles außer gtag wieder an (u. a.
+  `events.framer.com`).
+- Einwilligungs-Code lädt nach „Zustimmen“ nur das gtag-Skript nach (Framers dataLayer-Config wird
+  verarbeitet, genau ein page_view). Mit gespeicherter Zustimmung öffnet die Schleuse gar nicht.
+- Geprüft: frische Sitzungen auf /, /kontakt, /datenschutz (Handy + Desktop): 0 Anfragen an Google,
+  keine _ga-Cookies; iOS-Safari rendert normal. Sicherung: `code/custom/_sicherung-vor-schleuse.json`.
+- PSI danach: Handy 72 (TBT 0 ms, LCP 6,1 s, SI 5,1 s), Desktop 91 (TBT 0 ms). Rest-LCP = Lantern
+  rechnet Framers Modul-Preloads (~400 KB, ganz oben im Kopf) ein; beobachtet LCP 0,21 s.
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 

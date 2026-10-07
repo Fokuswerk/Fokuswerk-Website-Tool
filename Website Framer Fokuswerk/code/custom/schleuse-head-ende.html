@@ -1,0 +1,9 @@
+<script id="fokuswerk-schleuse-auf">
+/* Analytics-Schleuse (muss das LETZTE im headEnd sein). Direkt danach setzt Framer seinen gtag-Tag
+   (Site Settings). Ohne Einwilligung öffnet dieses Skript ein <noscript>: bei aktivem JavaScript ist
+   dessen Inhalt reiner Text – Framers Tag wird weder geladen noch ausgeführt. Geschlossen wird es
+   durch das leere noscript-Paar „fw-schleuse-zu“ am Anfang von bodyStart (ein einzelnes schließendes
+   Tag würde Framer beim Ausliefern entfernen). Danach stellt bodyStart alles außer gtag wieder her. */
+(function () { var ja = false; try { ja = localStorage.getItem("fw-einwilligung") === "ja"; } catch (e) {}
+  if (!ja) document.write('<noscript id="fw-schleuse">'); })();
+</script>
