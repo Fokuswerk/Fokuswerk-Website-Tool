@@ -10,7 +10,7 @@ die „messbar" verkauft, ist das die teuerste Angriffsfläche.
 |---|---|---|---|---|
 | **WAV Westerstede** | Website, Google Ads, Meta Ads (Mitarbeiter, neu auch Neukunden) | **belegt** | kommt | **Leitfallstudie** |
 | **Patio** | Social, Event-Ads, 2× Personalgewinnung | **belegt** | 2 Videos + Foto | Fallstudie |
-| **Wandscher** | Website + Content, Filme für Meta-Anzeigen | **belegt** | ja, inkl. Infovideo | **Fallstudie mit Wirkungsbeleg** |
+| **Wandscher** | Website + Content, Filme für Meta-Anzeigen | **belegt** | ja, inkl. Infovideo | **Fallstudie live** |
 | **Zwillis Padel** | Social-Content | CMS geschätzt · Insights belegt | ja, inkl. Reel | Fallstudie, sobald Playtomic-Zahl da |
 | **Eule Oldenburg** | Fotos/Videos | „über 500.000 Views", noch auszuzählen | 2 Videos | Bildreferenz + Zahl nach Zählung |
 | **Hotel Alte Werft** | Zimmerfotos (Auftragsarbeit) | keine | ja | Bildreferenz |
@@ -409,6 +409,50 @@ Drei Breakpoints (1200/810/390), Seitentitel und Beschreibung aus dem CMS.
 **Erste Fallstudie live:** https://frank-site-485713.framer.app/arbeiten/wav-westerstede
 Geprueft: genau eine H1, Titel aus dem CMS, keine Tippfehler, 7,9 Bildschirme, 3 Handlungsaufrufe.
 
+**Live (Stand 12.10.2026):** drei Fallstudien, alle aus derselben Sammlung und Detailseite.
+
+| Slug | Kunde | Leitzahl |
+|---|---|---|
+| `wav-westerstede` | WAV Westerstede | 5,30 € je Kontaktaufnahme |
+| `patio-oldenburg` | Patio | 69 Bewerbungen |
+| `wandscher-oldenburg` | Jan Wandscher | 9:15 Min. Lesezeit |
+
+### Wandscher-Fallstudie gebaut (12.10.2026)
+
+https://frank-site-485713.framer.app/arbeiten/wandscher-oldenburg
+
+Aufbau: Kopf mit Marke und Kurzbeschreibung, Kennzahlenband, Ausgangslage/Vorgehen/Ergebnis,
+zwei Einblicke, Abschluss-Baustein. Geprüft am Handy (375 px): eine H1 („Jan Wandscher"),
+SEO-Titel und -Beschreibung aus dem CMS, alle Zahlen mit Quelle im Band.
+
+**Die drei Kennzahlen**
+| Wert | Text | Quelle |
+|---|---|---|
+| 9:15 | Minuten bleibt ein Besucher im Schnitt | Website-Analytics, 12.09.–12.10.2026 |
+| 17.100 | Aufrufe für den Film zur Baustelle, ohne Werbebudget | Angabe des Betriebs |
+| 4,2 | Seiten öffnet ein Besucher dabei | Website-Analytics, 12.09.–12.10.2026 |
+
+**Erzählbogen:** Der Satz von der Informationsveranstaltung ist der Einstieg, die Anfahrtsseite
+und der Film sind die Antwort, die Lesezeit ist der Beleg. Die Oberbürgermeister-Geschichte
+kommt nicht vor — sie ist Hörensagen und bleibt intern.
+
+**Bilder:** Titelbild ist ein Querformat-Ausschnitt (1600×1000) aus dem Infovideo, das Gebäude
+mit dem Schild. Dazu zwei Handy-Aufnahmen der Kundenseite: Startseite und `/anfahrt`.
+
+**Im Text korrigierte Fakten** — beim Gegenlesen an steinmetz-wandscher.de fiel auf, dass zwei
+Angaben aus dem Gedächtnisstand veraltet waren:
+- **Zwölf Leistungen in vier Gruppen**, nicht elf (Grabmale, Urnen-, Kinder-, Tiergrabsteine,
+  Grabplatten · Bildhauerarbeiten, Grabschmuck, QR-Code im Stein · Grabpflege, Reparatur,
+  Vorsorge · Heim & Garten).
+- **Bewertungen: 57 bei Google, 12 bei ProvenExpert (Gesamtnote 4,88), 56 Briefe und Mails**,
+  zusammen 113 Stimmen auf `/bewertungen`. Die alte Notiz „ProvenExpert 5,0/31" stimmt nicht
+  mehr — eine glatte 5,0 hätte fast auf der Agenturseite gestanden.
+
+**Framer-Eigenheit (neu gelernt):** Nach jedem Veröffentlichen liefert der **erste** Abruf einer
+CMS-Detailseite nur die 47-KB-Hülle ohne `<title>` und ohne H1; erst der zweite Abruf bringt die
+vorgerenderte Seite (~285 KB) mit den CMS-Metadaten. SEO-Prüfungen deshalb **nie** am ersten
+Abruf nach dem Publish machen — sonst meldet man einen Fehler, den es nicht gibt.
+
 ### Gelernte Framer-Eigenheiten
 - Variablentyp im DSL heisst `richtext`, nicht `formattedText` (so meldet es die API zurueck).
 - Listenfelder werden per Kleinschreibung des Feldnamens gesetzt: `$control__<array>.0.wert`.
@@ -481,7 +525,8 @@ auf einem FrameNode ignoriert `altText` stillschweigend.
 - [ ] Uni: schriftliche Freigabe (von Reeken), Umfang/Zeitraum der Workshops
 - [ ] Aschenbeck: Umfang, seit wann, Anzahl Objekte
 - [ ] Thieme: Leads/Budget/Zeitraum aus dem Meta-Konto
-- [ ] Wandscher: die 17.100 Aufrufe per Screenshot aus dem Konto bestätigen
+- [ ] Wandscher: die 17.100 Aufrufe per Screenshot aus dem Konto bestätigen (stehen schon live)
+- [ ] Wandscher-Fallstudie: Absprungrate 51 % — steht als offener Punkt auf der Seite, also auch angehen
 - [ ] Between the Sheets: Umfang des Auftrags, Freigabe — ist jetzt als Bildreferenz möglich
 - [ ] `sunset-sounds.mp4` einem Kunden zuordnen (Atlantic Grand Hotel Bremen?)
 - [ ] Drei schwere Videos auf 720 Breite nachrechnen, sobald der Einbauort feststeht
