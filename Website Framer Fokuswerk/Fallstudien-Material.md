@@ -126,8 +126,27 @@ ohne sie.
 
 **Entscheidung Thees:** nicht weiter nachrecherchieren.
 
-Offen bleibt nur die **Reichweite dieses Films** einzeln aus dem Meta-Konto — die 594.552
-Konten sind die Summe über neun Anzeigen, nicht dieses eine Films.
+**Reichweite des Films: 17.100 organische Aufrufe** (Angabe Thees, 12.10.2026) — ohne
+Werbebudget. Damit ist die Zahl von den 594.552 Meta-Konten der neun Anzeigen getrennt; die
+bleiben eine andere Geschichte.
+
+**Einordnung — die Zahl ist besser, als sie klingt.** Absolut ist 17.100 keine große Zahl, und
+als Reichweitenbeweis wäre sie schwach. Für diesen Fall ist sie es nicht:
+- **Organisch, ohne einen Euro Budget.** Alles, was danach kam, hat der Film selbst geholt.
+- **Der Markt eines Steinmetz ist winzig.** Grabmale kauft man einmal im Leben, im Umkreis von
+  wenigen Kilometern. 17.100 Aufrufe auf ein Thema, das niemand freiwillig sucht, ist für
+  diesen Zuschnitt viel — nicht vergleichbar mit Gastronomie oder Padel.
+- **Die Zahl ist nicht der Punkt, die Zielgenauigkeit ist es.** Unter den 17.100 war der
+  Oberbürgermeister. Das ist die Pointe der Fallstudie: nicht *wie viele*, sondern *wer*.
+
+**Zulässiger Satz für die Seite:** „Ein Film über eine Baustelle — 17.100 Mal angesehen, ohne
+einen Euro Werbebudget." Vorher aus dem Konto bestätigen (Screenshot), damit die Zahl dieselbe
+Herkunft hat wie alle anderen auf der Seite.
+
+**Querbezug:** Instagram ist in den Framer-Analytics eine der Quellen für die Website-Besuche
+(311 Besucher, 9 Min. 15 Sek. Sitzungsdauer im Zeitraum 12.09.–12.10.2026). Ein Zusammenhang
+mit dem Film ist plausibel, **aber nicht belegt** — die Analytics weisen keine einzelnen
+Beiträge aus. Nicht als Wirkungskette behaupten.
 
 **Querbezug:** Film und die Seite `/anfahrt` samt Startseiten-Pop-up behandeln denselben Anlass.
 Damit ist die Fallstudie erzählbar als *ein Anlass, zwei Kanäle* — der Film für die Reichweite,
@@ -449,7 +468,7 @@ auf einem FrameNode ignoriert `altText` stillschweigend.
 - [ ] Uni: schriftliche Freigabe (von Reeken), Umfang/Zeitraum der Workshops
 - [ ] Aschenbeck: Umfang, seit wann, Anzahl Objekte
 - [ ] Thieme: Leads/Budget/Zeitraum aus dem Meta-Konto
-- [ ] Wandscher: Reichweite des Nadorster-Films einzeln aus dem Meta-Konto
+- [ ] Wandscher: die 17.100 Aufrufe per Screenshot aus dem Konto bestätigen
 - [ ] Between the Sheets: Umfang des Auftrags, Freigabe — ist jetzt als Bildreferenz möglich
 - [ ] `sunset-sounds.mp4` einem Kunden zuordnen (Atlantic Grand Hotel Bremen?)
 - [ ] Drei schwere Videos auf 720 Breite nachrechnen, sobald der Einbauort feststeht
