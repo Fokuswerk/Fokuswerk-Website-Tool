@@ -114,17 +114,25 @@ Genau darauf antwortet der Film.
 6. Schluss: „Damit eins klar ist: Wir sind hier, wir bleiben hier und wir werden auch weiterhin
    für dich da sein."
 
-**Wirkung — Angabe von Thees:** Nach dem Video hat sich **der Bürgermeister bei Jan Wandscher
-gemeldet.** Das ist der stärkere Beleg als jede Reichweitenzahl, weil er zeigt, dass der Film
-beim Entscheider angekommen ist. Für eine Agentur, die „messbar" verkauft, ist das die Sorte
-Wirkung, die man sonst nicht zeigen kann.
+**Wirkung — Angabe von Thees (12.10.2026):** Nach dem Video hat sich **der Oberbürgermeister
+der Stadt Oldenburg bei Jan Wandscher gemeldet.** Nicht ein Ratsmitglied, nicht die
+Pressestelle — der Verwaltungschef. Das ist der stärkere Beleg als jede Reichweitenzahl, weil
+er zeigt, dass der Film beim Entscheider angekommen ist, und zwar bei dem, der über die
+Baustelle tatsächlich entscheiden kann. Für eine Agentur, die „messbar" verkauft, ist das die
+Sorte Wirkung, die man sonst nicht zeigen kann.
 
-**Vor der Veröffentlichung zu klären**
-1. **Wer genau.** Oldenburg hat einen Oberbürgermeister; „Bürgermeister" ist in Niedersachsen
-   zusätzlich ein Ratsamt. Eine falsche Amtsbezeichnung auf der Agenturseite ist in zehn
-   Sekunden prüfbar — Name und Amt brauchen wir exakt.
-2. **Was daraus wurde.** Gespräch, Zusage zur Zufahrt, nichts? Entscheidet, ob daraus ein
-   Ergebnis wird oder eine Anekdote bleibt.
+**Amt steht damit fest: Oberbürgermeister.** Auf der Seite trägt der Satz auch ohne Namen
+(„der Oberbürgermeister der Stadt Oldenburg hat sich gemeldet"). Falls doch ein Name fallen
+soll, muss er aus der tatsächlichen Nachricht kommen, nicht aus der Recherche — in
+Niedersachsen war 2026 Kommunalwahl, der Kontakt kann vor oder nach dem Amtswechsel gelegen
+haben.
+
+**Noch vor der Veröffentlichung zu klären**
+1. **Was daraus wurde.** Gespräch, Zusage zur Zufahrt, nichts? Entscheidet, ob daraus ein
+   Ergebnis wird oder eine Anekdote bleibt. Mit einem Ergebnis wäre das die stärkste
+   Einzelgeschichte im ganzen Referenzbestand.
+2. **Wie er sich gemeldet hat** — Anruf, Nachricht, Kommentar unter dem Video? Ein Kommentar
+   wäre belegbar und zitierfähig, ein Anruf nur erzählbar.
 3. **Freigabe von Jan Wandscher.** Es ist seine Auseinandersetzung mit der Stadt, nicht unsere.
    Ohne sein ausdrückliches Ja geht die Geschichte nicht auf die Seite.
 4. **Reichweite dieses Films** einzeln aus dem Meta-Konto — die 594.552 Konten sind die Summe
@@ -418,8 +426,8 @@ im Framer-Editor. Muss vor dem Einbau geprueft werden.
 - [ ] Uni: schriftliche Freigabe (von Reeken), Umfang/Zeitraum der Workshops
 - [ ] Aschenbeck: Umfang, seit wann, Anzahl Objekte
 - [ ] Thieme: Leads/Budget/Zeitraum aus dem Meta-Konto
-- [ ] **Wandscher: Bürgermeister-Reaktion belegen** — wer genau (Amt!), was daraus wurde,
-      Freigabe von Jan Wandscher. Erst dann darf die Geschichte auf die Seite
+- [ ] **Wandscher: Oberbürgermeister-Reaktion** (Amt geklärt) — was daraus wurde, auf welchem
+      Weg er sich gemeldet hat, Freigabe von Jan Wandscher. Erst dann auf die Seite
 - [ ] Wandscher: Reichweite des Nadorster-Films einzeln aus dem Meta-Konto
 - [ ] Between the Sheets: Umfang des Auftrags, Freigabe — ist jetzt als Bildreferenz möglich
 - [ ] `sunset-sounds.mp4` einem Kunden zuordnen (Atlantic Grand Hotel Bremen?)
