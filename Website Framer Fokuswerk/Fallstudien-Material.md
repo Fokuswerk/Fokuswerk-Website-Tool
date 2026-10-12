@@ -9,15 +9,15 @@ die „messbar" verkauft, ist das die teuerste Angriffsfläche.
 | Kunde | Leistung | Zahlen | Material | Eignung |
 |---|---|---|---|---|
 | **WAV Westerstede** | Website, Google Ads, Meta Ads (Mitarbeiter, neu auch Neukunden) | **belegt** | kommt | **Leitfallstudie** |
-| **Patio** | Social, Event-Ads, 2× Personalgewinnung | **belegt** | offen | Fallstudie |
-| **Wandscher** | Website + Content, Filme für Meta-Anzeigen | **belegt** | ja | Fallstudie |
-| **Zwillis Padel** | Social-Content | CMS geschätzt · Insights belegt | ja | Fallstudie, sobald Playtomic-Zahl da |
-| **Eule Oldenburg** | Fotos/Videos | „über 500.000 Views", noch auszuzählen | offen | Bildreferenz + Zahl nach Zählung |
+| **Patio** | Social, Event-Ads, 2× Personalgewinnung | **belegt** | 2 Videos + Foto | Fallstudie |
+| **Wandscher** | Website + Content, Filme für Meta-Anzeigen | **belegt** | ja, inkl. Infovideo | **Fallstudie mit Wirkungsbeleg** |
+| **Zwillis Padel** | Social-Content | CMS geschätzt · Insights belegt | ja, inkl. Reel | Fallstudie, sobald Playtomic-Zahl da |
+| **Eule Oldenburg** | Fotos/Videos | „über 500.000 Views", noch auszuzählen | 2 Videos | Bildreferenz + Zahl nach Zählung |
 | **Hotel Alte Werft** | Zimmerfotos (Auftragsarbeit) | keine | ja | Bildreferenz |
 | **WinHadi** | Marke, Foto, Video, Website | geschätzt | ja | Bildreferenz **ohne Zahlen** |
 | **Al Pappagallo** | Fotos und Videos | keine | ja | Bildreferenz |
 | **Haubner Group** | — | — | — | erstmal raus (Zitat + Logo klären) |
-| **Between the Sheets** | Videos | keine | dünn | weglassen, Logo darf bleiben |
+| **Between the Sheets** | Videos, Fotos | keine | 3 Fotos | Bildreferenz möglich (vorher: weglassen) |
 | **Uni Oldenburg** | Meta-Ads Studierendengewinnung, Workshops | **belegt** | offen | Fallstudie + Vertrauensreferenz |
 | **Aschenbeck** | Immobilienfotos | keine noetig | ja | Bildreferenz |
 | **Thieme Augenoptik** | Recruiting-Kampagne + Video (Ausbildung) | fehlen | Video + Logo | Fallstudie, sobald Zahlen da |
@@ -89,6 +89,54 @@ Fokuswerk hat **die Filme gedreht, die Anzeigen aber nicht geschaltet.** Zahlen 
 → Zulässige Formulierung: „Für die Anzeigen haben wir die Filme produziert — sie liefen auf
 594.552 Meta-Konten." **Nicht** als eigenes Kampagnenergebnis darstellen.
 
+### Infovideo „Nadorster Straße" — nachgereicht am 12.10.2026
+
+`Medien/wandscher-nadorster.mp4` · 53 s · 1080×1920 · Untertitel eingebrannt · Jan Wandscher
+spricht selbst, gedreht vor dem Betrieb am Anfang der Nadorster Straße.
+
+**Anlass:** Sanierung der Nadorster Straße in Oldenburg. Auf der Informationsveranstaltung fiel
+der Satz, es sei egal, wie die Kunden den Betrieb erreichen — man hätte ja auch umziehen können.
+Genau darauf antwortet der Film.
+
+**Aufbau** (Untertitel aus dem Bild abgelesen, unsichere Stellen in Klammern):
+1. Das Zitat von der Veranstaltung, in Sie-Form: „(Es ist doch) egal, wie Ihre Kunden Sie
+   erreichen. Sie hätten (ja auch) umziehen können."
+2. „Ganz ehrlich, als wir diesen Satz auf der Informationsveranstaltung (zur) Sanierung der
+   Nadorster Straße (gehört haben), mussten wir erst schlucken."
+3. Standortbegründung: „Unser Betrieb ist nicht irgendein Standort. Unser Betrieb ist gewachsen
+   über Jahrzehnte. Hier vor Ort, am Anfang der Nadorster Straße, für die Menschen hier und für
+   die Menschen in Oldenburg und Umzu."
+4. Wende, dazu Wechsel in die Du-Form: „Und jetzt soll es egal sein, ob ihr uns erreicht?
+   Für uns ist es das nicht."
+5. Der praktische Kern: „Deshalb ist mir ganz wichtig, dir heute zu sagen: (Du kannst uns) auch
+   weiterhin erreichen. Unsere Zufahrt über die Lindenstraße 5 bleibt auch weiterhin für dich
+   offen", dazu das gesamte Betriebsgelände.
+6. Schluss: „Damit eins klar ist: Wir sind hier, wir bleiben hier und wir werden auch weiterhin
+   für dich da sein."
+
+**Wirkung — Angabe von Thees:** Nach dem Video hat sich **der Bürgermeister bei Jan Wandscher
+gemeldet.** Das ist der stärkere Beleg als jede Reichweitenzahl, weil er zeigt, dass der Film
+beim Entscheider angekommen ist. Für eine Agentur, die „messbar" verkauft, ist das die Sorte
+Wirkung, die man sonst nicht zeigen kann.
+
+**Vor der Veröffentlichung zu klären**
+1. **Wer genau.** Oldenburg hat einen Oberbürgermeister; „Bürgermeister" ist in Niedersachsen
+   zusätzlich ein Ratsamt. Eine falsche Amtsbezeichnung auf der Agenturseite ist in zehn
+   Sekunden prüfbar — Name und Amt brauchen wir exakt.
+2. **Was daraus wurde.** Gespräch, Zusage zur Zufahrt, nichts? Entscheidet, ob daraus ein
+   Ergebnis wird oder eine Anekdote bleibt.
+3. **Freigabe von Jan Wandscher.** Es ist seine Auseinandersetzung mit der Stadt, nicht unsere.
+   Ohne sein ausdrückliches Ja geht die Geschichte nicht auf die Seite.
+4. **Reichweite dieses Films** einzeln aus dem Meta-Konto — die 594.552 Konten sind die Summe
+   über neun Anzeigen, nicht dieses eine Films.
+
+**Querbezug:** Film und die Seite `/anfahrt` samt Startseiten-Pop-up behandeln denselben Anlass.
+Damit ist die Fallstudie erzählbar als *ein Anlass, zwei Kanäle* — der Film für die Reichweite,
+die Seite für die Dauer. Das ist der Aufbau, den sonst keine Referenz im Bestand hergibt.
+
+**Randnotiz:** Der Film duzt, die Website siezt. Für die Fallstudie unerheblich, als Markenfrage
+einmal zu entscheiden.
+
 ---
 
 ## Patio
@@ -96,10 +144,16 @@ Fokuswerk hat **die Filme gedreht, die Anzeigen aber nicht geschaltet.** Zahlen 
 Social Media, gelegentlich Anzeigen für Events, **2× Personalgewinnung**.
 CMS-Zahlen laut Thees zutreffend: **69 Bewerbungen**, 290K Aufrufe, +632 % Engagement.
 
-**Material:** Video vorhanden (`Medien/patio.mp4`, 25 s, Bar-Atmosphaere, gute Qualitaet).
+**Material** (Stand 12.10.2026)
+- `Medien/patio.mp4` · 25 s · 1920×1080 · Bar-Atmosphäre
+- `Medien/patio-sparkling-bubbles.mp4` · 34 s · 1080×1920 · **Produktfilm zur Karte
+  „Sparkling Bubbles"**: Drinks landen einer nach dem anderen auf der Bar, feste Schlagzeile
+  oben im Bild. Sauber, schleifenfähig, als stummer Hintergrund brauchbar — mit 2,7 MB die
+  leichteste Datei im Bestand.
+- `Medien/fotos/patio/tisch-sparkling-bubbles.jpg` · 1333×2000 · Tisch im Grünen mit vier
+  Drinks und der Karte, Abendlicht. Das Foto, das bisher fehlte.
 
-Offen: Zeitraum der 69 Bewerbungen · wurde daraus eingestellt (wäre die stärkere Zahl) ·
-Bildmaterial.
+Offen: Zeitraum der 69 Bewerbungen · wurde daraus eingestellt (wäre die stärkere Zahl).
 
 ---
 
@@ -119,7 +173,50 @@ Beiträge 250.865 / Stories 42.646 / Reels 18.808.
 Weg nach vorn: Buchungszahl aus **Playtomic** beim Kunden abfragen, dann wird aus der Schätzung
 ein Beleg. Bis dahin entweder Insights-Zahl nehmen oder Zwillis aus der Kopfleiste nehmen.
 
+**Material** (Stand 12.10.2026): `Medien/zwillis-padel.mp4` · 28 s · 1080×1920, aus 4K
+umgerechnet. Spielszenen auf dem blauen Platz, zwei Spieler, bewegte Kamera, kein Text im Bild.
+Gut für den Kopfbereich einer Fallstudie, weil es ohne Erklärung funktioniert. Mit 10,2 MB aber
+die zweitschwerste Datei — viel Bewegung lässt sich schlecht wegkomprimieren.
+
 ---
+
+## Eule Oldenburg
+
+Auftrag: Fotos und Videos. Zahl „über 500.000 Views" steht noch aus (auszählen oder
+Insights-Screenshot).
+
+**Material** (Stand 12.10.2026) — zwei Filme, beide zeigen die Eule als Veranstalter, nicht nur
+als Lokal:
+
+| Datei | Inhalt |
+|---|---|
+| `Medien/eule-hugo-leffers.mp4` · 47 s · 720×1280 | **Kooperation Eule × Leffers × Hugo Blue.** Der Gastgeber führt vom HUGO-Bereich im Kaufhaus über die Rolltreppe nach draußen zur Leffers-Fassade und zurück an eine Eule-Bar, die mitten in der Modeabteilung aufgebaut ist — blaue Neonschrift, Tafel mit Kartennamen („Blue Baby", „Kamikaze Senior"), zwei Leute im Service mixen durchgehend. Ende als Selfie-Perspektive im vollen Laden. |
+| `Medien/eule-lucid-club.mp4` · 46 s · 1080×1920 | **Ankündigung Eule × Lucid Club × Pure Events.** Gespielte Szene in weißen Trikots, Innenaufnahmen der Eule mit dem gelben Käfer-Taxi und der lucidclub-Leuchtschrift. |
+
+Das erste Video ist inhaltlich die interessantere Referenz: **drei Marken in einem Film**, und
+die Zusammenarbeit mit einem Kaufhaus zeigt ein Format, das über Gastronomie hinausgeht.
+
+Offen: Views auszählen · Freigabe mit drei beteiligten Marken (Leffers und Hugo sind keine
+Kunden von uns — ihre Logos und Marken dürfen in einer Fallstudie nur gezeigt werden, wenn die
+Eule das abdeckt) · Zeitraum der Zusammenarbeit.
+
+---
+
+## Between the Sheets
+
+Vorher als „weglassen, Logo darf bleiben" eingeordnet, weil das Material dünn war. Mit den drei
+Fotos vom 12.10.2026 ist eine **Bildreferenz jetzt möglich**:
+
+| Datei | Inhalt | Aufnahme |
+|---|---|---|
+| `Medien/fotos/between-the-sheets/kupferbecher.jpg` | Kupferbecher mit Gurke und Ingwer, harte Kante im Dunkeln | 09.04.2025 |
+| `Medien/fotos/between-the-sheets/espresso-martini.jpg` | Espresso Martini in der Hand, Gegenlicht, roter Vorhang | 09.04.2025 |
+| `Medien/fotos/between-the-sheets/tisch-drinks.jpg` | Tisch von oben, drei Longdrinks, Kerze, Getränkekarte | 23.04.2025 |
+
+Alle drei sind dunkel und kontraststark — eigenständiger Look, der sich von den hellen
+Patio-Bildern deutlich unterscheidet. Ohne Zahlen, als reine Bildreferenz.
+
+Offen: Umfang des Auftrags · Freigabe.
 
 ---
 
@@ -219,16 +316,49 @@ steht nirgends. Im Ammerland ist Fachkraeftemangel das Thema Nummer eins beim Mi
 
 ## Medien im Projekt (`Medien/`)
 
-Alle Videos sind fuers Web umgerechnet (1080p, H.264 CRF 26, faststart) und haben ein Standbild
-fuer `poster`, damit vor dem Klick nichts geladen wird.
+Alle Videos sind fürs Web umgerechnet (**lange Kante 1920, H.264 CRF 26, faststart, AAC 96k**)
+und haben ein Standbild für `poster`, damit vor dem Klick nichts geladen wird. Fotos auf
+**lange Kante 2000 px**.
 
-| Datei | Inhalt | Vorher | Nachher | Format |
-|---|---|---:|---:|---|
-| `patio.mp4` | Patio, Bar-Atmosphaere | 205,4 MB | **6,6 MB** | 1920x1080, 25,2 s |
-| `thieme.mp4` | Thieme, Recruiting Ausbildung | 140,6 MB | **4,9 MB** | 1080x1920, 23,5 s |
+### Videos
 
-Dazu `patio-standbild.jpg` und `thieme-standbild.jpg`.
-Fuer stumme Schleifen als Gestaltungselement liessen sich beide nochmal deutlich kleiner rechnen.
+| Datei | Kunde / Inhalt | Vorher | Nachher | Format | Last |
+|---|---|---:|---:|---|---:|
+| `patio.mp4` | Patio, Bar-Atmosphäre | 205,4 MB | **6,6 MB** | 1920×1080, 25,2 s | 2,1 Mbit/s |
+| `patio-sparkling-bubbles.mp4` | Patio, Produktfilm Karte | 250,9 MB | **2,7 MB** | 1080×1920, 34,1 s | 0,6 Mbit/s |
+| `thieme.mp4` | Thieme, Recruiting Ausbildung | 140,6 MB | **4,9 MB** | 1080×1920, 23,5 s | 1,7 Mbit/s |
+| `wandscher-nadorster.mp4` | Wandscher, Infovideo Nadorster Str. | 96,3 MB | **17,2 MB** | 1080×1920, 53,5 s | 2,6 Mbit/s |
+| `zwillis-padel.mp4` | Zwillis Padel, Spielszenen | 185,1 MB | **10,2 MB** | 1080×1920, 27,6 s | 3,0 Mbit/s |
+| `eule-hugo-leffers.mp4` | Eule × Leffers × Hugo Blue | 16,6 MB | **7,8 MB** | 720×1280, 47,4 s | 1,3 Mbit/s |
+| `eule-lucid-club.mp4` | Eule × Lucid Club × Pure Events | 129,7 MB | **13,8 MB** | 1080×1920, 46,4 s | 2,4 Mbit/s |
+| `sunset-sounds.mp4` | Sunset Sounds Rooftop Edition, Atlantic Grand Hotel Bremen | 83,5 MB | **12,3 MB** | 1080×1920, 59,7 s | 1,7 Mbit/s |
+
+Zu jedem Video liegt `<name>-standbild.jpg` daneben.
+
+**Drei Dateien sind für das Handy zu schwer:** `wandscher-nadorster` (17,2 MB),
+`eule-lucid-club` (13,8 MB), `zwillis-padel` (10,2 MB). Ursache ist nicht die Qualitätsstufe,
+sondern Bewegung und Auflösung.
+**Geprüft:** CRF 30 bringt sie auf 10,0 / 9,1 / 6,5 MB, erzeugt aber sichtbare Klötzchen —
+im Zwillis-Video zerfällt das Netz. **Der richtige Hebel ist die Auflösung, nicht die
+Kompression:** 720 breit statt 1080 (so wie `eule-hugo-leffers`) ist auf dem Handy nicht
+unterscheidbar und spart mehr. Sobald klar ist, welches Video wo eingebaut wird, nachrechnen.
+
+### Fotos
+
+| Datei | Inhalt | Format |
+|---|---|---|
+| `fotos/patio/tisch-sparkling-bubbles.jpg` | Tisch im Grünen, vier Drinks, Karte | 1333×2000 |
+| `fotos/between-the-sheets/kupferbecher.jpg` | Kupferbecher, Gurke, dunkel | 1333×2000 |
+| `fotos/between-the-sheets/espresso-martini.jpg` | Espresso Martini in der Hand | 1333×2000 |
+| `fotos/between-the-sheets/tisch-drinks.jpg` | Tisch von oben mit Karte und Kerze | 1333×2000 |
+
+Quellen waren 7728×5152 bei 21–26 MB je Bild; die Originale liegen weiter in `~/Downloads`.
+
+Dazu `logos/` (sechs Kundenlogos) und `wav/` (drei Screenshots).
+
+**Zuordnung offen:** `sunset-sounds.mp4` gehört zu keinem Kunden in der Liste oben — das Video
+zeigt eine Rooftop-Veranstaltung am Atlantic Grand Hotel Bremen. Die Datei kam aus einer
+parallelen Sitzung in den Ordner.
 
 ---
 
@@ -280,13 +410,20 @@ im Framer-Editor. Muss vor dem Einbau geprueft werden.
 - [ ] WAV: Conversion-Definition + „Campaign #1" klären
 - [ ] WAV Recruiting: 60 Bewerbungen bestaetigen (Bewerbertabelle), Zeitraum, Meta-Budget, Einstellungen
 - [ ] Zwillis: Playtomic-Buchungszahl, Startdatum der Zusammenarbeit
-- [ ] Patio: Zeitraum, Einstellungen, Bildmaterial
+- [ ] Patio: Zeitraum der 69 Bewerbungen, Einstellungen (Bildmaterial liegt jetzt vor)
 - [ ] Eule: Views zusammenrechnen oder Insights-Screenshot
+- [ ] Eule: Freigabe für die Leffers/Hugo-Kooperation — fremde Marken im Film
 - [ ] Haubner: Zitat und Logo auf der Startseite — bleiben oder runter?
 - [ ] Kopfleiste der Startseite: zwei der drei Zahlen sind geschätzt (Zwillis, WinHadi) → ersetzen
 - [ ] Uni: schriftliche Freigabe (von Reeken), Umfang/Zeitraum der Workshops
 - [ ] Aschenbeck: Umfang, seit wann, Anzahl Objekte
 - [ ] Thieme: Leads/Budget/Zeitraum aus dem Meta-Konto
+- [ ] **Wandscher: Bürgermeister-Reaktion belegen** — wer genau (Amt!), was daraus wurde,
+      Freigabe von Jan Wandscher. Erst dann darf die Geschichte auf die Seite
+- [ ] Wandscher: Reichweite des Nadorster-Films einzeln aus dem Meta-Konto
+- [ ] Between the Sheets: Umfang des Auftrags, Freigabe — ist jetzt als Bildreferenz möglich
+- [ ] `sunset-sounds.mp4` einem Kunden zuordnen (Atlantic Grand Hotel Bremen?)
+- [ ] Drei schwere Videos auf 720 Breite nachrechnen, sobald der Einbauort feststeht
 - [ ] Grundsatzfrage: Recruiting in die Positionierung aufnehmen?
 - [ ] Sechs Logos ins Kundenrad (Wandscher, Optik am Haarenufer, Zahnheilkunde, oh ton, Thieme, Aschenbeck)
 - [ ] Optik am Haarenufer: Leistungen, Zahlen, Material abfragen
