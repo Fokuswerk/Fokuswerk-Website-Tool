@@ -20,6 +20,7 @@ die „messbar" verkauft, ist das die teuerste Angriffsfläche.
 | **Between the Sheets** | Videos | keine | dünn | weglassen, Logo darf bleiben |
 | **Uni Oldenburg** | Meta-Ads Studierendengewinnung, Workshops | **belegt** | offen | Fallstudie + Vertrauensreferenz |
 | **Aschenbeck** | Immobilienfotos | keine noetig | ja | Bildreferenz |
+| **Thieme Augenoptik** | Recruiting-Kampagne + Video (Ausbildung) | fehlen | Video + Logo | Fallstudie, sobald Zahlen da |
 
 ---
 
@@ -179,6 +180,39 @@ ausserdem ein starkes Signal fuer das Zielsegment.
 
 Offen: nur Fotos oder auch Video/Drohne/Social - seit wann - wie viele Objekte.
 
+---
+
+## Thieme Augenoptik . Hoerakustik
+
+**Recruiting-Kampagne Meta** fuer die Ausbildung Augenoptiker:in (m/w/d), drei Standorte im
+Ammerland (Westerstede, Bad Zwischenahn, Augustfehn). Instant-Lead-Formular mit
+Qualifizierungsfragen, Budget laut Briefing ~10 EUR/Tag, Sonderkategorie Beschaeftigung.
+Briefing: `optiker-thieme-ads/RECRUITING-BRIEFING.md` (Juni 2026).
+
+**Material:** Logo + Recruiting-Video **23,5 s, 2160x3840 (4K hochkant), 25 fps, 147 MB**.
+Fuers Web muss das deutlich kleiner gerechnet werden.
+
+**Zahlen: fehlen.** Noetig waere ein Screenshot aus dem Meta-Konto (Leads, Budget, Zeitraum).
+
+---
+
+## Querbefund: Recruiting ist der heimliche Schwerpunkt
+
+Vier der zwoelf Referenzen sind Mitarbeiter- bzw. Nachwuchsgewinnung - und es sind genau die
+mit den belegbaren Zahlen:
+
+| Kunde | Branche | Beleg |
+|---|---|---|
+| WAV Westerstede | Kfz-Werkstatt | ~60 Bewerbungen in 2 Wochen (zu bestaetigen) |
+| Patio | Gastronomie | 69 Bewerbungen, 2 Kampagnen |
+| Thieme | Optiker/Hoerakustik | Ausbildung, 3 Standorte |
+| Uni Oldenburg | Hochschule | 36.842 Landingpage-Aufrufe, 0,11 EUR je Aufruf |
+
+Die Seite verspricht aber "Marketing, das messbar Kunden bringt". Der nachweisbare Schwerpunkt
+steht nirgends. Im Ammerland ist Fachkraeftemangel das Thema Nummer eins beim Mittelstaendler.
+
+**Entscheidung offen (Thees):** Positionierung um Recruiting erweitern - oder bewusst nicht.
+
 ## Offene Punkte
 
 - [ ] WAV: Conversion-Definition + „Campaign #1" klären
@@ -190,3 +224,5 @@ Offen: nur Fotos oder auch Video/Drohne/Social - seit wann - wie viele Objekte.
 - [ ] Kopfleiste der Startseite: zwei der drei Zahlen sind geschätzt (Zwillis, WinHadi) → ersetzen
 - [ ] Uni: schriftliche Freigabe (von Reeken), Umfang/Zeitraum der Workshops
 - [ ] Aschenbeck: Umfang, seit wann, Anzahl Objekte
+- [ ] Thieme: Leads/Budget/Zeitraum aus dem Meta-Konto
+- [ ] Grundsatzfrage: Recruiting in die Positionierung aufnehmen?
