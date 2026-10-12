@@ -397,21 +397,53 @@ Geprueft: genau eine H1, Titel aus dem CMS, keine Tippfehler, 7,9 Bildschirme, 3
 
 ---
 
-## Offene Logos fuers Kundenrad
+## Kundenrad — Stand 12.10.2026
 
-Thees hat am 12.10. nachgereicht - fehlen alle noch im Karussell auf der Startseite:
+Alle sechs nachgereichten Logos sind hochgeladen und im Karussell (jetzt 17 Logos).
+Der Hinweis in `Bestand.md`, Bilder liessen sich nur im Editor hochladen, stimmt nicht:
+`framer.uploadImage({ image: "data:image/png;base64,..." })` funktioniert. Ein Objekt aus
+`{bytes, mimeType}` ueberlebt die RPC-Grenze dagegen nicht.
 
-| Kunde | Status |
-|---|---|
-| Jan Wandscher (Steinmetz) | Logo erhalten |
-| Optik am Haarenufer | Logo erhalten, Kunde |
-| Praxis fuer Zahnheilkunde (Brahms/Preuss/Reinhard-Poneleit) | Logo erhalten |
-| oh ton | Logo erhalten |
-| Thieme Augenoptik . Hoerakustik | Logo erhalten |
-| Aschenbeck & Aschenbeck | Logo erhalten |
+Reihenfolge nach Ansage von Thees (12.10.) — die wichtigsten zuerst, weil Index 0 beim Laden
+vorne im Ring steht:
 
-**Achtung:** Laut `Bestand.md` lassen sich Bilder ueber den Agenten nicht hochladen, nur direkt
-im Framer-Editor. Muss vor dem Einbau geprueft werden.
+1. Universität Oldenburg
+2. Aschenbeck & Aschenbeck
+3. Optik am Haarenufer
+4. Patio
+5. Eule Oldenburg
+6. Vapiano
+7. WAV Westerstede
+8. Thieme Augenoptik
+9. Jan Wandscher
+10. Praxis für Zahnheilkunde
+11. Hotel Alte Werft
+12. Zwillis Padel
+13. Al Pappagallo
+14. Haubner Group
+15. WinHadi
+16. Between the Sheets
+17. oh ton
+
+Die Liste steht in `code/Kundenrad.tsx` im Array `STANDARD`. Der Property-Control
+`maxCount: 16` begrenzt nur die Editor-Oberflaeche, gerendert werden alle Eintraege.
+Hochgeladen wird die Datei mit `f.setFileContent(code)` auf dem Objekt aus
+`framer.getCodeFiles()` — `framer.setCodeFileContent` gibt es nicht.
+
+## Fallstudienseite — zwei Framer-Fallen
+
+**Alt-Text laesst sich nicht an die Sammlung binden.** Der Bildinhalt bindet sauber
+(`fill="var(--variable-kAoBXMS_5)"`), derselbe Ausdruck im Feld `altText` wird aber woertlich
+als Zeichenkette ins Markup geschrieben. Ein leerer Alt-Text wird von Framer ganz weggelassen,
+dann fehlt das Attribut und Lighthouse schlaegt an. Alt-Text auf dem Bild-Asset selbst
+(`uploadImage({ altText })`) wird beim Schreiben ins Sammlungsfeld verworfen — das Feld nimmt
+nur eine URL. Loesung: ein allgemeiner, fuer jede Fallstudie zutreffender Alt-Text am Knoten.
+
+**Die DSL verliert Umlaute.** Alles, was als Zeichenkette in `applyChanges` landet, kommt
+transliteriert an: aus "für" wird "fuer". Der Weg drumherum: den Text im Browser zur
+Laufzeit zusammenbauen, z. B. `"f" + String.fromCharCode(252) + "r"`. Ueber die Plugin-API
+(`setAttributes` auf Sammlungseintraegen) bleiben Umlaute dagegen erhalten — `setAttributes`
+auf einem FrameNode ignoriert `altText` stillschweigend.
 
 ## Offene Punkte
 
@@ -433,5 +465,4 @@ im Framer-Editor. Muss vor dem Einbau geprueft werden.
 - [ ] `sunset-sounds.mp4` einem Kunden zuordnen (Atlantic Grand Hotel Bremen?)
 - [ ] Drei schwere Videos auf 720 Breite nachrechnen, sobald der Einbauort feststeht
 - [ ] Grundsatzfrage: Recruiting in die Positionierung aufnehmen?
-- [ ] Sechs Logos ins Kundenrad (Wandscher, Optik am Haarenufer, Zahnheilkunde, oh ton, Thieme, Aschenbeck)
 - [ ] Optik am Haarenufer: Leistungen, Zahlen, Material abfragen

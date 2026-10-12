@@ -170,5 +170,150 @@
   "Kennzahl S": "g4MLh312_",
   "Zitat": "Etbg6GnL1",
   "Beschriftung": "xOUHrDfGU"
+ },
+ "stand_28_09_runde2": {
+  "seite": {
+   "home": "augiA20Il",
+   "desktop": "WQLkyLRf1",
+   "tablet": "Np0vhDBkT",
+   "phone": "DwpOhPzme"
+  },
+  "layoutTemplate": {
+   "id": "kydvDx4Fl",
+   "desktop": "sCRIa6vSU",
+   "navInstanz": "uAjBuKHoR",
+   "menueOverlay": "Syy0trUD3",
+   "menueGlas": "BND1pXN03",
+   "menueInhalt": "Zs2um6APD"
+  },
+  "komponenten": {
+   "Knopf": "FGiX6iPcm",
+   "Verweis": "sGWbKfMAc",
+   "Navpunkt": "AMcudz3ND",
+   "Menüpunkt": "xGSBXC12g",
+   "Großlink": "XGiL2HoR5",
+   "Navigation": "HsKb8QGrI",
+   "NavVarianten": {
+    "Leiste": "BguSAsxgB",
+    "Oben": "t5M9lc6Ba"
+   },
+   "Fußzeile": "V7MKw4smK",
+   "Frage": "bgFb2_wyj"
+  },
+  "code": {
+   "Netzfeld": "codeFile/fiiSnBl:default",
+   "Pfeil": "codeFile/iy4Bw58:default",
+   "Kundenrad": "codeFile/QdSIJpJ:default",
+   "Arbeitsraster": "codeFile/KIbbTwP:default",
+   "Leistungsfelder": "codeFile/sjgknOB:default",
+   "NavOverride": "codeFile/hzqFSmG:withScrollZustand"
+  },
+  "abschnitte": {
+   "AuftaktHülle": "kA5jkBYUz",
+   "Auftakt": "zBEhCeLEZ",
+   "Kunden": "oV6br1yom",
+   "System": "ZHkRvwlnW",
+   "Leistungen": "TL6mjnr7_",
+   "Arbeiten": "iwr2fpHHS",
+   "Beratung": "Fjl9epLLl",
+   "Ergebnisse": "DB3HTGcda",
+   "Agentur": "oChWTsLgU",
+   "Fragen": "rha0bcuGq",
+   "Abschluss": "uQzcUyeMt"
+  },
+  "instanzen": {
+   "Netzfeld": "SPORzdHQX",
+   "Kundenrad": "eXRH1f5DT",
+   "Leistungsfelder": "Bb0OWDfF1",
+   "Arbeitsraster": "GvJQoeShi"
+  }
+ },
+ "stand_28_09_runde3": {
+  "geisterzeilen": {
+   "Leistungen": "MpYz6lamm",
+   "Arbeiten": "c61MVPyWE",
+   "Beratung": "u_ZdYhMiG",
+   "Agentur": "uxgqJUgjB",
+   "Fragen": "hnHx8DV9N"
+  },
+  "karten": {
+   "LeistungenKarten": "FnGbMnvT0",
+   "BeratungKarten": "rMvL8zF4E",
+   "BeratungBild": "dnW7vpzi4",
+   "BeratungDunkel": "vKBc_5ajC",
+   "AgenturKarten": "cF0VN7qr0",
+   "AgenturDunkel": "yql6JLMaK",
+   "FragenKarten": "WBALOb78I",
+   "FragenDunkel": "KaAQQVSAr",
+   "FragenListe": "pbg17zEDA",
+   "SystemKette": "iX_esck5k"
+  },
+  "vorlage": {
+   "Etikett": "uekvmRMaI",
+   "Geisterzeile": "A2fTXpWhL",
+   "Hinweis": "m3nVL1nV7"
+  }
+ },
+ "stand_28_09_runde4": {
+  "code": {
+   "Glaskante": "codeFile/rrywI8q:default"
+  },
+  "instanzen": {
+   "Glaskante": "aZ8hcBooy",
+   "SmoothScroll": "cEKzNxM7t"
+  },
+  "hinweis": "Glas 1–7 gelöscht; Kampagnen stecken im Arbeitsraster (Control kampagnen)"
+ },
+ "stand_28_09_runde5_unterseiten": {
+  "/leistungen/performance-marketing": {
+   "D": "z2lwfADdX",
+   "T": "Q8xbsX_Xp",
+   "P": "fiTopxPdT"
+  },
+  "/leistungen/websites": {
+   "D": "AZY6w1JtH",
+   "T": "THk4zY4LR",
+   "P": "jWtLkE5LD"
+  },
+  "/leistungen/content": {
+   "D": "CDZa3Y1Bi",
+   "T": "TYXKkBH5m",
+   "P": "HROdOmY0K"
+  },
+  "/arbeiten": {
+   "D": "g420wy1OF",
+   "T": "PCGevPmRE",
+   "P": "Z6qrUFRlQ"
+  },
+  "/agentur": {
+   "D": "moLTi1Xxk",
+   "T": "d1a7ZhGss",
+   "P": "cdSTMAhqZ"
+  },
+  "/kontakt": {
+   "D": "cOWKx1tAX",
+   "T": "qipL_eq08",
+   "P": "ST01kmHGV",
+   "formular": "zQX5NOuyT",
+   "senden": "aiyG3osxh"
+  },
+  "/impressum": {
+   "D": "ZuYHAD_v2",
+   "T": "sXIFaAazM",
+   "P": "QmSsq97Y1"
+  },
+  "/agb": {
+   "D": "uI8Ks36UA",
+   "T": "W8SG4CmPm",
+   "P": "ImKMetJV7"
+  },
+  "/datenschutz": {
+   "D": "yYnSvoETv",
+   "T": "oMYgIhBjI",
+   "P": "qMzMX4mzE"
+  },
+  "komponente_Senden": "h4BOA4wQF",
+  "template_glaskante": "MA83qMlN3",
+  "template_smoothscroll": "VWeZUNT5a"
  }
 }

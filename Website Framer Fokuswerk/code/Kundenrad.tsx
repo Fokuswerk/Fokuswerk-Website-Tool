@@ -40,16 +40,22 @@ interface KundenradProps {
 
 const STANDARD: Logo[] = [
     { name: "Universität Oldenburg", bild: { src: "https://framerusercontent.com/images/ocpMb1uBS9G1MX8JFLQQ4EeyAqg.svg", alt: "Carl von Ossietzky Universität Oldenburg" } },
-    { name: "Hotel Alte Werft", bild: { src: "https://framerusercontent.com/images/4LLFl4HNCVq8Sy51vAuMn8jlpRg.png", alt: "Hotel Alte Werft" } },
-    { name: "Vapiano", bild: { src: "https://framerusercontent.com/images/z2d8x39K5Hik4HhDviq1nzXxblw.svg", alt: "Vapiano" } },
-    { name: "Haubner Group", bild: { src: "https://framerusercontent.com/images/ImJ661WggkxOkCIm5Zww4wM6pc.png", alt: "Haubner Group" } },
-    { name: "WAV Westerstede", bild: { src: "https://framerusercontent.com/images/ovYXtpdpa5coqVaUBagVbnyeWG8.png", alt: "WAV Westerstede" } },
-    { name: "Zwillis Padel", bild: { src: "https://framerusercontent.com/images/un5qWoV4NXGEowgSuUw3npjfSw.png", alt: "Zwillis Padel" } },
-    { name: "Al Pappagallo", bild: { src: "https://framerusercontent.com/images/ARTw4kJp7Srb7GQRCqUUlt5m8.png", alt: "Ristorante Al Pappagallo" } },
-    { name: "WinHadi", bild: { src: "https://framerusercontent.com/images/lpvKNedYoddiG0Hgipp3ZIcaNhc.png", alt: "WinHadi" } },
+    { name: "Aschenbeck & Aschenbeck", bild: { src: "https://framerusercontent.com/images/xiEi5GbJLK1IefRbTXjpOhJddBA.png", alt: "Aschenbeck & Aschenbeck Projektentwicklung" } },
+    { name: "Optik am Haarenufer", bild: { src: "https://framerusercontent.com/images/HkiJfOlOLDgzeGlw4sDYGSZBY.png", alt: "Optik am Haarenufer" } },
     { name: "Patio", bild: { src: "https://framerusercontent.com/images/b5FitHUfK0WXOC82nswyopSXAE4.png", alt: "Patio" } },
     { name: "Eule Oldenburg", bild: { src: "https://framerusercontent.com/images/hwiHxUn4sk0sKntMVFfGOBrFXyM.png", alt: "Eule Oldenburg" } },
+    { name: "Vapiano", bild: { src: "https://framerusercontent.com/images/z2d8x39K5Hik4HhDviq1nzXxblw.svg", alt: "Vapiano" } },
+    { name: "WAV Westerstede", bild: { src: "https://framerusercontent.com/images/ovYXtpdpa5coqVaUBagVbnyeWG8.png", alt: "WAV Westerstede" } },
+    { name: "Thieme Augenoptik", bild: { src: "https://framerusercontent.com/images/WfCSCZPXfaAXp2VPZE0PBufC8yQ.png", alt: "Thieme Augenoptik und Hörakustik" } },
+    { name: "Jan Wandscher", bild: { src: "https://framerusercontent.com/images/sl4zvA1YqIxvdAmMeCyFDq85iUA.png", alt: "Steinmetz Jan Wandscher" } },
+    { name: "Praxis für Zahnheilkunde", bild: { src: "https://framerusercontent.com/images/yOJ7kT1oBU9msfgNVFVZnpQ86Vw.png", alt: "Praxis für Zahnheilkunde Bad Zwischenahn" } },
+    { name: "Hotel Alte Werft", bild: { src: "https://framerusercontent.com/images/4LLFl4HNCVq8Sy51vAuMn8jlpRg.png", alt: "Hotel Alte Werft" } },
+    { name: "Zwillis Padel", bild: { src: "https://framerusercontent.com/images/un5qWoV4NXGEowgSuUw3npjfSw.png", alt: "Zwillis Padel" } },
+    { name: "Al Pappagallo", bild: { src: "https://framerusercontent.com/images/ARTw4kJp7Srb7GQRCqUUlt5m8.png", alt: "Ristorante Al Pappagallo" } },
+    { name: "Haubner Group", bild: { src: "https://framerusercontent.com/images/ImJ661WggkxOkCIm5Zww4wM6pc.png", alt: "Haubner Group" } },
+    { name: "WinHadi", bild: { src: "https://framerusercontent.com/images/lpvKNedYoddiG0Hgipp3ZIcaNhc.png", alt: "WinHadi" } },
     { name: "Between the Sheets", bild: { src: "https://framerusercontent.com/images/T82jIhno8JIhUbjsFmJrpnvDns.png", alt: "Between the Sheets" } },
+    { name: "oh ton", bild: { src: "https://framerusercontent.com/images/EXbRgAhznVjB26ayY7mqIeoArY.png", alt: "oh ton" } },
 ]
 
 const HAND =
