@@ -379,6 +379,13 @@ Gemessen nach dem Maßstab „Scrollweg zwischen zwei Handlungsaufrufen" (Handy,
 - Formular ist sonst sauber: 7 sichtbare Felder, die weiteren 11 sind Framers Spamfallen.
 - Googlebot sieht unverändert dasselbe wie ein Besucher (9.261 Zeichen, 2 Strukturdaten-Blöcke).
 
+**Auftaktleiste ohne Linien (12.10.2026, Version `e113d2d79`):** Auf Wunsch alle drei Linien aus der
+unteren Leiste des Auftakts entfernt (`code/Auftaktleiste.tsx`): die waagerechte Linie über der
+ganzen Leiste (`borderTop`), die senkrechten Trenner zwischen den drei Belegen (`borderLeft`) und
+der Strich mit dem laufenden orangen Segment neben „SCROLLEN". Die Abstände tragen die Gliederung
+jetzt allein. Geprüft bei 1440 px und 390 px. Die Props `akzent` und `reduziert` sind in der
+Hauptkomponente dadurch ungenutzt — Steuerung bewusst stehen gelassen, falls der Akzent zurück soll.
+
 **Tipp-Feedback der Menüpunkte:** 0,75 s → 0,18 s. Beim Antippen bleiben rund 250 ms bis die
 neue Seite lädt; alles darüber bricht sichtbar ab und sieht nach einem Fehler aus.
 

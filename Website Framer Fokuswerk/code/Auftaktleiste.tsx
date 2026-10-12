@@ -2,6 +2,9 @@ import { addPropertyControls, ControlType, useIsStaticRenderer } from "framer"
 import { motion, useReducedMotion } from "framer-motion"
 import { useEffect, useRef, useState, type CSSProperties } from "react"
 
+// Auftaktleiste — ohne Trennlinien (12.10.2026 auf Wunsch entfernt: waagerechte Linie über der
+// Leiste, senkrechte Trenner zwischen den Belegen, Strich mit laufendem Segment am Scroll-Hinweis).
+// Die Abstände tragen die Gliederung jetzt allein.
 // Auftaktleiste — unterer Rand des Auftakts: links ein Scroll-Hinweis mit wandernder Linie,
 // rechts drei belegte Ergebnisse aus echten Projekten, die beim Laden hochzählen.
 // Werte stammen aus den Case Studies (Bestand.md / Case-Studies.md).
@@ -132,20 +135,11 @@ export default function Auftaktleiste(props: AuftaktleisteProps) {
                 gap: 24,
                 fontFamily: SCHRIFT,
                 color: PAPIER,
-                borderTop: "1px solid rgba(245,243,239,0.14)",
                 paddingTop: schmal ? 16 : 22,
             }}
         >
             {!schmal && (
                 <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 11, fontWeight: 500, letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(245,243,239,0.55)" }}>
-                    <span style={{ position: "relative", width: 1, height: 38, background: "rgba(245,243,239,0.18)", overflow: "hidden" }}>
-                        <motion.span
-                            style={{ position: "absolute", left: 0, width: 1, height: 14, background: akzent }}
-                            initial={{ top: -14 }}
-                            animate={statisch || reduziert ? { top: 12 } : { top: [-14, 38] }}
-                            transition={{ duration: 1.6, repeat: 3, ease: [0.65, 0, 0.35, 1] }} // dreimal, dann Ruhe: Endlos-Bewegung hält den Speed Index offen
-                        />
-                    </span>
                     {hinweis}
                 </div>
             )}
@@ -160,7 +154,6 @@ export default function Auftaktleiste(props: AuftaktleisteProps) {
                             flex: schmal ? 1 : "0 0 auto",
                             minWidth: 0,
                             padding: schmal ? "0 10px" : "0 28px",
-                            borderLeft: i === 0 ? "none" : "1px solid rgba(245,243,239,0.14)",
                             paddingLeft: i === 0 ? 0 : schmal ? 10 : 28,
                             paddingRight: i === belege.length - 1 ? 0 : undefined,
                             display: "grid",
