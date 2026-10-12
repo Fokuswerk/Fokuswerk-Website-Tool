@@ -171,7 +171,20 @@ CMS-Zahlen laut Thees zutreffend: **69 Bewerbungen**, 290K Aufrufe, +632 % Engag
 - `Medien/fotos/patio/tisch-sparkling-bubbles.jpg` · 1333×2000 · Tisch im Grünen mit vier
   Drinks und der Karte, Abendlicht. Das Foto, das bisher fehlte.
 
-Offen: Zeitraum der 69 Bewerbungen · wurde daraus eingestellt (wäre die stärkere Zahl).
+**Fallstudie gebaut am 12.10.2026** — `/arbeiten/patio-oldenburg`, CMS-Eintrag `j9wT0K2Db`.
+Kennzahlen 69 Bewerbungen · 290.000 Aufrufe · +632 % Interaktionen, Beleg: „Kampagnen- und
+Kanalauswertungen des Kunden". Titelbild ist ein Standbild aus `patio.mp4` (Bar am Abend),
+die Einblicke sind das Tischfoto, das Standbild aus dem Sparkling-Bubbles-Film und das
+Patio-Schild aus dem Hausfilm.
+
+Offen: Zeitraum der 69 Bewerbungen · wurde daraus eingestellt (wäre die stärkere Zahl) ·
+Zeitraum und Vergleichsgröße hinter den 290.000 Aufrufen und den +632 %.
+
+**Die beiden Filme liegen noch nicht auf der Seite.** `framer.uploadFile` nimmt keine
+Data-URI, sondern holt die Datei von einer URL — und die Agentenverbindung bricht bei
+Nutzlasten ab etwa einem Megabyte ab. Entweder Thees zieht die MP4s einmal in den
+Framer-Editor (dann baue ich den Filmblock), oder die Dateien bekommen vorher eine
+öffentliche URL.
 
 ---
 
@@ -460,7 +473,7 @@ auf einem FrameNode ignoriert `altText` stillschweigend.
 - [ ] WAV: Conversion-Definition + „Campaign #1" klären
 - [ ] WAV Recruiting: 60 Bewerbungen bestaetigen (Bewerbertabelle), Zeitraum, Meta-Budget, Einstellungen
 - [ ] Zwillis: Playtomic-Buchungszahl, Startdatum der Zusammenarbeit
-- [ ] Patio: Zeitraum der 69 Bewerbungen, Einstellungen (Bildmaterial liegt jetzt vor)
+- [ ] Patio: Zeitraum der 69 Bewerbungen, Einstellungen; Filme in Framer hochladen lassen
 - [ ] Eule: Views zusammenrechnen oder Insights-Screenshot
 - [ ] Eule: Freigabe für die Leffers/Hugo-Kooperation — fremde Marken im Film
 - [ ] Haubner: Zitat und Logo auf der Startseite — bleiben oder runter?
