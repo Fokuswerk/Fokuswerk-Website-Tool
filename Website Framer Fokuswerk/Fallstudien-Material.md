@@ -56,6 +56,18 @@ Quelle: Google-Ads-Konto, Export und Screenshot vom 12.10.2026, Zeitraum **19.05
 **Nebenbefund für den Kunden, nicht für die Seite:** *Steinschlag & Autoglas* hat 649,90 € für
 3 Conversions verbraucht, Optimierungsfaktor 53 %.
 
+### Zweites Ziel: Mitarbeitergewinnung über Meta
+
+Eigener Funnel auf wav-wst.de (`/job` mit Danke-Seite und einwilligungsgebundenem Pixel),
+Bewerbungen laufen über `bewerbertabelle.gs` in eine Tabelle.
+
+**Rund 60 Bewerbungen in zwei Wochen** — Angabe aus dem Gedächtnis, **noch zu bestätigen**.
+Fehlt: genauer Zeitraum, Meta-Budget (daraus Kosten je Bewerbung), ob eingestellt wurde.
+Quelle für die Bestätigung: Bewerbertabelle + Screenshot aus dem Meta-Werbekonto.
+
+Damit zeigt WAV als einzige Referenz **zwei Ziele bei einem Kunden**: Neukunden über Google,
+Mitarbeiter über Meta. Das ist die stärkste Struktur im ganzen Bestand.
+
 ---
 
 ## Wandscher
@@ -107,6 +119,7 @@ ein Beleg. Bis dahin entweder Insights-Zahl nehmen oder Zwillis aus der Kopfleis
 ## Offene Punkte
 
 - [ ] WAV: Conversion-Definition + „Campaign #1" klären
+- [ ] WAV Recruiting: 60 Bewerbungen bestaetigen (Bewerbertabelle), Zeitraum, Meta-Budget, Einstellungen
 - [ ] Zwillis: Playtomic-Buchungszahl, Startdatum der Zusammenarbeit
 - [ ] Patio: Zeitraum, Einstellungen, Bildmaterial
 - [ ] Eule: Views zusammenrechnen oder Insights-Screenshot
