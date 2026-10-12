@@ -496,6 +496,31 @@ Nach dem Übertragen: Überschrift 295 px, 2 Zeilen, Seite 8.512 px.
 > gegenprüfen. Replicas erben die Struktur, aber die Überschreibungen der Vorlage kommen nicht
 > mit. Prüfen heißt messen (Breite und Zeilenzahl per JS), nicht ansehen.
 
+### Behoben: WAV stand dreimal in der Projektliste (12.10.2026)
+
+Thees' Befund: In der Liste „Alle Projekte" stand WAV Westerstede dreimal untereinander.
+
+**Ursache:** Der Rahmen der Liste (`AGqOvCzGX`) hatte `collectionList.collection = "Fallstudien"`
+gesetzt — **ohne** `repeatedDescendantId`. Framer wiederholt dann die **erste Kindzeile** einmal
+je Sammlungseintrag. Die erste Zeile war die statische WAV-Zeile, also erschien sie so oft, wie
+es Fallstudien gibt: bei zwei Fallstudien zweimal, nach dem Anlegen von Wandscher dreimal.
+Die Zeilen darunter (Glanzwerk, Heinz, Scharein, Henken, Bunjes, Kämper, Gartenzwerg) sind
+Geschwister und waren nie betroffen. Der Fehler ist also **älter als die Wandscher-Fallstudie** —
+sie hat ihn nur sichtbarer gemacht.
+
+Erkennungsmerkmal im Nachhinein: zwischen den wiederholten Zeilen fehlte die Haarlinie, weil nur
+die Zeilen 2–8 ein `borderTop` tragen, die Vorlage-Zeile nicht.
+
+**Behebung:** Die Bindung lässt sich per DSL **nicht** entfernen — `collectionList="null"`,
+`collectionList.collection="null"` und `=""` werden alle abgelehnt („Expected a valid collection
+name"). Deshalb: neuen, ungebundenen Rahmen mit denselben Attributen daneben gebaut, die acht
+Zeilen per `MOVE` umgehängt, den alten Rahmen per `DEL` entfernt. Geprüft: acht Zeilen, je
+einmal, Haarlinien und Pfeile erhalten; am Handy 311 px breit, kein Querlauf.
+
+> **Regel:** Eine CMS-Liste ohne `repeatedDescendantId` ist keine kaputte Liste, sondern eine
+> stille Vervielfältigung der ersten Zeile. Wer eine Liste an eine Sammlung bindet, muss beides
+> setzen — und danach zählen, wie viele Zeilen herauskommen.
+
 ### Noch offen auf `/arbeiten`
 
 Die Liste der Fallstudien ist drei nackte Textzeilen mit Haarlinie — kein Bild, kein Pfeil, kein
