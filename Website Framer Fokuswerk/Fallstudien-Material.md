@@ -453,6 +453,60 @@ CMS-Detailseite nur die 47-KB-Hülle ohne `<title>` und ohne H1; erst der zweite
 vorgerenderte Seite (~285 KB) mit den CMS-Metadaten. SEO-Prüfungen deshalb **nie** am ersten
 Abruf nach dem Publish machen — sonst meldet man einen Fehler, den es nicht gibt.
 
+---
+
+## Fallstudienseiten überarbeitet (12.10.2026)
+
+Thees' Urteil über den ersten Stand: *„sehen schlecht aus, passen null zum Rest der Website,
+haben gar keine Wertigkeit, wirken billig."* Der Befund war nicht Geschmack, sondern messbar.
+
+### Was tatsächlich kaputt war
+
+**1. Sechs Spaltenbreiten auf einer Seite.** Kopf 860 · Titelbild 1000 · Zahlen 860 · Text 760 ·
+Einblicke 1000 · Abschluss 1240. Damit hatte jeder Abschnitt eine andere linke Kante — genau
+das, was Thees seit dem Wandscher-Projekt als Regel vorgibt („alles bündig, links und rechts
+gleich"). Jetzt durchgehend **1240**.
+
+**2. Andere Formensprache als der Rest.** Die Startseite spricht in dunklen, runden Karten mit
+Haarlinien, Nummern, Pillen und Lichtfeld-Textur. Die Fallstudie sprach in grauen Absätzen auf
+Creme mit kleinen orangen Etiketten — also wie ein Markdown-Dokument neben einer gestalteten
+Seite. Übernommen wurden jetzt die Bausteine des Bestands:
+- Zahlen in einer **dunklen Karte** (Radius 20, Lichtfeld-Textur, Haarlinie über jeder Spalte)
+  statt in einem flachen Vollbreite-Band mit 2+1-Umbruch.
+- Die Angaben im Kopf als **Datenstreifen** zwischen zwei Haarlinien.
+- Text als **Redaktionssatz**: Etikettenspalte links (200 px), Lesespalte rechts (760 px),
+  Haarlinie als Trenner über jedem Block.
+- Einblicke in einer **dunklen Karte**, Bilder gleich groß und mittig.
+
+**3. Die Bilder hatten gemischte Seitenverhältnisse.** WAV und Patio lagen bei 4:5, meine
+Wandscher-Aufnahmen bei 0,46 (rohe Handy-Screenshots). Framer-Füllungen können nur „cover" —
+also wurde jeweils etwas abgeschnitten. Jetzt gilt **4:5 für alle Einblicke und 1,6 für alle
+Titelbilder**; die Wandscher-Aufnahmen sind als Komposition auf dunklem Feld (1000×1250) neu
+gerechnet, damit der ganze Screenshot sichtbar bleibt.
+
+**4. Der Abschluss-Block war auf dem Handy zerstört.** Gemessen auf der echten Seite bei 375 px:
+die Überschrift „Reden wir über Ihre Zahlen." war **1 px breit und 23 Zeilen hoch**, der Block
+2.335 px hoch, die Seite 9.656 px.
+**Ursache:** Der Baustein wurde von der Ratgeber-Seite kopiert, aber **ohne die Breakpoint-Werte**.
+Auf Handy und Tablet stand er deshalb noch auf den Desktop-Werten (Karte waagerecht, Kontaktkarte
+370 px fest). Auf der Ratgeber-Seite steht derselbe Block korrekt — der Vergleich war der Beweis.
+Nach dem Übertragen: Überschrift 295 px, 2 Zeilen, Seite 8.512 px.
+
+> **Regel daraus:** Wird ein Baustein zwischen Seiten kopiert, immer Tablet und Phone
+> gegenprüfen. Replicas erben die Struktur, aber die Überschreibungen der Vorlage kommen nicht
+> mit. Prüfen heißt messen (Breite und Zeilenzahl per JS), nicht ansehen.
+
+### Noch offen auf `/arbeiten`
+
+Die Liste der Fallstudien ist drei nackte Textzeilen mit Haarlinie — kein Bild, kein Pfeil, kein
+Hinweis, dass man darauf klicken kann. Direkt darunter zeigt der Abschnitt „Ergebnisse", wie es
+aussehen müsste. Das ist der Einstieg in die Fallstudien und der schwächste Punkt, der geblieben
+ist.
+
+Dazu steht in diesem Abschnitt weiter **+156 % (Zwillis)** und **+72 % (WinHadi)** — beide
+geschätzt — unter der Zeile „Nichts davon ist gerundet oder geschätzt". Mit den drei Fallstudien
+liegen jetzt belegte Zahlen bereit, die das ersetzen können (5,30 € · 69 Bewerbungen · 9:15).
+
 ### Gelernte Framer-Eigenheiten
 - Variablentyp im DSL heisst `richtext`, nicht `formattedText` (so meldet es die API zurueck).
 - Listenfelder werden per Kleinschreibung des Feldnamens gesetzt: `$control__<array>.0.wert`.
@@ -527,6 +581,8 @@ auf einem FrameNode ignoriert `altText` stillschweigend.
 - [ ] Thieme: Leads/Budget/Zeitraum aus dem Meta-Konto
 - [ ] Wandscher: die 17.100 Aufrufe per Screenshot aus dem Konto bestätigen (stehen schon live)
 - [ ] Wandscher-Fallstudie: Absprungrate 51 % — steht als offener Punkt auf der Seite, also auch angehen
+- [ ] `/arbeiten`: Fallstudien-Liste aufwerten (Titelbild, Pfeil, klickbare Karte statt Textzeile)
+- [ ] `/arbeiten` Abschnitt „Ergebnisse": geschätzte Zahlen (Zwillis, WinHadi) gegen die belegten tauschen
 - [ ] Between the Sheets: Umfang des Auftrags, Freigabe — ist jetzt als Bildreferenz möglich
 - [ ] `sunset-sounds.mp4` einem Kunden zuordnen (Atlantic Grand Hotel Bremen?)
 - [ ] Drei schwere Videos auf 720 Breite nachrechnen, sobald der Einbauort feststeht
