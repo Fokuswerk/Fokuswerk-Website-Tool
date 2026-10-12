@@ -18,6 +18,8 @@ die „messbar" verkauft, ist das die teuerste Angriffsfläche.
 | **Al Pappagallo** | Fotos und Videos | keine | ja | Bildreferenz |
 | **Haubner Group** | — | — | — | erstmal raus (Zitat + Logo klären) |
 | **Between the Sheets** | Videos | keine | dünn | weglassen, Logo darf bleiben |
+| **Uni Oldenburg** | Meta-Ads Studierendengewinnung, Workshops | **belegt** | offen | Fallstudie + Vertrauensreferenz |
+| **Aschenbeck** | Immobilienfotos | keine noetig | ja | Bildreferenz |
 
 ---
 
@@ -116,6 +118,67 @@ ein Beleg. Bis dahin entweder Insights-Zahl nehmen oder Zwillis aus der Kopfleis
 
 ---
 
+---
+
+## Uni Oldenburg (Carl von Ossietzky) — Fakultaet III
+
+Quelle: Meta-Werbekonto, CSV-Export vom 12.10.2026, Zeitraum **20.07.-12.10.2026**.
+Belegt und in sich schluessig (Summe der Einzelanzeigen = 4.009,58 EUR Gesamtzeile).
+
+| | |
+|---|---|
+| Budget | 4.009,58 EUR |
+| Erreichte Menschen | **589.310** |
+| Impressionen | 1.150.458 |
+| **Landingpage-Aufrufe** | **36.842** |
+| **Kosten je Landingpage-Aufruf** | **0,11 EUR** |
+| CPM | 3,49 EUR |
+| Klicks (alle) | 49.408 bei 4,29 % CTR |
+| Frequenz | 1,95 |
+
+### Je Studiengang
+
+| Studiengang | LP-Aufrufe | Budget | je Aufruf |
+|---|---:|---:|---:|
+| Niederdeutsch | 11.125 | 1.279,90 EUR | 0,115 EUR |
+| Slavistik (2 Anzeigen) | 10.709 | 814,37 EUR | 0,076 EUR |
+| Niederlandistik (4 Anzeigen) | 9.798 | 1.276,63 EUR | 0,130 EUR |
+| Musik | 5.210 | 638,68 EUR | 0,123 EUR |
+| Gender Studies | **lief nie** (Anzeige inaktiv, 0 EUR) | | |
+
+### Erzaehlbare Befunde
+- **Niederdeutsch war im Konzept als Sorgenfall markiert** (Zielgruppe evtl. zu klein fuer saubere
+  Auslieferung) und holte dann die meisten Landingpage-Aufrufe von allen. Beleg fuer das Vorgehen,
+  nicht nur fuers Ergebnis.
+- **Kreativ-Auswahl zahlte sich aus:** Slavistik-Explainer 0,075 EUR je Aufruf gegen
+  "Day in the Life" 0,188 EUR. Budget wanderte entsprechend.
+- Nur **vier** Studiengaenge liefen tatsaechlich, nicht fuenf.
+
+### Formulierungsgrenze
+Die Kampagne war laut eigenem Konzept **Top of Funnel, bewusst ohne Conversion-Ziel**.
+Ergebnis sind **Landingpage-Aufrufe, keine Bewerbungen**. Zulaessig:
+"36.842 Mal haben Interessierte die Studiengangsseite geoeffnet, fuer 11 Cent pro Aufruf."
+
+### Dazu: Workshops
+Fokuswerk hat ausserdem **Workshops fuer Mitarbeitende der Uni** gehalten. Macht aus der Referenz
+mehr als Dienstleistung - naemlich Schulung. Umfang und Zeitraum noch offen.
+
+### Freigabe
+Oeffentliche Einrichtung mit Vergaberegeln und Freigabeketten. **Schriftliche Freigabe noetig**,
+bevor der Name auf die Seite geht. Ansprechpartnerin: Jantje von Reeken.
+
+---
+
+## Aschenbeck & Aschenbeck Projektentwicklung
+
+**Immobilienfotos.** Logo liegt vor, Beispielfoto gesichtet - gute Qualitaet, echtes eigenes
+Material (im Gegensatz zum Stockmaterial auf der aktuellen Seite).
+
+Keine Zahlen noetig, das wird eine reine Bildreferenz. Ein Projektentwickler als Kunde ist
+ausserdem ein starkes Signal fuer das Zielsegment.
+
+Offen: nur Fotos oder auch Video/Drohne/Social - seit wann - wie viele Objekte.
+
 ## Offene Punkte
 
 - [ ] WAV: Conversion-Definition + „Campaign #1" klären
@@ -125,3 +188,5 @@ ein Beleg. Bis dahin entweder Insights-Zahl nehmen oder Zwillis aus der Kopfleis
 - [ ] Eule: Views zusammenrechnen oder Insights-Screenshot
 - [ ] Haubner: Zitat und Logo auf der Startseite — bleiben oder runter?
 - [ ] Kopfleiste der Startseite: zwei der drei Zahlen sind geschätzt (Zwillis, WinHadi) → ersetzen
+- [ ] Uni: schriftliche Freigabe (von Reeken), Umfang/Zeitraum der Workshops
+- [ ] Aschenbeck: Umfang, seit wann, Anzahl Objekte
