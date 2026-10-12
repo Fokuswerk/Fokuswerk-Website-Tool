@@ -96,6 +96,8 @@ Fokuswerk hat **die Filme gedreht, die Anzeigen aber nicht geschaltet.** Zahlen 
 Social Media, gelegentlich Anzeigen für Events, **2× Personalgewinnung**.
 CMS-Zahlen laut Thees zutreffend: **69 Bewerbungen**, 290K Aufrufe, +632 % Engagement.
 
+**Material:** Video vorhanden (`Medien/patio.mp4`, 25 s, Bar-Atmosphaere, gute Qualitaet).
+
 Offen: Zeitraum der 69 Bewerbungen · wurde daraus eingestellt (wäre die stärkere Zahl) ·
 Bildmaterial.
 
@@ -212,6 +214,21 @@ Die Seite verspricht aber "Marketing, das messbar Kunden bringt". Der nachweisba
 steht nirgends. Im Ammerland ist Fachkraeftemangel das Thema Nummer eins beim Mittelstaendler.
 
 **Entscheidung offen (Thees):** Positionierung um Recruiting erweitern - oder bewusst nicht.
+
+---
+
+## Medien im Projekt (`Medien/`)
+
+Alle Videos sind fuers Web umgerechnet (1080p, H.264 CRF 26, faststart) und haben ein Standbild
+fuer `poster`, damit vor dem Klick nichts geladen wird.
+
+| Datei | Inhalt | Vorher | Nachher | Format |
+|---|---|---:|---:|---|
+| `patio.mp4` | Patio, Bar-Atmosphaere | 205,4 MB | **6,6 MB** | 1920x1080, 25,2 s |
+| `thieme.mp4` | Thieme, Recruiting Ausbildung | 140,6 MB | **4,9 MB** | 1080x1920, 23,5 s |
+
+Dazu `patio-standbild.jpg` und `thieme-standbild.jpg`.
+Fuer stumme Schleifen als Gestaltungselement liessen sich beide nochmal deutlich kleiner rechnen.
 
 ## Offene Punkte
 
