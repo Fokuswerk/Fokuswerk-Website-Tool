@@ -230,6 +230,51 @@ fuer `poster`, damit vor dem Klick nichts geladen wird.
 Dazu `patio-standbild.jpg` und `thieme-standbild.jpg`.
 Fuer stumme Schleifen als Gestaltungselement liessen sich beide nochmal deutlich kleiner rechnen.
 
+---
+
+## Gebaut: Fallstudien-Struktur im Projekt (12.10.2026)
+
+**CMS-Sammlung "Fallstudien"** (`VK8MrrWH8`), 15 Felder: Kunde, Kurzbeschreibung, Branche, Ort,
+Zeitraum, Leistungen, Kennzahlen (Liste aus Wert/Text/Quelle, max. 3), Beleg, Logo, Titelbild,
+SEO Titel, SEO Beschreibung sowie Ausgangslage/Vorgehen/Ergebnis als Fliesstext.
+
+**Detailseite** `/arbeiten/:Fallstudien` - Aufbau: Kopf (Marke, H1, Kurzbeschreibung, Angaben),
+dunkles Kennzahlenband, drei Textbloecke, Abschluss-Baustein von der Ratgeber-Seite uebernommen.
+Drei Breakpoints (1200/810/390), Seitentitel und Beschreibung aus dem CMS.
+
+**Liste auf `/arbeiten`** zwischen "Alle Projekte" und "07 Ergebnisse", Abschnitt
+"[ MIT ZAHLEN BELEGT ]", verlinkt auf die Detailseite ueber den Slug.
+
+**Erste Fallstudie live:** https://frank-site-485713.framer.app/arbeiten/wav-westerstede
+Geprueft: genau eine H1, Titel aus dem CMS, keine Tippfehler, 7,9 Bildschirme, 3 Handlungsaufrufe.
+
+### Gelernte Framer-Eigenheiten
+- Variablentyp im DSL heisst `richtext`, nicht `formattedText` (so meldet es die API zurueck).
+- Listenfelder werden per Kleinschreibung des Feldnamens gesetzt: `$control__<array>.0.wert`.
+- Im Wiederholungsbereich bindet man **ohne** Praefix: `var(--variable-<itemFeldId>)`.
+- Bei einer CMS-Liste erst `collectionList.collection` setzen, **dann** die Felder binden.
+- Ein Seiten-Breakpoint braucht `height="auto"`, sonst ueberlappen die Abschnitte.
+- Textstile bringen eine Farbe mit; `textColor` setzt sich aber durch (auf dunklem Grund noetig).
+- H1 entsteht ueber den Textstil (`Artikel H1`), nicht ueber ein tag-Attribut.
+
+---
+
+## Offene Logos fuers Kundenrad
+
+Thees hat am 12.10. nachgereicht - fehlen alle noch im Karussell auf der Startseite:
+
+| Kunde | Status |
+|---|---|
+| Jan Wandscher (Steinmetz) | Logo erhalten |
+| Optik am Haarenufer | Logo erhalten, Kunde |
+| Praxis fuer Zahnheilkunde (Brahms/Preuss/Reinhard-Poneleit) | Logo erhalten |
+| oh ton | Logo erhalten |
+| Thieme Augenoptik . Hoerakustik | Logo erhalten |
+| Aschenbeck & Aschenbeck | Logo erhalten |
+
+**Achtung:** Laut `Bestand.md` lassen sich Bilder ueber den Agenten nicht hochladen, nur direkt
+im Framer-Editor. Muss vor dem Einbau geprueft werden.
+
 ## Offene Punkte
 
 - [ ] WAV: Conversion-Definition + „Campaign #1" klären
@@ -243,3 +288,5 @@ Fuer stumme Schleifen als Gestaltungselement liessen sich beide nochmal deutlich
 - [ ] Aschenbeck: Umfang, seit wann, Anzahl Objekte
 - [ ] Thieme: Leads/Budget/Zeitraum aus dem Meta-Konto
 - [ ] Grundsatzfrage: Recruiting in die Positionierung aufnehmen?
+- [ ] Sechs Logos ins Kundenrad (Wandscher, Optik am Haarenufer, Zahnheilkunde, oh ton, Thieme, Aschenbeck)
+- [ ] Optik am Haarenufer: Leistungen, Zahlen, Material abfragen
