@@ -39,24 +39,29 @@ interface KundenradProps {
 }
 
 const STANDARD: Logo[] = [
-    { name: "Universität Oldenburg", bild: { src: "https://framerusercontent.com/images/ocpMb1uBS9G1MX8JFLQQ4EeyAqg.svg", alt: "Carl von Ossietzky Universität Oldenburg" } },
-    { name: "Aschenbeck & Aschenbeck", bild: { src: "https://framerusercontent.com/images/xiEi5GbJLK1IefRbTXjpOhJddBA.png", alt: "Aschenbeck & Aschenbeck Projektentwicklung" } },
-    { name: "Optik am Haarenufer", bild: { src: "https://framerusercontent.com/images/HkiJfOlOLDgzeGlw4sDYGSZBY.png", alt: "Optik am Haarenufer" } },
-    { name: "Patio", bild: { src: "https://framerusercontent.com/images/b5FitHUfK0WXOC82nswyopSXAE4.png", alt: "Patio" } },
-    { name: "Eule Oldenburg", bild: { src: "https://framerusercontent.com/images/hwiHxUn4sk0sKntMVFfGOBrFXyM.png", alt: "Eule Oldenburg" } },
-    { name: "Vapiano", bild: { src: "https://framerusercontent.com/images/z2d8x39K5Hik4HhDviq1nzXxblw.svg", alt: "Vapiano" } },
+    // Reihenfolge = Reihenfolge der Ankunft vorn. Das Rad dreht von Platz 0 rueckwaerts
+    // durch die Liste (0, dann der letzte, dann der vorletzte …). Platz 0 steht vorn,
+    // solange der Abschnitt gerade erst ins Bild kommt; danach schiebt der Scroll die
+    // hinteren Plaetze nach vorn. Deshalb stehen die wichtigsten Kunden am ENDE der Liste
+    // und die schwaechsten in der Mitte (dort liegt die Rueckseite des Rings).
     { name: "WAV Westerstede", bild: { src: "https://framerusercontent.com/images/ovYXtpdpa5coqVaUBagVbnyeWG8.png", alt: "WAV Westerstede" } },
+    { name: "Zwillis Padel", bild: { src: "https://framerusercontent.com/images/un5qWoV4NXGEowgSuUw3npjfSw.png", alt: "Zwillis Padel" } },
+    { name: "Between the Sheets", bild: { src: "https://framerusercontent.com/images/T82jIhno8JIhUbjsFmJrpnvDns.png", alt: "Between the Sheets" } },
+    { name: "WinHadi", bild: { src: "https://framerusercontent.com/images/lpvKNedYoddiG0Hgipp3ZIcaNhc.png", alt: "WinHadi" } },
+    { name: "Haubner Group", bild: { src: "https://framerusercontent.com/images/ImJ661WggkxOkCIm5Zww4wM6pc.png", alt: "Haubner Group" } },
+    { name: "oh ton", bild: { src: "https://framerusercontent.com/images/EXbRgAhznVjB26ayY7mqIeoArY.png", alt: "oh ton" } },
+    { name: "Praxis für Zahnheilkunde", bild: { src: "https://framerusercontent.com/images/yOJ7kT1oBU9msfgNVFVZnpQ86Vw.png", alt: "Praxis für Zahnheilkunde Bad Zwischenahn" } },
+    { name: "Optik am Haarenufer", bild: { src: "https://framerusercontent.com/images/HkiJfOlOLDgzeGlw4sDYGSZBY.png", alt: "Optik am Haarenufer" } },
+    { name: "Hotel Alte Werft", bild: { src: "https://framerusercontent.com/images/4LLFl4HNCVq8Sy51vAuMn8jlpRg.png", alt: "Hotel Alte Werft" } },
     { name: "Thieme Augenoptik", bild: { src: "https://framerusercontent.com/images/WfCSCZPXfaAXp2VPZE0PBufC8yQ.png", alt: "Thieme Augenoptik und Hörakustik" } },
     { name: "Jan Wandscher", bild: { src: "https://framerusercontent.com/images/sl4zvA1YqIxvdAmMeCyFDq85iUA.png", alt: "Steinmetz Jan Wandscher" } },
-    { name: "Praxis für Zahnheilkunde", bild: { src: "https://framerusercontent.com/images/yOJ7kT1oBU9msfgNVFVZnpQ86Vw.png", alt: "Praxis für Zahnheilkunde Bad Zwischenahn" } },
-    { name: "Hotel Alte Werft", bild: { src: "https://framerusercontent.com/images/4LLFl4HNCVq8Sy51vAuMn8jlpRg.png", alt: "Hotel Alte Werft" } },
-    { name: "Zwillis Padel", bild: { src: "https://framerusercontent.com/images/un5qWoV4NXGEowgSuUw3npjfSw.png", alt: "Zwillis Padel" } },
+    { name: "Patio", bild: { src: "https://framerusercontent.com/images/b5FitHUfK0WXOC82nswyopSXAE4.png", alt: "Patio" } },
+    { name: "Vapiano", bild: { src: "https://framerusercontent.com/images/z2d8x39K5Hik4HhDviq1nzXxblw.svg", alt: "Vapiano" } },
+    { name: "Eule Oldenburg", bild: { src: "https://framerusercontent.com/images/hwiHxUn4sk0sKntMVFfGOBrFXyM.png", alt: "Eule Oldenburg" } },
     { name: "Al Pappagallo", bild: { src: "https://framerusercontent.com/images/ARTw4kJp7Srb7GQRCqUUlt5m8.png", alt: "Ristorante Al Pappagallo" } },
-    { name: "Haubner Group", bild: { src: "https://framerusercontent.com/images/ImJ661WggkxOkCIm5Zww4wM6pc.png", alt: "Haubner Group" } },
-    { name: "WinHadi", bild: { src: "https://framerusercontent.com/images/lpvKNedYoddiG0Hgipp3ZIcaNhc.png", alt: "WinHadi" } },
-    { name: "Between the Sheets", bild: { src: "https://framerusercontent.com/images/T82jIhno8JIhUbjsFmJrpnvDns.png", alt: "Between the Sheets" } },
-    { name: "oh ton", bild: { src: "https://framerusercontent.com/images/EXbRgAhznVjB26ayY7mqIeoArY.png", alt: "oh ton" } },
-]
+    { name: "Aschenbeck & Aschenbeck", bild: { src: "https://framerusercontent.com/images/xiEi5GbJLK1IefRbTXjpOhJddBA.png", alt: "Aschenbeck & Aschenbeck Projektentwicklung" } },
+    { name: "Universität Oldenburg", bild: { src: "https://framerusercontent.com/images/ocpMb1uBS9G1MX8JFLQQ4EeyAqg.svg", alt: "Carl von Ossietzky Universität Oldenburg" } },
+]]
 
 const HAND =
     "M21.8636 2.36424C21.174 2.36324 20.4953 2.53598 19.89 2.86651C19.6713 2.18908 19.2815 1.57954 18.7582 1.09688C18.235 0.614216 17.596 0.274761 16.9032 0.0857452C16.2103 -0.052057 15.487 -0.0338894 14.8032 0.164098C14.1195 0.362085 13.4984 0.733191 13 1.24151C12.4249 0.654556 11.688 0.252193 10.8833 0.0857452C10.0786 -0.0807031 9.24254 -0.00369412 8.48178 0.306951C7.72102 0.617595 7.07002 1.1478 6.61182 1.82993C6.15361 2.51207 5.90897 3.31523 5.90909 4.13697V7.09151H4.13636C3.03933 7.09151 1.98723 7.52731 1.21151 8.30303C0.435794 9.07875 0 10.1308 0 11.2279V13.0006C0 16.4484 1.36964 19.755 3.80761 22.193C6.24559 24.631 9.55219 26.0006 13 26.0006C16.4478 26.0006 19.7544 24.631 22.1924 22.193C24.6304 19.755 26 16.4484 26 13.0006V6.50061C26 5.40357 25.5642 4.35147 24.7885 3.57575C24.0128 2.80004 22.9607 2.36424 21.8636 2.36424ZM23.6364 13.0006C23.6364 15.8215 22.5158 18.5269 20.521 20.5217C18.5263 22.5164 15.8209 23.637 13 23.637C10.1791 23.637 7.47366 22.5164 5.47896 20.5217C3.48425 18.5269 2.36364 15.8215 2.36364 13.0006V11.2279C2.36364 10.7577 2.55041 10.3068 2.88286 9.97437C3.21531 9.64192 3.66621 9.45515 4.13636 9.45515H5.90909V13.0006C5.90909 13.314 6.0336 13.6146 6.25524 13.8363C6.47687 14.0579 6.77747 14.1824 7.09091 14.1824C7.40435 14.1824 7.70495 14.0579 7.92658 13.8363C8.14821 13.6146 8.27273 13.314 8.27273 13.0006V4.13697C8.27273 3.66681 8.4595 3.21591 8.79195 2.88346C9.1244 2.55101 9.5753 2.36424 10.0455 2.36424C10.5156 2.36424 10.9665 2.55101 11.299 2.88346C11.6314 3.21591 11.7273 3.66681 11.7273 4.13697V8.27333C11.7273 8.58677 11.8518 8.88737 12.0734 9.109C12.2951 9.33064 12.6466 9.45515 13 9.45515C13.3134 9.45515 13.614 9.33064 13.8357 9.109C14.0573 8.88737 14.1818 8.58677 14.1818 8.27333V4.13697C14.1818 3.66681 14.3686 3.21591 14.701 2.88346C15.0335 2.55101 15.4844 2.36424 15.9545 2.36424C16.4247 2.36424 16.8756 2.55101 17.2081 2.88346C17.5405 3.21591 17.7273 3.66681 17.7273 4.13697V8.27333C17.7273 8.58677 17.8518 8.88737 18.0734 9.109C18.2951 9.33064 18.5957 9.45515 18.9091 9.45515C19.2225 9.45515 19.5231 9.33064 19.7448 9.109C19.9664 8.88737 20.0909 8.58677 20.0909 8.27333V6.50061C20.0909 6.03045 20.2777 5.57955 20.6101 5.2471C20.9426 4.91465 21.3935 4.72788 21.8636 4.72788C22.3338 4.72788 22.7847 4.91465 23.1171 5.2471C23.4496 5.57955 23.6364 6.03045 23.6364 6.50061V13.0006Z"
