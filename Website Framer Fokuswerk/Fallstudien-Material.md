@@ -387,9 +387,25 @@ Quellen waren 7728×5152 bei 21–26 MB je Bild; die Originale liegen weiter in 
 
 Dazu `logos/` (sechs Kundenlogos) und `wav/` (drei Screenshots).
 
-**Zuordnung offen:** `sunset-sounds.mp4` gehört zu keinem Kunden in der Liste oben — das Video
-zeigt eine Rooftop-Veranstaltung am Atlantic Grand Hotel Bremen. Die Datei kam aus einer
-parallelen Sitzung in den Ordner.
+**`sunset-sounds.mp4` — zugeordnet und gesperrt (13.10.2026):** Der Film ist für die
+**Twenty Eight Agency** (Events & Brand Activation, Bremen, twentyeightagency.de) entstanden,
+Veranstaltung „Sunset Sounds · Rooftop Edition" am Atlantic Grand Hotel Bremen. Die
+Zusammenarbeit ist beendet, Thees will die Agentur **nicht bewerben**.
+
+**Der Film lässt sich nicht ohne Nennung zeigen.** Geprüft Bild für Bild:
+- 0–5 s: Logo-Lockup „SUNSET SOUNDS 21+ Rooftop Edit", dazu „ATLANTIC GRAND HOTEL Bremen" am Gebäude
+- ~6 s: das **Logo „TWENTY EIGHT AGENCY"** groß oben rechts
+- ~7 s: der Sprechertext nennt die Agentur, der eingebrannte Untertitel zeigt „EIGHT AGENCY"
+- durchgehend: eingebrannte Untertitel in jeder Sekunde (bei 11–38 s alle drei Sekunden geprüft),
+  die Veranstaltung und das Hotel werden mehrfach genannt
+
+Ein markenfreier Schnitt bliebe bei wenigen Sekunden Partybildern ohne Untertitel (ab ~41 s) —
+damit wäre genau das weg, was den Film gut macht. **Entscheidung: nicht einbauen.** Material für
+die Videoflächen gibt es genug (Eule, Patio, Zwillis, Wandscher, Thieme).
+
+**Was bleibt, ist das Format, nicht der Film:** zwei Moderierende, Dachterrasse, Karaoke-Untertitel,
+60 Sekunden Event-Ankündigung. Das Muster können wir für einen Kunden neu drehen, den wir nennen
+dürfen.
 
 ---
 
