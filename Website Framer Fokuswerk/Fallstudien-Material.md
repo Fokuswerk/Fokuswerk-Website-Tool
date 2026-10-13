@@ -521,6 +521,34 @@ einmal, Haarlinien und Pfeile erhalten; am Handy 311 px breit, kein Querlauf.
 > stille Vervielfältigung der ersten Zeile. Wer eine Liste an eine Sammlung bindet, muss beides
 > setzen — und danach zählen, wie viele Zeilen herauskommen.
 
+### Fallstudien-Liste als Karten (13.10.2026)
+
+Aus den drei Textzeilen unter „[ MIT ZAHLEN BELEGT ]" sind drei Karten geworden — in derselben
+Sprache wie die Leistungskarten der Startseite:
+
+| Bestandteil | Quelle |
+|---|---|
+| Titelbild oben, Verhältnis 1,6, Radius 14 | CMS-Feld *Titelbild* |
+| Branche als orange Marke | *Branche* |
+| Kundenname | *Kunde* |
+| Kurzbeschreibung | *Kurzbeschreibung* |
+| Haarlinie, darunter Leitzahl + Pfeil | **neue Felder** *Leitzahl* / *Leitzahl Beschriftung* |
+
+Karte: dunkel (Tinte), Radius 20, Innenabstand 12, Hover hebt sie leicht an. Verlinkt auf
+`/arbeiten/:slug`. Drei Spalten auf dem Desktop, Umbruch erlaubt, auf dem Handy gestapelt.
+
+**Zwei neue CMS-Felder:** `Leitzahl` (`RxSawVefJ`) und `Leitzahl Beschriftung` (`Srygdzs5w`).
+Gefüllt mit der jeweils ersten Kennzahl: WAV 5,30 € je Kontaktaufnahme · Patio 69 Bewerbungen ·
+Wandscher 9:15 Minuten Lesezeit. Eine Karte ohne Zahl wäre in einem Abschnitt namens „mit Zahlen
+belegt" eine verschenkte Fläche.
+
+**Gleiche Kartenhöhe:** `stackAlignment="stretch"` lehnt Framer ab (nur start/center/end). Gleiche
+Höhe entsteht deshalb über **Mindesthöhen** auf den beiden variablen Texten: Kurzbeschreibung
+`minHeight 142px`, Zahlen-Beschriftung `minHeight 42px`. Live gemessen bei 1280 px:
+alle drei Karten **317 × 540**, Oberkanten gleich. Am Handy 311 × 520, kein Querlauf.
+Achtung bei neuen Fallstudien: Wird die Kurzbeschreibung deutlich länger als die bisherigen,
+wächst diese eine Karte — dann entweder den Text kürzen oder die Mindesthöhe nachziehen.
+
 ### Noch offen auf `/arbeiten`
 
 Die Liste der Fallstudien ist drei nackte Textzeilen mit Haarlinie — kein Bild, kein Pfeil, kein
@@ -606,7 +634,6 @@ auf einem FrameNode ignoriert `altText` stillschweigend.
 - [ ] Thieme: Leads/Budget/Zeitraum aus dem Meta-Konto
 - [ ] Wandscher: die 17.100 Aufrufe per Screenshot aus dem Konto bestätigen (stehen schon live)
 - [ ] Wandscher-Fallstudie: Absprungrate 51 % — steht als offener Punkt auf der Seite, also auch angehen
-- [ ] `/arbeiten`: Fallstudien-Liste aufwerten (Titelbild, Pfeil, klickbare Karte statt Textzeile)
 - [ ] `/arbeiten` Abschnitt „Ergebnisse": geschätzte Zahlen (Zwillis, WinHadi) gegen die belegten tauschen
 - [ ] Between the Sheets: Umfang des Auftrags, Freigabe — ist jetzt als Bildreferenz möglich
 - [ ] `sunset-sounds.mp4` einem Kunden zuordnen (Atlantic Grand Hotel Bremen?)
