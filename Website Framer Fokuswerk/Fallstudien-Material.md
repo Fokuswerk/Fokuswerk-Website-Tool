@@ -657,13 +657,12 @@ auf einem FrameNode ignoriert `altText` stillschweigend.
 - [ ] Eule: Views zusammenrechnen oder Insights-Screenshot
 - [ ] Eule: Freigabe für die Leffers/Hugo-Kooperation — fremde Marken im Film
 - [ ] Haubner: Zitat und Logo auf der Startseite — bleiben oder runter?
-- [ ] Kopfleiste der Startseite: zwei der drei Zahlen sind geschätzt (Zwillis, WinHadi) → ersetzen
+- [x] Kopfleiste/Ergebnisse: geschätzte Zahlen ersetzt (13.10.) — jetzt 5,30 € · 9:15 · 69, auf Startseite und /arbeiten
 - [ ] Uni: schriftliche Freigabe (von Reeken), Umfang/Zeitraum der Workshops
 - [ ] Aschenbeck: Umfang, seit wann, Anzahl Objekte
 - [ ] Thieme: Leads/Budget/Zeitraum aus dem Meta-Konto
 - [ ] Wandscher: die 17.100 Aufrufe per Screenshot aus dem Konto bestätigen (stehen schon live)
 - [ ] Wandscher-Fallstudie: Absprungrate 51 % — steht als offener Punkt auf der Seite, also auch angehen
-- [ ] `/arbeiten` Abschnitt „Ergebnisse": geschätzte Zahlen (Zwillis, WinHadi) gegen die belegten tauschen
 - [ ] Between the Sheets: Umfang des Auftrags, Freigabe — ist jetzt als Bildreferenz möglich
 - [ ] `sunset-sounds.mp4` einem Kunden zuordnen (Atlantic Grand Hotel Bremen?)
 - [ ] Drei schwere Videos auf 720 Breite nachrechnen, sobald der Einbauort feststeht
