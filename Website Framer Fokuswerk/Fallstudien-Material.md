@@ -578,26 +578,55 @@ Der Hinweis in `Bestand.md`, Bilder liessen sich nur im Editor hochladen, stimmt
 `framer.uploadImage({ image: "data:image/png;base64,..." })` funktioniert. Ein Objekt aus
 `{bytes, mimeType}` ueberlebt die RPC-Grenze dagegen nicht.
 
-Reihenfolge nach Ansage von Thees (12.10.) — die wichtigsten zuerst, weil Index 0 beim Laden
-vorne im Ring steht:
+### Korrigierte Reihenfolge (13.10.2026)
 
-1. Universität Oldenburg
-2. Aschenbeck & Aschenbeck
-3. Optik am Haarenufer
-4. Patio
-5. Eule Oldenburg
-6. Vapiano
-7. WAV Westerstede
-8. Thieme Augenoptik
-9. Jan Wandscher
-10. Praxis für Zahnheilkunde
-11. Hotel Alte Werft
-12. Zwillis Padel
-13. Al Pappagallo
-14. Haubner Group
-15. WinHadi
-16. Between the Sheets
-17. oh ton
+Die Annahme vom 12.10. — „die wichtigsten zuerst, weil Index 0 beim Laden vorne im Ring steht" —
+war **falsch**. Thees' Befund: Beim Hinunterscrollen standen **WinHadi, Between the Sheets und
+oh ton** im Fokus, die wichtigen Logos waren schon durch.
+
+**Die Mechanik dahinter**
+- Das Rad läuft nicht beim Laden los: ein IntersectionObserver hält es an, solange der Abschnitt
+  nicht im Bild ist. Beim Ankommen steht es bei Drehung 0, vorn steht **Platz 0**.
+- Danach dreht es **rückwärts** durch die Liste: 0 → letzter → vorletzter → …
+  (vordere Karte = `round(-drehung / schritt)`).
+- Der **Scroll-Schub** (0,035° je Pixel) zeigt in dieselbe Richtung: Wer scrollt, schiebt das Rad
+  weiter durch die Liste. Deshalb war beim Ankommen das **Ende** der Liste vorn.
+- Eigendrehung bei Tempo 1,5: 9°/s, bei 17 Logos rund **2,4 s je Logo**.
+
+**Also gehören die wichtigsten Kunden ans Ende der Liste und die schwächsten in die Mitte**
+(dort liegt die Rückseite des Rings).
+
+| Platz | Kunde | wann vorn |
+|---:|---|---|
+| 0 | WAV Westerstede | steht vorn, wenn der Abschnitt ins Bild kommt |
+| 16 | Universität Oldenburg | 1. Ankunft |
+| 15 | Aschenbeck & Aschenbeck | 2. |
+| 14 | Al Pappagallo | 3. |
+| 13 | Eule Oldenburg | 4. |
+| 12 | Vapiano | 5. |
+| 11 | Patio | 6. |
+| 10 | Jan Wandscher | 7. |
+| 9 | Thieme Augenoptik | 8. |
+| 8 | Hotel Alte Werft | 9. |
+| 7 | Optik am Haarenufer | 10. |
+| 6 | Praxis für Zahnheilkunde | 11. |
+| 5 | oh ton | 12. |
+| 4 | Haubner Group | 13. |
+| 3 | WinHadi | 14. |
+| 2 | Between the Sheets | 15. |
+| 1 | Zwillis Padel | 16. |
+
+**An der Live-Seite gemessen** (1280 px, Ruhezustand, Mitte bei 640): Eule −30 · Al Pappagallo
+−15 · Vapiano 44 · Aschenbeck 114 · **Uni 359** · **WAV 677 (vorn)** · Zwillis 984 ·
+Between the Sheets 1206 · WinHadi 1308. Die starken Logos stehen links und laufen ein, die
+schwachen rechts und ziehen ab.
+
+**Prüfhinweis:** Im Browserfenster des Agenten dreht sich das Rad nicht — `requestAnimationFrame`
+läuft nur in einem sichtbar gezeichneten Fenster. Die Reihenfolge prüft man deshalb an den
+x-Positionen der Logos im Ruhezustand, nicht an der Animation.
+
+**Offen:** Die Uni steht jetzt an der auffälligsten Stelle, die schriftliche Freigabe von
+Frau von Reeken fehlt noch. Kommt sie nicht, muss das Logo raus und Aschenbeck rückt vor.
 
 Die Liste steht in `code/Kundenrad.tsx` im Array `STANDARD`. Der Property-Control
 `maxCount: 16` begrenzt nur die Editor-Oberflaeche, gerendert werden alle Eintraege.
