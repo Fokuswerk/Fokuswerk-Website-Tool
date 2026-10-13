@@ -684,7 +684,7 @@ function Schalter(props: { wert: "websites" | "kampagnen"; setWert: (w: "website
                             display: "inline-flex",
                             alignItems: "flex-start",
                             gap: 6,
-                            padding: "11px 22px 12px",
+                            padding: schmal ? "15px 22px 16px" : "11px 22px 12px",
                             borderRadius: 999,
                             fontFamily: SCHRIFT,
                             fontWeight: 500,

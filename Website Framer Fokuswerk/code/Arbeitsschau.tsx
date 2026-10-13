@@ -762,7 +762,7 @@ function Schalter(props: { wert: Filter; setWert: (f: Filter) => void; akzent: s
                             aria-selected={an}
                             type="button"
                             onClick={() => setWert(f.id)}
-                            style={{ all: "unset", position: "relative", cursor: "pointer", padding: schmal ? "11px 11px 12px" : "11px 18px 12px", borderRadius: 999, display: "inline-flex", alignItems: "flex-start", gap: 5, flexShrink: 0, whiteSpace: "nowrap", WebkitTapHighlightColor: "transparent" }}
+                            style={{ all: "unset", position: "relative", cursor: "pointer", padding: schmal ? "15px 13px 16px" : "11px 18px 12px", borderRadius: 999, display: "inline-flex", alignItems: "flex-start", gap: 5, flexShrink: 0, whiteSpace: "nowrap", WebkitTapHighlightColor: "transparent" }}
                         >
                             {an ? <motion.span layoutId="arbeitsschau-marke" transition={{ type: "spring", stiffness: 380, damping: 34 }} style={{ position: "absolute", inset: 0, borderRadius: 999, background: PAPIER }} /> : null}
                             <span style={{ position: "relative", ...text(schmal ? 13.5 : 14.5, an ? TINTE : "rgba(245,243,239,0.72)"), lineHeight: 1, whiteSpace: "nowrap", transition: "color 0.4s" }}>{f.text}</span>
