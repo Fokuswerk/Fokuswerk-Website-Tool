@@ -56,9 +56,11 @@ const SCHRIFT = "Inter, 'Inter Placeholder', system-ui, sans-serif"
 const PAPIER = "rgb(245, 243, 239)"
 
 const STANDARD: Beleg[] = [
-    { wert: 156, vor: "+", nach: " %", text: "mehr Buchungen", kunde: "Zwillis Padel" },
+    // Nur belegte Zahlen. Die früheren Werte (+156 % Zwillis, +72 % WinHadi) waren geschätzt und
+    // standen damit ausgerechnet an der auffälligsten Stelle der Seite. Ersetzt am 14.10.2026.
+    { wert: 439, vor: "", nach: "", text: "Kontaktaufnahmen", kunde: "WAV Westerstede" },
     { wert: 69, vor: "", nach: "", text: "Bewerbungen", kunde: "Patio" },
-    { wert: 72, vor: "+", nach: " %", text: "länger auf der Website", kunde: "WinHadi" },
+    { wert: 17100, vor: "", nach: "", text: "Aufrufe für einen Film", kunde: "Jan Wandscher" },
 ]
 
 function Zahl(props: { b: Beleg; verzug: number; statisch: boolean }) {
@@ -119,7 +121,10 @@ export default function Auftaktleiste(props: AuftaktleisteProps) {
     // Drei Belege nebeneinander lassen auf dem Handy je rund 120 px — der dritte wurde dort
     // abgeschnitten. Zwei haben Platz, und dieselben Zahlen stehen weiter unten im Abschnitt
     // „Ergebnisse" noch einmal in Ruhe.
-    const belege = (props.belege && props.belege.length ? props.belege : STANDARD).slice(0, schmal ? 2 : 3)
+    // Bewusst ohne Instanz-Feld: Eine Kopie der Liste am Element im Editor hat die Werte aus dem
+    // Code überschrieben — dadurch standen die geschätzten Zahlen (+156 %, +72 %) weiter live,
+    // obwohl sie hier längst ersetzt waren. Die Zahlen stehen jetzt nur noch an dieser einen Stelle.
+    const belege = STANDARD.slice(0, schmal ? 2 : 3)
     const [los, setLos] = useState(statisch)
     useEffect(() => (statisch ? undefined : nachVorspann(() => setLos(true))), [statisch])
 
@@ -173,22 +178,6 @@ export default function Auftaktleiste(props: AuftaktleisteProps) {
 }
 
 addPropertyControls(Auftaktleiste, {
-    belege: {
-        type: ControlType.Array,
-        title: "Belege",
-        maxCount: 3,
-        control: {
-            type: ControlType.Object,
-            controls: {
-                wert: { type: ControlType.Number, title: "Wert", defaultValue: 100 },
-                vor: { type: ControlType.String, title: "Vor", defaultValue: "" },
-                nach: { type: ControlType.String, title: "Nach", defaultValue: "" },
-                text: { type: ControlType.String, title: "Text", defaultValue: "" },
-                kunde: { type: ControlType.String, title: "Kunde", defaultValue: "" },
-            },
-        },
-        defaultValue: STANDARD,
-    },
     hinweis: { type: ControlType.String, title: "Hinweis", defaultValue: "Scrollen" },
     akzent: { type: ControlType.Color, title: "Akzent", defaultValue: "rgb(255, 90, 31)" },
 })
