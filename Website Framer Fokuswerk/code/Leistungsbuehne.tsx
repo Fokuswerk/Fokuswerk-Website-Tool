@@ -48,6 +48,10 @@ const BILDER = {
     werkzeug: U("photo-1608613304899-ea8098577e38"),
     wav: "https://framerusercontent.com/images/ArC0EnCXXAPEbwWsXDR5b7YS2eg.webp",
     glanzwerk: "https://framerusercontent.com/images/D5H2GC4EWAAp7sGmDPH80jVOXB4.webp",
+    // Handy-Ansicht von steinmetz-wandscher.de (echtes Kundenprojekt, Stand 14.10.2026).
+    // Bewusst die Handy-Fassung: Die Karte verspricht "Fürs Handy gebaut", ein hineingequetschtes
+    // Desktop-Layout im Telefonrahmen wäre das Gegenteil des Versprechens.
+    wandscher: "https://framerusercontent.com/images/0FBtQOHljxrUb6isSeWD4GvBo.jpg",
 }
 
 // Bilder erst laden, wenn die Bühne näherkommt. CSS-Hintergründe lädt der Browser sonst sofort beim
@@ -385,7 +389,7 @@ export function Seitenschau(props: { aktiv: boolean; los: boolean; schmal: boole
                 }}
             >
                 <div style={{ position: "relative", width: "100%", height: "100%", borderRadius: 16, overflow: "hidden", background: HELL }}>
-                    <Rolle bild={BILDER.glanzwerk} alt="Website der Gebäudereinigung Glanzwerk auf dem Handy" hoehe={schmal ? 380 : 460} dauer={aktiv ? 8 : 18} laeuft={laeuft} statisch={statisch} />
+                    <Rolle bild={BILDER.wandscher} alt="Website des Steinmetzbetriebs Jan Wandscher auf dem Handy" hoehe={schmal ? 380 : 460} dauer={aktiv ? 8 : 18} laeuft={laeuft} statisch={statisch} />
                     <span style={{ position: "absolute", left: "50%", top: 5, width: 34, height: 9, marginLeft: -17, borderRadius: 9, background: TINTE }} />
                 </div>
             </motion.div>

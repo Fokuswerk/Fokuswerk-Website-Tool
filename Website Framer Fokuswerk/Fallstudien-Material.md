@@ -664,6 +664,69 @@ Laufzeit zusammenbauen, z. B. `"f" + String.fromCharCode(252) + "r"`. Ueber die 
 (`setAttributes` auf Sammlungseintraegen) bleiben Umlaute dagegen erhalten — `setAttributes`
 auf einem FrameNode ignoriert `altText` stillschweigend.
 
+## Filme auf der Website (14.10.2026)
+
+### Gebaut
+
+**Code-Baustein `Film.tsx`** (Framer-Datei `g8aqdub`): zeigt vor dem Klick nur das Standbild.
+Das `<video>` entsteht erst beim Antippen, dazu `preload="none"`. Ein 7-MB-Film auf einer Seite,
+die niemand abspielt, kostet damit exakt null. Kein YouTube/Vimeo — deren Player lädt 3,7 MB vor
+dem ersten Klick. Ohne Datei und ohne Standbild zeichnet der Baustein nichts.
+
+**Vier CMS-Felder** in der Sammlung Fallstudien: `Film` (Datei, mp4), `Film Standbild` (Bild),
+`Film Text` (Bildunterschrift), `Film Zeigen` (Schalter).
+
+**Abschnitt „03b Film"** auf `/arbeiten/:Fallstudien`, zwischen Fließtext und Einblicken:
+Marke „[ FILM ]", dunkle Karte mit Lichtfeld, Film mittig (380 px, am Handy 300). Die Sichtbarkeit
+hängt am Schalter `Film Zeigen` — bei WAV ist er aus, dort erscheint nichts. Live geprüft:
+Wandscher zeigt den Abschnitt, WAV nicht, und im HTML steht **kein** `<video>` und **kein** mp4.
+
+**Webfassungen gerechnet** (720 px, CRF 27, faststart) plus Standbild:
+
+| Film | vorher | 720er | Standbild |
+|---|---:|---:|---:|
+| Wandscher, Nadorster Straße | 17,23 MB | 7,50 MB | 120 KB |
+| Zwillis Padel | 10,25 MB | 4,68 MB | 68 KB |
+| Patio, Sparkling Bubbles | 2,71 MB | 1,53 MB | 61 KB |
+
+Die Standbilder und Bildunterschriften sind gesetzt (Wandscher und Patio).
+
+### Offen: die drei Videodateien
+
+**`framer.uploadFile` nimmt keine Daten, nur eine erreichbare Adresse** („Assets upload from
+URL …"), und zwar unabhängig von der Größe — auch 33 KB werden abgelehnt. Bilder gehen per
+Daten-Adresse, Videos nicht. Es gibt damit keinen Weg, die Dateien über die Schnittstelle
+hochzuladen, solange sie nur lokal liegen.
+
+**Zwei Wege:**
+1. **Im Framer-Editor** die drei Dateien aus `Medien/web/` in das CMS-Feld *Film* der jeweiligen
+   Fallstudie ziehen. Danach ist nichts weiter zu tun, der Abschnitt steht schon.
+2. Das Repository ist öffentlich — ein `git push` würde die Dateien über eine Adresse erreichbar
+   machen. Dafür liegen aber **79 unveröffentlichte Commits** dieses Monorepos bereit; das geht
+   nur mit ausdrücklicher Ansage.
+
+### Korrektur zur Planung
+
+Es gibt **keine Zwillis-Fallstudie** — die Sammlung hat WAV, Patio und Wandscher. Der
+Zwillis-Film hat damit noch keinen Platz. Er wartet auf die Playtomic-Zahl (siehe offene Punkte)
+oder gehört später auf `/leistungen/content`.
+
+---
+
+## Wandscher in der Websites-Kachel (14.10.2026)
+
+Die Kachel „Websites" auf der Startseite zeigt im Browserfenster weiter wav-wst.de, im
+Telefonrahmen jetzt **steinmetz-wandscher.de** statt des Glanzwerk-Entwurfs: ein echtes
+Kundenprojekt ersetzt einen Entwurf.
+
+**Bewusst die Handy-Fassung** (390 px breit, Ausschnitt ab 3.200 px, skaliert auf 400×2400):
+Die Karte verspricht „Fürs Handy gebaut" — ein hineingequetschtes Desktop-Layout im
+Telefonrahmen wäre das Gegenteil davon. Das alte Glanzwerk-Bild war genau das.
+
+**Fallstrick beim Aufnehmen:** Der Canvas-Render einer Framer-Seite enthält das
+Cookie-Fenster. Deshalb nicht die Seitenmitte von oben nehmen, sondern einen Ausschnitt
+unterhalb des Auftakts.
+
 ## Offene Punkte
 
 - [ ] WAV: Conversion-Definition + „Campaign #1" klären
