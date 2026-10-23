@@ -10,6 +10,7 @@ import { ARTEN, geraet, geraeteFuer, type GeraeteArt } from "@/data/geraete";
 import { eur } from "@/lib/berechnung";
 import {
   alleVorschlaege, alsKuechentyp, ausBelegung, befundeZeile, drehungen, drehungName, FORMEN, kuechenwaende,
+  befundeGesamt, tauschMoeglich, tauschPlan,
   pruefeAngaben, wandlaenge, WANDNAME, type Raumform, type Vorschlag, type WandId,
 } from "@/lib/planer";
 import { schrittFolge, useKueche } from "@/store/kueche";
@@ -143,6 +144,8 @@ export default function Kuechenplaner() {
   const [ansicht, setAnsicht] = useState<"raum" | "vorn" | "umstellen">("raum");
   /** Beim Umstellen angefasster Schrank: Zeile und Platz darin. */
   const [angefasst, setAngefasst] = useState<{ zeile: string; index: number } | null>(null);
+  /** Warum der letzte Tausch nicht ging. */
+  const [tauschGrund, setTauschGrund] = useState<string | null>(null);
   /** Im Prüfschritt geöffneter Einzelwert. null heißt Übersicht. */
   const [offen, setOffen] = useState<string | null>(null);
   const [planBild, setPlanBild] = useState<string | null>(null);
@@ -174,20 +177,29 @@ export default function Kuechenplaner() {
     return ausBelegung(raum, typ, grundVorschlag.strategie, { ...grundVorschlag.belegung, ...eigen });
   }, [grundVorschlag, eigen, raum, typ]);
 
-  const tausche = (zeileId: string, i: number, j: number) => {
-    if (!gewaehlterVorschlag || i === j) return;
-    const ids = [...(gewaehlterVorschlag.belegung[zeileId] ?? [])];
-    [ids[i], ids[j]] = [ids[j], ids[i]];
-    setzeBelegung(grundVorschlag!.strategie, { ...(eigen ?? {}), [zeileId]: ids });
+  const antippen = (zeileId: string, index: number) => {
+    if (!gewaehlterVorschlag) return;
+    const ziel = { zeile: zeileId, index };
+    if (!angefasst) { setAngefasst(ziel); setTauschGrund(null); return; }
+    if (angefasst.zeile === zeileId && angefasst.index === index) {
+      setAngefasst(null); setTauschGrund(null); return;
+    }
+    const plan = tauschPlan(typ, gewaehlterVorschlag.belegung, angefasst, ziel);
+    if ("grund" in plan) {
+      // Geht nicht — den Grund nennen und den neuen Schrank anfassen,
+      // damit man nicht erst abwaehlen muss.
+      setTauschGrund(plan.grund);
+      setAngefasst(ziel);
+      return;
+    }
+    setzeBelegung(grundVorschlag!.strategie, { ...(eigen ?? {}), ...plan.belegung });
+    setAngefasst(null);
+    setTauschGrund(null);
   };
 
-  const antippen = (zeileId: string, index: number) => {
-    if (!angefasst) { setAngefasst({ zeile: zeileId, index }); return; }
-    if (angefasst.zeile !== zeileId) { setAngefasst({ zeile: zeileId, index }); return; }
-    if (angefasst.index === index) { setAngefasst(null); return; }
-    tausche(zeileId, angefasst.index, index);
-    setAngefasst(null);
-  };
+  const zielMoeglich = (zeileId: string, index: number) =>
+    !!angefasst && !!gewaehlterVorschlag &&
+    tauschMoeglich(typ, gewaehlterVorschlag.belegung, angefasst, { zeile: zeileId, index });
   const hinweise = pruefeAngaben(raum);
 
   // Orientierung: wo im Ablauf stehe ich gerade. Ohne Start- und Ergebnisbild,
@@ -897,13 +909,13 @@ export default function Kuechenplaner() {
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                       <p className="text-[14px] text-kohle-2">
                         {angefasst
-                          ? "Jetzt auf den Platz tippen, an den er soll — an derselben Wand."
+                          ? "Jetzt auf den Platz tippen, an den er soll. Mögliche Plätze sind markiert."
                           : "Tipp einen Schrank an — im Raum oder in der Ansicht — dann den Platz, an den er soll."}
                       </p>
                       {eigen && Object.keys(eigen).length > 0 && (
                         <button
                           type="button"
-                          onClick={() => { setzeBelegung(grundVorschlag!.strategie, {}); setAngefasst(null); }}
+                          onClick={() => { setzeBelegung(grundVorschlag!.strategie, {}); setAngefasst(null); setTauschGrund(null); }}
                           className="flex items-center gap-1.5 text-[13.5px] font-semibold text-kohle-2 transition-colors hover:text-kohle"
                         >
                           <RotateCcw size={13} strokeWidth={2.2} />
@@ -920,9 +932,16 @@ export default function Kuechenplaner() {
                       umstellen={{
                         gewaehlt: angefasst,
                         onWaehle: (zeileId, index) => antippen(zeileId, index),
-                        onLeer: () => setAngefasst(null),
+                        onLeer: () => { setAngefasst(null); setTauschGrund(null); },
+                        moeglich: zielMoeglich,
                       }}
                     />
+
+                    {tauschGrund && (
+                      <div className="mt-4">
+                        <Notiz ton="achtung">{tauschGrund}</Notiz>
+                      </div>
+                    )}
 
                     <div className="mt-6 space-y-4">
                       {typ.zeilen.map((z) => {
@@ -939,6 +958,7 @@ export default function Kuechenplaner() {
                               hoehe={typ.zeilen.length > 1 ? 230 : 300}
                               waehlbar
                               gewaehlt={angefasst?.zeile === z.id ? angefasst.index : null}
+                              moeglich={angefasst ? (i) => zielMoeglich(z.id, i) : undefined}
                               onWaehle={(i) => antippen(z.id, i)}
                             />
                             {hin.length > 0 && (
@@ -950,6 +970,16 @@ export default function Kuechenplaner() {
                         );
                       })}
                     </div>
+
+                    {(() => {
+                      const quer = befundeGesamt(raum, typ, gewaehlterVorschlag.belegung);
+                      if (quer.length === 0) return null;
+                      return (
+                        <div className="mt-4 space-y-1.5">
+                          {quer.map((h) => <Notiz key={h} ton="achtung">{h}</Notiz>)}
+                        </div>
+                      );
+                    })()}
 
                     <p className="mt-5 text-[12.5px] leading-relaxed text-kohle-3">
                       Getauscht wird immer Platz gegen Platz — so bleibt die Summe der Breiten

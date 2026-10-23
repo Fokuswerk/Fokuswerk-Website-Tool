@@ -48,6 +48,8 @@ const hex = (c: [number, number, number]) =>
 export interface Umstellen {
   gewaehlt: { zeile: string; index: number } | null;
   onWaehle: (zeile: string, index: number) => void;
+  /** Welche Plätze als Ziel in Frage kommen, solange einer angefasst ist. */
+  moeglich?: (zeile: string, index: number) => boolean;
   /** Ob der letzte Zeigerweg ein Tippen war und kein Drehen. */
   klickOk: () => boolean;
 }
@@ -65,6 +67,9 @@ function Koerper({
   const fassbar = !!umstellen && !!k.platz;
   const aktiv =
     fassbar && umstellen!.gewaehlt?.zeile === k.platz!.zeile && umstellen!.gewaehlt?.index === k.platz!.index;
+  const ziel =
+    fassbar && !aktiv && !!umstellen!.gewaehlt &&
+    (umstellen!.moeglich ? umstellen!.moeglich(k.platz!.zeile, k.platz!.index) : true);
 
   return (
     <mesh
@@ -88,8 +93,14 @@ function Koerper({
         color={hex(k.farbe)}
         roughness={stoff.rauheit}
         metalness={stoff.metall}
-        emissive={istFenster ? "#d7e8f3" : aktiv ? "#b98a1e" : ueber ? "#6d6a60" : "#000000"}
-        emissiveIntensity={istFenster ? 0.9 : aktiv ? 0.42 : ueber ? 0.18 : 0}
+        emissive={
+          istFenster ? "#d7e8f3"
+          : aktiv ? "#b98a1e"
+          : ueber ? "#6d6a60"
+          : ziel ? "#3f7a58"
+          : "#000000"
+        }
+        emissiveIntensity={istFenster ? 0.9 : aktiv ? 0.42 : ueber ? 0.2 : ziel ? 0.2 : 0}
       />
     </mesh>
   );
@@ -320,6 +331,7 @@ export function Kuechenraum({
   umstellen?: {
     gewaehlt: { zeile: string; index: number } | null;
     onWaehle: (zeile: string, index: number) => void;
+    moeglich?: (zeile: string, index: number) => boolean;
     /** Tippen ins Leere löst die Auswahl wieder. */
     onLeer?: () => void;
   };

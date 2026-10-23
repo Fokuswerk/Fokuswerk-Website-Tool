@@ -25,6 +25,7 @@ export function Kuechenbild({
   mitNamen = true,
   waehlbar = false,
   gewaehlt = null,
+  moeglich,
   onWaehle,
 }: {
   typ: Kuechentyp;
@@ -36,6 +37,8 @@ export function Kuechenbild({
   waehlbar?: boolean;
   /** Angefasster Schrank, als Platz in der Zeile. */
   gewaehlt?: number | null;
+  /** Welche Plätze als Ziel in Frage kommen. Ohne Angabe: alle. */
+  moeglich?: (index: number) => boolean;
   onWaehle?: (index: number) => void;
 }) {
   const zeile = typ.zeilen.find((z) => z.id === zeileId);
@@ -270,7 +273,10 @@ export function Kuechenbild({
       {waehlbar &&
         plaetze.map((p) => {
           const aktiv = gewaehlt === p.index;
-          const offen = gewaehlt !== null && gewaehlt !== undefined;
+          // Angefasst ist moeglicherweise ein Schrank an einer anderen Wand —
+          // dann hat diese Zeile keine Auswahl, zeigt aber trotzdem Ziele.
+          const offen = (gewaehlt !== null && gewaehlt !== undefined) || !!moeglich;
+          const ziel = offen && !aktiv && (moeglich ? moeglich(p.index) : true);
           return (
             <g key={`fass-${p.index}`} onClick={() => onWaehle?.(p.index)} style={{ cursor: "pointer" }}>
               <rect
@@ -282,9 +288,11 @@ export function Kuechenbild({
                 className={
                   aktiv
                     ? "fill-kohle/[0.14] stroke-kohle"
-                    : offen
-                      ? "fill-transparent stroke-kohle/25 hover:fill-kohle/[0.05]"
-                      : "fill-transparent stroke-transparent hover:fill-kohle/[0.05] hover:stroke-kohle/25"
+                    : ziel
+                      ? "fill-transparent stroke-kohle/35 hover:fill-kohle/[0.07]"
+                      : offen
+                        ? "fill-transparent stroke-transparent"
+                        : "fill-transparent stroke-transparent hover:fill-kohle/[0.05] hover:stroke-kohle/25"
                 }
                 strokeWidth={aktiv ? 26 : 14}
                 strokeDasharray={aktiv ? undefined : "40 46"}

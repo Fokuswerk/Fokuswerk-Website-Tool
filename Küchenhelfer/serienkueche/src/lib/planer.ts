@@ -558,3 +558,113 @@ export function befundeZeile(a: Raumangaben, typ: Kuechentyp, zeileId: string, i
   }
   return hin;
 }
+
+/* ---------------------------------------------------------------- */
+
+const PBX_MIN = 20;
+const PBX_MAX = 600;
+
+/** Die Passleiste einer Zeile um delta mm ändern, damit die Summe stimmt. */
+function passeAn(ids: string[], delta: number): string[] | null {
+  if (delta === 0) return ids;
+  const i = ids.findIndex((m) => m.startsWith("PBX:"));
+  if (i < 0) {
+    // Ohne Passleiste lässt sich nur Platz abgeben, wenn welcher frei wird.
+    if (delta >= PBX_MIN) return [...ids, `PBX:${delta}`];
+    return null;
+  }
+  const neu = (modul(ids[i]).breite ?? 0) + delta;
+  if (neu === 0) return ids.filter((_, k) => k !== i);
+  if (neu < PBX_MIN || neu > PBX_MAX) return null;
+  const aus = [...ids];
+  aus[i] = `PBX:${neu}`;
+  return aus;
+}
+
+const cm = (mm: number) => `${Math.round(mm / 10)} cm`;
+
+/** Der Wandname im Dativ, für Sätze wie "an der linken Wand". */
+function wandDativ(seite: Wandseite): string {
+  const w = (Object.keys(SEITE) as WandId[]).find((k) => SEITE[k] === seite);
+  return w ? WANDNAME_DAT[w] : "einen Wand";
+}
+
+/**
+ * Zwei Schränke tauschen — auch über die Wandgrenze hinweg.
+ *
+ * In einer Zeile geht das immer: die Summe der Breiten bleibt dieselbe.
+ * Zwischen zwei Zeilen nur, wenn beide hinterher wieder genau auf ihre
+ * Wandlänge kommen. Sind die Schränke unterschiedlich breit, muss die
+ * Passleiste der jeweiligen Zeile den Unterschied auffangen.
+ */
+export function tauschPlan(
+  typ: Kuechentyp,
+  belegung: Record<string, string[]>,
+  a: { zeile: string; index: number },
+  b: { zeile: string; index: number },
+): { belegung: Record<string, string[]> } | { grund: string } {
+  if (a.zeile === b.zeile) {
+    const ids = [...(belegung[a.zeile] ?? [])];
+    if (!ids[a.index] || !ids[b.index]) return { grund: "Diesen Platz gibt es nicht mehr." };
+    [ids[a.index], ids[b.index]] = [ids[b.index], ids[a.index]];
+    return { belegung: { [a.zeile]: ids } };
+  }
+
+  const idsA = [...(belegung[a.zeile] ?? [])];
+  const idsB = [...(belegung[b.zeile] ?? [])];
+  const mA = idsA[a.index];
+  const mB = idsB[b.index];
+  if (!mA || !mB) return { grund: "Diesen Platz gibt es nicht mehr." };
+
+  const wA = modul(mA).breite ?? 0;
+  const wB = modul(mB).breite ?? 0;
+  idsA[a.index] = mB;
+  idsB[b.index] = mA;
+  const diff = wB - wA;
+
+  const fertigA = passeAn(idsA, -diff);
+  const fertigB = passeAn(idsB, diff);
+  if (!fertigA || !fertigB) {
+    const seiteA = typ.zeilen.find((z) => z.id === a.zeile)?.wand;
+    const seiteB = typ.zeilen.find((z) => z.id === b.zeile)?.wand;
+    const eng = !fertigA
+      ? seiteA ? wandDativ(seiteA) : "einen Wand"
+      : seiteB ? wandDativ(seiteB) : "anderen Wand";
+    return {
+      grund: `Die beiden sind unterschiedlich breit — ${cm(wA)} und ${cm(wB)}. An der ${eng} lässt sich der Unterschied nicht ausgleichen.`,
+    };
+  }
+
+  return { belegung: { [a.zeile]: fertigA, [b.zeile]: fertigB } };
+}
+
+/** Lässt sich an diesen Platz tauschen? Für die Vorschau der Ziele. */
+export function tauschMoeglich(
+  typ: Kuechentyp,
+  belegung: Record<string, string[]>,
+  a: { zeile: string; index: number },
+  b: { zeile: string; index: number },
+): boolean {
+  if (a.zeile === b.zeile && a.index === b.index) return false;
+  return !("grund" in tauschPlan(typ, belegung, a, b));
+}
+
+/**
+ * Befunde, die zwischen zwei Zeilen liegen und deshalb in keiner von beiden
+ * auffallen — etwa wenn Spüle und Spülmaschine auf verschiedene Wände
+ * geraten sind.
+ */
+export function befundeGesamt(a: Raumangaben, typ: Kuechentyp, belegung: Record<string, string[]>): string[] {
+  const hin: string[] = [];
+  const wo = (m: string) => typ.zeilen.find((z) => (belegung[z.id] ?? []).includes(m));
+  const zSp = wo("SP600");
+  const zGs = wo("GS600");
+
+  if (zSp && zGs && zSp.id !== zGs.id) {
+    hin.push(`Spüle und Spülmaschine stehen jetzt an verschiedenen Wänden (${zSp.bezeichnung} und ${zGs.bezeichnung}). Beide brauchen dann eigene Anschlüsse.`);
+  }
+  if (zSp && zSp.wand !== SEITE[a.wasser.wand]) {
+    hin.push(`Die Spüle steht nicht mehr an der Wand mit dem Wasseranschluss (${WANDNAME[a.wasser.wand]}). Das muss verlegt werden.`);
+  }
+  return hin;
+}
