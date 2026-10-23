@@ -44,17 +44,18 @@ function RaumSkizze({ form, ausrichtung }: { form: Raumform; ausrichtung: number
     <svg viewBox="0 0 90 58" className="h-[54px] w-full" aria-hidden="true">
       <rect x="5" y="5" width="80" height="48" rx="6" className="fill-creme" />
       {kuechenwaende({ form, ausrichtung }).map((w) => (
-        <path key={w} d={SKIZZE[w]} strokeWidth={9} strokeLinecap="round" className="stroke-butter" fill="none" />
+        <path key={w} d={SKIZZE[w]} strokeWidth={9} strokeLinecap="round" className="stroke-kohle-2" fill="none" />
       ))}
     </svg>
   );
 }
 
-function Kopf({ titel, satz }: { titel: string; satz?: string }) {
+function Kopf({ titel, satz, vor }: { titel: string; satz?: string; vor?: string }) {
   return (
     <div className="warm-rein">
-      <h1 className="gross text-[29px] font-bold leading-[1.12] text-kohle sm:text-[36px]">{titel}</h1>
-      {satz && <p className="mt-3 max-w-[50ch] text-[16px] leading-relaxed text-kohle-2">{satz}</p>}
+      {vor && <div className="vorzeile mb-3">{vor}</div>}
+      <h1 className="gross text-[31px] font-bold leading-[1.05] text-kohle sm:text-[40px]">{titel}</h1>
+      {satz && <p className="mt-4 max-w-[52ch] text-[16.5px] leading-relaxed text-kohle-2">{satz}</p>}
     </div>
   );
 }
@@ -70,7 +71,7 @@ function VorschlagKarte({
 }) {
   const ersteZeile = typ.zeilen[0]?.id ?? "Z-haupt";
   return (
-    <Karte className={`overflow-hidden ${aktiv ? "ring-2 ring-kohle" : "shadow-[0_2px_12px_rgba(23,22,15,0.05)]"}`}>
+    <Karte className={`overflow-hidden border ${aktiv ? "border-kohle ring-1 ring-kohle" : "border-linie-warm"}`}>
       <div className="bg-creme-2/60 px-4 pt-4">
         <Kuechenbild typ={typ} variante={v.variante} zeileId={ersteZeile} hoehe={150} mitNamen={false} />
       </div>
@@ -100,7 +101,7 @@ function VorschlagKarte({
           ))}
           {v.achtungPunkte.slice(0, 1).map((a) => (
             <li key={a} className="flex gap-2.5 text-kohle-3">
-              <span className="mt-[1px] shrink-0 font-bold text-butter">!</span>
+              <span className="mt-[1px] shrink-0 font-bold text-kohle">!</span>
               <span>{a}</span>
             </li>
           ))}
@@ -137,6 +138,11 @@ export default function Kuechenplaner() {
   const gewaehlterVorschlag = moegliche.find((v) => v.strategie === gewaehlt) ?? empfehlung;
   const hinweise = pruefeAngaben(raum);
 
+  // Orientierung: wo im Ablauf stehe ich gerade. Ohne Start- und Ergebnisbild,
+  // die sind keine Fragen.
+  const gesamt = Math.max(1, folge.length - 2);
+  const schrittText = `Schritt ${Math.min(gesamt, Math.max(1, pos))} von ${gesamt}`;
+
   const istStart = schritt === "start";
   const istErgebnis = schritt === "ergebnis";
   const istVorschlaege = schritt === "vorschlaege";
@@ -152,6 +158,8 @@ export default function Kuechenplaner() {
 
   // Die Zeichnung begleitet jede Frage, statt unter ihr zu liegen: wer eine
   // Zahl aendert, sieht die Wirkung sofort, ohne zu scrollen.
+  // Die Spalte bleibt auf allen Fragen stehen, damit die Breite nicht
+  // springt — gezeichnet wird aber nur, wo der Raum etwas zu sagen hat.
   const zeigeBild = !istStart && !breit;
   const geometrie = zeigeBild && !geraeteArt && schritt !== "niveau" && schritt !== "quelle" && schritt !== "upload";
   const stufen = drehungen(raum.form);
@@ -195,7 +203,7 @@ export default function Kuechenplaner() {
   );
 
   const bildTafel = (
-    <Karte className="px-4 py-4">
+    <Karte className="border border-linie-warm px-4 py-4">
       <Raumbild raum={raum} hervorhebung={hervor} hoehe={226} />
       <p className="mt-3 border-t border-linie-warm pt-3 text-center text-[13px] leading-snug text-kohle-3">
         {hervor
@@ -247,7 +255,7 @@ export default function Kuechenplaner() {
           <Link href="/" className="flex shrink-0 items-center gap-2">
             <svg width="18" height="18" viewBox="0 0 17 17" aria-hidden="true">
               <rect x="0.75" y="0.75" width="15.5" height="15.5" rx="3" fill="none" strokeWidth="1.4" className="stroke-kohle" />
-              <path d="M0.75 5.6 H16.25" strokeWidth="1.4" className="stroke-butter" />
+              <path d="M0.75 5.6 H16.25" strokeWidth="1.4" className="stroke-kohle-3" />
             </svg>
             <span className="gross text-[15px] font-bold text-kohle">Serienküche</span>
           </Link>
@@ -262,22 +270,22 @@ export default function Kuechenplaner() {
       </header>
 
       <main className={`mx-auto px-5 pb-20 sm:px-8 ${breit ? "max-w-[1080px] pt-6" : zeigeBild ? "max-w-[1180px] pt-0 lg:pt-7" : "max-w-[720px] pt-6"}`}>
-        {zeigeBild && bildStreifen}
+        {geometrie && bildStreifen}
         <div className={zeigeBild ? "lg:grid lg:grid-cols-[minmax(0,1fr)_372px] lg:items-start lg:gap-10" : ""}>
         <div className={zeigeBild ? "min-w-0 pt-5 lg:pt-0" : ""}>
         {istStart && (
           <div className="warm-rein pt-4 text-center sm:pt-10">
             {moegliche[0] && (
               <div className="mx-auto mb-8 w-full max-w-[400px]">
-                <Karte className="px-5 py-5 shadow-[0_10px_34px_rgba(23,22,15,0.07)]">
+                <Karte className="border border-linie-warm px-5 py-5">
                   <Kuechenbild typ={typ} variante={moegliche[moegliche.length - 1].variante} zeileId={typ.zeilen[0].id} hoehe={150} mitNamen={false} />
                 </Karte>
               </div>
             )}
-            <h1 className="gross text-[33px] font-bold leading-[1.1] text-kohle sm:text-[42px]">
+            <h1 className="gross gross-xl text-[38px] font-bold text-kohle sm:text-[54px]">
               Fangen wir mit deinem Raum an.
             </h1>
-            <p className="mx-auto mt-4 max-w-[46ch] text-[17px] leading-relaxed text-kohle-2">
+            <p className="mx-auto mt-6 max-w-[48ch] text-[17.5px] leading-relaxed text-kohle-2">
               Ein paar Fragen zu Wänden, Fenster und Geräten. Daraus rechnen wir eine Küche,
               die wirklich passt — mit jedem Schrank, jedem Maß und einem Preis.
             </p>
@@ -293,14 +301,14 @@ export default function Kuechenplaner() {
 
         {schritt === "quelle" && (
           <>
-            <Kopf titel="Wie willst du anfangen?" satz="Beides führt zum selben Ergebnis — der eine Weg ist schneller, der andere braucht keinen Plan." />
+            <Kopf vor={schrittText} titel="Wie willst du anfangen?" satz="Beides führt zum selben Ergebnis — der eine Weg ist schneller, der andere braucht keinen Plan." />
             <div className="mt-7">
               <GrosseWahl<"fragen" | "plan">
                 wert={quelle}
                 setze={(q) => setzeQuelle(q)}
                 optionen={[
-                  { id: "fragen", titel: "Fragen beantworten", satz: "Zwölf kurze Fragen zu deinem Raum. Du brauchst nur einen Zollstock.", bild: <PencilLine size={26} strokeWidth={1.7} className="text-butter" /> },
-                  { id: "plan", titel: "Grundriss hochladen", satz: "Hast du einen Wohnungsgrundriss? Wir lesen die Maße heraus, du prüfst sie nach.", bild: <ScanLine size={26} strokeWidth={1.7} className="text-butter" /> },
+                  { id: "fragen", titel: "Fragen beantworten", satz: "Ein paar kurze Fragen zu deinem Raum. Du brauchst nur einen Zollstock.", bild: <PencilLine size={26} strokeWidth={1.7} className="text-kohle-2" /> },
+                  { id: "plan", titel: "Grundriss hochladen", satz: "Hast du einen Wohnungsgrundriss? Wir lesen die Maße heraus, du prüfst sie nach.", bild: <ScanLine size={26} strokeWidth={1.7} className="text-kohle-2" /> },
                 ]}
               />
             </div>
@@ -309,9 +317,9 @@ export default function Kuechenplaner() {
 
         {schritt === "upload" && (
           <>
-            <Kopf titel="Lade deinen Grundriss hoch" satz="PDF oder Bild vom Wohnungsgrundriss. Wir lesen Wandlängen, Fenster und Tür heraus — und zeigen dir danach, was wir verstanden haben." />
+            <Kopf vor={schrittText} titel="Lade deinen Grundriss hoch" satz="PDF oder Bild vom Wohnungsgrundriss. Wir lesen Wandlängen, Fenster und Tür heraus — und zeigen dir danach, was wir verstanden haben." />
             <div className="mt-7">
-              <Karte className="px-5 py-8 text-center">
+              <Karte className="border border-linie-warm px-5 py-8 text-center">
                 <input
                   ref={feld}
                   type="file"
@@ -350,13 +358,13 @@ export default function Kuechenplaner() {
                   </>
                 ) : (
                   <div className="mx-auto max-w-[360px] text-left">
-                    <div className="h-[5px] w-full overflow-hidden rounded-full bg-creme-2">
-                      <div className="h-full rounded-full bg-butter transition-[width] duration-500" style={{ width: `${((lauf + 1) / 4) * 100}%` }} />
+                    <div className="h-[3px] w-full overflow-hidden rounded-full bg-linie-warm">
+                      <div className="h-full rounded-full bg-kohle transition-[width] duration-500" style={{ width: `${((lauf + 1) / 4) * 100}%` }} />
                     </div>
                     <ol className="mt-4 space-y-2">
                       {["Plan gelesen", "Wände gefunden", "Fenster und Türen geschätzt", "Maße umgerechnet"].map((t, i) => (
                         <li key={t} className={`flex items-center gap-2.5 text-[14.5px] ${i <= lauf ? "text-kohle-2" : "text-kohle-3"}`}>
-                          <span className={`w-4 text-right text-[13px] font-semibold ${i < lauf ? "text-salbei" : i === lauf ? "text-butter" : "text-kohle-3"}`}>
+                          <span className={`w-4 text-right text-[13px] font-semibold ${i < lauf ? "text-salbei" : i === lauf ? "text-kohle" : "text-kohle-3"}`}>
                             {i < lauf ? "\u2713" : i + 1}
                           </span>
                           {t}
@@ -373,6 +381,7 @@ export default function Kuechenplaner() {
         {schritt === "pruefen" && (
           <>
             <Kopf
+              vor={schrittText}
               titel="Haben wir das richtig gelesen?"
               satz="Wände kann ein Plan sauber hergeben. Fenster und Türen sind das Schwierigste daran — da schätzen wir, und du korrigierst."
             />
@@ -385,11 +394,11 @@ export default function Kuechenplaner() {
               </p>
             </div>
             <div className="mt-6 space-y-3">
-              <Karte className="px-5 py-4">
+              <Karte className="border border-linie-warm px-5 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-[15px] font-semibold text-kohle">An wie vielen Wänden soll die Küche stehen?</div>
-                    <div className="text-[13px] font-semibold text-butter">sagt der Plan nicht — entscheidest du</div>
+                    <div className="text-[13px] font-semibold text-kohle">sagt der Plan nicht — entscheidest du</div>
                   </div>
                 </div>
                 <div className="mt-3 border-t border-linie-warm pt-3">
@@ -407,11 +416,11 @@ export default function Kuechenplaner() {
                 </div>
               </Karte>
 
-              <Karte className="px-5 py-4">
+              <Karte className="border border-linie-warm px-5 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-[15px] font-semibold text-kohle">Raumbreite</div>
-                    <div className="text-[13px] text-salbei">aus dem Plan gelesen</div>
+                    <div className="text-[13px] font-medium text-salbei">aus dem Plan gelesen</div>
                   </div>
                   <div className="num text-[18px] font-bold text-kohle">{Math.round(raum.breite / 10)} cm</div>
                 </div>
@@ -420,11 +429,11 @@ export default function Kuechenplaner() {
                 </div>
               </Karte>
 
-              <Karte className="px-5 py-4">
+              <Karte className="border border-linie-warm px-5 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-[15px] font-semibold text-kohle">Raumtiefe</div>
-                    <div className="text-[13px] text-salbei">aus dem Plan gelesen</div>
+                    <div className="text-[13px] font-medium text-salbei">aus dem Plan gelesen</div>
                   </div>
                   <div className="num text-[18px] font-bold text-kohle">{Math.round(raum.tiefe / 10)} cm</div>
                 </div>
@@ -434,11 +443,11 @@ export default function Kuechenplaner() {
               </Karte>
 
               {raum.fenster && (
-                <Karte className="px-5 py-4">
+                <Karte className="border border-linie-warm px-5 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-[15px] font-semibold text-kohle">Fenster an der Hauptwand</div>
-                      <div className="text-[13px] font-semibold text-butter">geschätzt — bitte prüfen</div>
+                      <div className="text-[13px] font-semibold text-kohle">geschätzt — bitte prüfen</div>
                     </div>
                     <div className="num text-[18px] font-bold text-kohle">{Math.round(raum.fenster.breite / 10)} cm breit</div>
                   </div>
@@ -457,11 +466,11 @@ export default function Kuechenplaner() {
                 </Karte>
               )}
 
-              <Karte className="px-5 py-4">
+              <Karte className="border border-linie-warm px-5 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-[15px] font-semibold text-kohle">Tür</div>
-                    <div className="text-[13px] font-semibold text-butter">geschätzt — bitte prüfen</div>
+                    <div className="text-[13px] font-semibold text-kohle">geschätzt — bitte prüfen</div>
                   </div>
                   <div className="num text-[15px] text-kohle-2">{WANDNAME[raum.tuer.wand]}</div>
                 </div>
@@ -470,11 +479,11 @@ export default function Kuechenplaner() {
                 </div>
               </Karte>
 
-              <Karte className="px-5 py-4">
+              <Karte className="border border-linie-warm px-5 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-[15px] font-semibold text-kohle">Wasseranschluss</div>
-                    <div className="text-[13px] font-semibold text-butter">im Plan nicht eingezeichnet — geraten</div>
+                    <div className="text-[13px] font-semibold text-kohle">im Plan nicht eingezeichnet — geraten</div>
                   </div>
                   <div className="num text-[15px] text-kohle-2">{WANDNAME[raum.wasser.wand]}</div>
                 </div>
@@ -502,7 +511,7 @@ export default function Kuechenplaner() {
 
         {schritt === "form" && (
           <>
-            <Kopf titel="An wie vielen Wänden soll die Küche stehen?" satz="Schau dich im Raum um. Du kannst das später jederzeit ändern." />
+            <Kopf vor={schrittText} titel="An wie vielen Wänden soll die Küche stehen?" satz="Schau dich im Raum um. Du kannst das später jederzeit ändern." />
             <div className="mt-7">
               <GrosseWahl<Raumform>
                 wert={raum.form}
@@ -516,6 +525,7 @@ export default function Kuechenplaner() {
         {schritt === "drehung" && (
           <>
             <Kopf
+              vor={schrittText}
               titel={raum.form === "u-form" ? "Wohin ist das U offen?" : "Wie liegt die Küche im Raum?"}
               satz="Dreh sie so, wie es bei dir aussieht. Die Zeichnung zeigt dir deinen Raum von oben."
             />
@@ -539,8 +549,8 @@ export default function Kuechenplaner() {
 
         {schritt === "breite" && (
           <>
-            <Kopf titel="Wie breit ist der Raum?" satz="Die Länge der Hauptwand, von Ecke zu Ecke." />
-            <Karte className="mt-7 px-5 py-7">
+            <Kopf vor={schrittText} titel="Wie breit ist der Raum?" satz="Die Länge der Hauptwand, von Ecke zu Ecke." />
+            <Karte className="mt-8 border border-linie-warm px-5 py-7">
               <GrosseZahl wert={raum.breite} setze={(mm) => setzeRaum({ breite: mm })} min={120} max={900} />
             </Karte>
           </>
@@ -548,8 +558,8 @@ export default function Kuechenplaner() {
 
         {schritt === "tiefe" && (
           <>
-            <Kopf titel="Und wie tief?" satz="Von der Hauptwand bis zur Wand gegenüber. Daran hängt, wie viel Platz zum Stehen bleibt." />
-            <Karte className="mt-7 px-5 py-7">
+            <Kopf vor={schrittText} titel="Und wie tief?" satz="Von der Hauptwand bis zur Wand gegenüber. Daran hängt, wie viel Platz zum Stehen bleibt." />
+            <Karte className="mt-8 border border-linie-warm px-5 py-7">
               <GrosseZahl wert={raum.tiefe} setze={(mm) => setzeRaum({ tiefe: mm })} min={150} max={900} />
             </Karte>
             {hinweise.length > 0 && (
@@ -561,10 +571,11 @@ export default function Kuechenplaner() {
         {zeileWand && (
           <>
             <Kopf
+              vor={schrittText}
               titel={`Wie lang wird die Zeile an der ${WANDNAME[zeileWand]}?`}
               satz={`Die Wand ist ${Math.round(wandlaenge(raum, zeileWand) / 10)} cm lang. Wenn eine Tür, ein Heizkörper oder ein Durchgang Platz wegnimmt, trag hier weniger ein.`}
             />
-            <Karte className="mt-7 px-5 py-7">
+            <Karte className="mt-8 border border-linie-warm px-5 py-7">
               <GrosseZahl
                 wert={raum.nutz[zeileWand]}
                 setze={(mm) => setzeNutz(zeileWand, mm)}
@@ -582,7 +593,7 @@ export default function Kuechenplaner() {
 
         {schritt === "fensterJa" && (
           <>
-            <Kopf titel="Gibt es im Raum ein Fenster?" satz="Vor einem Fenster darf nichts Hohes stehen und darüber hängt kein Schrank. Deshalb fragen wir." />
+            <Kopf vor={schrittText} titel="Gibt es im Raum ein Fenster?" satz="Vor einem Fenster darf nichts Hohes stehen und darüber hängt kein Schrank. Deshalb fragen wir." />
             <div className="mt-7">
               <GrosseWahl<"ja" | "nein">
                 wert={raum.fenster ? "ja" : "nein"}
@@ -602,7 +613,7 @@ export default function Kuechenplaner() {
 
         {schritt === "fenster" && raum.fenster && (
           <>
-            <Kopf titel="Wo ist das Fenster?" satz="Erst die Wand, dann die Stelle." />
+            <Kopf vor={schrittText} titel="Wo ist das Fenster?" satz="Erst die Wand, dann die Stelle." />
             <div className="mt-7">{wandWahl(raum.fenster.wand, (w) => setzeRaum({ fenster: { ...raum.fenster!, wand: w, von: 0 } }))}</div>
             <Karte className="mt-4 px-5 py-6">
               <Schieber
@@ -622,7 +633,7 @@ export default function Kuechenplaner() {
 
         {schritt === "tuer" && (
           <>
-            <Kopf titel="Wo ist die Tür?" satz="Eine Tür darf nicht gegen einen Schrank schlagen." />
+            <Kopf vor={schrittText} titel="Wo ist die Tür?" satz="Eine Tür darf nicht gegen einen Schrank schlagen." />
             <div className="mt-7">{wandWahl(raum.tuer.wand, (w) => setzeRaum({ tuer: { ...raum.tuer, wand: w, von: 0 } }))}</div>
             <Karte className="mt-4 px-5 py-6">
               <Schieber
@@ -639,6 +650,7 @@ export default function Kuechenplaner() {
         {schritt === "wasser" && (
           <>
             <Kopf
+              vor={schrittText}
               titel="Wo kommt das Wasser aus der Wand?"
               satz="Schau unter die alte Spüle oder in die Ecke mit den Leitungen. Dort bleibt die Spüle am besten — sonst muss ein Installateur verlegen."
             />
@@ -662,7 +674,7 @@ export default function Kuechenplaner() {
           const info = ARTEN.find((x) => x.art === geraeteArt)!;
           return (
             <>
-              <Kopf titel={info.frage} satz={info.hilfe} />
+              <Kopf vor={schrittText} titel={info.frage} satz={info.hilfe} />
               <div className="mt-7">
                 <GrosseWahl<string>
                   wert={raum.geraete[geraeteArt]}
@@ -681,7 +693,7 @@ export default function Kuechenplaner() {
 
         {schritt === "niveau" && (
           <>
-            <Kopf titel="Wie soll sie ausgestattet sein?" satz="Das entscheidet über Fronten, Auszüge und Beschläge." />
+            <Kopf vor={schrittText} titel="Wie soll sie ausgestattet sein?" satz="Das entscheidet über Fronten, Auszüge und Beschläge." />
             <div className="mt-7">
               <GrosseWahl<"einfach" | "mittel" | "gehoben">
                 wert={raum.niveau}
@@ -733,13 +745,13 @@ export default function Kuechenplaner() {
         {istErgebnis && gewaehlterVorschlag && (
           <div className="warm-rein">
             <div className="text-center">
-              <h1 className="gross text-[31px] font-bold leading-[1.1] text-kohle sm:text-[40px]">Das ist deine Küche.</h1>
-              <p className="mx-auto mt-3 max-w-[48ch] text-[16px] text-kohle-2">
+              <h1 className="gross gross-xl text-[36px] font-bold text-kohle sm:text-[52px]">Das ist deine Küche.</h1>
+              <p className="mx-auto mt-4 max-w-[48ch] text-[16.5px] text-kohle-2">
                 {gewaehlterVorschlag.titel} · {FORMEN.find((f) => f.id === raum.form)!.titel}
               </p>
             </div>
 
-            <Karte className="mt-7 overflow-hidden shadow-[0_10px_40px_rgba(23,22,15,0.07)]">
+            <Karte className="mt-8 overflow-hidden border border-linie-warm">
               <div className="bg-creme-2/40 px-4 pb-5 pt-5 sm:px-7">
                 <div className="mb-5 flex justify-center">
                   <div className="inline-flex rounded-full bg-creme-2 p-1">
@@ -776,8 +788,8 @@ export default function Kuechenplaner() {
               </div>
               <div className="grid gap-6 p-6 sm:grid-cols-[1fr_auto] sm:items-end sm:p-8">
                 <div>
-                  <div className="text-[13px] font-semibold uppercase tracking-[0.07em] text-kohle-3">Komplett, mit Geräten und Montage</div>
-                  <div className="gross mt-1 text-[42px] font-bold leading-none text-kohle">{eur(gewaehlterVorschlag.preis)}</div>
+                  <div className="vorzeile">Komplett, mit Geräten und Montage</div>
+                  <div className="gross ziffern mt-2 text-[44px] font-bold leading-none tracking-[-0.04em] text-kohle">{eur(gewaehlterVorschlag.preis)}</div>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <WKnopf art="primaer" gross onClick={() => melde("Demo: Hier ginge die Anfrage raus.")}>Angebot anfordern</WKnopf>
@@ -792,9 +804,9 @@ export default function Kuechenplaner() {
                 ["Hängeschränke", String(gewaehlterVorschlag.haengeschraenke)],
                 ["Arbeitsfläche", `${Math.round(gewaehlterVorschlag.arbeitsflaeche / 10)} cm`],
               ].map(([a, b]) => (
-                <Karte key={a} className="px-5 py-4">
-                  <div className="text-[13.5px] text-kohle-3">{a}</div>
-                  <div className="gross mt-1 text-[26px] font-bold leading-none text-kohle">{b}</div>
+                <Karte key={a} className="border border-linie-warm px-5 py-4">
+                  <div className="vorzeile">{a}</div>
+                  <div className="gross ziffern mt-2 text-[26px] font-bold leading-none text-kohle">{b}</div>
                 </Karte>
               ))}
             </div>
@@ -881,9 +893,7 @@ export default function Kuechenplaner() {
           </div>
         )}
         </div>
-        {zeigeBild && (
-          <aside className="hidden lg:sticky lg:top-[80px] lg:block">{bildTafel}</aside>
-        )}
+        <aside className="hidden lg:sticky lg:top-[80px] lg:block">{geometrie ? bildTafel : null}</aside>
         </div>
       </main>
     </div>

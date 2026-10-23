@@ -8,9 +8,9 @@ import { Minus, Plus } from "lucide-react";
 
 export function Fortschritt({ wert }: { wert: number }) {
   return (
-    <div className="h-[5px] w-full overflow-hidden rounded-full bg-creme-2">
+    <div className="h-[2px] w-full overflow-hidden rounded-full bg-linie-warm">
       <div
-        className="h-full rounded-full bg-butter transition-[width] duration-500 ease-out"
+        className="h-full rounded-full bg-kohle transition-[width] duration-500 ease-out"
         style={{ width: `${Math.round(wert * 100)}%` }}
       />
     </div>
@@ -30,16 +30,16 @@ export function WKnopf({
   gross?: boolean;
   aus?: boolean;
 }) {
-  const basis = `inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all ${
+  const basis = `inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-colors ${
     gross ? "px-7 py-3.5 text-[16px]" : "px-5 py-2.5 text-[14.5px]"
   }`;
   const stil = aus
     ? "cursor-not-allowed bg-creme-2 text-kohle-3"
     : art === "primaer"
-      ? "bg-kohle text-creme hover:bg-[#2a2819] active:scale-[0.98]"
+      ? "bg-kohle text-creme hover:bg-[#312e25]"
       : art === "klar"
-        ? "text-kohle-2 hover:bg-creme-2"
-        : "border border-linie-warm bg-papier text-kohle hover:border-kohle-3 active:scale-[0.98]";
+        ? "text-kohle-2 hover:text-kohle"
+        : "border border-linie-stark bg-papier text-kohle hover:border-kohle";
   return (
     <button type="button" onClick={aus ? undefined : onClick} disabled={aus} className={`${basis} ${stil}`}>
       {children}
@@ -48,7 +48,7 @@ export function WKnopf({
 }
 
 export function Karte({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-[22px] bg-papier ${className}`}>{children}</div>;
+  return <div className={`rounded-[16px] bg-papier ${className}`}>{children}</div>;
 }
 
 export function GrosseWahl<T extends string | number>({
@@ -73,15 +73,15 @@ export function GrosseWahl<T extends string | number>({
             type="button"
             onClick={() => setze(o.id)}
             aria-pressed={aktiv}
-            className={`warm-wahl rounded-[20px] border-2 p-4 text-left ${
+            className={`warm-wahl rounded-[14px] border p-4 text-left ${
               aktiv
-                ? "border-kohle bg-papier shadow-[0_8px_26px_rgba(23,22,15,0.09)]"
-                : "border-transparent bg-papier shadow-[0_2px_10px_rgba(23,22,15,0.04)] hover:shadow-[0_8px_22px_rgba(23,22,15,0.07)]"
+                ? "border-kohle bg-papier ring-1 ring-kohle"
+                : "border-linie-warm bg-papier hover:border-linie-stark"
             }`}
           >
             {o.bild && <div className="mb-3">{o.bild}</div>}
-            <div className="text-[16px] font-semibold leading-tight text-kohle">{o.titel}</div>
-            {o.satz && <div className="mt-1 text-[13.5px] leading-snug text-kohle-2">{o.satz}</div>}
+            <div className="gross text-[16.5px] font-bold leading-tight text-kohle">{o.titel}</div>
+            {o.satz && <div className="mt-1.5 text-[13.5px] leading-snug text-kohle-2">{o.satz}</div>}
           </button>
         );
       })}
@@ -114,12 +114,14 @@ export function GrosseZahl({
           type="button"
           onClick={() => setzeCm(cm - schritt)}
           aria-label="Kleiner"
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-linie-warm bg-papier text-kohle transition-colors hover:border-kohle-3 active:scale-95"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-linie-stark bg-papier text-kohle transition-colors hover:border-kohle active:scale-95"
         >
-          <Minus size={22} strokeWidth={2.2} />
+          <Minus size={20} strokeWidth={2} />
         </button>
 
-        <div className="flex min-w-[180px] items-baseline justify-center gap-2">
+        <div className="flex min-w-[196px] items-baseline justify-center gap-2">
+          {/* Gegengewicht zur Einheit, damit die Zahl wirklich mittig steht. */}
+          <span className="w-[30px] shrink-0" aria-hidden="true" />
           <input
             type="number"
             value={cm}
@@ -130,22 +132,22 @@ export function GrosseZahl({
               if (Number.isFinite(v)) setzeCm(v);
             }}
             aria-label={`Maß in ${einheit}`}
-            className="gross w-[150px] bg-transparent text-center text-[52px] font-bold leading-none text-kohle outline-none [appearance:textfield] focus:text-kohle [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className="gross ziffern w-[136px] bg-transparent text-center text-[54px] font-bold leading-none tracking-[-0.04em] text-kohle outline-none [appearance:textfield] focus:text-kohle [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
-          <span className="text-[19px] font-semibold text-kohle-3">{einheit}</span>
+          <span className="w-[30px] shrink-0 text-left text-[17px] font-medium text-kohle-3">{einheit}</span>
         </div>
 
         <button
           type="button"
           onClick={() => setzeCm(cm + schritt)}
           aria-label="Größer"
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-linie-warm bg-papier text-kohle transition-colors hover:border-kohle-3 active:scale-95"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-linie-stark bg-papier text-kohle transition-colors hover:border-kohle active:scale-95"
         >
-          <Plus size={22} strokeWidth={2.2} />
+          <Plus size={20} strokeWidth={2} />
         </button>
       </div>
-      <div className="mt-2 text-center text-[14px] text-kohle-3">
-        das sind {(wert / 1000).toFixed(2).replace(".", ",")} Meter
+      <div className="ziffern mt-2 text-center text-[13.5px] text-kohle-3">
+        {(wert / 1000).toFixed(2).replace(".", ",")} Meter
       </div>
       <input
         type="range"
@@ -155,7 +157,7 @@ export function GrosseZahl({
         value={cm}
         onChange={(e) => setzeCm(Number(e.target.value))}
         aria-label="Maß schieben"
-        className="mt-5 h-1.5 w-full cursor-pointer appearance-none rounded-full bg-creme-2"
+        className="mt-7 w-full cursor-pointer"
       />
     </div>
   );
@@ -185,9 +187,9 @@ export function Schieber({
         value={Math.min(wert, max)}
         onChange={(e) => setze(Number(e.target.value))}
         aria-label="Stelle an der Wand"
-        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-creme-2"
+        className="w-full cursor-pointer"
       />
-      <div className="mt-2 flex justify-between text-[13px] text-kohle-3">
+      <div className="mt-3 flex justify-between text-[13px] text-kohle-3">
         <span>{links}</span>
         <span>{rechts}</span>
       </div>
@@ -198,8 +200,8 @@ export function Schieber({
 export function Notiz({ children, ton = "ruhig" }: { children: ReactNode; ton?: "ruhig" | "achtung" }) {
   return (
     <div
-      className={`rounded-[18px] px-4 py-3 text-[14px] leading-relaxed ${
-        ton === "achtung" ? "bg-butter-soft text-kohle-2" : "bg-papier text-kohle-2"
+      className={`rounded-[12px] border-l-2 py-2.5 pl-4 pr-3 text-[14px] leading-relaxed text-kohle-2 ${
+        ton === "achtung" ? "border-kohle bg-creme-2/70" : "border-linie-stark bg-papier"
       }`}
     >
       {children}

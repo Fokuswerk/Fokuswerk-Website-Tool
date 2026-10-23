@@ -109,7 +109,7 @@ export function Kuechenbild({
                 d={`M${p.von + 150} ${y(OS_UK + OS_H * 0.6 - 150)} H${p.von + p.breite - 150}`}
                 strokeWidth={22}
                 strokeLinecap="round"
-                className="stroke-butter"
+                className="stroke-kohle-2"
               />
             )}
           </g>
@@ -165,8 +165,8 @@ export function Kuechenbild({
             {rolle === "kuehlschrank" && (
               <>
                 <path d={`M${p.von + 16} ${y(oben - 760)} H${p.von + p.breite - 16}`} strokeWidth={12} className="stroke-linie-warm" />
-                <path d={`M${p.von + p.breite - 150} ${y(oben - 1050)} V${y(oben - 1420)}`} strokeWidth={26} strokeLinecap="round" className="stroke-butter" />
-                <path d={`M${p.von + p.breite - 150} ${y(oben - 420)} V${y(oben - 640)}`} strokeWidth={26} strokeLinecap="round" className="stroke-butter" />
+                <path d={`M${p.von + p.breite - 150} ${y(oben - 1050)} V${y(oben - 1420)}`} strokeWidth={26} strokeLinecap="round" className="stroke-kohle-2" />
+                <path d={`M${p.von + p.breite - 150} ${y(oben - 420)} V${y(oben - 640)}`} strokeWidth={26} strokeLinecap="round" className="stroke-kohle-2" />
               </>
             )}
 
@@ -174,7 +174,7 @@ export function Kuechenbild({
             {rolle === "backofen" && (
               <>
                 <rect x={p.von + 110} y={y(1560)} width={p.breite - 220} height={520} rx={20} className="fill-kohle" />
-                <path d={`M${p.von + 160} ${y(1620)} H${p.von + p.breite - 160}`} strokeWidth={26} strokeLinecap="round" className="stroke-butter" />
+                <path d={`M${p.von + 160} ${y(1620)} H${p.von + p.breite - 160}`} strokeWidth={26} strokeLinecap="round" className="stroke-kohle-2" />
               </>
             )}
 
@@ -198,7 +198,7 @@ export function Kuechenbild({
               <>
                 <rect x={mitte - 230} y={y(AP_OK + 26)} width={460} height={60} rx={18} className="fill-kohle" />
                 {[-165, -55, 55, 165].map((dx) => (
-                  <circle key={dx} cx={mitte + dx} cy={y(AP_OK + 56)} r={42} className="fill-butter" />
+                  <circle key={dx} cx={mitte + dx} cy={y(AP_OK + 56)} r={42} className="fill-kohle-2" />
                 ))}
                 <path d={`M${p.von + 130} ${y(SOCKEL + 300)} H${p.von + p.breite - 130}`} strokeWidth={22} strokeLinecap="round" className="stroke-linie-warm" />
               </>
@@ -208,7 +208,7 @@ export function Kuechenbild({
             {rolle === "spuelmaschine" && (
               <>
                 <rect x={p.von + 110} y={y(SOCKEL + KORPUS - 40)} width={p.breite - 220} height={90} rx={18} className="fill-kohle" />
-                <path d={`M${p.von + 170} ${y(SOCKEL + 230)} H${p.von + p.breite - 170}`} strokeWidth={26} strokeLinecap="round" className="stroke-butter" />
+                <path d={`M${p.von + 170} ${y(SOCKEL + 230)} H${p.von + p.breite - 170}`} strokeWidth={26} strokeLinecap="round" className="stroke-kohle-2" />
               </>
             )}
 
@@ -223,7 +223,7 @@ export function Kuechenbild({
                     className="stroke-linie-warm"
                   />
                 ))}
-                <path d={`M${mitte - 110} ${y(SOCKEL + 560)} H${mitte + 110}`} strokeWidth={24} strokeLinecap="round" className="stroke-butter-2" />
+                <path d={`M${mitte - 110} ${y(SOCKEL + 560)} H${mitte + 110}`} strokeWidth={24} strokeLinecap="round" className="stroke-kohle-3" />
               </>
             )}
           </g>
@@ -326,7 +326,7 @@ export function Raumbild({
           <rect
             key={w}
             x={r.x} y={r.y} width={r.w} height={r.h} rx={46}
-            className={hervorhebung && hervorhebung !== w ? "fill-butter-2/45" : "fill-butter-2"}
+            className={hervorhebung && hervorhebung !== w ? "fill-holz/45" : "fill-holz"}
           />
         );
       })}

@@ -23,21 +23,26 @@
   --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
 
 
-  /* Warme Sprache fuer den Weg der Privatkunden: Creme statt Grau, weiche
-     grosse Karten, eine warme Akzentfarbe. Bewusst anders als der technische
-     Profi-Bereich, weil die Leute andere sind. */
-  --color-creme: #f8f4ec;
-  --color-creme-2: #f1e9dc;
+  /* Weg der Privatkunden. Ruhiges warmes Grau, fast keine Farbe in der
+     Oberflaeche: die Farbe kommt aus der Kueche selbst — Eiche, Stein,
+     Graphit. Alles andere traegt nur und draengt sich nicht vor. */
+  --color-creme: #f5f3ef;
+  --color-creme-2: #ebe8e1;
   --color-papier: #ffffff;
-  --color-kohle: #17160f;
-  --color-kohle-2: #5c594d;
-  --color-kohle-3: #95907f;
-  --color-butter: #eab308;
-  --color-butter-2: #f5d987;
-  --color-butter-soft: #fdf4dc;
-  --color-salbei: #4f7555;
-  --color-salbei-soft: #e8efe8;
-  --color-linie-warm: #e7decd;
+  --color-kohle: #15140f;
+  --color-kohle-2: #56534a;
+  --color-kohle-3: #8e8a80;
+  /* Nur noch im Produkt selbst, nicht in der Oberflaeche. */
+  --color-butter: #c9a227;
+  --color-butter-2: #e4cf8e;
+  --color-butter-soft: #f4efe2;
+  --color-salbei: #4a6f50;
+  --color-salbei-soft: #e9efe9;
+  --color-linie-warm: #e4e0d7;
+  --color-linie-stark: #cfcabe;
+  /* Holz aus dem 3D-Bild — die einzige Farbe, die in Zeichnungen auftaucht. */
+  --color-holz: #cbae87;
+  --color-holz-soft: #e8dcc8;
 
   --font-warm: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-gross: "Outfit", ui-sans-serif, system-ui, sans-serif;
@@ -85,20 +90,62 @@ body {
   background: var(--color-creme);
   color: var(--color-kohle);
   font-family: var(--font-warm);
-  font-size: 16px;
-  line-height: 1.55;
+  font-size: 16.5px;
+  line-height: 1.6;
+  letter-spacing: -0.004em;
 }
-.warm h1, .warm h2, .warm .gross { font-family: var(--font-gross); letter-spacing: -0.02em; }
+.warm h1, .warm h2, .warm h3, .warm .gross {
+  font-family: var(--font-gross);
+  letter-spacing: -0.03em;
+}
+/* Grosse Zeilen vertragen mehr Enge als kleine. */
+.warm .gross-xl { letter-spacing: -0.038em; line-height: 0.98; }
+
+/* Kleine Vorzeile ueber einer Ueberschrift. */
+.warm .vorzeile {
+  font-family: var(--font-warm);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--color-kohle-3);
+}
+
+/* Ziffern laufen in gleicher Breite, damit Preise beim Rechnen nicht wackeln. */
+.warm .ziffern { font-variant-numeric: tabular-nums; }
 
 @keyframes warmRein {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: none; }
 }
-.warm-rein { animation: warmRein .34s cubic-bezier(.22,.8,.3,1) both; }
+.warm-rein { animation: warmRein .3s cubic-bezier(.22,.8,.3,1) both; }
 
-/* Grosse Auswahlflaechen sollen sich anfassbar anfuehlen */
-.warm-wahl { transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
-.warm-wahl:hover { transform: translateY(-2px); }
-.warm-wahl:active { transform: translateY(0); }
+/* Auswahlflaechen antworten ruhig: Rand und Grund, kein Huepfen. */
+.warm-wahl { transition: border-color .16s ease, background-color .16s ease, color .16s ease; }
+.warm-wahl:active { transform: scale(.995); }
 
-.warm input[type="range"] { accent-color: var(--color-butter); }
+.warm input[type="range"] { accent-color: var(--color-kohle); }
+
+/* Schieber einheitlich und schlank, in jedem Browser gleich. */
+.warm input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; }
+.warm input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px; border-radius: 999px; background: var(--color-linie-stark);
+}
+.warm input[type="range"]::-moz-range-track {
+  height: 3px; border-radius: 999px; background: var(--color-linie-stark);
+}
+.warm input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  height: 22px; width: 22px; margin-top: -9.5px;
+  border-radius: 999px; background: var(--color-kohle);
+  border: 3px solid var(--color-papier);
+  box-shadow: 0 1px 4px rgba(21,20,15,.28);
+  cursor: pointer;
+}
+.warm input[type="range"]::-moz-range-thumb {
+  height: 22px; width: 22px;
+  border-radius: 999px; background: var(--color-kohle);
+  border: 3px solid var(--color-papier);
+  box-shadow: 0 1px 4px rgba(21,20,15,.28);
+  cursor: pointer;
+}

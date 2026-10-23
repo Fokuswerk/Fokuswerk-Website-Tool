@@ -152,7 +152,7 @@ export function Planauflage({
 
       {/* Wände mit Küche */}
       {waende.map((w) => (
-        <div key={w} className="pointer-events-none absolute bg-butter/80 ring-1 ring-kohle/50" style={{ ...stueck(w, 0, 1), minWidth: 5, minHeight: 5 }} />
+        <div key={w} className="pointer-events-none absolute bg-holz/85 ring-1 ring-kohle/40" style={{ ...stueck(w, 0, 1), minWidth: 5, minHeight: 5 }} />
       ))}
 
       {/* Fenster, Tür, Wasser an ihrer Stelle auf der Wand */}
@@ -218,7 +218,7 @@ export function Planauflage({
       {/* Legende unter dem Bild statt darauf — auf dem Handy deckt sie sonst den Plan zu */}
       <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-kohle-2">
         <span>
-          <span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] bg-butter align-middle" />
+          <span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] bg-holz align-middle" />
           Küche an {waende.map((w) => WANDNAME[w]).join(", ")}
         </span>
         <span>

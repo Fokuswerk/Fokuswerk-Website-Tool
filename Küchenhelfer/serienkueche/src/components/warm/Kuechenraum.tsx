@@ -165,7 +165,7 @@ function Abstand({ ziel, richtung, groesse }: {
     kam.position.y = 1.85 + (zuschlag - 1) * 0.55;
     kam.updateProjectionMatrix();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [size.width, size.height, groesse, ziel[0], ziel[2], richtung[0], richtung[2]]);
+  }, [size.width, size.height, groesse, richtung[0], richtung[2]]);
   return null;
 }
 
@@ -204,10 +204,17 @@ export function Kuechenraum({
   typ,
   variante,
   hoehe = 440,
+  rahmenGroesse,
+  unterzeile = true,
 }: {
   typ: Kuechentyp;
   variante: VarianteRoh;
-  hoehe?: number;
+  hoehe?: number | string;
+  /** Feste Bezugsgröße für den Kameraabstand in Metern. Ohne sie richtet
+      sich der Abstand nach dem Raum — was springt, wenn der Raum sich
+      während des Schiebens ändert. */
+  rahmenGroesse?: number;
+  unterzeile?: boolean;
 }) {
   const [angefasst, setAngefasst] = useState(false);
   const { breite, tiefe } = typ.raum;
@@ -251,7 +258,14 @@ export function Kuechenraum({
           camera={{ position: blick.pos, fov: 34, near: 0.1, far: 120 }}
         >
           <color attach="background" args={["#efebe3"]} />
-          <Abstand ziel={blick.ziel} richtung={blick.richtung} groesse={Math.max(breite, tiefe) * M} />
+          <Abstand
+            ziel={blick.ziel}
+            richtung={blick.richtung}
+            // Über Eck und in U-Form greift die Küche weiter um den Raum —
+            // dann muss die Kamera etwas zurück, sonst stehen die Seitenzeilen
+            // am Bildrand an.
+            groesse={rahmenGroesse ?? Math.max(breite, tiefe) * M + (typ.zeilen.length - 1) * 0.38}
+          />
           <Suspense fallback={null}>
             <Licht />
             <Raum typ={typ} variante={variante} />
@@ -276,9 +290,11 @@ export function Kuechenraum({
         )}
       </div>
 
-      <p className="mt-3 text-center text-[12.5px] text-kohle-3">
-        Gerechnet, nicht gezeichnet: jeder Schrank steht hier so, wie er geliefert wird.
-      </p>
+      {unterzeile && (
+        <p className="mt-3 text-center text-[12.5px] text-kohle-3">
+          Gerechnet, nicht gezeichnet: jeder Schrank steht hier so, wie er geliefert wird.
+        </p>
+      )}
     </div>
   );
 }
