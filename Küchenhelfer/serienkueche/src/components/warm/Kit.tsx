@@ -59,7 +59,7 @@ export function GrosseWahl<T extends string | number>({
 }: {
   wert: T | null;
   setze: (v: T) => void;
-  optionen: Array<{ id: T; titel: string; satz?: string; bild?: ReactNode }>;
+  optionen: Array<{ id: T; titel: string; satz?: string; zusatz?: string; bild?: ReactNode }>;
   spalten?: 2 | 3 | 4;
 }) {
   const grid = spalten === 4 ? "sm:grid-cols-2 lg:grid-cols-4" : spalten === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2";
@@ -79,9 +79,14 @@ export function GrosseWahl<T extends string | number>({
                 : "hover:!border-linie-stark"
             }`}
           >
-            {o.bild && <div className="mb-3">{o.bild}</div>}
+            {o.bild && <div className="vertieft mb-3.5 overflow-hidden rounded-[10px] bg-creme-2">{o.bild}</div>}
             <div className="gross text-[16.5px] font-bold leading-tight text-kohle">{o.titel}</div>
             {o.satz && <div className="mt-1.5 text-[13.5px] leading-snug text-kohle-2">{o.satz}</div>}
+            {o.zusatz && (
+              <div className="ziffern mt-2.5 border-t border-linie-warm pt-2.5 text-[13px] font-semibold text-kohle">
+                {o.zusatz}
+              </div>
+            )}
           </button>
         );
       })}

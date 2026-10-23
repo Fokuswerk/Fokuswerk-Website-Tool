@@ -9,11 +9,12 @@ import { modul } from "@/data/module";
 import { ARTEN, geraet, geraeteFuer, type GeraeteArt } from "@/data/geraete";
 import { eur } from "@/lib/berechnung";
 import {
-  alleVorschlaege, alsKuechentyp, drehungen, drehungName, FORMEN, kuechenwaende,
+  alleVorschlaege, alsKuechentyp, ausBelegung, befundeZeile, drehungen, drehungName, FORMEN, kuechenwaende,
   pruefeAngaben, wandlaenge, WANDNAME, type Raumform, type Vorschlag, type WandId,
 } from "@/lib/planer";
 import { schrittFolge, useKueche } from "@/store/kueche";
 import { Kuechenbild, Raumbild } from "@/components/warm/Kuechenbild";
+import { Geraetebild } from "@/components/warm/Geraetebild";
 
 import { Fortschritt, GrosseWahl, GrosseZahl, Karte, Notiz, Schieber, WKnopf } from "@/components/warm/Kit";
 import { BeispielPlan, Planauflage, RAHMEN_START, type Rahmen } from "@/components/warm/Planauflage";
@@ -136,10 +137,12 @@ function VorschlagKarte({
 }
 
 export default function Kuechenplaner() {
-  const { raum, quelle, erkannt, schritt, gewaehlt, setzeRaum, setzeGeraet, setzeNutz, setzeQuelle, uebernehmeErkennung, geheZu, weiter, zurueck, waehle, neu } = useKueche();
+  const { raum, quelle, erkannt, schritt, gewaehlt, eigeneBelegung, setzeRaum, setzeGeraet, setzeNutz, setzeQuelle, uebernehmeErkennung, geheZu, weiter, zurueck, waehle, setzeBelegung, neu } = useKueche();
   const [details, setDetails] = useState(false);
   const [lauf, setLauf] = useState<number | null>(null);
-  const [ansicht, setAnsicht] = useState<"raum" | "vorn">("raum");
+  const [ansicht, setAnsicht] = useState<"raum" | "vorn" | "umstellen">("raum");
+  /** Beim Umstellen angefasster Schrank: Zeile und Platz darin. */
+  const [angefasst, setAngefasst] = useState<{ zeile: string; index: number } | null>(null);
   /** Im Prüfschritt geöffneter Einzelwert. null heißt Übersicht. */
   const [offen, setOffen] = useState<string | null>(null);
   const [planBild, setPlanBild] = useState<string | null>(null);
@@ -160,7 +163,31 @@ export default function Kuechenplaner() {
   const empfehlung = [...moegliche].sort(
     (a, b) => b.arbeitsflaeche - a.arbeitsflaeche || a.wegZumWasser - b.wegZumWasser || a.preis - b.preis,
   )[0];
-  const gewaehlterVorschlag = moegliche.find((v) => v.strategie === gewaehlt) ?? empfehlung;
+  const grundVorschlag = moegliche.find((v) => v.strategie === gewaehlt) ?? empfehlung;
+
+  // Von Hand umgestellt wird nur getauscht, die Breite bleibt also stimmen.
+  // Alles andere — Preis, Hängeschränke, Hinweise — rechnen wir neu, sonst
+  // stünden beim Umstellen falsche Zahlen da.
+  const eigen = grundVorschlag ? eigeneBelegung[grundVorschlag.strategie] : undefined;
+  const gewaehlterVorschlag = useMemo(() => {
+    if (!grundVorschlag || !eigen) return grundVorschlag;
+    return ausBelegung(raum, typ, grundVorschlag.strategie, { ...grundVorschlag.belegung, ...eigen });
+  }, [grundVorschlag, eigen, raum, typ]);
+
+  const tausche = (zeileId: string, i: number, j: number) => {
+    if (!gewaehlterVorschlag || i === j) return;
+    const ids = [...(gewaehlterVorschlag.belegung[zeileId] ?? [])];
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    setzeBelegung(grundVorschlag!.strategie, { ...(eigen ?? {}), [zeileId]: ids });
+  };
+
+  const antippen = (zeileId: string, index: number) => {
+    if (!angefasst) { setAngefasst({ zeile: zeileId, index }); return; }
+    if (angefasst.zeile !== zeileId) { setAngefasst({ zeile: zeileId, index }); return; }
+    if (angefasst.index === index) { setAngefasst(null); return; }
+    tausche(zeileId, angefasst.index, index);
+    setAngefasst(null);
+  };
   const hinweise = pruefeAngaben(raum);
 
   // Orientierung: wo im Ablauf stehe ich gerade. Ohne Start- und Ergebnisbild,
@@ -756,7 +783,9 @@ export default function Kuechenplaner() {
                   optionen={geraeteFuer(geraeteArt).map((g) => ({
                     id: g.id,
                     titel: g.name,
-                    satz: `${g.satz}${g.aufpreis !== 0 ? `  ${g.aufpreis > 0 ? "+" : ""}${eur(g.aufpreis)}` : "  im Preis"}`,
+                    satz: g.satz,
+                    zusatz: g.aufpreis === 0 ? "im Preis" : `${g.aufpreis > 0 ? "+" : "−"}${eur(Math.abs(g.aufpreis))}`,
+                    bild: <Geraetebild id={g.id} />,
                   }))}
                 />
               </div>
@@ -828,13 +857,13 @@ export default function Kuechenplaner() {
               <div className="bg-creme-2/40 px-4 pb-5 pt-5 sm:px-7">
                 <div className="mb-5 flex justify-center">
                   <div className="vertieft inline-flex rounded-full bg-creme-2 p-1">
-                    {([["raum", "Räumlich"], ["vorn", "Von vorn"]] as const).map(([id, t]) => (
+                    {([["raum", "Räumlich"], ["vorn", "Von vorn"], ["umstellen", "Umstellen"]] as const).map(([id, t]) => (
                       <button
                         key={id}
                         type="button"
-                        onClick={() => setAnsicht(id)}
+                        onClick={() => { setAnsicht(id); setAngefasst(null); }}
                         aria-pressed={ansicht === id}
-                        className={`rounded-full px-4 py-1.5 text-[13.5px] font-semibold transition ${
+                        className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition sm:px-4 sm:text-[13.5px] ${
                           ansicht === id
                             ? "bg-gradient-to-b from-white to-[#fbfaf7] text-kohle shadow-[0_1px_2px_rgba(21,20,15,.1),0_3px_8px_-3px_rgba(21,20,15,.22),inset_0_1px_0_#fff]"
                             : "text-kohle-2 hover:text-kohle"
@@ -846,9 +875,11 @@ export default function Kuechenplaner() {
                   </div>
                 </div>
 
-                {ansicht === "raum" ? (
+                {ansicht === "raum" && (
                   <Kuechenraum typ={typ} variante={gewaehlterVorschlag.variante} hoehe={420} geraeteSchalter />
-                ) : (
+                )}
+
+                {ansicht === "vorn" && (
                   <div className="space-y-2">
                     {typ.zeilen.map((z) => (
                       <div key={z.id}>
@@ -858,6 +889,61 @@ export default function Kuechenplaner() {
                         <Kuechenbild typ={typ} variante={gewaehlterVorschlag.variante} zeileId={z.id} hoehe={typ.zeilen.length > 1 ? 200 : 290} />
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {ansicht === "umstellen" && (
+                  <div>
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-[14px] text-kohle-2">
+                        {angefasst
+                          ? "Jetzt auf den Platz tippen, an den er soll."
+                          : "Tipp einen Schrank an, dann den Platz, an den er soll."}
+                      </p>
+                      {eigen && Object.keys(eigen).length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => { setzeBelegung(grundVorschlag!.strategie, {}); setAngefasst(null); }}
+                          className="flex items-center gap-1.5 text-[13.5px] font-semibold text-kohle-2 transition-colors hover:text-kohle"
+                        >
+                          <RotateCcw size={13} strokeWidth={2.2} />
+                          Wieder wie vorgeschlagen
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      {typ.zeilen.map((z) => {
+                        const hin = befundeZeile(raum, typ, z.id, gewaehlterVorschlag.belegung[z.id] ?? []);
+                        return (
+                          <div key={z.id}>
+                            {typ.zeilen.length > 1 && (
+                              <div className="mb-1 text-[12.5px] font-semibold text-kohle-3">{z.bezeichnung}</div>
+                            )}
+                            <Kuechenbild
+                              typ={typ}
+                              variante={gewaehlterVorschlag.variante}
+                              zeileId={z.id}
+                              hoehe={typ.zeilen.length > 1 ? 280 : 380}
+                              waehlbar
+                              gewaehlt={angefasst?.zeile === z.id ? angefasst.index : null}
+                              onWaehle={(i) => antippen(z.id, i)}
+                            />
+                            {hin.length > 0 && (
+                              <div className="mt-2 space-y-1.5">
+                                {hin.map((h) => <Notiz key={h} ton="achtung">{h}</Notiz>)}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <p className="mt-5 text-[12.5px] leading-relaxed text-kohle-3">
+                      Getauscht wird immer Platz gegen Platz — so bleibt die Summe der Breiten
+                      genau deine Wandlänge. Preis, Hängeschränke und Arbeitsfläche rechnen wir
+                      sofort neu, und wenn eine Regel kippt, steht es direkt darunter.
+                    </p>
                   </div>
                 )}
               </div>

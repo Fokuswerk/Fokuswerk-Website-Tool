@@ -1,5 +1,6 @@
 import { modul } from "@/data/module";
 import { geraet, STANDARD_GERAETE, type Geraetewahl } from "@/data/geraete";
+import { ROLLE_NAME, rolleVon } from "@/lib/masse";
 import type { Kuechentyp, Oeffnung, Wandseite, Zeile } from "@/lib/typen";
 import type { VarianteRoh } from "@/data/varianten";
 
@@ -393,6 +394,58 @@ export function planeKueche(a: Raumangaben, strategie: Strategie): Vorschlag {
     if (iKf > 0 && iKf < r.ids.length - 1) kochfeldGerueckt = true;
   }
 
+  return ausBelegung(a, typ, strategie, belegung);
+}
+
+export function alleVorschlaege(a: Raumangaben): Vorschlag[] {
+  return STRATEGIEN.map((s) => planeKueche(a, s.id));
+}
+
+export function pruefeAngaben(a: Raumangaben): string[] {
+  const h: string[] = [];
+  const gesamt = kuechenwaende(a).reduce((s, w) => s + a.nutz[w], 0);
+  if (gesamt < 1800) h.push("Unter 1,80 m Küchenwand bekommt man Spüle, Herd und Kühlschrank nicht unter.");
+  if (a.tiefe < 2100) h.push("Bei weniger als 2,10 m Raumtiefe wird es vor der Küche eng — man braucht etwa 1,20 m zum Stehen.");
+  if (a.form === "zwei-waende" && a.tiefe < 2400) h.push("Für zwei Zeilen gegenüber sollte der Raum mindestens 2,40 m tief sein.");
+  if (a.fenster && a.fenster.von + a.fenster.breite > wandlaenge(a, a.fenster.wand)) h.push("Das Fenster liegt rechnerisch außerhalb der Wand.");
+  if (a.wasser.von > wandlaenge(a, a.wasser.wand)) h.push("Der Wasseranschluss liegt rechnerisch außerhalb der Wand.");
+  return h;
+}
+
+/**
+ * Alles, was sich aus einer fertigen Belegung ergibt: Preis, Kennzahlen und
+ * die Hinweise dazu. Getrennt von der Suche nach der Anordnung, damit eine
+ * von Hand umgestellte Küche durch dieselbe Rechnung läuft — sonst stünden
+ * beim Umstellen falsche Zahlen und Hinweise da.
+ */
+export function ausBelegung(
+  a: Raumangaben,
+  typ: Kuechentyp,
+  strategie: Strategie,
+  belegung: Record<string, string[]>,
+): Vorschlag {
+  const titel = STRATEGIEN.find((s) => s.id === strategie)!.titel;
+  const wasserZeile = `Z-${a.wasser.wand}`;
+
+  // Die beiden Befunde stehen in der Anordnung selbst, nicht im Weg dorthin.
+  let fensterKonflikt = false;
+  let kochfeldGerueckt = false;
+  for (const z of typ.zeilen) {
+    const ids = belegung[z.id] ?? [];
+    const f = typ.oeffnungen.find((o) => o.art === "fenster" && o.wand === z.wand);
+    if (f) {
+      const von = f.von - z.start;
+      const bis = f.von + f.breite - z.start;
+      for (let i = 0; i < ids.length; i++) {
+        if (modul(ids[i]).kategorie !== "hochschrank") continue;
+        const l = lageIn(ids, i);
+        if (l.von < bis && l.bis > von) fensterKonflikt = true;
+      }
+    }
+    const iKf = ids.indexOf("KF600");
+    if (iKf > 0 && iKf < ids.length - 1) kochfeldGerueckt = true;
+  }
+
   const variante: VarianteRoh = {
     id: `frei-${strategie}`, typId: "MEINE", kurz: titel, schwerpunkt: "kosten",
     bezeichnung: titel, belegung, weitere: [], staerken: [], schwaechen: [], begruendung: "",
@@ -411,7 +464,7 @@ export function planeKueche(a: Raumangaben, strategie: Strategie): Vorschlag {
     }
   }
 
-  const lfm = gesamt / 1000;
+  const lfm = typ.zeilen.reduce((su, z) => su + z.laenge, 0) / 1000;
   const aufschlag = a.niveau === "gehoben" ? 1.35 : a.niveau === "einfach" ? 0.82 : 1;
   let preis = 0;
   for (const z of typ.zeilen) for (const id of belegung[z.id]) preis += modul(id).preis;
@@ -458,20 +511,50 @@ export function planeKueche(a: Raumangaben, strategie: Strategie): Vorschlag {
     achtung.push(`Zwischen den Zeilen bleiben nur ${a.tiefe - 1200} mm Gang. Empfohlen sind 1.200 mm.`);
   }
 
+
   return { strategie, titel, moeglich: true, belegung, haengeschraenke, variante, preis, arbeitsflaeche, wegZumWasser, passblende, gutPunkte: gut, achtungPunkte: achtung };
 }
 
-export function alleVorschlaege(a: Raumangaben): Vorschlag[] {
-  return STRATEGIEN.map((s) => planeKueche(a, s.id));
-}
+/**
+ * Was an einer von Hand umgestellten Zeile auffällt. Umgestellt wird nur
+ * getauscht, deshalb stimmt die Breite immer — was kippen kann, sind die
+ * Regeln, die ein Laie nicht kennt.
+ */
+export function befundeZeile(a: Raumangaben, typ: Kuechentyp, zeileId: string, ids: string[]): string[] {
+  const z = typ.zeilen.find((x) => x.id === zeileId);
+  if (!z) return [];
+  const hin: string[] = [];
+  const f = typ.oeffnungen.find((o) => o.art === "fenster" && o.wand === z.wand);
+  const zone = f ? { von: f.von - z.start, bis: f.von + f.breite - z.start } : null;
 
-export function pruefeAngaben(a: Raumangaben): string[] {
-  const h: string[] = [];
-  const gesamt = kuechenwaende(a).reduce((s, w) => s + a.nutz[w], 0);
-  if (gesamt < 1800) h.push("Unter 1,80 m Küchenwand bekommt man Spüle, Herd und Kühlschrank nicht unter.");
-  if (a.tiefe < 2100) h.push("Bei weniger als 2,10 m Raumtiefe wird es vor der Küche eng — man braucht etwa 1,20 m zum Stehen.");
-  if (a.form === "zwei-waende" && a.tiefe < 2400) h.push("Für zwei Zeilen gegenüber sollte der Raum mindestens 2,40 m tief sein.");
-  if (a.fenster && a.fenster.von + a.fenster.breite > wandlaenge(a, a.fenster.wand)) h.push("Das Fenster liegt rechnerisch außerhalb der Wand.");
-  if (a.wasser.von > wandlaenge(a, a.wasser.wand)) h.push("Der Wasseranschluss liegt rechnerisch außerhalb der Wand.");
-  return h;
+  for (let i = 0; i < ids.length; i++) {
+    const id = ids[i];
+    const l = lageIn(ids, i);
+    const m = modul(id);
+    if (zone && m.kategorie === "hochschrank" && l.von < zone.bis && l.bis > zone.von) {
+      hin.push(`Der ${ROLLE_NAME[rolleVon(id)] || "hohe Schrank"} steht vor dem Fenster und nimmt Licht.`);
+    }
+    if (id === "KF600") {
+      const abstand = Math.min(l.von, z.laenge - l.bis);
+      if (abstand < SEITENABSTAND_KOCHFELD) {
+        hin.push(
+          abstand <= 0
+            ? "Der Herd steht direkt an der Wand — daneben bleibt kein Platz zum Abstellen."
+            : `Neben dem Herd bleiben nur ${Math.round(abstand / 10)} cm bis zur Wand. Empfohlen sind ${SEITENABSTAND_KOCHFELD / 10} cm.`,
+        );
+      }
+    }
+  }
+
+  const iSp = ids.indexOf("SP600");
+  const iGs = ids.indexOf("GS600");
+  if (iSp >= 0 && iGs >= 0 && Math.abs(iSp - iGs) > 1) {
+    hin.push("Die Spülmaschine steht nicht mehr neben der Spüle — dann braucht sie eigene Anschlüsse.");
+  }
+  if (SEITE[a.wasser.wand] === z.wand && iSp >= 0) {
+    const l = lageIn(ids, iSp);
+    const weg = Math.abs((l.von + l.bis) / 2 - (a.wasser.von - z.start));
+    if (weg > 900) hin.push(`Die Spüle liegt jetzt rund ${Math.round(weg / 100) * 10} cm vom Wasseranschluss entfernt.`);
+  }
+  return hin;
 }

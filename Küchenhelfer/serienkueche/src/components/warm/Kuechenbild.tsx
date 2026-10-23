@@ -23,12 +23,20 @@ export function Kuechenbild({
   zeileId = "Z1",
   hoehe = 260,
   mitNamen = true,
+  waehlbar = false,
+  gewaehlt = null,
+  onWaehle,
 }: {
   typ: Kuechentyp;
   variante: VarianteRoh;
   zeileId?: string;
   hoehe?: number;
   mitNamen?: boolean;
+  /** Schränke anfassbar machen, um sie zu tauschen. */
+  waehlbar?: boolean;
+  /** Angefasster Schrank, als Platz in der Zeile. */
+  gewaehlt?: number | null;
+  onWaehle?: (index: number) => void;
 }) {
   const zeile = typ.zeilen.find((z) => z.id === zeileId);
   if (!zeile) return null;
@@ -39,7 +47,8 @@ export function Kuechenbild({
 
   const randX = 180;
   const randUnten = mitNamen ? 560 : 160;
-  const vb = `${-randX} ${-140} ${zeile.laenge + 2 * randX} ${RH + 140 + randUnten}`;
+  const randOben = waehlbar ? 300 : 140;
+  const vb = `${-randX} ${-randOben} ${zeile.laenge + 2 * randX} ${RH + randOben + randUnten}`;
 
   return (
     <svg
@@ -50,7 +59,7 @@ export function Kuechenbild({
       aria-label={`Die Küche von vorn: ${plaetze.map((p) => NAME[rolleVon(p.modulId)]).filter(Boolean).join(", ")}`}
     >
       {/* Wand */}
-      <rect x={-randX} y={-140} width={zeile.laenge + 2 * randX} height={RH + 140} rx={40} className="fill-creme-2" />
+      <rect x={-randX} y={-randOben} width={zeile.laenge + 2 * randX} height={RH + randOben} rx={40} className="fill-creme-2" />
 
       {/* Fenster */}
       {fenster.map((f) => {
@@ -255,6 +264,45 @@ export function Kuechenbild({
             >
               {n}
             </text>
+          );
+        })}
+      {/* Fassflächen zum Umstellen. Ganz oben, damit nichts dazwischenkommt. */}
+      {waehlbar &&
+        plaetze.map((p) => {
+          const aktiv = gewaehlt === p.index;
+          const offen = gewaehlt !== null && gewaehlt !== undefined;
+          return (
+            <g key={`fass-${p.index}`} onClick={() => onWaehle?.(p.index)} style={{ cursor: "pointer" }}>
+              <rect
+                x={p.von + 16}
+                y={y(HOCH_H)}
+                width={Math.max(10, p.breite - 32)}
+                height={HOCH_H}
+                rx={40}
+                className={
+                  aktiv
+                    ? "fill-kohle/[0.14] stroke-kohle"
+                    : offen
+                      ? "fill-transparent stroke-kohle/25 hover:fill-kohle/[0.05]"
+                      : "fill-transparent stroke-transparent hover:fill-kohle/[0.05] hover:stroke-kohle/25"
+                }
+                strokeWidth={aktiv ? 26 : 14}
+                strokeDasharray={aktiv ? undefined : "40 46"}
+              />
+              {aktiv && (
+                <text
+                  x={p.von + p.breite / 2}
+                  y={y(HOCH_H) - 90}
+                  textAnchor="middle"
+                  fontSize={135}
+                  fontWeight={700}
+                  fontFamily="Plus Jakarta Sans, sans-serif"
+                  className="fill-kohle"
+                >
+                  ausgewählt
+                </text>
+              )}
+            </g>
           );
         })}
     </svg>
