@@ -897,8 +897,8 @@ export default function Kuechenplaner() {
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                       <p className="text-[14px] text-kohle-2">
                         {angefasst
-                          ? "Jetzt auf den Platz tippen, an den er soll."
-                          : "Tipp einen Schrank an, dann den Platz, an den er soll."}
+                          ? "Jetzt auf den Platz tippen, an den er soll — an derselben Wand."
+                          : "Tipp einen Schrank an — im Raum oder in der Ansicht — dann den Platz, an den er soll."}
                       </p>
                       {eigen && Object.keys(eigen).length > 0 && (
                         <button
@@ -912,7 +912,19 @@ export default function Kuechenplaner() {
                       )}
                     </div>
 
-                    <div className="space-y-4">
+                    <Kuechenraum
+                      typ={typ}
+                      variante={gewaehlterVorschlag.variante}
+                      hoehe={400}
+                      unterzeile={false}
+                      umstellen={{
+                        gewaehlt: angefasst,
+                        onWaehle: (zeileId, index) => antippen(zeileId, index),
+                        onLeer: () => setAngefasst(null),
+                      }}
+                    />
+
+                    <div className="mt-6 space-y-4">
                       {typ.zeilen.map((z) => {
                         const hin = befundeZeile(raum, typ, z.id, gewaehlterVorschlag.belegung[z.id] ?? []);
                         return (
@@ -924,7 +936,7 @@ export default function Kuechenplaner() {
                               typ={typ}
                               variante={gewaehlterVorschlag.variante}
                               zeileId={z.id}
-                              hoehe={typ.zeilen.length > 1 ? 280 : 380}
+                              hoehe={typ.zeilen.length > 1 ? 230 : 300}
                               waehlbar
                               gewaehlt={angefasst?.zeile === z.id ? angefasst.index : null}
                               onWaehle={(i) => antippen(z.id, i)}

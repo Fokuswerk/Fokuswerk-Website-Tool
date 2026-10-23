@@ -30,6 +30,9 @@ export interface Kasten {
   farbe: RGB;
   /** Welches Material — bestimmt Rauheit und Glanz im Bild. */
   stoff?: Stoff;
+  /** Zu welchem Schrank der Körper gehört. Erst damit lässt sich im Raum
+      ein Schrank anfassen: alle seine Teile tragen dieselbe Kennung. */
+  platz?: { zeile: string; index: number };
 }
 
 export type Stoff =
@@ -127,11 +130,20 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
     return [a.o[0] + a.e[0] * sx + a.n[0] * d, a.o[1] + a.e[1] * sx + a.n[1] * d, z];
   };
 
+  // Welchem Schrank gehören die Körper, die gerade entstehen.
+  let platzJetzt: { zeile: string; index: number } | null = null;
+
   const stelle = (
     wand: Wandseite, s0: number, s1: number, d0: number, d1: number,
     z0: number, z1: number, farbe: RGB,
   ) => {
-    kaesten.push({ id: `k${lauf++}`, ...quader(wand, s0, s1, d0, d1, z0, z1), farbe, stoff: STOFF.get(farbe) });
+    kaesten.push({
+      id: `k${lauf++}`,
+      ...quader(wand, s0, s1, d0, d1, z0, z1),
+      farbe,
+      stoff: STOFF.get(farbe),
+      ...(platzJetzt ? { platz: platzJetzt } : {}),
+    });
   };
 
   /** Schrank mit sichtbarer Fuge: dunklerer Korpus, davor die Frontplatte. */
@@ -196,6 +208,7 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
     if (plaetze.length === 0) continue;
     const fenster = typ.oeffnungen.filter((o) => o.art === "fenster" && o.wand === zeile.wand);
     const ab = zeile.start;
+    platzJetzt = null;
 
     // Arbeitsplatte über die ganze Zeile, 20 mm Überstand nach vorn
     stelle(zeile.wand, ab, ab + zeile.laenge, 0, TIEFE_UNTEN + 20, AP_OK - PLATTE, AP_OK, MATERIAL.platte);
@@ -206,6 +219,7 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
       const s1 = ab + p.bis;
       const m = (s0 + s1) / 2;
       const rolle = rolleVon(p.modulId);
+      platzJetzt = { zeile: zeile.id, index: p.index };
 
       // Geräte bekommen eine Marke: Umriss und Punkt für das Schild.
       const merke = (d0: number, d1: number, z0: number, z1: number, zSchild: number, dSchild: number) => {
@@ -302,6 +316,7 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
     }
   }
 
+  platzJetzt = null;
   return { kaesten, marken, boden, waende, mitte: [breite / 2, tiefe / 2, 1100] };
 }
 

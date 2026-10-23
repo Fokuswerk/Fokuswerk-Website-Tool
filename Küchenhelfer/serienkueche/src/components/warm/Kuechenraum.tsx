@@ -45,24 +45,70 @@ const STOFFE: Record<Stoff | "sonst", { rauheit: number; metall: number }> = {
 const hex = (c: [number, number, number]) =>
   `#${c.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
 
-function Koerper({ k }: { k: Kasten }) {
+export interface Umstellen {
+  gewaehlt: { zeile: string; index: number } | null;
+  onWaehle: (zeile: string, index: number) => void;
+  /** Ob der letzte Zeigerweg ein Tippen war und kein Drehen. */
+  klickOk: () => boolean;
+}
+
+function Koerper({
+  k, umstellen, ueber, setzeUeber,
+}: {
+  k: Kasten;
+  umstellen?: Umstellen;
+  ueber?: boolean;
+  setzeUeber?: (p: { zeile: string; index: number } | null) => void;
+}) {
   const stoff = STOFFE[k.stoff ?? "sonst"];
   const istFenster = k.stoff === "fenster";
+  const fassbar = !!umstellen && !!k.platz;
+  const aktiv =
+    fassbar && umstellen!.gewaehlt?.zeile === k.platz!.zeile && umstellen!.gewaehlt?.index === k.platz!.index;
+
   return (
     <mesh
       position={[(k.x + k.bx / 2) * M, (k.z + k.bz / 2) * M, (k.y + k.by / 2) * M]}
       castShadow={!istFenster}
       receiveShadow
+      onPointerOver={fassbar ? (e) => { e.stopPropagation(); setzeUeber?.(k.platz!); } : undefined}
+      onPointerOut={fassbar ? () => setzeUeber?.(null) : undefined}
+      onClick={
+        fassbar
+          ? (e) => {
+              e.stopPropagation();
+              if (!umstellen!.klickOk()) return;
+              umstellen!.onWaehle(k.platz!.zeile, k.platz!.index);
+            }
+          : undefined
+      }
     >
       <boxGeometry args={[k.bx * M, k.bz * M, k.by * M]} />
       <meshStandardMaterial
         color={hex(k.farbe)}
         roughness={stoff.rauheit}
         metalness={stoff.metall}
-        emissive={istFenster ? "#d7e8f3" : "#000000"}
-        emissiveIntensity={istFenster ? 0.9 : 0}
+        emissive={istFenster ? "#d7e8f3" : aktiv ? "#b98a1e" : ueber ? "#6d6a60" : "#000000"}
+        emissiveIntensity={istFenster ? 0.9 : aktiv ? 0.42 : ueber ? 0.18 : 0}
       />
     </mesh>
+  );
+}
+
+/** Feiner Umriss um einen angefassten Schrank. */
+function Umriss({ kaesten, farbe }: { kaesten: Kasten[]; farbe: string }) {
+  if (kaesten.length === 0) return null;
+  const x0 = Math.min(...kaesten.map((k) => k.x));
+  const x1 = Math.max(...kaesten.map((k) => k.x + k.bx));
+  const y0 = Math.min(...kaesten.map((k) => k.y));
+  const y1 = Math.max(...kaesten.map((k) => k.y + k.by));
+  const z0 = Math.min(...kaesten.map((k) => k.z));
+  const z1 = Math.max(...kaesten.map((k) => k.z + k.bz));
+  return (
+    <lineSegments position={[((x0 + x1) / 2) * M, ((z0 + z1) / 2) * M, ((y0 + y1) / 2) * M]}>
+      <edgesGeometry args={[new BoxGeometry((x1 - x0) * M + 0.02, (z1 - z0) * M + 0.02, (y1 - y0) * M + 0.02)]} />
+      <lineBasicMaterial color={farbe} transparent opacity={0.85} />
+    </lineSegments>
   );
 }
 
@@ -109,10 +155,25 @@ function Geraetemarke({ marke }: { marke: Marke }) {
   );
 }
 
-function Raum({ typ, variante, zeigeGeraete }: { typ: Kuechentyp; variante: VarianteRoh; zeigeGeraete: boolean }) {
+function Raum({
+  typ, variante, zeigeGeraete, umstellen,
+}: {
+  typ: Kuechentyp; variante: VarianteRoh; zeigeGeraete: boolean; umstellen?: Umstellen;
+}) {
   const szene = useMemo(() => baueSzene(typ, variante), [typ, variante]);
   const { breite, tiefe } = typ.raum;
   const sicht = useSichtbareWaende(breite, tiefe);
+  const [ueber, setzeUeber] = useState<{ zeile: string; index: number } | null>(null);
+
+  // Zeigerform nur so lange aendern, wie wirklich etwas unter dem Zeiger ist.
+  useEffect(() => {
+    if (!umstellen || !ueber) return;
+    document.body.style.cursor = "pointer";
+    return () => { document.body.style.cursor = ""; };
+  }, [umstellen, ueber]);
+
+  const teileVon = (p: { zeile: string; index: number } | null) =>
+    p ? szene.kaesten.filter((k) => k.platz?.zeile === p.zeile && k.platz?.index === p.index) : [];
   const bx = breite * M;
   const bz = tiefe * M;
   const bh = RAUMHOEHE * M;
@@ -146,7 +207,18 @@ function Raum({ typ, variante, zeigeGeraete }: { typ: Kuechentyp; variante: Vari
           </group>
         ))}
 
-      {szene.kaesten.map((k) => <Koerper key={k.id} k={k} />)}
+      {szene.kaesten.map((k) => (
+        <Koerper
+          key={k.id}
+          k={k}
+          umstellen={umstellen}
+          ueber={!!ueber && k.platz?.zeile === ueber.zeile && k.platz?.index === ueber.index}
+          setzeUeber={setzeUeber}
+        />
+      ))}
+
+      {umstellen && <Umriss kaesten={teileVon(umstellen.gewaehlt)} farbe="#8a6410" />}
+      {umstellen && !umstellen.gewaehlt && <Umriss kaesten={teileVon(ueber)} farbe="#4a473e" />}
 
       {/* Geräte benennen: sonst sieht man weiße Fronten und weiß nicht,
           hinter welcher der Backofen steckt. Nur die Wände, auf die man
@@ -232,6 +304,7 @@ export function Kuechenraum({
   rahmenGroesse,
   unterzeile = true,
   geraeteSchalter = false,
+  umstellen,
 }: {
   typ: Kuechentyp;
   variante: VarianteRoh;
@@ -243,9 +316,30 @@ export function Kuechenraum({
   unterzeile?: boolean;
   /** Schalter, um die Geräte zu benennen. */
   geraeteSchalter?: boolean;
+  /** Schränke im Raum anfassen und tauschen. */
+  umstellen?: {
+    gewaehlt: { zeile: string; index: number } | null;
+    onWaehle: (zeile: string, index: number) => void;
+    /** Tippen ins Leere löst die Auswahl wieder. */
+    onLeer?: () => void;
+  };
 }) {
   const [angefasst, setAngefasst] = useState(false);
   const [zeigeGeraete, setZeigeGeraete] = useState(true);
+
+  // Drehen und Antippen am selben Ort: als Tippen zaehlt nur, was den Zeiger
+  // kaum bewegt hat. Sonst waehlt jedes Drehen versehentlich einen Schrank.
+  const zeiger = useRef({ x: 0, y: 0, gewandert: false });
+  const klickOk = () => !zeiger.current.gewandert;
+  const merkeStart = (e: React.PointerEvent) => {
+    zeiger.current = { x: e.clientX, y: e.clientY, gewandert: false };
+  };
+  const merkeWeg = (e: React.PointerEvent) => {
+    if (zeiger.current.gewandert) return;
+    if (Math.hypot(e.clientX - zeiger.current.x, e.clientY - zeiger.current.y) > 6) {
+      zeiger.current.gewandert = true;
+    }
+  };
   const { breite, tiefe } = typ.raum;
 
   // Von der Seite her schauen, an der die Küche steht — sonst sieht man
@@ -278,13 +372,15 @@ export function Kuechenraum({
       <div
         className="vertieft relative overflow-hidden rounded-[18px] bg-[#efebe3] ring-1 ring-black/[0.06]"
         style={{ height: hoehe, touchAction: "none" }}
-        onPointerDown={() => setAngefasst(true)}
+        onPointerDown={(e) => { setAngefasst(true); merkeStart(e); }}
+        onPointerMove={merkeWeg}
       >
         <Canvas
           shadows
           dpr={[1, 2]}
           gl={{ antialias: true }}
           camera={{ position: blick.pos, fov: 34, near: 0.1, far: 120 }}
+          onPointerMissed={() => { if (umstellen && klickOk()) umstellen.onLeer?.(); }}
         >
           <color attach="background" args={["#efebe3"]} />
           <Abstand
@@ -297,7 +393,12 @@ export function Kuechenraum({
           />
           <Suspense fallback={null}>
             <Licht />
-            <Raum typ={typ} variante={variante} zeigeGeraete={geraeteSchalter && zeigeGeraete} />
+            <Raum
+              typ={typ}
+              variante={variante}
+              zeigeGeraete={geraeteSchalter && zeigeGeraete}
+              umstellen={umstellen ? { ...umstellen, klickOk } : undefined}
+            />
           </Suspense>
           <OrbitControls
             target={blick.ziel}
