@@ -16,7 +16,20 @@ npm run build && npx next start -p 3000
 
 `next dev` bindet auf dem Entwicklungsrechner keinen Port — der Produktionsserver läuft.
 
-## Die acht Bereiche
+## Zwei Wege
+
+Auf der Startseite entscheidet sich, welcher Weg gilt.
+
+**Eine einzelne Küche** (`/kueche`) — für Leute ohne Vorkenntnisse. Sechs Schritte:
+Raumform, Maße, Fenster und Tür, Wünsche, Vorschläge, Ergebnis. Die Zeichnung wächst
+beim Ausfüllen mit. Hier wird wirklich gerechnet: `lib/planer.ts` erzeugt aus den
+Eingaben eine Modulfolge, prüft Abstände und Regeln und begründet das Ergebnis in
+Alltagssprache. Eingaben in Zentimetern, intern Millimeter.
+
+**Ein ganzes Haus** (`/dashboard` und `/projects/demo/*`) — der Profi-Weg für Bauträger,
+acht Bereiche hinter einer festen Seitenleiste.
+
+## Die acht Bereiche des Profi-Wegs
 
 | Route | Inhalt |
 |---|---|
@@ -35,13 +48,17 @@ npm run build && npx next start -p 3000
 src/
   data/        Demo-Daten: Modulkatalog, Projekt mit Geometrie, Varianten
   lib/
+    planer.ts      Rechnet freie Räume: Modulfolge, Regeln, Begründungen
     typen.ts       Datenmodell
     berechnung.ts  Preise, Kennzahlen, Aggregation, Invariantenprüfung
     ableitung.ts   Anschlüsse und Freigabestand aus der Variante abgeleitet
-  store/       Zentraler Demo-Zustand, LocalStorage-Persistenz
+  store/
+    demo.ts      Zustand des Profi-Wegs
+    kueche.ts    Zustand der Schritt-für-Schritt-Strecke
   components/
     plan/        Grundriss und Wandansicht als SVG aus Geometriedaten
     layout/      Seitenleiste und Rahmen
+    kueche/      Eingabefelder für Leute ohne Vorkenntnisse
     ui/          Eigenes Baukastenset
 ```
 
@@ -79,8 +96,9 @@ npx esbuild werkzeuge/pruefe.ts --bundle --platform=node --format=esm \
 
 ## Bewusst simuliert
 
-Grundrisserkennung · Variantengenerierung (vorberechnet statt Solver) · Dateiverarbeitung
-beim Upload · Lieferantenzuordnung · Bestellung · Druckansicht über den Browserdialog.
+Grundrisserkennung · Dateiverarbeitung beim Upload · Lieferantenzuordnung · Bestellung ·
+Druckansicht über den Browserdialog. Im Profi-Weg sind auch die Varianten vorberechnet.
+**Nicht simuliert** ist die Planung im Einzelküchen-Weg — die rechnet aus den Eingaben.
 
 ## Bewusst nicht enthalten
 

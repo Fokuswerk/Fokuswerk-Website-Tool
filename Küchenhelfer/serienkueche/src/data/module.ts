@@ -50,6 +50,22 @@ export const MODULE: NeutralesModul[] = [
 const INDEX = new Map(MODULE.map((m) => [m.id, m]));
 
 export function modul(id: string): NeutralesModul {
+  // Passleiste mit frei zugeschnittener Breite: "PBX:<mm>".
+  // Reale Kuechen schliessen den Rest einer Nische so, weil Wandlaengen
+  // selten auf das Modulraster fallen.
+  if (id.startsWith("PBX:")) {
+    const breite = Number(id.slice(4));
+    return {
+      id,
+      bezeichnung: "Passleiste, vor Ort zugeschnitten",
+      kategorie: "blende",
+      breite,
+      hoehe: 720,
+      einheit: "stk",
+      preis: Math.max(28, Math.round(breite * 0.28)),
+      artikel: "PB-ZS-M",
+    };
+  }
   const m = INDEX.get(id);
   if (!m) throw new Error(`Unbekanntes Modul: ${id}`);
   return m;

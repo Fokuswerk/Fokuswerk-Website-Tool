@@ -1,12 +1,25 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { Seitenleiste } from "./Seitenleiste";
 import { Toasts } from "@/components/ui/kit";
 
 export function Rahmen({ children }: { children: ReactNode }) {
   const [offen, setOffen] = useState(false);
+  const pfad = usePathname();
+  // Der Weg fuer eine einzelne Kueche laeuft ohne Profi-Navigation.
+  const profi = pfad.startsWith("/dashboard") || pfad.startsWith("/projects");
+
+  if (!profi) {
+    return (
+      <>
+        {children}
+        <Toasts />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-full lg:grid lg:grid-cols-[246px_minmax(0,1fr)]">

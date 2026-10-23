@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
+  ArrowLeft,
   ClipboardCheck,
   FileText,
   LayoutGrid,
@@ -84,6 +85,14 @@ export function Seitenleiste({ schliessen }: { schliessen?: () => void }) {
           <dt className="text-ink-3">Stand</dt>
           <dd className="text-ink-2">{PROJEKT.status}</dd>
         </dl>
+        <Link
+          href="/"
+          onClick={schliessen}
+          className="mt-3 flex items-center gap-2 rounded-sm px-1 py-1 text-[11.5px] text-ink-3 transition-colors hover:text-ink-2"
+        >
+          <ArrowLeft size={13} strokeWidth={1.6} />
+          Zurück zur Auswahl
+        </Link>
         <button
           onClick={() => setFrage(true)}
           className="mt-3 flex w-full items-center gap-2 rounded-sm px-1 py-1 text-[11.5px] text-ink-3 transition-colors hover:text-ink-2"
