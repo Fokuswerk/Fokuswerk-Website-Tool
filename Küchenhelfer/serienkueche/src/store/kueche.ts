@@ -138,7 +138,7 @@ export const useKueche = create<KuecheState>()(
         }),
     }),
     {
-      name: "serienkueche-einzel-v5",
+      name: "serienkueche-einzel-v6",
       // Ein Plan aus einer älteren Sitzung kann Geräte nennen, die es nicht
       // mehr gibt. Beim Laden einmal geradeziehen, statt daran zu scheitern.
       merge: (gespeichert, jetzt) => {

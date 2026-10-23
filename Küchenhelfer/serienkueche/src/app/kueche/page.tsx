@@ -6,7 +6,8 @@ import dynamic from "next/dynamic";
 import { useRef } from "react";
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, FileUp, PencilLine, RotateCcw, RotateCw, ScanLine } from "lucide-react";
 import { modul } from "@/data/module";
-import { ARTEN, geraet, geraeteFuer, type GeraeteArt } from "@/data/geraete";
+import { rolleVon, ROLLE_NAME } from "@/lib/masse";
+import { ARTEN, geraet, geraeteFuer, markenFuer, PREISSTAND_GERAETE, QUELLEN, type GeraeteArt } from "@/data/geraete";
 import { eur } from "@/lib/berechnung";
 import {
   alleVorschlaege, alsKuechentyp, ausBelegung, befundeZeile, drehungen, drehungName, FORMEN, kuechenwaende,
@@ -22,6 +23,30 @@ import { BeispielPlan, Planauflage, RAHMEN_START, type Rahmen } from "@/componen
 import { melde } from "@/components/ui/kit";
 
 const ALLE_WAENDE: WandId[] = ["haupt", "links", "rechts", "gegenueber"];
+
+/** Kurzer Name eines Moduls für die Positionsliste. */
+function modulName(id: string): string {
+  const r = ROLLE_NAME[rolleVon(id)];
+  if (r) return r;
+  if (id.startsWith("PBX:") || modul(id).kategorie === "blende") return "Passleiste";
+  return modul(id).bezeichnung;
+}
+
+/** Die Legende unter einer Zeichnung: Nummer und Name, alles auf einer Linie. */
+function Positionsliste({ ids, ab }: { ids: string[]; ab: number }) {
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[12.5px] leading-none text-kohle-2">
+      {ids.map((id, i) => (
+        <span key={i} className="flex items-center gap-1.5">
+          <span className="ziffern flex h-[18px] min-w-[18px] items-center justify-center rounded-full border border-linie-stark px-1 text-[10.5px] font-bold text-kohle">
+            {ab + i}
+          </span>
+          {modulName(id)}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 /** Was beim Öffnen eines einzelnen Prüfpunkts oben steht. */
 const EDIT_TITEL: Record<string, string> = {
@@ -94,7 +119,7 @@ function VorschlagKarte({
   return (
     <Karte className={`overflow-hidden ${aktiv ? "flaeche-hoch !border-kohle ring-1 ring-kohle" : ""}`}>
       <div className="bg-creme-2/60 px-4 pt-4">
-        <Kuechenbild typ={typ} variante={v.variante} zeileId={ersteZeile} hoehe={150} mitNamen={false} />
+        <Kuechenbild typ={typ} variante={v.variante} zeileId={ersteZeile} hoehe={150} />
       </div>
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
@@ -146,6 +171,8 @@ export default function Kuechenplaner() {
   const [angefasst, setAngefasst] = useState<{ zeile: string; index: number } | null>(null);
   /** Warum der letzte Tausch nicht ging. */
   const [tauschGrund, setTauschGrund] = useState<string | null>(null);
+  /** Markenfilter im Geräteschritt. null = alle. */
+  const [marke, setMarke] = useState<string | null>(null);
   /** Im Prüfschritt geöffneter Einzelwert. null heißt Übersicht. */
   const [offen, setOffen] = useState<string | null>(null);
   const [planBild, setPlanBild] = useState<string | null>(null);
@@ -195,6 +222,16 @@ export default function Kuechenplaner() {
     setzeBelegung(grundVorschlag!.strategie, { ...(eigen ?? {}), ...plan.belegung });
     setAngefasst(null);
     setTauschGrund(null);
+  };
+
+  /** Fortlaufende Positionsnummern über alle Zeilen hinweg. */
+  const nummerAb = (zeileId: string) => {
+    let n = 1;
+    for (const z of typ.zeilen) {
+      if (z.id === zeileId) return n;
+      n += (gewaehlterVorschlag?.belegung[z.id] ?? []).length;
+    }
+    return n;
   };
 
   const zielMoeglich = (zeileId: string, index: number) =>
@@ -367,7 +404,7 @@ export default function Kuechenplaner() {
             {moegliche[0] && (
               <div className="mx-auto mb-8 w-full max-w-[400px]">
                 <Karte className="px-5 py-5">
-                  <Kuechenbild typ={typ} variante={moegliche[moegliche.length - 1].variante} zeileId={typ.zeilen[0].id} hoehe={150} mitNamen={false} />
+                  <Kuechenbild typ={typ} variante={moegliche[moegliche.length - 1].variante} zeileId={typ.zeilen[0].id} hoehe={150} />
                 </Karte>
               </div>
             )}
@@ -787,54 +824,101 @@ export default function Kuechenplaner() {
           return (
             <>
               <Kopf vor={schrittText} titel={info.frage} satz={info.hilfe} />
-              <div className="mt-7 grid gap-3 sm:grid-cols-2">
-                {geraeteFuer(geraeteArt).map((g) => {
-                  const aktiv = raum.geraete[geraeteArt] === g.id;
-                  return (
+
+              {markenFuer(geraeteArt).length > 1 && (
+                <div className="mt-6 flex flex-wrap items-center gap-2">
+                  <span className="mr-1 text-[13px] text-kohle-3">Marke</span>
+                  {[null, ...markenFuer(geraeteArt)].map((m) => (
                     <button
-                      key={g.id}
+                      key={m ?? "alle"}
                       type="button"
-                      onClick={() => setzeGeraet(geraeteArt, g.id)}
-                      aria-pressed={aktiv}
-                      className={`warm-wahl flaeche rounded-[14px] p-4 text-left ${
-                        aktiv ? "flaeche-hoch !border-kohle ring-1 ring-kohle" : "hover:!border-linie-stark"
+                      onClick={() => setMarke(m)}
+                      aria-pressed={marke === m}
+                      className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+                        marke === m ? "bg-kohle text-creme" : "flaeche text-kohle-2 hover:!border-kohle-3"
                       }`}
                     >
-                      <div className="flex gap-4">
-                        <div className="vertieft w-[104px] shrink-0 overflow-hidden rounded-[10px] bg-creme-2">
-                          <Geraetebild id={g.id} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          {g.klasse && <div className="vorzeile">{g.klasse}</div>}
-                          <div className="gross mt-1 text-[16px] font-bold leading-tight text-kohle">{g.name}</div>
-                          <div className="mt-1.5 text-[13.5px] leading-snug text-kohle-2">{g.satz}</div>
-                        </div>
-                      </div>
-
-                      {g.daten && g.daten.length > 0 && (
-                        <dl className="mt-3.5 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-linie-warm pt-3">
-                          {g.daten.map(([k, v]) => (
-                            <div key={k} className="flex items-baseline justify-between gap-2 text-[12.5px]">
-                              <dt className="shrink-0 text-kohle-3">{k}</dt>
-                              <dd className="ziffern truncate text-right font-medium text-kohle-2">{v}</dd>
-                            </div>
-                          ))}
-                        </dl>
-                      )}
-
-                      <div className="ziffern mt-3 border-t border-linie-warm pt-3 text-[13.5px] font-semibold text-kohle">
-                        {g.aufpreis === 0 ? "im Preis enthalten" : `${g.aufpreis > 0 ? "+" : "−"}${eur(Math.abs(g.aufpreis))}`}
-                      </div>
+                      {m ?? "Alle"}
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                {geraeteFuer(geraeteArt)
+                  .filter((g) => !marke || g.marke === marke || g.marke === "—")
+                  .map((g) => {
+                    const aktiv = raum.geraete[geraeteArt] === g.id;
+                    return (
+                      <button
+                        key={g.id}
+                        type="button"
+                        onClick={() => setzeGeraet(geraeteArt, g.id)}
+                        aria-pressed={aktiv}
+                        className={`warm-wahl flaeche rounded-[14px] p-4 text-left ${
+                          aktiv ? "flaeche-hoch !border-kohle ring-1 ring-kohle" : "hover:!border-linie-stark"
+                        }`}
+                      >
+                        <div className="flex gap-4">
+                          <div className="vertieft w-[104px] shrink-0 overflow-hidden rounded-[10px] bg-creme-2">
+                            <Geraetebild g={g} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="vorzeile">
+                              {g.marke === "—" ? "ohne Gerät" : [g.marke, g.serie].filter(Boolean).join(" · ")}
+                            </div>
+                            <div className="gross mt-1 text-[16px] font-bold leading-tight text-kohle">{g.name}</div>
+                            {g.modell && <div className="ziffern mt-0.5 text-[12.5px] text-kohle-3">{g.modell}</div>}
+                            <div className="mt-1.5 text-[13.5px] leading-snug text-kohle-2">{g.satz}</div>
+                          </div>
+                        </div>
+
+                        {g.daten && g.daten.length > 0 && (
+                          <dl className="mt-3.5 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-linie-warm pt-3">
+                            {g.daten.map(([k, v]) => (
+                              <div key={k} className="flex items-baseline justify-between gap-2 text-[12.5px]">
+                                <dt className="shrink-0 text-kohle-3">{k}</dt>
+                                <dd className="ziffern truncate text-right font-medium text-kohle-2">{v}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        )}
+
+                        <div className="ziffern mt-3 flex items-baseline justify-between gap-3 border-t border-linie-warm pt-3 text-[13px]">
+                          <span className="text-kohle-3">
+                            {g.richtpreis > 0 ? `Gerät ca. ${eur(g.richtpreis)}` : "kein Gerät"}
+                          </span>
+                          <span className="font-semibold text-kohle">
+                            {g.aufpreis === 0 ? "im Preis" : `${g.aufpreis > 0 ? "+" : "−"}${eur(Math.abs(g.aufpreis))}`}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
               </div>
+
+              {geraeteArt === "backofen" && geraet(raum.geraete.backofen).breite > 0 && (
+                <Karte className="mt-5 px-5 py-5">
+                  <div className="text-[15px] font-semibold text-kohle">Wo soll er hin?</div>
+                  <div className="mt-3">
+                    <GrosseWahl<"unten" | "hoch">
+                      wert={raum.ofenHoch ? "hoch" : "unten"}
+                      setze={(w) => setzeRaum({ ofenHoch: w === "hoch" })}
+                      optionen={[
+                        { id: "unten", titel: "Unter das Kochfeld", satz: "Der übliche Weg. Spart 60 cm Wand." },
+                        { id: "hoch", titel: "Auf Griffhöhe", satz: "Rückenschonend. Braucht 60 cm Wand über die ganze Höhe." },
+                      ]}
+                    />
+                  </div>
+                </Karte>
+              )}
 
               <div className="mt-5">
                 <Notiz>
-                  Klassen, Maße und technische Daten sind Beispielwerte für den Prototyp. Marken
-                  und konkrete Modelle kommen aus der Preisliste des Lieferanten — das ist eine
-                  Tabelle, kein Umbau: Name, Daten, Preis, fertig.
+                  Echte Geräte mit ihrer Modellbezeichnung. Die Preise sind recherchierte
+                  Straßenpreise, Stand {PREISSTAND_GERAETE} ({QUELLEN}) — Momentaufnahmen, keine
+                  Einkaufskonditionen. Für ein echtes Angebot tritt die Preisliste des
+                  Lieferanten an ihre Stelle.
                 </Notiz>
               </div>
             </>
@@ -934,7 +1018,15 @@ export default function Kuechenplaner() {
                         {typ.zeilen.length > 1 && (
                           <div className="mb-1 text-[12.5px] font-semibold text-kohle-3">{z.bezeichnung}</div>
                         )}
-                        <Kuechenbild typ={typ} variante={gewaehlterVorschlag.variante} zeileId={z.id} hoehe={typ.zeilen.length > 1 ? 200 : 290} />
+                        <Kuechenbild
+                          typ={typ}
+                          variante={gewaehlterVorschlag.variante}
+                          zeileId={z.id}
+                          hoehe={typ.zeilen.length > 1 ? 210 : 300}
+                         
+                          nummernAb={nummerAb(z.id)}
+                        />
+                        <Positionsliste ids={gewaehlterVorschlag.belegung[z.id] ?? []} ab={nummerAb(z.id)} />
                       </div>
                     ))}
                   </div>
@@ -1058,11 +1150,14 @@ export default function Kuechenplaner() {
                               variante={gewaehlterVorschlag.variante}
                               zeileId={z.id}
                               hoehe={typ.zeilen.length > 1 ? 230 : 300}
+                             
+                              nummernAb={nummerAb(z.id)}
                               waehlbar
                               gewaehlt={angefasst?.zeile === z.id ? angefasst.index : null}
                               moeglich={angefasst ? (i) => zielMoeglich(z.id, i) : undefined}
                               onWaehle={(i) => antippen(z.id, i)}
                             />
+                            <Positionsliste ids={gewaehlterVorschlag.belegung[z.id] ?? []} ab={nummerAb(z.id)} />
                             {hin.length > 0 && (
                               <div className="mt-2 space-y-1.5">
                                 {hin.map((h) => <Notiz key={h} ton="achtung">{h}</Notiz>)}

@@ -35,6 +35,9 @@ export interface Raumangaben {
   tuer: { wand: WandId; von: number; breite: number };
   wasser: { wand: WandId; von: number };
   geraete: Geraetewahl;
+  /** Backofen auf Griffhöhe statt unter dem Kochfeld. Kostet 60 cm Wand
+      über die ganze Höhe, dafür muss sich niemand bücken. */
+  ofenHoch: boolean;
   niveau: "einfach" | "mittel" | "gehoben";
 }
 
@@ -107,6 +110,7 @@ export const STANDARD_RAUM: Raumangaben = {
   tuer: { wand: "gegenueber", von: 1800, breite: 885 },
   wasser: { wand: "haupt", von: 2500 },
   geraete: { ...STANDARD_GERAETE },
+  ofenHoch: false,
   niveau: "mittel",
 };
 
@@ -209,13 +213,14 @@ export interface Vorschlag {
   achtungPunkte: string[];
 }
 
-function pflichtmodule(g: Geraetewahl): string[] {
+function pflichtmodule(a: Raumangaben): string[] {
+  const g = a.geraete;
   const liste = ["SP600"];
   if (geraet(g.kochfeld).breite > 0) liste.push("KF600");
   const ks = geraet(g.kuehlschrank);
-  if (ks.id === "kuehl-gross") liste.push("HK600");
-  else if (ks.id === "kuehl-klein") liste.push("US600");
-  if (geraet(g.backofen).breite === 600) liste.push("HB600");
+  if (ks.bau === "hoch") liste.push("HK600");
+  else if (ks.bau === "unterbau") liste.push("US600");
+  if (a.ofenHoch && geraet(g.backofen).breite > 0) liste.push("HB600");
   const gs = geraet(g.spuelmaschine);
   if (gs.breite === 600) liste.push("GS600");
   else if (gs.breite === 450) liste.push("US450");
@@ -357,7 +362,7 @@ export function planeKueche(a: Raumangaben, strategie: Strategie): Vorschlag {
     preis: 0, arbeitsflaeche: 0, wegZumWasser: 0, passblende: 0, gutPunkte: [], achtungPunkte: [],
   };
 
-  const pflicht = pflichtmodule(a.geraete);
+  const pflicht = pflichtmodule(a);
   const gesamt = typ.zeilen.reduce((s, z) => s + z.laenge, 0);
   if (breiteVon(pflicht) > gesamt) {
     const fehlt = Math.ceil((breiteVon(pflicht) - gesamt) / 10) * 10;
@@ -465,7 +470,7 @@ export function ausBelegung(
   }
 
   const lfm = typ.zeilen.reduce((su, z) => su + z.laenge, 0) / 1000;
-  const aufschlag = a.niveau === "gehoben" ? 1.35 : a.niveau === "einfach" ? 0.82 : 1;
+  const aufschlag = niveauFaktor(a.niveau);
   let preis = 0;
   for (const z of typ.zeilen) for (const id of belegung[z.id]) preis += modul(id).preis;
   preis += haengeschraenke * modul("HS600").preis;
@@ -582,6 +587,11 @@ function passeAn(ids: string[], delta: number): string[] | null {
 }
 
 const cm = (mm: number) => `${Math.round(mm / 10)} cm`;
+
+/** Was die Ausstattungsstufe auf alle Positionen aufschlaegt. */
+export function niveauFaktor(niveau: Raumangaben["niveau"]): number {
+  return niveau === "gehoben" ? 1.35 : niveau === "einfach" ? 0.82 : 1;
+}
 
 /** Der Wandname im Dativ, für Sätze wie "an der linken Wand". */
 function wandDativ(seite: Wandseite): string {

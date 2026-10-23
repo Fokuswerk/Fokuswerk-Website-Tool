@@ -15,14 +15,13 @@ import type { Kuechentyp } from "@/lib/typen";
  */
 
 const R = 34;
-const NAME = ROLLE_NAME;
 
 export function Kuechenbild({
   typ,
   variante,
   zeileId = "Z1",
   hoehe = 260,
-  mitNamen = true,
+  nummernAb,
   waehlbar = false,
   gewaehlt = null,
   moeglich,
@@ -32,7 +31,9 @@ export function Kuechenbild({
   variante: VarianteRoh;
   zeileId?: string;
   hoehe?: number;
-  mitNamen?: boolean;
+  /** Positionsnummern wie im Küchenplan, fortlaufend ab dieser Zahl.
+      Dieselbe Nummer steht später in der Stückliste. */
+  nummernAb?: number;
   /** Schränke anfassbar machen, um sie zu tauschen. */
   waehlbar?: boolean;
   /** Angefasster Schrank, als Platz in der Zeile. */
@@ -49,7 +50,7 @@ export function Kuechenbild({
   const fenster = typ.oeffnungen.filter((o) => o.art === "fenster" && o.wand === zeile.wand);
 
   const randX = 180;
-  const randUnten = mitNamen ? 560 : 160;
+  const randUnten = nummernAb !== undefined ? 360 : 150;
   const randOben = waehlbar ? 300 : 140;
   const vb = `${-randX} ${-randOben} ${zeile.laenge + 2 * randX} ${RH + randOben + randUnten}`;
 
@@ -59,7 +60,7 @@ export function Kuechenbild({
       style={{ height: hoehe, width: "100%" }}
       className="block max-w-full"
       role="img"
-      aria-label={`Die Küche von vorn: ${plaetze.map((p) => NAME[rolleVon(p.modulId)]).filter(Boolean).join(", ")}`}
+      aria-label={`Die Küche von vorn: ${plaetze.map((p) => ROLLE_NAME[rolleVon(p.modulId)]).filter(Boolean).join(", ")}`}
     >
       {/* Wand */}
       <rect x={-randX} y={-randOben} width={zeile.laenge + 2 * randX} height={RH + randOben} rx={40} className="fill-creme-2" />
@@ -262,27 +263,29 @@ export function Kuechenbild({
       <rect x={0} y={y(SOCKEL)} width={zeile.laenge} height={SOCKEL} className="fill-creme" />
       <path d={`M${-randX} ${RH} H${zeile.laenge + randX}`} strokeWidth={16} strokeLinecap="round" className="stroke-linie-warm" />
 
-      {/* Namen darunter */}
-      {mitNamen &&
+      {/* Positionsnummern. Namen passen unter einen 60er Schrank nie — ein
+          Wort wie "Spülmaschine" ist breiter als der Schrank selbst. Im
+          Küchenplan steht deshalb die Nummer, und daneben die Liste. */}
+      {nummernAb !== undefined &&
         plaetze.map((p) => {
-          const n = NAME[rolleVon(p.modulId)];
-          if (!n || p.breite < 400) return null;
-          // Lange Wörter wie "Spülmaschine" sind breiter als ein 60er Schrank.
-          // Deshalb abwechselnd zwei Zeilen: so stösst nichts aneinander.
-          const zweite = p.index % 2 === 1;
+          if (p.breite < 200) return null;
+          const cx = p.von + p.breite / 2;
           return (
-            <text
-              key={`n-${p.index}`}
-              x={p.von + p.breite / 2}
-              y={RH + (zweite ? 420 : 260)}
-              textAnchor="middle"
-              fontSize={135}
-              fontFamily="Plus Jakarta Sans, sans-serif"
-              fontWeight={500}
-              className="fill-kohle-2"
-            >
-              {n}
-            </text>
+            <g key={`nr-${p.index}`}>
+              <circle cx={cx} cy={RH + 190} r={118} className="fill-papier stroke-linie-stark" strokeWidth={14} />
+              <text
+                x={cx}
+                y={RH + 190}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={140}
+                fontFamily="Plus Jakarta Sans, sans-serif"
+                fontWeight={700}
+                className="fill-kohle"
+              >
+                {nummernAb + p.index}
+              </text>
+            </g>
           );
         })}
       {/* Fassflächen zum Umstellen. Ganz oben, damit nichts dazwischenkommt. */}

@@ -32,7 +32,7 @@ export interface Kasten {
   stoff?: Stoff;
   /** Zu welchem Schrank der Körper gehört. Erst damit lässt sich im Raum
       ein Schrank anfassen: alle seine Teile tragen dieselbe Kennung. */
-  platz?: { zeile: string; index: number };
+  platz?: { zeile: string; index: number; name: string };
 }
 
 export type Stoff =
@@ -131,7 +131,7 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
   };
 
   // Welchem Schrank gehören die Körper, die gerade entstehen.
-  let platzJetzt: { zeile: string; index: number } | null = null;
+  let platzJetzt: { zeile: string; index: number; name: string } | null = null;
 
   const stelle = (
     wand: Wandseite, s0: number, s1: number, d0: number, d1: number,
@@ -219,7 +219,11 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
       const s1 = ab + p.bis;
       const m = (s0 + s1) / 2;
       const rolle = rolleVon(p.modulId);
-      platzJetzt = { zeile: zeile.id, index: p.index };
+      platzJetzt = {
+        zeile: zeile.id,
+        index: p.index,
+        name: ROLLE_NAME[rolle] || (rolle === "leiste" ? "Passleiste" : modul(p.modulId).bezeichnung),
+      };
 
       // Geräte bekommen eine Marke: Umriss und Punkt für das Schild.
       const merke = (d0: number, d1: number, z0: number, z1: number, zSchild: number, dSchild: number) => {

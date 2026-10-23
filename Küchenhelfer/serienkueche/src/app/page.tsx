@@ -2,11 +2,13 @@
 
 import { useMemo, type ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { eur } from "@/lib/berechnung";
 import { alsKuechentyp, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/lib/planer";
 import { Kuechenbild } from "@/components/warm/Kuechenbild";
 import { LiveHero } from "@/components/warm/LiveHero";
+import { FOTOS, FOTO_HINWEIS, FOTO_URHEBER, fotoUrl, type Foto } from "@/data/fotos";
 
 /**
  * Die Startseite zeigt die Küche, statt über sie zu reden: ganz oben steht
@@ -34,7 +36,7 @@ const BEISPIELE: Array<{ titel: string; satz: string; raum: Partial<Raumangaben>
       nutz: { haupt: 2400, links: 2600, rechts: 2600, gegenueber: 2400 },
       fenster: null,
       niveau: "einfach",
-      geraete: { ...STANDARD_RAUM.geraete, spuelmaschine: "gs-keine", kuehlschrank: "kuehl-klein" },
+      geraete: { ...STANDARD_RAUM.geraete, spuelmaschine: "gs-keine", kuehlschrank: "ks-bosch-kur21" },
     },
   },
   { titel: "Normale Küche", satz: "3,40 m, Fenster, Spülmaschine, mittlere Ausstattung", raum: {} },
@@ -45,7 +47,8 @@ const BEISPIELE: Array<{ titel: string; satz: string; raum: Partial<Raumangaben>
       breite: 4400,
       nutz: { haupt: 4400, links: 2800, rechts: 2800, gegenueber: 4400 },
       niveau: "gehoben",
-      geraete: { ...STANDARD_RAUM.geraete, kochfeld: "kf-induktion", backofen: "ofen-hoch" },
+      geraete: { ...STANDARD_RAUM.geraete, kochfeld: "kf-siemens-ex645", backofen: "bo-siemens-hb774" },
+      ofenHoch: true,
     },
   },
 ];
@@ -61,6 +64,20 @@ const ZUSAGEN = [
   ["Wir kennen die Regeln", "Nichts Hohes vor dem Fenster, Abstand neben dem Herd, Spüle am Wasseranschluss."],
   ["Vor der Bestellung misst jemand nach", "Wände sind nie ganz gerade. Dein Plan bleibt, die Maße werden bestätigt."],
 ];
+
+/** Ein Foto, das den Platz füllt, den es bekommt. */
+function Bild({ f, breite, hoehe }: { f: Foto; breite: number; hoehe: number }) {
+  return (
+    <Image
+      src={fotoUrl(f, breite)}
+      alt={f.alt}
+      width={breite}
+      height={hoehe}
+      className="h-full w-full object-cover"
+      sizes="(max-width: 768px) 100vw, 50vw"
+    />
+  );
+}
 
 function Knopf({ href, children }: { href: string; children: ReactNode }) {
   return (
@@ -122,6 +139,16 @@ export default function Start() {
         </div>
       </section>
 
+      {/* Ein Foto, damit nicht nur Gerechnetes zu sehen ist */}
+      <section className="pb-20 sm:pb-28">
+        <div className="h-[clamp(240px,40vw,480px)] w-full overflow-hidden">
+          <Bild f={FOTOS.weit} breite={2000} hoehe={900} />
+        </div>
+        <div className="mx-auto mt-3 max-w-[1180px] px-5 text-[12.5px] text-kohle-3 sm:px-8">
+          {FOTO_HINWEIS}
+        </div>
+      </section>
+
       {/* Drei Schritte */}
       <section className="mx-auto max-w-[1180px] px-5 pb-20 sm:px-8 sm:pb-28">
         <h2 className="gross max-w-[20ch] text-[32px] font-bold leading-[1.08] text-kohle sm:text-[44px]">
@@ -162,6 +189,30 @@ export default function Start() {
         </div>
       </section>
 
+      {/* Galerie: wie so etwas aussieht, wenn es steht */}
+      <section className="mx-auto max-w-[1180px] px-5 pt-20 sm:px-8 sm:pt-28">
+        <h2 className="gross max-w-[20ch] text-[32px] font-bold leading-[1.08] text-kohle sm:text-[44px]">
+          So sieht so etwas aus, wenn es steht.
+        </h2>
+        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          <div className="h-[clamp(210px,30vw,340px)] overflow-hidden rounded-[16px] sm:col-span-2">
+            <Bild f={FOTOS.modern} breite={1400} hoehe={800} />
+          </div>
+          <div className="h-[clamp(210px,30vw,340px)] overflow-hidden rounded-[16px]">
+            <Bild f={FOTOS.auszug} breite={800} hoehe={800} />
+          </div>
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="h-[clamp(190px,26vw,300px)] overflow-hidden rounded-[16px]">
+            <Bild f={FOTOS.hell} breite={1000} hoehe={700} />
+          </div>
+          <div className="h-[clamp(190px,26vw,300px)] overflow-hidden rounded-[16px]">
+            <Bild f={FOTOS.zeile} breite={1000} hoehe={700} />
+          </div>
+        </div>
+        <p className="mt-4 text-[12.5px] text-kohle-3">{FOTO_HINWEIS}</p>
+      </section>
+
       {/* Preis, aus echt gerechneten Beispielen */}
       <section className="mx-auto max-w-[1180px] px-5 py-20 sm:px-8 sm:py-28">
         <h2 className="gross max-w-[22ch] text-[32px] font-bold leading-[1.08] text-kohle sm:text-[44px]">
@@ -181,7 +232,7 @@ export default function Start() {
                 variante={b.plan.variante}
                 zeileId={b.typ.zeilen[0].id}
                 hoehe={140}
-                mitNamen={false}
+               
               />
               <div className="gross mt-5 text-[19px] font-bold text-kohle">{b.titel}</div>
               <div className="mt-1.5 text-[14.5px] leading-snug text-kohle-2">{b.satz}</div>
@@ -218,7 +269,8 @@ export default function Start() {
         </Link>
 
         <p className="mt-10 max-w-[78ch] text-[13px] leading-relaxed text-kohle-3">
-          Prototyp. Alle Preise sind erfunden. Der Plan wird aus deinen Eingaben wirklich gerechnet;
+          Fotos: {FOTO_URHEBER} (Unsplash). Prototyp. Gerätepreise sind recherchierte
+          Straßenpreise, alle anderen Preise sind gesetzt. Der Plan wird aus deinen Eingaben wirklich gerechnet;
           das Einlesen von Grundrissen und die Bestellung sind nachgestellt. Und so gut ein Plan auch
           aussieht: bevor bestellt wird, misst jemand den fertigen Raum nach.
         </p>

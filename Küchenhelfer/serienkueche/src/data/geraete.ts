@@ -1,109 +1,222 @@
 /**
- * Geräte, die man einzeln auswählt. Bewusst wenige Optionen je Art — wer
- * zum ersten Mal plant, soll entscheiden können, nicht vergleichen müssen.
- * Preise sind Aufschläge gegenüber der einfachsten Variante, in EUR netto.
+ * Geräte, die man einzeln auswählt.
+ *
+ * Es sind echte, in Deutschland gängige Einbaugeräte mit ihrer
+ * Modellbezeichnung. Die Preise sind recherchierte Straßenpreise und
+ * Momentaufnahmen, keine Einkaufskonditionen — Stand siehe PREISSTAND_GERAETE,
+ * Quellen in QUELLEN. Für ein echtes Angebot ersetzt die Preisliste des
+ * Lieferanten diese Tabelle; am Aufbau ändert das nichts.
+ *
+ * Technische Daten stehen nur dort, wo sie belegt sind. Lieber eine Zeile
+ * weniger als eine erfundene.
  */
+
+export const PREISSTAND_GERAETE = "Oktober 2026";
+export const QUELLEN = "geizhals.de, testbericht.de, vergleich.org, otto.de, ebay.de";
+
+export type GeraeteArt = "kuehlschrank" | "kochfeld" | "backofen" | "spuelmaschine" | "dunstabzug";
 
 export interface Geraet {
   id: string;
   art: GeraeteArt;
+  /** Hersteller. "—" bei der Option, gar keines zu nehmen. */
+  marke: string;
+  /** Baureihe des Herstellers, soweit bekannt. */
+  serie?: string;
+  /** Modellbezeichnung des Herstellers. */
+  modell?: string;
+  /** Was es ist, in einem Wort oder zweien. */
   name: string;
   satz: string;
-  aufpreis: number;
+  /** Belegte technische Daten. */
+  daten?: Array<[string, string]>;
+  /** Recherchierter Straßenpreis in EUR. 0 = kein Gerät. */
+  richtpreis: number;
   /** Breite des Korpus, den das Gerät belegt. 0 = belegt keinen eigenen Platz. */
   breite: number;
-  /** Ausstattungsklasse, nach der im Katalog sortiert wird. */
-  klasse?: "Basis" | "Komfort" | "Premium";
-  /** Technische Daten, Bezeichnung und Wert. Stehen am Gerät selbst. */
-  daten?: Array<[string, string]>;
+  /** Nur Kühlschrank: wie er eingebaut wird. */
+  bau?: "hoch" | "unterbau" | "keiner";
+  /** Wird beim Laden aus dem Richtpreis gerechnet. */
+  aufpreis: number;
 }
 
-export type GeraeteArt = "kuehlschrank" | "kochfeld" | "backofen" | "spuelmaschine" | "dunstabzug";
+const ROH: Array<Omit<Geraet, "aufpreis">> = [
+  /* ---------------- Kühlschrank ---------------- */
+  {
+    id: "ks-keiner", art: "kuehlschrank", marke: "—", name: "Keiner",
+    satz: "Du bringst deinen eigenen mit oder stellst ihn woanders hin.",
+    richtpreis: 0, breite: 0, bau: "keiner",
+  },
+  {
+    id: "ks-bosch-kur21", art: "kuehlschrank", marke: "Bosch", serie: "Serie 4", modell: "KUR21VFE0",
+    name: "Unterbau-Kühlschrank", satz: "Passt unter die Arbeitsplatte, 82 cm Nische. Die Platte läuft durch.",
+    daten: [["Nutzinhalt", "134 l"], ["Verbrauch", "93 kWh/Jahr"], ["Geräusch", "35 dB"], ["Energie", "E"]],
+    richtpreis: 512, breite: 600, bau: "unterbau",
+  },
+  {
+    id: "ks-siemens-ki81", art: "kuehlschrank", marke: "Siemens", serie: "iQ500", modell: "KI81RADD0",
+    name: "Einbaukühlschrank, volle Höhe", satz: "Nimmt 60 cm Wand über die ganze Höhe — dort gibt es keine Arbeitsfläche.",
+    daten: [["Nutzinhalt", "310 l"]],
+    richtpreis: 989, breite: 600, bau: "hoch",
+  },
+  {
+    id: "ks-bosch-kif82", art: "kuehlschrank", marke: "Bosch", serie: "Serie 8", modell: "KIF82PFE0",
+    name: "Einbaukühlschrank, volle Höhe", satz: "Die gehobene Baureihe, ebenfalls über die ganze Höhe.",
+    daten: [["Nutzinhalt", "269 l"]],
+    richtpreis: 1149, breite: 600, bau: "hoch",
+  },
 
-export const GERAETE: Geraet[] = [
-  // Kühlschrank
-  { id: "kuehl-klein", art: "kuehlschrank", name: "Unterbaukühlschrank", klasse: "Basis",
-    satz: "88 cm hoch, die Arbeitsfläche läuft darüber durch.",
-    daten: [["Nutzinhalt", "134 l"], ["Gefrierfach", "15 l"], ["Energie", "E"], ["Geräusch", "38 dB"]],
-    aufpreis: 0, breite: 600 },
-  { id: "kuehl-gross", art: "kuehlschrank", name: "Einbaukühlschrank 178 cm", klasse: "Komfort",
-    satz: "Voller Schrank mit getrenntem Gefrierteil.",
-    daten: [["Nutzinhalt", "254 l"], ["Gefrierteil", "75 l"], ["Energie", "D"], ["Geräusch", "35 dB"]],
-    aufpreis: 180, breite: 600 },
-  { id: "kuehl-nofrost", art: "kuehlschrank", name: "Einbaukühlschrank mit NoFrost", klasse: "Premium",
-    satz: "Taut sich selbst ab, Frischefach mit eigener Klimazone.",
-    daten: [["Nutzinhalt", "248 l"], ["Gefrierteil", "72 l"], ["Energie", "C"], ["Geräusch", "33 dB"]],
-    aufpreis: 540, breite: 600 },
-  { id: "kuehl-keiner", art: "kuehlschrank", name: "Keiner", satz: "Du bringst deinen eigenen mit.", aufpreis: -240, breite: 0 },
+  /* ---------------- Kochfeld ---------------- */
+  {
+    id: "kf-aeg-tn64", art: "kochfeld", marke: "AEG", modell: "TN64RA06XB",
+    name: "Glaskeramik", satz: "Der günstige Einstieg, mit Edelstahlrahmen.",
+    daten: [["Breite", "60 cm"], ["Timer", "ja"], ["Abschaltautomatik", "ja"]],
+    richtpreis: 168, breite: 600,
+  },
+  {
+    id: "kf-bosch-pke611", art: "kochfeld", marke: "Bosch", serie: "Serie 4", modell: "PKE611BB2E",
+    name: "Glaskeramik", satz: "Der Klassiker. Günstig und gut zu reinigen.",
+    daten: [["Kochzonen", "4"], ["Anschlusswert", "6,6 kW"], ["Breite", "60 cm"]],
+    richtpreis: 229, breite: 600,
+  },
+  {
+    id: "kf-bosch-pug611", art: "kochfeld", marke: "Bosch", serie: "Serie 6", modell: "PUG611AA5E",
+    name: "Induktion", satz: "Schneller heiß, spart Strom, kühlt rasch ab.",
+    daten: [["Breite", "60 cm"], ["Technik", "Induktion"]],
+    richtpreis: 299, breite: 600,
+  },
+  {
+    id: "kf-aeg-iks6447", art: "kochfeld", marke: "AEG", modell: "IKS6447CXB",
+    name: "Induktion mit FlexiBridge", satz: "Zwei Zonen lassen sich zu einer großen verbinden — für Bräter und Grillplatte.",
+    daten: [["Breite", "60 cm"], ["FlexiBridge", "ja"], ["Rahmen", "Edelstahl"]],
+    richtpreis: 533, breite: 600,
+  },
+  {
+    id: "kf-siemens-ex645", art: "kochfeld", marke: "Siemens", serie: "iQ700", modell: "EX645HXC1E",
+    name: "Induktion", satz: "Die gehobene Baureihe, autark bedienbar.",
+    daten: [["Breite", "60 cm"], ["Technik", "Induktion"]],
+    richtpreis: 549, breite: 600,
+  },
 
-  // Kochfeld
-  { id: "kf-ceran", art: "kochfeld", name: "Ceranfeld", klasse: "Basis",
-    satz: "Der Klassiker. Günstig und gut zu reinigen.",
-    daten: [["Kochzonen", "4"], ["Zweikreiszone", "ja"], ["Anschluss", "400 V"], ["Restwärme", "Anzeige"]],
-    aufpreis: 0, breite: 600 },
-  { id: "kf-induktion", art: "kochfeld", name: "Induktion", klasse: "Komfort",
-    satz: "Schneller heiß, spart Strom, kühlt rasch ab.",
-    daten: [["Kochzonen", "4"], ["Ankochautomatik", "ja"], ["Anschluss", "400 V"], ["Kindersicherung", "ja"]],
-    aufpreis: 290, breite: 600 },
-  { id: "kf-flex", art: "kochfeld", name: "Induktion mit Flächenzone", klasse: "Premium",
-    satz: "Zwei Zonen lassen sich zu einer großen verbinden — für Bräter und Grillplatte.",
-    daten: [["Kochzonen", "4, 2 koppelbar"], ["Bratsensor", "ja"], ["Anschluss", "400 V"], ["Timer", "je Zone"]],
-    aufpreis: 620, breite: 600 },
-  { id: "kf-gas", art: "kochfeld", name: "Gas", klasse: "Komfort",
-    satz: "Nur wenn ein Gasanschluss vorhanden ist.",
-    daten: [["Brenner", "4"], ["Wok-Brenner", "ja"], ["Zündsicherung", "ja"], ["Rost", "Gusseisen"]],
-    aufpreis: 150, breite: 600 },
+  /* ---------------- Backofen ---------------- */
+  {
+    id: "bo-keiner", art: "backofen", marke: "—", name: "Keiner",
+    satz: "Nur ein Kochfeld, kein Ofen.",
+    richtpreis: 0, breite: 0,
+  },
+  {
+    id: "bo-bosch-hba571", art: "backofen", marke: "Bosch", serie: "Serie 2", modell: "HBA571BB4",
+    name: "Einbaubackofen", satz: "Der günstige Einstieg.",
+    daten: [["Breite", "60 cm"]],
+    richtpreis: 369, breite: 600,
+  },
+  {
+    id: "bo-aeg-nbu5p40", art: "backofen", marke: "AEG", modell: "NBU5P40SM",
+    name: "Einbaubackofen, SurroundCook", satz: "Gleichmäßige Hitzeverteilung im Garraum.",
+    daten: [["Breite", "60 cm"], ["Beheizung", "SurroundCook"]],
+    richtpreis: 466, breite: 600,
+  },
+  {
+    id: "bo-bosch-hbg578", art: "backofen", marke: "Bosch", serie: "Serie 6", modell: "HBG578BB3",
+    name: "Einbaubackofen mit 3D-Heißluft", satz: "Mit Air Fry — frittieren ohne Fett.",
+    daten: [["Garraum", "71 l"], ["Beheizung", "3D-Heißluft"], ["Air Fry", "ja"]],
+    richtpreis: 506, breite: 600,
+  },
+  {
+    id: "bo-siemens-hb774", art: "backofen", marke: "Siemens", serie: "iQ700", modell: "HB774G1B1",
+    name: "Einbaubackofen mit Pyrolyse", satz: "Reinigt sich selbst durch Ausbrennen.",
+    daten: [["Breite", "60 cm"], ["Reinigung", "Pyrolyse"]],
+    richtpreis: 697, breite: 600,
+  },
 
-  // Backofen
-  { id: "ofen-unten", art: "backofen", name: "Backofen unter dem Kochfeld", klasse: "Basis",
-    satz: "Der übliche Weg. Spart 60 cm Wand.",
-    daten: [["Garraum", "71 l"], ["Beheizung", "Umluft, O/U"], ["Reinigung", "Emaille"], ["Energie", "A"]],
-    aufpreis: 0, breite: 0 },
-  { id: "ofen-hoch", art: "backofen", name: "Backofen auf Griffhöhe", klasse: "Komfort",
-    satz: "Rückenschonend. Braucht 60 cm Wand über die ganze Höhe.",
-    daten: [["Garraum", "71 l"], ["Beheizung", "Umluft, Grill"], ["Reinigung", "Pyrolyse"], ["Energie", "A+"]],
-    aufpreis: 160, breite: 600 },
-  { id: "ofen-dampf", art: "backofen", name: "Backofen mit Dampf", klasse: "Premium",
-    satz: "Dampfgaren zusätzlich, auf Griffhöhe. Braucht ebenfalls 60 cm.",
-    daten: [["Garraum", "71 l"], ["Dampf", "zuschaltbar"], ["Reinigung", "Pyrolyse"], ["Kerntemperatur", "Fühler"]],
-    aufpreis: 540, breite: 600 },
-  { id: "ofen-keiner", art: "backofen", name: "Keiner", satz: "Nur Kochfeld, kein Ofen.", aufpreis: -380, breite: 0 },
+  /* ---------------- Spülmaschine ---------------- */
+  {
+    id: "gs-keine", art: "spuelmaschine", marke: "—", name: "Keine",
+    satz: "Dafür 60 cm mehr Stauraum.",
+    richtpreis: 0, breite: 0,
+  },
+  {
+    id: "gs-siemens-sr61", art: "spuelmaschine", marke: "Siemens", serie: "iQ100", modell: "SR61IX05KE",
+    name: "Spülmaschine 45 cm", satz: "Spart 15 cm Wand. Für ein bis zwei Personen.",
+    daten: [["Breite", "45 cm"], ["Energie", "F"], ["Einbau", "vollintegriert"]],
+    richtpreis: 418, breite: 450,
+  },
+  {
+    id: "gs-aeg-fsk649", art: "spuelmaschine", marke: "AEG", modell: "FSK64907Z",
+    name: "Spülmaschine 60 cm", satz: "Die normale Größe für einen Haushalt.",
+    daten: [["Breite", "60 cm"], ["Geräusch", "44 dB"], ["Einbau", "vollintegriert"]],
+    richtpreis: 449, breite: 600,
+  },
+  {
+    id: "gs-siemens-sx63", art: "spuelmaschine", marke: "Siemens", modell: "SX63EX04BE",
+    name: "Spülmaschine 60 cm, hoch", satz: "Höhere Bauform, mehr Platz im Korb.",
+    daten: [["Breite", "60 cm"], ["Einbau", "vollintegriert"]],
+    richtpreis: 748, breite: 600,
+  },
+  {
+    id: "gs-siemens-sn87", art: "spuelmaschine", marke: "Siemens", serie: "iQ700", modell: "SN87TX00CE",
+    name: "Spülmaschine 60 cm, leise", satz: "Testsieger der Stiftung Warentest 4/2026. Leise genug für den offenen Wohnraum.",
+    daten: [["Breite", "60 cm"], ["Geräusch", "43 dB"], ["Energie", "A"]],
+    richtpreis: 879, breite: 600,
+  },
 
-  // Spülmaschine
-  { id: "gs-45", art: "spuelmaschine", name: "Spülmaschine 45 cm", klasse: "Basis",
-    satz: "Spart 15 cm Wand. Für ein bis zwei Personen.",
-    daten: [["Gedecke", "9"], ["Geräusch", "47 dB"], ["Energie", "E"], ["Programme", "5"]],
-    aufpreis: -40, breite: 450 },
-  { id: "gs-60", art: "spuelmaschine", name: "Spülmaschine 60 cm", klasse: "Komfort",
-    satz: "Die normale Größe für einen Haushalt.",
-    daten: [["Gedecke", "13"], ["Geräusch", "44 dB"], ["Energie", "D"], ["Besteckschublade", "ja"]],
-    aufpreis: 0, breite: 600 },
-  { id: "gs-leise", art: "spuelmaschine", name: "Spülmaschine 60 cm, leise", klasse: "Premium",
-    satz: "Läuft so leise, dass sie im offenen Wohnraum nicht stört.",
-    daten: [["Gedecke", "14"], ["Geräusch", "39 dB"], ["Energie", "B"], ["Trocknen", "Zeolith"]],
-    aufpreis: 430, breite: 600 },
-  { id: "gs-keine", art: "spuelmaschine", name: "Keine", satz: "Dafür 60 cm mehr Stauraum.", aufpreis: -290, breite: 0 },
-
-  // Dunstabzug
-  { id: "da-esse", art: "dunstabzug", name: "Dunstesse über dem Herd", klasse: "Basis",
-    satz: "Sichtbar an der Wand, kräftig.",
-    daten: [["Leistung", "620 m³/h"], ["Geräusch", "62 dB"], ["Stufen", "3"], ["Beleuchtung", "LED"]],
-    aufpreis: 0, breite: 0 },
-  { id: "da-flach", art: "dunstabzug", name: "Flachschirm im Hängeschrank", klasse: "Komfort",
-    satz: "Verschwindet im Schrank, zum Kochen wird er herausgezogen.",
-    daten: [["Leistung", "420 m³/h"], ["Geräusch", "56 dB"], ["Stufen", "3 + Intensiv"], ["Filter", "spülbar"]],
-    aufpreis: 170, breite: 0 },
-  { id: "da-mulde", art: "dunstabzug", name: "Abzug im Kochfeld", klasse: "Premium",
-    satz: "Zieht den Dunst nach unten ab. Nichts hängt über dem Herd.",
-    daten: [["Leistung", "580 m³/h"], ["Geräusch", "54 dB"], ["Umluft", "möglich"], ["Bedienung", "am Kochfeld"]],
-    aufpreis: 980, breite: 0 },
-  { id: "da-keiner", art: "dunstabzug", name: "Keiner", satz: "Nur sinnvoll, wenn gut gelüftet werden kann.", aufpreis: -210, breite: 0 },
+  /* ---------------- Dunstabzug ---------------- */
+  {
+    id: "da-keiner", art: "dunstabzug", marke: "—", name: "Keiner",
+    satz: "Nur sinnvoll, wenn gut gelüftet werden kann.",
+    richtpreis: 0, breite: 0,
+  },
+  {
+    id: "da-bosch-dft63", art: "dunstabzug", marke: "Bosch", serie: "Serie 2", modell: "DFT63AC50",
+    name: "Flachschirmhaube 60 cm", satz: "Verschwindet im Hängeschrank, zum Kochen wird sie herausgezogen.",
+    daten: [["Breite", "60 cm"], ["Geräusch", "68 dB"]],
+    richtpreis: 165, breite: 0,
+  },
+  {
+    id: "da-aeg-dpk3632", art: "dunstabzug", marke: "AEG", modell: "DPK3632B",
+    name: "Flachschirmhaube 60 cm", satz: "Ab- oder Umluft, umschaltbar.",
+    daten: [["Breite", "60 cm"], ["Stufen", "3"], ["Fettfilter", "2, aus Metall"]],
+    richtpreis: 239, breite: 0,
+  },
+  {
+    id: "da-bosch-dfl064", art: "dunstabzug", marke: "Bosch", serie: "Serie 4", modell: "DFL064A52",
+    name: "Flachschirmhaube 60 cm", satz: "Die mittlere Baureihe.",
+    daten: [["Breite", "60 cm"]],
+    richtpreis: 303, breite: 0,
+  },
+  {
+    id: "da-siemens-li67", art: "dunstabzug", marke: "Siemens", modell: "LI67RA561",
+    name: "Flachschirmhaube 60 cm", satz: "Edelstahl, für den Einbau in den Hängeschrank.",
+    daten: [["Breite", "59,8 cm"], ["Material", "Edelstahl"]],
+    richtpreis: 401, breite: 0,
+  },
 ];
 
+/** Der Aufschlag ist der Abstand zum günstigsten echten Gerät seiner Art.
+    Die Option "keins" zaehlt dabei nicht als Nullpunkt — sonst saehe jedes
+    Geraet teuer aus, statt dass das Weglassen etwas spart. */
+export const GERAETE: Geraet[] = (() => {
+  const basis = new Map<GeraeteArt, number>();
+  for (const g of ROH) {
+    if (g.richtpreis <= 0) continue;
+    const b = basis.get(g.art);
+    if (b === undefined || g.richtpreis < b) basis.set(g.art, g.richtpreis);
+  }
+  return ROH.map((g) => ({ ...g, aufpreis: g.richtpreis - (basis.get(g.art) ?? 0) }));
+})();
+
+export interface Geraetewahl {
+  kuehlschrank: string;
+  kochfeld: string;
+  backofen: string;
+  spuelmaschine: string;
+  dunstabzug: string;
+}
+
 export const ARTEN: Array<{ art: GeraeteArt; frage: string; hilfe: string }> = [
-  { art: "kuehlschrank", frage: "Welchen Kühlschrank?", hilfe: "Ein hoher Kühlschrank nimmt 60 cm Wand über die ganze Höhe — dort gibt es dann keine Arbeitsfläche." },
-  { art: "kochfeld", frage: "Worauf kochst du?", hilfe: "Alle drei brauchen gleich viel Platz, der Unterschied liegt in Technik und Preis." },
-  { art: "backofen", frage: "Wo soll der Backofen hin?", hilfe: "Auf Griffhöhe musst du dich nicht bücken, das kostet aber 60 cm Wand." },
+  { art: "kuehlschrank", frage: "Welchen Kühlschrank?", hilfe: "Ein Gerät über die volle Höhe nimmt 60 cm Wand — dort gibt es dann keine Arbeitsfläche." },
+  { art: "kochfeld", frage: "Worauf kochst du?", hilfe: "Alle brauchen gleich viel Platz, der Unterschied liegt in Technik und Preis." },
+  { art: "backofen", frage: "Welchen Backofen?", hilfe: "Wo er steht, entscheidest du gleich darunter." },
   { art: "spuelmaschine", frage: "Spülmaschine?", hilfe: "Sie steht am besten direkt neben der Spüle — dann teilen sich beide den Anschluss." },
   { art: "dunstabzug", frage: "Und der Dunstabzug?", hilfe: "Er hängt über dem Herd und braucht keinen eigenen Platz an der Wand." },
 ];
@@ -112,7 +225,8 @@ const INDEX = new Map(GERAETE.map((g) => [g.id, g]));
 
 /** Notnagel, falls eine Kennung gar nicht aufzulösen ist. */
 const UNBEKANNT: Geraet = {
-  id: "unbekannt", art: "kuehlschrank", name: "Gerät", satz: "", aufpreis: 0, breite: 600,
+  id: "unbekannt", art: "kuehlschrank", marke: "—", name: "Gerät", satz: "",
+  richtpreis: 0, aufpreis: 0, breite: 600,
 };
 
 export function geraet(id: string): Geraet {
@@ -129,14 +243,19 @@ export function geraeteFuer(art: GeraeteArt): Geraet[] {
   return GERAETE.filter((g) => g.art === art);
 }
 
-export type Geraetewahl = Record<GeraeteArt, string>;
+/** Die Marken, die es in dieser Art gibt — für den Filter. */
+export function markenFuer(art: GeraeteArt): string[] {
+  const aus: string[] = [];
+  for (const g of geraeteFuer(art)) if (g.marke !== "—" && !aus.includes(g.marke)) aus.push(g.marke);
+  return aus.sort();
+}
 
 export const STANDARD_GERAETE: Geraetewahl = {
-  kuehlschrank: "kuehl-gross",
-  kochfeld: "kf-ceran",
-  backofen: "ofen-unten",
-  spuelmaschine: "gs-60",
-  dunstabzug: "da-esse",
+  kuehlschrank: "ks-siemens-ki81",
+  kochfeld: "kf-bosch-pke611",
+  backofen: "bo-bosch-hbg578",
+  spuelmaschine: "gs-aeg-fsk649",
+  dunstabzug: "da-aeg-dpk3632",
 };
 
 /** Eine gespeicherte Gerätewahl auf den heutigen Katalog ziehen. */

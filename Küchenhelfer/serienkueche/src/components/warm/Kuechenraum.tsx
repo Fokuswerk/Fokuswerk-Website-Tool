@@ -185,6 +185,29 @@ function Raum({
 
   const teileVon = (p: { zeile: string; index: number } | null) =>
     p ? szene.kaesten.filter((k) => k.platz?.zeile === p.zeile && k.platz?.index === p.index) : [];
+
+  /** Schild am angefassten oder überfahrenen Schrank: man soll sehen, was
+      man da anfasst, ohne es aus der Form raten zu müssen. */
+  const schild = (p: { zeile: string; index: number } | null, stark: boolean) => {
+    const teile = teileVon(p);
+    if (teile.length === 0) return null;
+    const name = teile[0].platz?.name;
+    if (!name) return null;
+    const x = (Math.min(...teile.map((k) => k.x)) + Math.max(...teile.map((k) => k.x + k.bx))) / 2;
+    const y = (Math.min(...teile.map((k) => k.y)) + Math.max(...teile.map((k) => k.y + k.by))) / 2;
+    const z = Math.max(...teile.map((k) => k.z + k.bz));
+    return (
+      <Html position={[x * M, z * M + 0.12, y * M]} center zIndexRange={[40, 20]} style={{ pointerEvents: "none" }}>
+        <span
+          className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-semibold shadow-[0_2px_8px_rgba(21,20,15,.35)] backdrop-blur-sm ${
+            stark ? "bg-kohle text-creme" : "bg-kohle/70 text-creme"
+          }`}
+        >
+          {name}
+        </span>
+      </Html>
+    );
+  };
   const bx = breite * M;
   const bz = tiefe * M;
   const bh = RAUMHOEHE * M;
@@ -230,6 +253,9 @@ function Raum({
 
       {umstellen && <Umriss kaesten={teileVon(umstellen.gewaehlt)} farbe="#8a6410" />}
       {umstellen && !umstellen.gewaehlt && <Umriss kaesten={teileVon(ueber)} farbe="#4a473e" />}
+      {umstellen && schild(umstellen.gewaehlt, true)}
+      {umstellen && ueber && !(umstellen.gewaehlt?.zeile === ueber.zeile && umstellen.gewaehlt?.index === ueber.index) &&
+        schild(ueber, false)}
 
       {/* Geräte benennen: sonst sieht man weiße Fronten und weiß nicht,
           hinter welcher der Backofen steckt. Nur die Wände, auf die man
