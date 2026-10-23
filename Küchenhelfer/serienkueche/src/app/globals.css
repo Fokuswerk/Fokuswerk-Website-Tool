@@ -22,6 +22,26 @@
   --font-ui: "Archivo", ui-sans-serif, system-ui, sans-serif;
   --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
 
+
+  /* Warme Sprache fuer den Weg der Privatkunden: Creme statt Grau, weiche
+     grosse Karten, eine warme Akzentfarbe. Bewusst anders als der technische
+     Profi-Bereich, weil die Leute andere sind. */
+  --color-creme: #f8f4ec;
+  --color-creme-2: #f1e9dc;
+  --color-papier: #ffffff;
+  --color-kohle: #17160f;
+  --color-kohle-2: #5c594d;
+  --color-kohle-3: #95907f;
+  --color-butter: #eab308;
+  --color-butter-2: #f5d987;
+  --color-butter-soft: #fdf4dc;
+  --color-salbei: #4f7555;
+  --color-salbei-soft: #e8efe8;
+  --color-linie-warm: #e7decd;
+
+  --font-warm: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-gross: "Outfit", ui-sans-serif, system-ui, sans-serif;
+
   --radius-xs: 2px;
   --radius-sm: 3px;
   --radius-md: 5px;
@@ -59,3 +79,26 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ------- Weg fuer Privatkunden ------- */
+.warm {
+  background: var(--color-creme);
+  color: var(--color-kohle);
+  font-family: var(--font-warm);
+  font-size: 16px;
+  line-height: 1.55;
+}
+.warm h1, .warm h2, .warm .gross { font-family: var(--font-gross); letter-spacing: -0.02em; }
+
+@keyframes warmRein {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.warm-rein { animation: warmRein .34s cubic-bezier(.22,.8,.3,1) both; }
+
+/* Grosse Auswahlflaechen sollen sich anfassbar anfuehlen */
+.warm-wahl { transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+.warm-wahl:hover { transform: translateY(-2px); }
+.warm-wahl:active { transform: translateY(0); }
+
+.warm input[type="range"] { accent-color: var(--color-butter); }
