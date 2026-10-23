@@ -2,60 +2,88 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { STANDARD_RAUM, zeilenzahl, type Raumangaben, type Strategie, type Wunschliste } from "@/lib/planer";
+import { STANDARD_GERAETE, type GeraeteArt, type Geraetewahl } from "@/data/geraete";
+import { angleichen, kuechenwaende, STANDARD_RAUM, type Raumangaben, type Strategie, type WandId } from "@/lib/planer";
 
 /**
  * Der Weg für Privatkunden: viele kleine Schritte mit je einer Entscheidung.
- * Nicht zutreffende Schritte fallen aus der Folge heraus — wer kein Fenster
- * hat, wird nicht gefragt, wo es sitzt.
+ * Die Folge wird aus den Angaben berechnet — wer über Eck plant, wird nach
+ * der Seite gefragt, wer kein Fenster hat, nicht nach dessen Platz.
  */
 
 export type SchrittId =
-  | "start"
-  | "form"
-  | "wandA"
-  | "wandB"
-  | "tiefe"
-  | "fensterJa"
-  | "fensterWo"
-  | "tuer"
-  | "wasser"
-  | "spuelmaschine"
-  | "kuehl"
-  | "ofen"
-  | "niveau"
-  | "vorschlaege"
-  | "ergebnis";
+  | "start" | "quelle" | "upload" | "pruefen" | "form" | "seite"
+  | "breite" | "tiefe"
+  | `zeile-${WandId}`
+  | "fensterJa" | "fenster"
+  | "tuer" | "wasser"
+  | `geraet-${GeraeteArt}`
+  | "niveau" | "vorschlaege" | "ergebnis";
 
-export function schrittFolge(raum: Raumangaben): SchrittId[] {
-  const folge: SchrittId[] = ["start", "form", "wandA"];
-  if (zeilenzahl(raum.form) > 1) folge.push("wandB");
-  folge.push("tiefe", "fensterJa");
-  if (raum.fenster) folge.push("fensterWo");
-  folge.push("tuer", "wasser", "spuelmaschine", "kuehl", "ofen", "niveau", "vorschlaege", "ergebnis");
-  return folge;
+export function schrittFolge(raum: Raumangaben, quelle: Quelle): SchrittId[] {
+  const f: SchrittId[] = ["start", "quelle"];
+  if (quelle === "plan") {
+    f.push("upload", "pruefen");
+  } else {
+    f.push("form");
+    if (raum.form === "ecke") f.push("seite");
+    f.push("breite", "tiefe");
+    for (const w of kuechenwaende(raum)) f.push(`zeile-${w}` as SchrittId);
+    f.push("fensterJa");
+    if (raum.fenster) f.push("fenster");
+    f.push("tuer", "wasser");
+  }
+  f.push(
+    "geraet-kuehlschrank", "geraet-kochfeld", "geraet-backofen",
+    "geraet-spuelmaschine", "geraet-dunstabzug",
+    "niveau", "vorschlaege", "ergebnis",
+  );
+  return f;
 }
+
+export type Quelle = "fragen" | "plan";
 
 export interface KuecheState {
   raum: Raumangaben;
+  quelle: Quelle;
+  /** Ist der simulierte Erkennungslauf schon gelaufen. */
+  erkannt: boolean;
   schritt: SchrittId;
-  besucht: SchrittId[];
   gewaehlt: Strategie | null;
+  /** Vom Nutzer von Hand umgestellte Belegung, je Vorschlag. */
+  eigeneBelegung: Record<string, Record<string, string[]>>;
 
+  setzeQuelle: (q: Quelle) => void;
+  uebernehmeErkennung: () => void;
   setzeRaum: (teil: Partial<Raumangaben>) => void;
-  setzeWunsch: (teil: Partial<Wunschliste>) => void;
+  setzeGeraet: (art: GeraeteArt, id: string) => void;
+  setzeNutz: (wand: WandId, mm: number) => void;
   geheZu: (id: SchrittId) => void;
   weiter: () => void;
   zurueck: () => void;
   waehle: (s: Strategie) => void;
+  setzeBelegung: (schluessel: string, belegung: Record<string, string[]>) => void;
   neu: () => void;
 }
 
+/** Was der simulierte Erkennungslauf aus einem Plan liest. */
+export const ERKANNT: Raumangaben = {
+  ...STANDARD_RAUM,
+  breite: 3620,
+  tiefe: 2740,
+  nutz: { haupt: 3620, links: 2740, rechts: 2740, gegenueber: 3620 },
+  fenster: { wand: "haupt", von: 1850, breite: 1180 },
+  tuer: { wand: "gegenueber", von: 420, breite: 885 },
+  wasser: { wand: "haupt", von: 2890 },
+};
+
 const ANFANG = {
   raum: STANDARD_RAUM,
+  quelle: "fragen" as Quelle,
+  erkannt: false,
   schritt: "start" as SchrittId,
-  besucht: ["start"] as SchrittId[],
   gewaehlt: null as Strategie | null,
+  eigeneBelegung: {} as Record<string, Record<string, string[]>>,
 };
 
 export const useKueche = create<KuecheState>()(
@@ -63,41 +91,52 @@ export const useKueche = create<KuecheState>()(
     (set) => ({
       ...ANFANG,
 
-      setzeRaum: (teil) => set((s) => ({ raum: { ...s.raum, ...teil } })),
+      setzeRaum: (teil) =>
+        set((s) => ({ raum: angleichen({ ...s.raum, ...teil }), eigeneBelegung: {} })),
 
-      setzeWunsch: (teil) =>
-        set((s) => ({ raum: { ...s.raum, wuensche: { ...s.raum.wuensche, ...teil } } })),
+      setzeGeraet: (art, id) =>
+        set((s) => ({
+          raum: { ...s.raum, geraete: { ...s.raum.geraete, [art]: id } as Geraetewahl },
+          eigeneBelegung: {},
+        })),
 
-      geheZu: (id) =>
-        set((s) => ({ schritt: id, besucht: s.besucht.includes(id) ? s.besucht : [...s.besucht, id] })),
+      setzeNutz: (wand, mm) =>
+        set((s) => ({
+          raum: angleichen({ ...s.raum, nutz: { ...s.raum.nutz, [wand]: mm } }),
+          eigeneBelegung: {},
+        })),
+
+      setzeQuelle: (q) => set({ quelle: q }),
+
+      uebernehmeErkennung: () =>
+        set({ raum: angleichen({ ...ERKANNT, geraete: { ...STANDARD_GERAETE } }), erkannt: true, eigeneBelegung: {} }),
+
+      geheZu: (id) => set({ schritt: id }),
 
       weiter: () =>
         set((s) => {
-          const folge = schrittFolge(s.raum);
-          const i = folge.indexOf(s.schritt);
-          const naechster = folge[Math.min(folge.length - 1, i + 1)];
-          return {
-            schritt: naechster,
-            besucht: s.besucht.includes(naechster) ? s.besucht : [...s.besucht, naechster],
-          };
+          const f = schrittFolge(s.raum, s.quelle);
+          return { schritt: f[Math.min(f.length - 1, f.indexOf(s.schritt) + 1)] };
         }),
 
       zurueck: () =>
         set((s) => {
-          const folge = schrittFolge(s.raum);
-          const i = folge.indexOf(s.schritt);
-          return { schritt: folge[Math.max(0, i - 1)] };
+          const f = schrittFolge(s.raum, s.quelle);
+          return { schritt: f[Math.max(0, f.indexOf(s.schritt) - 1)] };
         }),
 
       waehle: (g) => set({ gewaehlt: g }),
 
+      setzeBelegung: (schluessel, belegung) =>
+        set((s) => ({ eigeneBelegung: { ...s.eigeneBelegung, [schluessel]: belegung } })),
+
       neu: () =>
         set({
           ...ANFANG,
-          raum: { ...STANDARD_RAUM, wuensche: { ...STANDARD_RAUM.wuensche } },
-          besucht: ["start"],
+          raum: { ...STANDARD_RAUM, nutz: { ...STANDARD_RAUM.nutz }, geraete: { ...STANDARD_GERAETE } },
+          eigeneBelegung: {},
         }),
     }),
-    { name: "serienkueche-einzel-v2" },
+    { name: "serienkueche-einzel-v4" },
   ),
 );

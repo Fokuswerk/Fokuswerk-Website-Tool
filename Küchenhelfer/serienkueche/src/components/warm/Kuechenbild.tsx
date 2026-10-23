@@ -285,65 +285,130 @@ export function Kuechenbild({
   );
 }
 
-/** Der Raum von oben, bewusst einfach gehalten. */
-export function Raumbild({ typ, hoehe = 200 }: { typ: Kuechentyp; hoehe?: number }) {
-  const { breite, tiefe } = typ.raum;
-  const rand = 420;
+
+/* ------------------------------------------------------------------ */
+
+import { kuechenwaende, wandlaenge, zeilenStart, WANDNAME, type Raumangaben, type WandId } from "@/lib/planer";
+
+const ECKE: Record<WandId, { x: (b: number, t: number) => number; y: (b: number, t: number) => number }> = {
+  haupt: { x: (b) => b / 2, y: () => -300 },
+  gegenueber: { x: (b) => b / 2, y: (_b, t) => t + 400 },
+  links: { x: () => -330, y: (_b, t) => t / 2 },
+  rechts: { x: (b) => b + 330, y: (_b, t) => t / 2 },
+};
+
+/**
+ * Der Raum von oben. Zeigt, welche Wand gerade gemeint ist — ohne das
+ * weiss niemand, worauf sich eine Frage bezieht.
+ */
+export function Raumbild({
+  raum,
+  hervorhebung,
+  hoehe = 210,
+}: {
+  raum: Raumangaben;
+  hervorhebung?: WandId | null;
+  hoehe?: number;
+}) {
+  const { breite, tiefe } = raum;
+  const rand = 560;
+  const waende = kuechenwaende(raum);
+
+  const zeilenRect = (w: WandId) => {
+    const t = 560;
+    const start = zeilenStart(raum, w);
+    const laenge = Math.max(0, Math.min(raum.nutz[w], wandlaenge(raum, w) - start));
+    if (w === "haupt") return { x: start, y: 0, w: laenge, h: t };
+    if (w === "gegenueber") return { x: start, y: tiefe - t, w: laenge, h: t };
+    if (w === "links") return { x: 0, y: start, w: t, h: laenge };
+    return { x: breite - t, y: start, w: t, h: laenge };
+  };
+
+  const aufWand = (w: WandId, von: number, lang: number, dicke: number) => {
+    if (w === "haupt") return { x: von, y: -dicke / 2, w: lang, h: dicke };
+    if (w === "gegenueber") return { x: von, y: tiefe - dicke / 2, w: lang, h: dicke };
+    if (w === "links") return { x: -dicke / 2, y: von, w: dicke, h: lang };
+    return { x: breite - dicke / 2, y: von, w: dicke, h: lang };
+  };
+
   return (
     <svg
       viewBox={`${-rand} ${-rand} ${breite + 2 * rand} ${tiefe + 2 * rand}`}
       style={{ height: hoehe, width: "100%" }}
       className="block max-w-full"
       role="img"
-      aria-label="Der Raum von oben"
+      aria-label={hervorhebung ? `Der Raum von oben, hervorgehoben ist die ${WANDNAME[hervorhebung]}` : "Der Raum von oben"}
     >
-      <rect x={0} y={0} width={breite} height={tiefe} rx={60} className="fill-papier" />
-      <rect x={0} y={0} width={breite} height={tiefe} rx={60} fill="none" strokeWidth={34} className="stroke-linie-warm" />
+      <rect x={0} y={0} width={breite} height={tiefe} rx={70} className="fill-papier" />
+      <rect x={0} y={0} width={breite} height={tiefe} rx={70} fill="none" strokeWidth={36} className="stroke-linie-warm" />
 
-      {typ.zeilen.map((z) => {
-        const t = 560;
-        const r =
-          z.wand === "nord" ? { x: z.start, y: 0, w: z.laenge, h: t }
-          : z.wand === "sued" ? { x: z.start, y: tiefe - t, w: z.laenge, h: t }
-          : z.wand === "west" ? { x: 0, y: z.start, w: t, h: z.laenge }
-          : { x: breite - t, y: z.start, w: t, h: z.laenge };
-        return <rect key={z.id} x={r.x} y={r.y} width={r.w} height={r.h} rx={44} className="fill-butter-2" />;
-      })}
-
-      {typ.oeffnungen.map((o) => {
-        const d = 150;
-        const r =
-          o.wand === "nord" ? { x: o.von, y: -d / 2, w: o.breite, h: d }
-          : o.wand === "sued" ? { x: o.von, y: tiefe - d / 2, w: o.breite, h: d }
-          : o.wand === "west" ? { x: -d / 2, y: o.von, w: d, h: o.breite }
-          : { x: breite - d / 2, y: o.von, w: d, h: o.breite };
+      {/* Küchenzeilen */}
+      {waende.map((w) => {
+        const r = zeilenRect(w);
+        if (r.w <= 0 || r.h <= 0) return null;
         return (
           <rect
-            key={o.id}
-            x={r.x} y={r.y} width={r.w} height={r.h} rx={60}
-            className={o.art === "fenster" ? "fill-salbei" : "fill-kohle-3"}
+            key={w}
+            x={r.x} y={r.y} width={r.w} height={r.h} rx={46}
+            className={hervorhebung && hervorhebung !== w ? "fill-butter-2/45" : "fill-butter-2"}
           />
         );
       })}
 
-      {typ.zwangspunkte.map((z) => {
-        const d = 230;
-        const p =
-          z.wand === "nord" ? { x: z.von + z.breite / 2, y: 180 }
-          : z.wand === "sued" ? { x: z.von + z.breite / 2, y: tiefe - 180 }
-          : z.wand === "west" ? { x: 180, y: z.von + z.breite / 2 }
-          : { x: breite - 180, y: z.von + z.breite / 2 };
+      {/* Hervorgehobene Wand kräftig markieren */}
+      {hervorhebung && (() => {
+        const r = aufWand(hervorhebung, 0, wandlaenge(raum, hervorhebung), 150);
+        const e = ECKE[hervorhebung];
         return (
-          <g key={z.id}>
-            <circle cx={p.x} cy={p.y} r={d / 2} className="fill-papier" />
-            <circle cx={p.x} cy={p.y} r={d / 2} fill="none" strokeWidth={26} className="stroke-salbei" />
-            <path
-              d={`M${p.x} ${p.y - 52} q 46 60 46 96 a 46 46 0 0 1 -92 0 q 0 -36 46 -96 Z`}
-              className="fill-salbei"
-            />
+          <g>
+            <rect x={r.x} y={r.y} width={r.w} height={r.h} rx={70} className="fill-kohle" />
+            <text
+              x={e.x(breite, tiefe)}
+              y={e.y(breite, tiefe)}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize={210}
+              fontWeight={700}
+              fontFamily="Plus Jakarta Sans, sans-serif"
+              className="fill-kohle"
+              transform={
+                hervorhebung === "links" || hervorhebung === "rechts"
+                  ? `rotate(${hervorhebung === "links" ? -90 : 90} ${e.x(breite, tiefe)} ${e.y(breite, tiefe)})`
+                  : undefined
+              }
+            >
+              {WANDNAME[hervorhebung]}
+            </text>
           </g>
         );
-      })}
+      })()}
+
+      {/* Fenster und Tür */}
+      {raum.fenster && (() => {
+        const r = aufWand(raum.fenster.wand, raum.fenster.von, raum.fenster.breite, 170);
+        return <rect x={r.x} y={r.y} width={r.w} height={r.h} rx={70} className="fill-salbei" />;
+      })()}
+      {(() => {
+        const r = aufWand(raum.tuer.wand, raum.tuer.von, raum.tuer.breite, 170);
+        return <rect x={r.x} y={r.y} width={r.w} height={r.h} rx={70} className="fill-kohle-3" />;
+      })()}
+
+      {/* Wasseranschluss als Tropfen */}
+      {(() => {
+        const w = raum.wasser.wand;
+        const p =
+          w === "haupt" ? { x: raum.wasser.von, y: 250 }
+          : w === "gegenueber" ? { x: raum.wasser.von, y: tiefe - 250 }
+          : w === "links" ? { x: 250, y: raum.wasser.von }
+          : { x: breite - 250, y: raum.wasser.von };
+        return (
+          <g>
+            <circle cx={p.x} cy={p.y} r={135} className="fill-papier" />
+            <circle cx={p.x} cy={p.y} r={135} fill="none" strokeWidth={28} className="stroke-salbei" />
+            <path d={`M${p.x} ${p.y - 58} q 52 66 52 106 a 52 52 0 0 1 -104 0 q 0 -40 52 -106 Z`} className="fill-salbei" />
+          </g>
+        );
+      })()}
     </svg>
   );
 }
