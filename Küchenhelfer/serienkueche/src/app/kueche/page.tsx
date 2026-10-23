@@ -20,7 +20,7 @@ import { Geraetebild, Schrankbild } from "@/components/warm/Geraetebild";
 
 import { Fortschritt, GrosseWahl, GrosseZahl, Karte, Notiz, Schieber, WKnopf } from "@/components/warm/Kit";
 import { baueUnterlagen } from "@/lib/unterlagen";
-import { GERAETEFOTOS, GERAETEFOTO_HINWEIS, fotoUrl } from "@/data/fotos";
+import { FOTOS, GERAETEFOTOS, GERAETEFOTO_HINWEIS, fotoUrl } from "@/data/fotos";
 import NextImage from "next/image";
 import { BeispielPlan, Planauflage, RAHMEN_START, type Rahmen } from "@/components/warm/Planauflage";
 import { melde } from "@/components/ui/kit";
@@ -460,33 +460,49 @@ export default function Kuechenplaner() {
         </div>
       </header>
 
-      <main className={`mx-auto px-5 pb-20 sm:px-8 ${breit ? "max-w-[1080px] pt-6" : zeigeBild ? "max-w-[1180px] pt-0 lg:pt-7" : "max-w-[720px] pt-6"}`}>
+      <main className={`mx-auto px-5 pb-20 sm:px-8 ${breit ? "max-w-[1180px] pt-6" : istStart ? "max-w-[1180px] pt-6 sm:pt-10" : zeigeBild ? "max-w-[1180px] pt-0 lg:pt-7" : "max-w-[720px] pt-6"}`}>
         {geometrie && bildStreifen}
         <div className={zeigeBild ? "lg:grid lg:grid-cols-[minmax(0,1fr)_372px] lg:items-start lg:gap-10" : ""}>
         <div className={zeigeBild ? "min-w-0 pt-5 lg:pt-0" : ""}>
         {istStart && (
-          <div className="warm-rein pt-4 text-center sm:pt-10">
-            {moegliche[0] && (
-              <div className="mx-auto mb-8 w-full max-w-[400px]">
-                <Karte className="px-5 py-5">
-                  <Kuechenbild typ={typ} variante={moegliche[moegliche.length - 1].variante} zeileId={typ.zeilen[0].id} hoehe={150} />
-                </Karte>
+          <div className="warm-rein grid items-center gap-10 pt-2 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:pt-8">
+            <div>
+              <div className="vorzeile">Küche planen</div>
+              <h1 className="gross gross-xl mt-3 max-w-[14ch] text-[40px] font-bold text-kohle sm:text-[58px]">
+                Fangen wir mit deinem Raum an.
+              </h1>
+              <p className="mt-6 max-w-[46ch] text-[17.5px] leading-relaxed text-kohle-2">
+                Ein paar Fragen zu Wänden, Fenster und Geräten. Daraus rechnen wir eine Küche,
+                die wirklich passt — mit jedem Schrank, jedem Maß und einem Preis.
+              </p>
+              <div className="mt-9">
+                <WKnopf art="primaer" gross onClick={weiter}>
+                  Los geht’s
+                  <ArrowRight size={18} strokeWidth={2.2} />
+                </WKnopf>
               </div>
-            )}
-            <h1 className="gross gross-xl text-[38px] font-bold text-kohle sm:text-[54px]">
-              Fangen wir mit deinem Raum an.
-            </h1>
-            <p className="mx-auto mt-6 max-w-[48ch] text-[17.5px] leading-relaxed text-kohle-2">
-              Ein paar Fragen zu Wänden, Fenster und Geräten. Daraus rechnen wir eine Küche,
-              die wirklich passt — mit jedem Schrank, jedem Maß und einem Preis.
-            </p>
-            <div className="mt-8">
-              <WKnopf art="primaer" gross onClick={weiter}>
-                Küche planen
-                <ArrowRight size={18} strokeWidth={2.2} />
-              </WKnopf>
+              <p className="mt-5 text-[13.5px] text-kohle-3">Etwa fünf Minuten. Kein Konto, kein Termin.</p>
             </div>
-            <p className="mt-5 text-[13.5px] text-kohle-3">Etwa fünf Minuten. Kein Konto, kein Termin.</p>
+
+            <div className="relative">
+              <div className="h-[clamp(260px,42vw,460px)] overflow-hidden rounded-[22px]">
+                <NextImage
+                  src={fotoUrl(FOTOS.gruen, 1200)}
+                  alt={FOTOS.gruen.alt}
+                  width={1200}
+                  height={1500}
+                  priority
+                  className="h-full w-full object-cover"
+                  sizes="(max-width: 1024px) 100vw, 48vw"
+                />
+              </div>
+              {moegliche[0] && (
+                <div className="flaeche flaeche-hoch -mt-16 ml-auto mr-4 w-[min(320px,80%)] rounded-[16px] px-4 py-4 sm:-mt-20 sm:w-[340px]">
+                  <div className="vorzeile mb-2">Beispiel, gerade gerechnet</div>
+                  <Kuechenbild typ={typ} variante={moegliche[moegliche.length - 1].variante} zeileId={typ.zeilen[0].id} hoehe={120} />
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1006,17 +1022,22 @@ export default function Kuechenplaner() {
 
         {schritt === "niveau" && (
           <>
-            <Kopf vor={schrittText} titel="Wie soll sie ausgestattet sein?" satz="Das entscheidet über Fronten, Auszüge und Beschläge." />
+            <Kopf vor={schrittText} titel="Wie soll sie ausgestattet sein?" satz="Das entscheidet über Fronten, Auszüge und Beschläge — und schlägt auf Möbel und Montage, nicht auf die Geräte." />
             <div className="mt-7">
               <GrosseWahl<"einfach" | "mittel" | "gehoben">
                 wert={raum.niveau}
                 setze={(n) => setzeRaum({ niveau: n })}
                 spalten={3}
-                optionen={[
-                  { id: "einfach", titel: "Einfach", satz: "Solide Fronten, Scharniere ohne Dämpfung." },
-                  { id: "mittel", titel: "Mittel", satz: "Gedämpfte Vollauszüge, bessere Fronten." },
-                  { id: "gehoben", titel: "Gehoben", satz: "Hochwertige Oberflächen, Technik im Detail." },
-                ]}
+                optionen={([
+                  ["einfach", "Einfach", "Solide Fronten, Scharniere ohne Dämpfung.", "−18 %"],
+                  ["mittel", "Mittel", "Gedämpfte Vollauszüge, bessere Fronten.", "Grundpreis"],
+                  ["gehoben", "Gehoben", "Hochwertige Oberflächen, Technik im Detail.", "+35 %"],
+                ] as const).map(([id, titel, satz, zusatz]) => ({
+                  id,
+                  titel,
+                  satz,
+                  zusatz: zusatz === "Grundpreis" ? zusatz : `${zusatz} auf Möbel und Montage`,
+                }))}
               />
             </div>
           </>

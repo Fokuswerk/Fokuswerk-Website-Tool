@@ -138,7 +138,7 @@ export default function Start() {
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(180deg, rgba(14,13,9,0.62) 0%, rgba(14,13,9,0.34) 38%, rgba(14,13,9,0.78) 100%)",
+                "linear-gradient(180deg, rgba(14,13,9,0.70) 0%, rgba(14,13,9,0.52) 40%, rgba(14,13,9,0.82) 100%)",
             }}
           />
         </div>

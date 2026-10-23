@@ -30,7 +30,7 @@ export function Rahmen({ children }: { children: ReactNode }) {
 
       {/* Leiste als Schublade auf Tablet und Handy */}
       <div className="lg:hidden">
-        <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-paper px-4 py-2.5">
+        <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-paper/85 px-4 py-3 backdrop-blur-xl backdrop-saturate-150">
           <button
             onClick={() => setOffen(true)}
             aria-label="Navigation öffnen"

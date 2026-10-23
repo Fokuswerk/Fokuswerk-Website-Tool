@@ -36,19 +36,19 @@ export function Seitenleiste({ schliessen }: { schliessen?: () => void }) {
   const [frage, setFrage] = useState(false);
 
   return (
-    <nav className="flex h-full flex-col border-r border-line bg-paper">
-      <div className="px-4 pt-5 pb-4">
+    <nav className="flex h-full flex-col border-r border-line bg-gradient-to-b from-white to-[#fcfbf9]">
+      <div className="px-4 pb-5 pt-6">
         <Link href="/dashboard" className="block" onClick={schliessen}>
           <div className="flex items-center gap-2">
             <svg width="17" height="17" viewBox="0 0 17 17" aria-hidden="true">
               <rect x="0.75" y="0.75" width="15.5" height="15.5" rx="1" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-ink" />
               <path d="M0.75 5.6 H16.25 M5.6 5.6 V16.25 M10.6 5.6 V16.25" stroke="currentColor" strokeWidth="1" className="text-accent" />
             </svg>
-            <span className="text-[14.5px] font-semibold tracking-[-0.01em] text-ink">Serienküche</span>
+            <span className="text-[15px] font-semibold tracking-[-0.015em] text-ink">Serienküche</span>
           </div>
         </Link>
-        <div className="mt-3.5 rounded-sm border border-line bg-ground px-2.5 py-2">
-          <div className="text-[10px] font-medium uppercase tracking-[0.06em] text-ink-3">Projekt</div>
+        <div className="pro-vertieft mt-4 rounded-[8px] border border-line bg-ground px-3 py-2.5">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-3">Projekt</div>
           <div className="mt-0.5 truncate text-[12.5px] font-medium text-ink">{PROJEKT.name}</div>
           <div className="num mt-0.5 text-[11px] text-ink-3">{PROJEKT.ort} · {PROJEKT.einheiten} WE</div>
         </div>
@@ -64,8 +64,10 @@ export function Seitenleiste({ schliessen }: { schliessen?: () => void }) {
                 href={p.href}
                 onClick={schliessen}
                 aria-current={aktiv ? "page" : undefined}
-                className={`mb-[1px] flex items-center gap-2.5 rounded-sm px-2.5 py-[7px] text-[13px] transition-colors ${
-                  aktiv ? "bg-accent-soft font-medium text-ink" : "text-ink-2 hover:bg-ground"
+                className={`mb-[2px] flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-[13.5px] transition-colors ${
+                  aktiv
+                    ? "bg-ink font-medium text-paper shadow-[0_1px_2px_rgba(26,26,22,.2)]"
+                    : "text-ink-2 hover:bg-ground hover:text-ink"
                 }`}
               >
                 <Icon size={15} strokeWidth={1.6} className={aktiv ? "text-accent" : "text-ink-3"} />

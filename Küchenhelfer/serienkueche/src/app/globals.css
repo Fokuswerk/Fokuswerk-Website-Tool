@@ -4,16 +4,18 @@
    Eine Hauptfarbe (tiefes Blau) fuer erkannte Geometrie und Aktion,
    eine Signalfarbe (Ocker) ausschliesslich fuer Pruefbedarf. */
 @theme {
-  --color-ground: #f6f6f4;
+  /* Dieselbe Familie wie der Privatkundenweg, nur sachlicher: warme
+     Neutraltoene statt kuehlem Grau, damit beide Haelften zusammengehoeren. */
+  --color-ground: #f5f4f1;
   --color-paper: #ffffff;
-  --color-ink: #1b1e23;
-  --color-ink-2: #565d67;
-  --color-ink-3: #8a919b;
-  --color-line: #e3e3df;
-  --color-line-2: #efefeb;
-  --color-accent: #1f4e79;
+  --color-ink: #1a1a16;
+  --color-ink-2: #56544c;
+  --color-ink-3: #8c8980;
+  --color-line: #e4e1da;
+  --color-line-2: #f0ede7;
+  --color-accent: #27465f;
   --color-accent-2: #3a7ab0;
-  --color-accent-soft: #eaf1f7;
+  --color-accent-soft: #e9eff4;
   --color-flag: #93650f;
   --color-flag-soft: #faf2e0;
   --color-good: #2f6b4f;
@@ -57,13 +59,26 @@ body {
   background: var(--color-ground);
   color: var(--color-ink);
   font-family: var(--font-ui);
-  font-size: 13.5px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 * { box-sizing: border-box; }
 
 .num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+
+/* Tiefe auch im Profibereich: feine Oberkante, weiter weicher Schatten. */
+.pro-flaeche {
+  background: linear-gradient(180deg, #ffffff 0%, #fdfcfa 100%);
+  border: 1px solid rgba(26, 26, 22, 0.07);
+  box-shadow:
+    0 1px 2px rgba(26, 26, 22, 0.035),
+    0 10px 26px -18px rgba(26, 26, 22, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.pro-vertieft {
+  box-shadow: inset 0 2px 4px rgba(26, 26, 22, 0.07), inset 0 -1px 0 rgba(255, 255, 255, 0.6);
+}
 
 :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; border-radius: 2px; }
 
