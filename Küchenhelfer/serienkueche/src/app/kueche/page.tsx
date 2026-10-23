@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRef } from "react";
-import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, FileUp, PencilLine, RotateCcw, RotateCw, ScanLine } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, FileUp, PencilLine, Printer, RotateCcw, RotateCw, ScanLine } from "lucide-react";
 import { modul } from "@/data/module";
 import { rolleVon, ROLLE_NAME } from "@/lib/masse";
 import { ARTEN, geraet, geraeteFuer, markenFuer, PREISSTAND_GERAETE, QUELLEN, type GeraeteArt } from "@/data/geraete";
@@ -19,6 +19,9 @@ import { Kuechenbild, Raumbild } from "@/components/warm/Kuechenbild";
 import { Geraetebild, Schrankbild } from "@/components/warm/Geraetebild";
 
 import { Fortschritt, GrosseWahl, GrosseZahl, Karte, Notiz, Schieber, WKnopf } from "@/components/warm/Kit";
+import { baueUnterlagen } from "@/lib/unterlagen";
+import { GERAETEFOTOS, GERAETEFOTO_HINWEIS, fotoUrl } from "@/data/fotos";
+import NextImage from "next/image";
 import { BeispielPlan, Planauflage, RAHMEN_START, type Rahmen } from "@/components/warm/Planauflage";
 import { melde } from "@/components/ui/kit";
 
@@ -162,6 +165,67 @@ function VorschlagKarte({
   );
 }
 
+
+/** Ein nummerierter Abschnitt der Unterlagen. */
+function Abschnitt({ nr, titel, satz, children }: { nr: string; titel: string; satz?: string; children: ReactNode }) {
+  return (
+    <section className="mt-12 break-inside-avoid border-t border-linie-warm pt-7">
+      <div className="flex items-baseline gap-3">
+        <span className="vorzeile ziffern">{nr}</span>
+        <h2 className="gross text-[22px] font-bold leading-tight text-kohle sm:text-[26px]">{titel}</h2>
+      </div>
+      {satz && <p className="mt-2 text-[14px] text-kohle-2">{satz}</p>}
+      <div className="mt-5">{children}</div>
+    </section>
+  );
+}
+
+/** Schlichte Tabelle mit Haarlinien — lesbar am Bildschirm und auf Papier. */
+function Tabelle({
+  kopf, zeilen, rechts = [], fuss,
+}: {
+  kopf: string[];
+  zeilen: string[][];
+  /** Spalten, die rechtsbündig stehen. */
+  rechts?: number[];
+  fuss?: string[];
+}) {
+  const aus = (i: number) => (rechts.includes(i) ? "text-right" : "text-left");
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[520px] border-collapse text-[13.5px]">
+        <thead>
+          <tr>
+            {kopf.map((k, i) => (
+              <th key={k} className={`border-b border-kohle-3 pb-2 font-semibold text-kohle-3 ${aus(i)}`}>{k}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {zeilen.map((z, j) => (
+            <tr key={j}>
+              {z.map((c, i) => (
+                <td key={i} className={`border-b border-linie-warm py-2 align-top text-kohle-2 ${aus(i)} ${rechts.includes(i) ? "ziffern whitespace-nowrap" : ""} ${i === 0 ? "ziffern pr-3 text-kohle" : "pr-3"}`}>
+                  {c}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+        {fuss && (
+          <tfoot>
+            <tr>
+              {fuss.map((c, i) => (
+                <td key={i} className={`pt-2 font-semibold text-kohle ${aus(i)} ${rechts.includes(i) ? "ziffern" : ""}`}>{c}</td>
+              ))}
+            </tr>
+          </tfoot>
+        )}
+      </table>
+    </div>
+  );
+}
+
 export default function Kuechenplaner() {
   const { raum, quelle, erkannt, schritt, gewaehlt, eigeneBelegung, setzeRaum, setzeGeraet, setzeNutz, setzeQuelle, uebernehmeErkennung, geheZu, weiter, zurueck, waehle, setzeBelegung, neu } = useKueche();
   const [details, setDetails] = useState(false);
@@ -187,7 +251,7 @@ export default function Kuechenplaner() {
   const pos = Math.max(0, folge.indexOf(schritt));
   const typ = useMemo(() => alsKuechentyp(raum), [raum]);
   const waende = kuechenwaende(raum);
-  const brauchtPlan = schritt === "vorschlaege" || schritt === "ergebnis" || schritt === "start";
+  const brauchtPlan = schritt === "vorschlaege" || schritt === "ergebnis" || schritt === "unterlagen" || schritt === "start";
   const vorschlaege = useMemo(() => (brauchtPlan ? alleVorschlaege(raum) : []), [raum, brauchtPlan]);
   const moegliche = vorschlaege.filter((v) => v.moeglich);
   const empfehlung = [...moegliche].sort(
@@ -246,8 +310,9 @@ export default function Kuechenplaner() {
 
   const istStart = schritt === "start";
   const istErgebnis = schritt === "ergebnis";
+  const istUnterlagen = schritt === "unterlagen";
   const istVorschlaege = schritt === "vorschlaege";
-  const breit = istErgebnis || istVorschlaege;
+  const breit = istErgebnis || istVorschlaege || istUnterlagen;
 
   const zeileWand = schritt.startsWith("zeile-") ? (schritt.slice(6) as WandId) : null;
   const geraeteArt = schritt.startsWith("geraet-") ? (schritt.slice(7) as GeraeteArt) : null;
@@ -825,8 +890,22 @@ export default function Kuechenplaner() {
             <>
               <Kopf vor={schrittText} titel={info.frage} satz={info.hilfe} />
 
+              <div className="vertieft relative mt-7 h-[clamp(140px,22vw,220px)] overflow-hidden rounded-[16px] bg-creme-2 ring-1 ring-black/[0.06]">
+                <NextImage
+                  src={fotoUrl(GERAETEFOTOS[geraeteArt], 1400)}
+                  alt={GERAETEFOTOS[geraeteArt].alt}
+                  width={1400}
+                  height={700}
+                  className="h-full w-full object-cover"
+                  sizes="(max-width: 768px) 100vw, 60vw"
+                />
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/70 to-transparent p-3 text-[11.5px] text-creme">
+                  {GERAETEFOTO_HINWEIS}
+                </span>
+              </div>
+
               {markenFuer(geraeteArt).length > 1 && (
-                <div className="mt-6 flex flex-wrap items-center gap-2">
+                <div className="mt-5 flex flex-wrap items-center gap-2">
                   <span className="mr-1 text-[13px] text-kohle-3">Marke</span>
                   {[null, ...markenFuer(geraeteArt)].map((m) => (
                     <button
@@ -1192,7 +1271,7 @@ export default function Kuechenplaner() {
                   <div className="gross ziffern mt-2 text-[44px] font-bold leading-none tracking-[-0.04em] text-kohle">{eur(gewaehlterVorschlag.preis)}</div>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <WKnopf art="primaer" gross onClick={() => melde("Demo: Hier ginge die Anfrage raus.")}>Angebot anfordern</WKnopf>
+                  <WKnopf art="primaer" gross onClick={() => geheZu("unterlagen")}>Angebot anfordern</WKnopf>
                   <WKnopf gross onClick={() => window.print()}>Speichern</WKnopf>
                 </div>
               </div>
@@ -1277,6 +1356,177 @@ export default function Kuechenplaner() {
             </div>
           </div>
         )}
+
+        {istUnterlagen && gewaehlterVorschlag && (() => {
+          const u = baueUnterlagen(raum, typ, gewaehlterVorschlag);
+          const mm = (x: number) => x.toLocaleString("de-DE");
+          return (
+            <div className="warm-rein unterlagen">
+              <div className="flex flex-wrap items-end justify-between gap-5">
+                <div>
+                  <div className="vorzeile">Unterlagen zur Anfrage</div>
+                  <h1 className="gross gross-xl mt-3 text-[34px] font-bold text-kohle sm:text-[46px]">
+                    Das geht mit raus.
+                  </h1>
+                  <p className="mt-4 max-w-[62ch] text-[16px] leading-relaxed text-kohle-2">
+                    Alles darin stammt aus deinem Plan: die Positionsnummern sind dieselben wie in
+                    der Zeichnung, die Maßkette ergibt deine Wandlänge, und die Summe der
+                    Stückliste ist der Preis, der dir angezeigt wurde.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3 nicht-drucken">
+                  <WKnopf onClick={() => window.print()}>
+                    <Printer size={16} strokeWidth={2} />
+                    Drucken oder als PDF
+                  </WKnopf>
+                  <WKnopf art="primaer" onClick={() => melde("Demo: Hier ginge die Anfrage mit allen Unterlagen raus.")}>
+                    Anfrage abschicken
+                  </WKnopf>
+                </div>
+              </div>
+
+              <dl className="mt-9 grid gap-x-8 gap-y-2.5 border-t border-linie-warm pt-6 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  ["Erstellt", u.kopf.erstellt],
+                  ["Form", u.kopf.form],
+                  ["Ausstattung", u.kopf.niveau],
+                  ["Lieferant", u.kopf.lieferant],
+                  ["Preisstand Möbel", `${u.kopf.preisstand}, gültig bis ${u.kopf.gueltigBis}`],
+                  ["Preisstand Geräte", u.kopf.preisstandGeraete],
+                ].map(([k, v]) => (
+                  <div key={k} className="flex items-baseline justify-between gap-4 border-b border-linie-warm/70 pb-2 text-[13.5px]">
+                    <dt className="shrink-0 text-kohle-3">{k}</dt>
+                    <dd className="ziffern text-right text-kohle">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              <Abschnitt titel="Raum" nr="1">
+                <dl className="grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
+                  {u.raum.map(([k, v]) => (
+                    <div key={k} className="flex items-baseline justify-between gap-4 border-b border-linie-warm/70 pb-2 text-[13.5px]">
+                      <dt className="shrink-0 text-kohle-3">{k}</dt>
+                      <dd className="ziffern text-right text-kohle">{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Abschnitt>
+
+              <Abschnitt titel="Maßketten" nr="2" satz="Jede Zeile von links nach rechts, Maße ab Zeilenanfang.">
+                <div className="space-y-7">
+                  {u.massketten.map((k) => (
+                    <div key={k.zeileId}>
+                      <div className="flex flex-wrap items-baseline justify-between gap-3">
+                        <div className="gross text-[16px] font-bold text-kohle">{k.wand}</div>
+                        <div className="ziffern text-[13px] text-kohle-2">
+                          Zeile {mm(k.laenge)} mm, beginnt {mm(k.start)} mm ab der Ecke
+                        </div>
+                      </div>
+                      <Tabelle
+                        kopf={["Pos", "Element", "von", "bis", "Breite"]}
+                        rechts={[2, 3, 4]}
+                        zeilen={k.positionen.map((p) => [
+                          String(p.nr), p.name, `${mm(p.von)} mm`, `${mm(p.bis)} mm`, `${mm(p.breite)} mm`,
+                        ])}
+                        fuss={["", "Summe", "", "", `${mm(k.positionen.reduce((su, p) => su + p.breite, 0))} mm`]}
+                      />
+                      {!k.geht_auf && (
+                        <div className="mt-2">
+                          <Notiz ton="achtung">Diese Zeile geht rechnerisch nicht auf — vor dem Bestellen klären.</Notiz>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </Abschnitt>
+
+              <Abschnitt titel="Stückliste" nr="3" satz="Positionsnummern wie in der Zeichnung. Preise netto.">
+                <Tabelle
+                  kopf={["Pos", "Bezeichnung", "Artikel", "Menge", "Einzel", "Summe"]}
+                  rechts={[3, 4, 5]}
+                  zeilen={u.liste.map((z) => [
+                    z.pos, z.bezeichnung, z.artikel,
+                    `${z.menge.toLocaleString("de-DE")} ${z.einheit}`,
+                    eur(z.einzel), eur(z.summe),
+                  ])}
+                />
+                <div className="mt-6 ml-auto max-w-[420px] space-y-2">
+                  {u.summen.map(([k, v]) => (
+                    <div key={k} className="flex items-baseline justify-between gap-4 text-[14px]">
+                      <span className="text-kohle-2">{k}</span>
+                      <span className="ziffern text-kohle">{eur(v)}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-baseline justify-between gap-4 border-t border-kohle pt-2.5">
+                    <span className="gross text-[16px] font-bold text-kohle">Gesamt, netto</span>
+                    <span className="gross ziffern text-[22px] font-bold text-kohle">{eur(u.gesamt)}</span>
+                  </div>
+                </div>
+              </Abschnitt>
+
+              <Abschnitt titel="Anschlüsse" nr="4" satz="Maße ab Zeilenanfang, Höhen über Fertigfußboden.">
+                <Tabelle
+                  kopf={["Anschluss", "Wand", "ab Anfang", "Höhe", "Hinweis"]}
+                  rechts={[2, 3]}
+                  zeilen={u.anschluesse.map((an) => [
+                    an.art, an.wand, `${mm(an.abZeilenanfang)} mm`, `${mm(an.hoehe)} mm`, an.hinweis,
+                  ])}
+                />
+              </Abschnitt>
+
+              <Abschnitt titel="Zuschnitt" nr="5" satz="Arbeitsplatte, Passleisten und Sockel.">
+                <Tabelle
+                  kopf={["Platte", "Länge", "Tiefe", "Stärke", "Ausschnitte"]}
+                  rechts={[1, 2, 3]}
+                  zeilen={u.zuschnitt.platten.map((pl, i) => [
+                    `${i + 1} · ${pl.wand}`,
+                    `${mm(pl.laenge)} mm`,
+                    `${mm(pl.tiefe)} mm`,
+                    `${pl.staerke} mm`,
+                    pl.ausschnitte.length === 0
+                      ? "keine"
+                      : pl.ausschnitte
+                          .map((a) => `${a.was} ${a.breite}×${a.tiefe} mm, ab ${mm(a.abKante)} mm`)
+                          .join(" · "),
+                  ])}
+                />
+                {u.zuschnitt.leisten.length > 0 && (
+                  <div className="mt-6">
+                    <Tabelle
+                      kopf={["Passleiste", "Breite", "Höhe"]}
+                      rechts={[1, 2]}
+                      zeilen={u.zuschnitt.leisten.map((l, i) => [
+                        `${i + 1} · ${l.wand}`, `${mm(l.breite)} mm`, `${mm(l.hoehe)} mm`,
+                      ])}
+                    />
+                  </div>
+                )}
+                <p className="ziffern mt-5 text-[13.5px] text-kohle-2">
+                  Sockel: {u.zuschnitt.sockelLfm.toLocaleString("de-DE")} lfm, Höhe 150 mm.
+                </p>
+              </Abschnitt>
+
+              <Abschnitt titel="Vor Ort prüfen" nr="6">
+                <ul className="space-y-2.5">
+                  {u.pruefen.map((t) => (
+                    <li key={t} className="flex gap-3 text-[14.5px] leading-relaxed text-kohle-2">
+                      <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-kohle-3" />
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              </Abschnitt>
+
+              <div className="mt-10">
+                <Notiz>
+                  Prototyp: Modulpreise und Artikelnummern sind Demo-Werte eines gedachten
+                  Partnerprogramms, Gerätepreise sind recherchierte Straßenpreise. Maße, Mengen,
+                  Anschlusspunkte und Zuschnitte sind dagegen aus deinem Plan gerechnet.
+                </Notiz>
+              </div>
+            </div>
+          );
+        })()}
 
         {schritt === "pruefen" && offen && (
           <div className="mt-9 flex items-center justify-between gap-4">

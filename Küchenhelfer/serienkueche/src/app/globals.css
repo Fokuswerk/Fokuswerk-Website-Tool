@@ -183,3 +183,19 @@ body {
   box-shadow: 0 2px 6px rgba(21, 20, 15, 0.34), 0 0 0 1px rgba(21, 20, 15, 0.08);
   cursor: grab;
 }
+
+/* ------- Unterlagen auf Papier ------- */
+@media print {
+  /* Alles, was nur am Bildschirm hilft, verschwindet. */
+  header, .nicht-drucken { display: none !important; }
+  .warm { background: #ffffff !important; }
+  body { background: #ffffff !important; }
+  .warm .unterlagen { color: #000; font-size: 10.5pt; }
+  .warm .unterlagen table { font-size: 9.5pt; }
+  .warm .unterlagen .flaeche,
+  .warm .unterlagen .flaeche-hoch { box-shadow: none !important; border-color: #ccc !important; }
+  .warm .unterlagen section { break-inside: avoid; }
+  .warm .unterlagen table { break-inside: auto; }
+  .warm .unterlagen tr { break-inside: avoid; }
+  @page { margin: 16mm; }
+}

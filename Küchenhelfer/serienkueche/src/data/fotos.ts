@@ -1,70 +1,101 @@
+import type { GeraeteArt } from "@/data/geraete";
+
 /**
  * Fotos für die Seite.
  *
- * Freie Bilder von Unsplash (Unsplash-Lizenz, Nutzung auch kommerziell ohne
+ * Freie Bilder von Unsplash (Unsplash-Lizenz, kommerzielle Nutzung ohne
  * Namensnennung erlaubt). Wir nennen die Fotografinnen und Fotografen
- * trotzdem — und schreiben dazu, dass es Beispielbilder sind und keine
- * Küchen, die über dieses Werkzeug geplant wurden. Alles andere wäre eine
- * Referenz, die es noch nicht gibt.
+ * trotzdem.
+ *
+ * Zwei Dinge stehen bewusst dabei: die Raumbilder sind Beispiele und keine
+ * Küchen, die über dieses Werkzeug geplant wurden. Und die Gerätebilder
+ * zeigen die Art des Geräts, nicht das einzelne Modell — die Bilder der
+ * Hersteller kommen mit deren Katalog.
  */
 
 export interface Foto {
-  /** Kennung des Bildes bei Unsplash. */
   id: string;
   alt: string;
   urheber: string;
-  seite: string;
 }
 
 export const FOTOS = {
-  weit: {
-    id: "photo-1721614465872-f59fb6feb0f3",
-    alt: "Helle Küche mit weißen Fronten und Holzboden",
-    urheber: "Alex Tyson",
-    seite: "https://unsplash.com/photos/a-kitchen-with-white-cabinets-and-wood-floors-VSZCL7n1aiE",
+  hero: {
+    id: "photo-1600684388091-627109f3cd60",
+    alt: "Küche mit matten dunklen Fronten und Holzboden",
+    urheber: "Sven Brandsma",
   },
-  hell: {
-    id: "photo-1722859030232-6a5d22308ea1",
-    alt: "Küche mit weißen Schränken und Dielenboden",
-    urheber: "Lisa Anna",
-    seite: "https://unsplash.com/photos/a-kitchen-with-white-cabinets-and-wooden-floors-UA4G2SVGWUg",
+  marmor: {
+    id: "photo-1695542958346-d51b0c2f1917",
+    alt: "Dunkle Küche mit Marmorarbeitsplatte",
+    urheber: "Tim Schmidbauer",
   },
-  modern: {
-    id: "photo-1692133186528-c1c42edd5a5c",
-    alt: "Moderne Küchenzeile mit Insel",
-    urheber: "Brian Wangenheim",
-    seite: "https://unsplash.com/photos/a-kitchen-with-white-cabinets-and-wood-floors-QJyLk2urg6I",
+  gruen: {
+    id: "photo-1586208958839-06c17cacdf08",
+    alt: "Küche mit grünen Fronten, modern und zugleich altmodisch",
+    urheber: "Kam Idris",
   },
-  ruhig: {
-    id: "photo-1674217444141-d8ca3bc66584",
-    alt: "Zurückhaltend eingerichtete Küche mit weißen Wänden",
-    urheber: "David Libeert",
-    seite: "https://unsplash.com/photos/a-kitchen-with-white-walls-and-wood-floors-slfL-x_7sSw",
+  detail: {
+    id: "photo-1698133468654-156bfe8b088e",
+    alt: "Dunkle Küchenzeile mit Schneidebrett auf der Platte",
+    urheber: "Laura Barry",
   },
-  auszug: {
-    id: "photo-1676907228185-6869277a9f8f",
-    alt: "Offener Küchenauszug mit eingeräumtem Geschirr",
-    urheber: "Orgalux",
-    seite: "https://unsplash.com/photos/an-open-drawer-in-a-kitchen-filled-with-dishes-BngKr53ZvR4",
+  insel: {
+    id: "photo-1765766601532-90e9b96320c8",
+    alt: "Moderne dunkle Küche mit Marmorboden",
+    urheber: "Marina Nazina",
   },
-  zeile: {
-    id: "photo-1721901948031-e260af9635df",
-    alt: "Lange Küchenzeile mit weißen Fronten",
-    urheber: "Alex Tyson",
-    seite: "https://unsplash.com/photos/a-kitchen-with-white-cabinets-and-wooden-floors-LiNcrHZm1Bw",
+  licht: {
+    id: "photo-1790156690388-1229a422c30a",
+    alt: "Lange Küchenzeile mit eingelassenen Kochfeldern und Pendelleuchten",
+    urheber: "Ceba Solutions",
   },
 } satisfies Record<string, Foto>;
+
+/** Ein Bild je Geräteart. Zeigt die Art, nicht das Modell. */
+export const GERAETEFOTOS: Record<GeraeteArt, Foto> = {
+  kuehlschrank: {
+    id: "photo-1713514022453-4adc636025a4",
+    alt: "Kühlschrank zwischen weißen Küchenfronten",
+    urheber: "Sanju Pandita",
+  },
+  kochfeld: {
+    id: "photo-1755062371460-3592808f7aea",
+    alt: "Induktionskochfeld in einer Küche mit Holzfronten",
+    urheber: "Grace Anne Bobadilla",
+  },
+  backofen: {
+    id: "photo-1772567732993-3c546ee1a52c",
+    alt: "Eingebauter Backofen im Hochschrank",
+    urheber: "Franco Debartolo",
+  },
+  spuelmaschine: {
+    id: "photo-1736390755053-f57997f7931b",
+    alt: "Geschirr wird in eine Spülmaschine geräumt",
+    urheber: "Jutta Elisabeth",
+  },
+  dunstabzug: {
+    id: "photo-1772016608838-d8d467da27e8",
+    alt: "Küche mit Dunstabzug über dem Kochfeld",
+    urheber: "Smart Renovations",
+  },
+};
 
 /** Bild-Adresse in der gewünschten Breite. Unsplash rechnet selbst herunter,
     deshalb laden wir nie mehr als nötig. */
 export function fotoUrl(f: Foto, breite: number): string {
-  return `https://images.unsplash.com/${f.id}?fm=jpg&q=72&w=${breite}&auto=format&fit=crop`;
+  return `https://images.unsplash.com/${f.id}?fm=jpg&q=78&w=${breite}&auto=format&fit=crop`;
 }
 
 export const FOTO_HINWEIS =
   "Beispielbilder, keine über dieses Werkzeug geplanten Küchen — die gibt es noch nicht.";
 
-export const FOTO_URHEBER = Object.values(FOTOS)
-  .map((f) => f.urheber)
+export const GERAETEFOTO_HINWEIS =
+  "Die Bilder zeigen die Art des Geräts, nicht das einzelne Modell. Herstellerbilder kommen mit dem Lieferantenkatalog.";
+
+export const FOTO_URHEBER = [
+  ...Object.values(FOTOS).map((f) => f.urheber),
+  ...Object.values(GERAETEFOTOS).map((f) => f.urheber),
+]
   .filter((n, i, a) => a.indexOf(n) === i)
   .join(", ");

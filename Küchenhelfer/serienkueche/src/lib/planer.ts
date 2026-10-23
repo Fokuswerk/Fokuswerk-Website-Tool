@@ -211,6 +211,23 @@ export interface Vorschlag {
   passblende: number;
   gutPunkte: string[];
   achtungPunkte: string[];
+  /** Der Preis in seinen Posten — damit die Stückliste aufgeht. */
+  kosten: Kosten;
+}
+
+/** Die Posten, aus denen sich der Preis zusammensetzt. Alles EUR netto. */
+export interface Kosten {
+  korpusse: number;
+  haenge: number;
+  platte: number;
+  sockel: number;
+  spuele: number;
+  montage: number;
+  /** Summe vor dem Ausstattungszuschlag. */
+  moebel: number;
+  zuschlag: number;
+  geraete: number;
+  gesamt: number;
 }
 
 function pflichtmodule(a: Raumangaben): string[] {
@@ -360,6 +377,7 @@ export function planeKueche(a: Raumangaben, strategie: Strategie): Vorschlag {
     strategie, titel, moeglich: false, belegung: {}, haengeschraenke: 0,
     variante: { id: `frei-${strategie}`, typId: "MEINE", kurz: titel, schwerpunkt: "kosten", bezeichnung: titel, belegung: {}, weitere: [], staerken: [], schwaechen: [], begruendung: "" },
     preis: 0, arbeitsflaeche: 0, wegZumWasser: 0, passblende: 0, gutPunkte: [], achtungPunkte: [],
+    kosten: { korpusse: 0, haenge: 0, platte: 0, sockel: 0, spuele: 0, montage: 0, moebel: 0, zuschlag: 0, geraete: 0, gesamt: 0 },
   };
 
   const pflicht = pflichtmodule(a);
@@ -469,17 +487,33 @@ export function ausBelegung(
     }
   }
 
+  // Der Preis zerfaellt in Posten, die man einzeln nachrechnen kann.
+  // Die Ausstattungsstufe schlaegt auf Moebel und Arbeit, nicht auf Geraete:
+  // ein Backofen wird nicht teurer, weil die Fronten besser sind.
   const lfm = typ.zeilen.reduce((su, z) => su + z.laenge, 0) / 1000;
   const aufschlag = niveauFaktor(a.niveau);
-  let preis = 0;
-  for (const z of typ.zeilen) for (const id of belegung[z.id]) preis += modul(id).preis;
-  preis += haengeschraenke * modul("HS600").preis;
-  preis += Math.round(modul("AP").preis * lfm);
-  preis += Math.round(modul("SO").preis * lfm);
-  preis += modul("GP1").preis + modul("SPA").preis;
-  preis += Math.round(modul("MON").preis * lfm);
-  for (const art of Object.keys(a.geraete) as Array<keyof Geraetewahl>) preis += geraet(a.geraete[art]).aufpreis;
-  preis = Math.max(600, Math.round(preis * aufschlag));
+
+  let korpusse = 0;
+  for (const z of typ.zeilen) for (const id of belegung[z.id]) korpusse += modul(id).preis;
+  const haenge = haengeschraenke * modul("HS600").preis;
+  const platte = Math.round(modul("AP").preis * lfm);
+  const sockel = Math.round(modul("SO").preis * lfm);
+  const spuele = modul("SPA").preis;
+  const montage = Math.round(modul("MON").preis * lfm);
+  const moebel = korpusse + haenge + platte + sockel + spuele + montage;
+  const zuschlag = Math.round(moebel * aufschlag) - moebel;
+
+  let geraete = 0;
+  for (const art of Object.keys(a.geraete) as Array<keyof Geraetewahl>) {
+    geraete += geraet(a.geraete[art]).richtpreis;
+  }
+
+  const kosten = {
+    korpusse, haenge, platte, sockel, spuele, montage,
+    moebel, zuschlag, geraete,
+    gesamt: Math.max(600, moebel + zuschlag + geraete),
+  };
+  const preis = kosten.gesamt;
 
   const hauptId = `Z-${kuechenwaende(a)[0]}`;
   const z1 = belegung[hauptId] ?? [];
@@ -517,7 +551,7 @@ export function ausBelegung(
   }
 
 
-  return { strategie, titel, moeglich: true, belegung, haengeschraenke, variante, preis, arbeitsflaeche, wegZumWasser, passblende, gutPunkte: gut, achtungPunkte: achtung };
+  return { strategie, titel, moeglich: true, belegung, haengeschraenke, variante, preis, arbeitsflaeche, wegZumWasser, passblende, gutPunkte: gut, achtungPunkte: achtung, kosten };
 }
 
 /**

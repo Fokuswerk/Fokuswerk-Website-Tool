@@ -18,7 +18,7 @@ export type SchrittId =
   | "fensterJa" | "fenster"
   | "tuer" | "wasser"
   | `geraet-${GeraeteArt}`
-  | "niveau" | "vorschlaege" | "ergebnis";
+  | "niveau" | "vorschlaege" | "ergebnis" | "unterlagen";
 
 export function schrittFolge(raum: Raumangaben, quelle: Quelle): SchrittId[] {
   const f: SchrittId[] = ["start", "quelle"];
@@ -36,7 +36,7 @@ export function schrittFolge(raum: Raumangaben, quelle: Quelle): SchrittId[] {
   f.push(
     "geraet-kuehlschrank", "geraet-kochfeld", "geraet-backofen",
     "geraet-spuelmaschine", "geraet-dunstabzug",
-    "niveau", "vorschlaege", "ergebnis",
+    "niveau", "vorschlaege", "ergebnis", "unterlagen",
   );
   return f;
 }
