@@ -12,7 +12,7 @@ import { angleichen, kuechenwaende, STANDARD_RAUM, type Raumangaben, type Strate
  */
 
 export type SchrittId =
-  | "start" | "quelle" | "upload" | "pruefen" | "form" | "seite"
+  | "start" | "quelle" | "upload" | "pruefen" | "form" | "drehung"
   | "breite" | "tiefe"
   | `zeile-${WandId}`
   | "fensterJa" | "fenster"
@@ -26,7 +26,7 @@ export function schrittFolge(raum: Raumangaben, quelle: Quelle): SchrittId[] {
     f.push("upload", "pruefen");
   } else {
     f.push("form");
-    if (raum.form === "ecke") f.push("seite");
+    if (raum.form !== "eine-wand") f.push("drehung");
     f.push("breite", "tiefe");
     for (const w of kuechenwaende(raum)) f.push(`zeile-${w}` as SchrittId);
     f.push("fensterJa");
@@ -137,6 +137,6 @@ export const useKueche = create<KuecheState>()(
           eigeneBelegung: {},
         }),
     }),
-    { name: "serienkueche-einzel-v4" },
+    { name: "serienkueche-einzel-v5" },
   ),
 );

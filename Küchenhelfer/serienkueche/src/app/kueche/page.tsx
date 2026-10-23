@@ -3,30 +3,37 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRef } from "react";
-import { ArrowLeft, ArrowRight, Check, ChevronDown, FileUp, PencilLine, RotateCcw, ScanLine } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronDown, FileUp, PencilLine, RotateCcw, RotateCw, ScanLine } from "lucide-react";
 import { modul } from "@/data/module";
 import { ARTEN, geraet, geraeteFuer, type GeraeteArt } from "@/data/geraete";
 import { eur } from "@/lib/berechnung";
 import {
-  alleVorschlaege, alsKuechentyp, FORMEN, kuechenwaende, pruefeAngaben,
-  wandlaenge, WANDNAME, type Raumform, type Vorschlag, type WandId,
+  alleVorschlaege, alsKuechentyp, drehungen, drehungName, FORMEN, kuechenwaende,
+  pruefeAngaben, wandlaenge, WANDNAME, type Raumform, type Vorschlag, type WandId,
 } from "@/lib/planer";
 import { schrittFolge, useKueche } from "@/store/kueche";
 import { Kuechenbild, Raumbild } from "@/components/warm/Kuechenbild";
 import { Fortschritt, GrosseWahl, GrosseZahl, Karte, Notiz, Schieber, WKnopf } from "@/components/warm/Kit";
+import { BeispielPlan, Planauflage, RAHMEN_START, type Rahmen } from "@/components/warm/Planauflage";
 import { melde } from "@/components/ui/kit";
 
 const ALLE_WAENDE: WandId[] = ["haupt", "links", "rechts", "gegenueber"];
 
-function FormBild({ form }: { form: Raumform }) {
-  const w = (d: string) => <path d={d} strokeWidth={9} strokeLinecap="round" className="stroke-butter" fill="none" />;
+const SKIZZE: Record<WandId, string> = {
+  haupt: "M13 13 H77",
+  rechts: "M77 13 V45",
+  gegenueber: "M13 45 H77",
+  links: "M13 13 V45",
+};
+
+/** Der Raum von oben, gelb die Wände mit Küche. Zeigt die Form und ihre Drehung. */
+function RaumSkizze({ form, ausrichtung }: { form: Raumform; ausrichtung: number }) {
   return (
     <svg viewBox="0 0 90 58" className="h-[54px] w-full" aria-hidden="true">
       <rect x="5" y="5" width="80" height="48" rx="6" className="fill-creme" />
-      {form === "eine-wand" && w("M12 12 H78")}
-      {form === "ecke" && <>{w("M12 12 H78")}{w("M12 12 V42")}</>}
-      {form === "zwei-waende" && <>{w("M12 12 H78")}{w("M12 46 H78")}</>}
-      {form === "u-form" && <>{w("M12 12 H78")}{w("M12 12 V44")}{w("M78 12 V44")}</>}
+      {kuechenwaende({ form, ausrichtung }).map((w) => (
+        <path key={w} d={SKIZZE[w]} strokeWidth={9} strokeLinecap="round" className="stroke-butter" fill="none" />
+      ))}
     </svg>
   );
 }
@@ -100,6 +107,8 @@ export default function Kuechenplaner() {
   const { raum, quelle, erkannt, schritt, gewaehlt, setzeRaum, setzeGeraet, setzeNutz, setzeQuelle, uebernehmeErkennung, geheZu, weiter, zurueck, waehle, neu } = useKueche();
   const [details, setDetails] = useState(false);
   const [lauf, setLauf] = useState<number | null>(null);
+  const [planBild, setPlanBild] = useState<string | null>(null);
+  const [rahmen, setRahmen] = useState<Rahmen>(RAHMEN_START);
   const feld = useRef<HTMLInputElement>(null);
 
   const folge = schrittFolge(raum, quelle);
@@ -128,6 +137,83 @@ export default function Kuechenplaner() {
       : schritt === "wasser" ? raum.wasser.wand
       : null);
 
+  // Die Zeichnung begleitet jede Frage, statt unter ihr zu liegen: wer eine
+  // Zahl aendert, sieht die Wirkung sofort, ohne zu scrollen.
+  const zeigeBild = !istStart && !breit;
+  const geometrie = zeigeBild && !geraeteArt && schritt !== "niveau" && schritt !== "quelle" && schritt !== "upload";
+  const stufen = drehungen(raum.form);
+  const dreh = () => setzeRaum({ ausrichtung: (raum.ausrichtung + 1) % stufen });
+
+  const drehKnopf = (
+    <button
+      type="button"
+      onClick={dreh}
+      className="flex shrink-0 items-center gap-1.5 rounded-full border border-linie-warm bg-papier px-3 py-1.5 text-[13px] font-semibold text-kohle transition hover:bg-creme-2"
+    >
+      <RotateCw size={13} strokeWidth={2.3} />
+      Drehen
+    </button>
+  );
+
+  // Im langen Pruefschritt waeren vier volle Karten zu viel — hier reicht die
+  // Skizze als Knopf, der Satz darunter sagt, was gewaehlt ist.
+  const drehReihe = (
+    <div>
+      <div className={`grid gap-2 ${stufen === 2 ? "grid-cols-2" : "grid-cols-4"}`}>
+        {Array.from({ length: stufen }, (_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setzeRaum({ ausrichtung: i })}
+            aria-pressed={i === raum.ausrichtung}
+            aria-label={drehungName(raum.form, i)}
+            className={`rounded-[14px] border-2 p-1.5 transition ${
+              i === raum.ausrichtung ? "border-kohle bg-papier" : "border-transparent bg-creme hover:bg-creme-2"
+            }`}
+          >
+            <RaumSkizze form={raum.form} ausrichtung={i} />
+          </button>
+        ))}
+      </div>
+      <p className="mt-2 text-center text-[13px] text-kohle-2">
+        {drehungName(raum.form, raum.ausrichtung).replace(/^./, (c) => c.toUpperCase())}
+      </p>
+    </div>
+  );
+
+  const bildTafel = (
+    <Karte className="px-4 py-4">
+      <Raumbild raum={raum} hervorhebung={hervor} hoehe={226} />
+      <p className="mt-3 border-t border-linie-warm pt-3 text-center text-[13px] leading-snug text-kohle-3">
+        {hervor
+          ? <>Schwarz markiert ist die <strong className="font-semibold text-kohle">{WANDNAME[hervor]}</strong>.</>
+          : "Gelb sind die Wände mit Küche, der Tropfen zeigt den Wasseranschluss."}
+      </p>
+      {geometrie && stufen > 1 && (
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-linie-warm pt-3">
+          <span className="min-w-0 text-[13px] leading-snug text-kohle-2">{drehungName(raum.form, raum.ausrichtung)}</span>
+          {drehKnopf}
+        </div>
+      )}
+    </Karte>
+  );
+
+  const bildStreifen = (
+    <div className="sticky top-[56px] z-10 -mx-5 bg-creme/95 px-5 pb-3 pt-2 backdrop-blur sm:-mx-8 sm:px-8 lg:hidden">
+      <div className="flex items-center gap-3 rounded-[16px] border border-linie-warm bg-papier py-2 pl-2 pr-3">
+        <div className="w-[96px] shrink-0">
+          <Raumbild raum={raum} hervorhebung={hervor} hoehe={66} />
+        </div>
+        <p className="min-w-0 flex-1 text-[12.5px] leading-snug text-kohle-3">
+          {hervor
+            ? <>Schwarz: <strong className="font-semibold text-kohle">{WANDNAME[hervor]}</strong></>
+            : "Dein Raum von oben"}
+        </p>
+        {geometrie && stufen > 1 && drehKnopf}
+      </div>
+    </div>
+  );
+
   const wandWahl = (wert: WandId, setze: (w: WandId) => void) => (
     <GrosseWahl<WandId>
       wert={wert}
@@ -144,7 +230,7 @@ export default function Kuechenplaner() {
   return (
     <div className="warm min-h-full">
       <header className="sticky top-0 z-20 bg-creme/90 backdrop-blur">
-        <div className="mx-auto flex max-w-[1080px] items-center gap-4 px-5 pb-3 pt-4 sm:px-8">
+        <div className="mx-auto flex h-[56px] max-w-[1180px] items-center gap-4 px-5 sm:px-8">
           <Link href="/" className="flex shrink-0 items-center gap-2">
             <svg width="18" height="18" viewBox="0 0 17 17" aria-hidden="true">
               <rect x="0.75" y="0.75" width="15.5" height="15.5" rx="3" fill="none" strokeWidth="1.4" className="stroke-kohle" />
@@ -162,7 +248,10 @@ export default function Kuechenplaner() {
         </div>
       </header>
 
-      <main className={`mx-auto px-5 pb-20 pt-6 sm:px-8 ${breit ? "max-w-[1080px]" : "max-w-[720px]"}`}>
+      <main className={`mx-auto px-5 pb-20 sm:px-8 ${breit ? "max-w-[1080px] pt-6" : zeigeBild ? "max-w-[1180px] pt-0 lg:pt-7" : "max-w-[720px] pt-6"}`}>
+        {zeigeBild && bildStreifen}
+        <div className={zeigeBild ? "lg:grid lg:grid-cols-[minmax(0,1fr)_372px] lg:items-start lg:gap-10" : ""}>
+        <div className={zeigeBild ? "min-w-0 pt-5 lg:pt-0" : ""}>
         {istStart && (
           <div className="warm-rein pt-4 text-center sm:pt-10">
             {moegliche[0] && (
@@ -214,7 +303,11 @@ export default function Kuechenplaner() {
                   ref={feld}
                   type="file"
                   className="sr-only"
-                  onChange={() => {
+                  onChange={(e) => {
+                    const datei = e.target.files?.[0];
+                    // Nur Bilder lassen sich hier anzeigen; fuer PDF zeigen wir
+                    // einen gezeichneten Beispielplan und sagen es dazu.
+                    setPlanBild(datei && datei.type.startsWith("image/") ? URL.createObjectURL(datei) : null);
                     setLauf(0);
                     let i = 0;
                     const weiterLauf = () => {
@@ -270,6 +363,14 @@ export default function Kuechenplaner() {
               titel="Haben wir das richtig gelesen?"
               satz="Wände kann ein Plan sauber hergeben. Fenster und Türen sind das Schwierigste daran — da schätzen wir, und du korrigierst."
             />
+            <div className="mt-6">
+              <Planauflage raum={raum} rahmen={rahmen} setzeRahmen={setRahmen} bild={planBild} kinder={<BeispielPlan />} />
+              <p className="mt-2.5 text-[13px] leading-snug text-kohle-3">
+                {planBild
+                  ? "Dein Plan mit unserer Lesart darüber. Wo im Bild dein Küchenraum liegt, erkennt keine Software sicher — zieh den Rahmen einmal passend, dann sitzt jede Zahl unten an der richtigen Wand."
+                  : "Von einer PDF zeigen wir im Prototyp keine Vorschau, deshalb hier ein gezeichneter Beispielplan. Der Rahmen und alle Maße darauf sind deine echten Angaben von unten."}
+              </p>
+            </div>
             <div className="mt-6 space-y-3">
               <Karte className="px-5 py-4">
                 <div className="flex items-center justify-between gap-3">
@@ -284,16 +385,10 @@ export default function Kuechenplaner() {
                     setze={(f) => setzeRaum({ form: f })}
                     optionen={FORMEN.map((f) => ({ id: f.id, titel: f.titel, satz: f.erklaerung }))}
                   />
-                  {raum.form === "ecke" && (
-                    <div className="mt-3">
-                      <GrosseWahl<"links" | "rechts">
-                        wert={raum.seite}
-                        setze={(x) => setzeRaum({ seite: x })}
-                        optionen={[
-                          { id: "links", titel: "Nach links" },
-                          { id: "rechts", titel: "Nach rechts" },
-                        ]}
-                      />
+                  {stufen > 1 && (
+                    <div className="mt-4 border-t border-linie-warm pt-4">
+                      <div className="mb-2 text-[13.5px] text-kohle-2">Und wie liegt sie im Raum?</div>
+                      {drehReihe}
                     </div>
                   )}
                 </div>
@@ -399,23 +494,31 @@ export default function Kuechenplaner() {
               <GrosseWahl<Raumform>
                 wert={raum.form}
                 setze={(f) => setzeRaum({ form: f })}
-                optionen={FORMEN.map((f) => ({ id: f.id, titel: f.titel, satz: f.erklaerung, bild: <FormBild form={f.id} /> }))}
+                optionen={FORMEN.map((f) => ({ id: f.id, titel: f.titel, satz: f.erklaerung, bild: <RaumSkizze form={f.id} ausrichtung={0} /> }))}
               />
             </div>
           </>
         )}
 
-        {schritt === "seite" && (
+        {schritt === "drehung" && (
           <>
-            <Kopf titel="Auf welcher Seite geht es um die Ecke?" satz="Stell dich in den Raum und schau auf die Hauptwand." />
+            <Kopf
+              titel={raum.form === "u-form" ? "Wohin ist das U offen?" : "Wie liegt die Küche im Raum?"}
+              satz="Dreh sie so, wie es bei dir aussieht. Die Zeichnung zeigt dir deinen Raum von oben."
+            />
             <div className="mt-7">
-              <GrosseWahl<"links" | "rechts">
-                wert={raum.seite}
-                setze={(s) => setzeRaum({ seite: s })}
-                optionen={[
-                  { id: "links", titel: "Nach links", satz: "Die zweite Zeile läuft an der linken Wand entlang." },
-                  { id: "rechts", titel: "Nach rechts", satz: "Die zweite Zeile läuft an der rechten Wand entlang." },
-                ]}
+              <GrosseWahl<number>
+                wert={raum.ausrichtung}
+                setze={(a) => setzeRaum({ ausrichtung: a })}
+                spalten={2}
+                optionen={Array.from({ length: stufen }, (_, i) => {
+                  const n = drehungName(raum.form, i);
+                  return {
+                    id: i,
+                    titel: n.charAt(0).toUpperCase() + n.slice(1),
+                    bild: <RaumSkizze form={raum.form} ausrichtung={i} />,
+                  };
+                })}
               />
             </div>
           </>
@@ -726,19 +829,6 @@ export default function Kuechenplaner() {
           </div>
         )}
 
-        {!istStart && !breit && (
-          <div className="mt-8">
-            <Karte className="px-4 py-4">
-              <Raumbild raum={raum} hervorhebung={hervor} hoehe={205} />
-              <p className="mt-3 border-t border-linie-warm pt-3 text-center text-[13px] text-kohle-3">
-                {hervor
-                  ? `Schwarz markiert ist die ${WANDNAME[hervor]}.`
-                  : "Gelb sind die Wände mit Küche, der Tropfen zeigt den Wasseranschluss."}
-              </p>
-            </Karte>
-          </div>
-        )}
-
         {!istStart && (
           <div className="mt-9 flex items-center justify-between gap-4">
             <WKnopf art="klar" onClick={zurueck}>
@@ -753,6 +843,11 @@ export default function Kuechenplaner() {
             )}
           </div>
         )}
+        </div>
+        {zeigeBild && (
+          <aside className="hidden lg:sticky lg:top-[80px] lg:block">{bildTafel}</aside>
+        )}
+        </div>
       </main>
     </div>
   );

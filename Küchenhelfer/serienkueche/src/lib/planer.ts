@@ -20,8 +20,10 @@ export type WandId = "haupt" | "links" | "rechts" | "gegenueber";
 
 export interface Raumangaben {
   form: Raumform;
-  /** Bei "ecke": liegt die zweite Zeile links oder rechts. */
-  seite: "links" | "rechts";
+  /** Drehung der Küche im Raum, in Vierteln im Uhrzeigersinn (0 bis 3).
+      Deckt alles ab: an welcher Wand eine Zeile steht, welche Ecke genutzt
+      wird und wohin eine U-Form offen ist. */
+  ausrichtung: number;
   /** Länge der Haupt- und der gegenüberliegenden Wand in mm. */
   breite: number;
   /** Länge der beiden Seitenwände in mm. */
@@ -49,11 +51,45 @@ export const FORMEN: Array<{ id: Raumform; titel: string; erklaerung: string }> 
   { id: "u-form", titel: "U-Form", erklaerung: "Drei Wände. Der meiste Stauraum." },
 ];
 
-export function kuechenwaende(a: Pick<Raumangaben, "form" | "seite">): WandId[] {
-  if (a.form === "eine-wand") return ["haupt"];
-  if (a.form === "ecke") return ["haupt", a.seite];
-  if (a.form === "zwei-waende") return ["haupt", "gegenueber"];
-  return ["links", "haupt", "rechts"];
+/** Wände im Uhrzeigersinn, für die Drehung. */
+const ZYKLUS: WandId[] = ["haupt", "rechts", "gegenueber", "links"];
+
+export function drehe(w: WandId, viertel: number): WandId {
+  return ZYKLUS[(ZYKLUS.indexOf(w) + ((viertel % 4) + 4)) % 4];
+}
+
+export function kuechenwaende(a: Pick<Raumangaben, "form" | "ausrichtung">): WandId[] {
+  const basis: WandId[] =
+    a.form === "eine-wand" ? ["haupt"]
+    : a.form === "ecke" ? ["haupt", "links"]
+    : a.form === "zwei-waende" ? ["haupt", "gegenueber"]
+    : ["links", "haupt", "rechts"];
+  return basis.map((w) => drehe(w, a.ausrichtung));
+}
+
+/** Wie viele Drehungen bei dieser Form unterscheidbar sind. */
+export function drehungen(form: Raumform): number {
+  return form === "zwei-waende" ? 2 : 4;
+}
+
+/** Dieselben Waende im Dativ — "an der linken Wand", nicht "an der linke Wand". */
+const WANDNAME_DAT: Record<WandId, string> = {
+  haupt: "Hauptwand",
+  links: "linken Wand",
+  rechts: "rechten Wand",
+  gegenueber: "Wand gegenüber",
+};
+
+/** Was die Drehung dem Nutzer sagt. */
+export function drehungName(form: Raumform, ausrichtung: number): string {
+  const w = kuechenwaende({ form, ausrichtung });
+  if (form === "u-form") {
+    const offen = ZYKLUS.find((x) => !w.includes(x))!;
+    return `offen zur ${WANDNAME_DAT[offen]}`;
+  }
+  if (form === "ecke") return `Ecke ${WANDNAME[w[0]]} / ${WANDNAME[w[1]]}`;
+  if (form === "zwei-waende") return `${WANDNAME[w[0]]} und ${WANDNAME[w[1]]}`;
+  return `an der ${WANDNAME_DAT[w[0]]}`;
 }
 
 export function wandlaenge(a: Raumangaben, w: WandId): number {
@@ -62,7 +98,7 @@ export function wandlaenge(a: Raumangaben, w: WandId): number {
 
 export const STANDARD_RAUM: Raumangaben = {
   form: "eine-wand",
-  seite: "links",
+  ausrichtung: 0,
   breite: 3400,
   tiefe: 2800,
   nutz: { haupt: 3400, links: 2800, rechts: 2800, gegenueber: 3400 },
@@ -99,7 +135,10 @@ const SEITE: Record<WandId, Wandseite> = {
 const KORPUSTIEFE = 600;
 
 export function zeilenStart(a: Raumangaben, w: WandId): number {
-  return w !== "haupt" && a.form !== "zwei-waende" ? KORPUSTIEFE : 0;
+  // An einer Ecke beginnt die anschliessende Zeile hinter der Korpustiefe
+  // der ersten, sonst stossen die Schraenke zusammen.
+  const waende = kuechenwaende(a);
+  return w !== waende[0] && a.form !== "zwei-waende" ? KORPUSTIEFE : 0;
 }
 
 export function alsKuechentyp(a: Raumangaben): Kuechentyp {

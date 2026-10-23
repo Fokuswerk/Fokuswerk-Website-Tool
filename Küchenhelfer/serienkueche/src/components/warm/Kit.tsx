@@ -51,7 +51,7 @@ export function Karte({ children, className = "" }: { children: ReactNode; class
   return <div className={`rounded-[22px] bg-papier ${className}`}>{children}</div>;
 }
 
-export function GrosseWahl<T extends string>({
+export function GrosseWahl<T extends string | number>({
   wert,
   setze,
   optionen,
