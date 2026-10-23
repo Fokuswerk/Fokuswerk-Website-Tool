@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { STANDARD_GERAETE, type GeraeteArt, type Geraetewahl } from "@/data/geraete";
+import { bereinigeGeraete, STANDARD_GERAETE, type GeraeteArt, type Geraetewahl } from "@/data/geraete";
 import { angleichen, kuechenwaende, STANDARD_RAUM, type Raumangaben, type Strategie, type WandId } from "@/lib/planer";
 
 /**
@@ -137,6 +137,19 @@ export const useKueche = create<KuecheState>()(
           eigeneBelegung: {},
         }),
     }),
-    { name: "serienkueche-einzel-v5" },
+    {
+      name: "serienkueche-einzel-v5",
+      // Ein Plan aus einer älteren Sitzung kann Geräte nennen, die es nicht
+      // mehr gibt. Beim Laden einmal geradeziehen, statt daran zu scheitern.
+      merge: (gespeichert, jetzt) => {
+        const alt = gespeichert as Partial<KuecheState> | undefined;
+        if (!alt?.raum) return { ...jetzt, ...alt } as KuecheState;
+        return {
+          ...jetzt,
+          ...alt,
+          raum: angleichen({ ...STANDARD_RAUM, ...alt.raum, geraete: bereinigeGeraete(alt.raum.geraete) }),
+        } as KuecheState;
+      },
+    },
   ),
 );

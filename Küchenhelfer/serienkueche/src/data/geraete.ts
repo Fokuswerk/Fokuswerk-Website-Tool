@@ -53,10 +53,19 @@ export const ARTEN: Array<{ art: GeraeteArt; frage: string; hilfe: string }> = [
 
 const INDEX = new Map(GERAETE.map((g) => [g.id, g]));
 
+/** Notnagel, falls eine Kennung gar nicht aufzulösen ist. */
+const UNBEKANNT: Geraet = {
+  id: "unbekannt", art: "kuehlschrank", name: "Gerät", satz: "", aufpreis: 0, breite: 600,
+};
+
 export function geraet(id: string): Geraet {
   const g = INDEX.get(id);
-  if (!g) throw new Error(`Unbekanntes Gerät: ${id}`);
-  return g;
+  if (g) return g;
+  // Ein gespeicherter Plan kann ein Gerät nennen, das der Katalog nicht mehr
+  // führt. Dann lieber weiterrechnen als die ganze Seite stehen lassen — die
+  // Wahl wird beim Laden ohnehin bereinigt.
+  if (typeof console !== "undefined") console.warn(`Unbekanntes Gerät: ${id}`);
+  return UNBEKANNT;
 }
 
 export function geraeteFuer(art: GeraeteArt): Geraet[] {
@@ -72,3 +81,13 @@ export const STANDARD_GERAETE: Geraetewahl = {
   spuelmaschine: "gs-60",
   dunstabzug: "da-esse",
 };
+
+/** Eine gespeicherte Gerätewahl auf den heutigen Katalog ziehen. */
+export function bereinigeGeraete(wahl: Partial<Geraetewahl> | undefined): Geraetewahl {
+  const sauber = { ...STANDARD_GERAETE };
+  for (const art of Object.keys(STANDARD_GERAETE) as GeraeteArt[]) {
+    const id = wahl?.[art];
+    if (id && INDEX.get(id)?.art === art) sauber[art] = id;
+  }
+  return sauber;
+}
