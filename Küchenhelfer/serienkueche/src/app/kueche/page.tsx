@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRef } from "react";
 import { ArrowLeft, ArrowRight, Check, ChevronDown, FileUp, PencilLine, RotateCcw, RotateCw, ScanLine } from "lucide-react";
 import { modul } from "@/data/module";
@@ -13,11 +14,22 @@ import {
 } from "@/lib/planer";
 import { schrittFolge, useKueche } from "@/store/kueche";
 import { Kuechenbild, Raumbild } from "@/components/warm/Kuechenbild";
+
 import { Fortschritt, GrosseWahl, GrosseZahl, Karte, Notiz, Schieber, WKnopf } from "@/components/warm/Kit";
 import { BeispielPlan, Planauflage, RAHMEN_START, type Rahmen } from "@/components/warm/Planauflage";
 import { melde } from "@/components/ui/kit";
 
 const ALLE_WAENDE: WandId[] = ["haupt", "links", "rechts", "gegenueber"];
+
+// Das räumliche Bild läuft nur im Browser: ein Renderer hat auf dem Server
+// nichts zu zeichnen, und der Code soll erst laden, wenn er gebraucht wird.
+const Kuechenraum = dynamic(
+  () => import("@/components/warm/Kuechenraum").then((m) => m.Kuechenraum),
+  {
+    ssr: false,
+    loading: () => <div className="h-[420px] animate-pulse rounded-[18px] bg-creme-2" />,
+  },
+);
 
 const SKIZZE: Record<WandId, string> = {
   haupt: "M13 13 H77",
@@ -107,6 +119,7 @@ export default function Kuechenplaner() {
   const { raum, quelle, erkannt, schritt, gewaehlt, setzeRaum, setzeGeraet, setzeNutz, setzeQuelle, uebernehmeErkennung, geheZu, weiter, zurueck, waehle, neu } = useKueche();
   const [details, setDetails] = useState(false);
   const [lauf, setLauf] = useState<number | null>(null);
+  const [ansicht, setAnsicht] = useState<"raum" | "vorn">("raum");
   const [planBild, setPlanBild] = useState<string | null>(null);
   const [rahmen, setRahmen] = useState<Rahmen>(RAHMEN_START);
   const feld = useRef<HTMLInputElement>(null);
@@ -727,15 +740,39 @@ export default function Kuechenplaner() {
             </div>
 
             <Karte className="mt-7 overflow-hidden shadow-[0_10px_40px_rgba(23,22,15,0.07)]">
-              <div className="space-y-2 bg-creme-2/50 px-4 pt-6 sm:px-8">
-                {typ.zeilen.map((z) => (
-                  <div key={z.id}>
-                    {typ.zeilen.length > 1 && (
-                      <div className="mb-1 text-[12.5px] font-semibold text-kohle-3">{z.bezeichnung}</div>
-                    )}
-                    <Kuechenbild typ={typ} variante={gewaehlterVorschlag.variante} zeileId={z.id} hoehe={typ.zeilen.length > 1 ? 200 : 290} />
+              <div className="bg-creme-2/40 px-4 pb-5 pt-5 sm:px-7">
+                <div className="mb-5 flex justify-center">
+                  <div className="inline-flex rounded-full bg-creme-2 p-1">
+                    {([["raum", "Räumlich"], ["vorn", "Von vorn"]] as const).map(([id, t]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setAnsicht(id)}
+                        aria-pressed={ansicht === id}
+                        className={`rounded-full px-4 py-1.5 text-[13.5px] font-semibold transition ${
+                          ansicht === id ? "bg-papier text-kohle shadow-sm" : "text-kohle-2 hover:text-kohle"
+                        }`}
+                      >
+                        {t}
+                      </button>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                {ansicht === "raum" ? (
+                  <Kuechenraum typ={typ} variante={gewaehlterVorschlag.variante} hoehe={420} />
+                ) : (
+                  <div className="space-y-2">
+                    {typ.zeilen.map((z) => (
+                      <div key={z.id}>
+                        {typ.zeilen.length > 1 && (
+                          <div className="mb-1 text-[12.5px] font-semibold text-kohle-3">{z.bezeichnung}</div>
+                        )}
+                        <Kuechenbild typ={typ} variante={gewaehlterVorschlag.variante} zeileId={z.id} hoehe={typ.zeilen.length > 1 ? 200 : 290} />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="grid gap-6 p-6 sm:grid-cols-[1fr_auto] sm:items-end sm:p-8">
                 <div>

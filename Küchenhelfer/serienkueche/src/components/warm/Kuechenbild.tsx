@@ -1,6 +1,7 @@
 "use client";
 
 import { modul } from "@/data/module";
+import { AP_OK, HOCH_H, KORPUS, OS_H, OS_UK, PLATTE, rolleVon, ROLLE_NAME, SOCKEL } from "@/lib/masse";
 import { platzierung } from "@/lib/berechnung";
 import type { VarianteRoh } from "@/data/varianten";
 import type { Kuechentyp } from "@/lib/typen";
@@ -13,36 +14,8 @@ import type { Kuechentyp } from "@/lib/typen";
  * Wer noch nie eine Küche geplant hat, soll auf einen Blick sehen, was wo steht.
  */
 
-const SOCKEL = 150;
-const KORPUS = 720;
-const PLATTE = 45;
-const AP_OK = SOCKEL + KORPUS + PLATTE;
-const OS_UK = 1460;
-const OS_H = 700;
-const HOCH_H = 2060;
 const R = 34;
-
-type Rolle = "kuehlschrank" | "backofen" | "spuele" | "herd" | "spuelmaschine" | "schrank" | "leiste";
-
-function rolleVon(id: string): Rolle {
-  if (id === "HK600") return "kuehlschrank";
-  if (id === "HB600") return "backofen";
-  if (id === "SP600") return "spuele";
-  if (id === "KF600") return "herd";
-  if (id === "GS600") return "spuelmaschine";
-  if (modul(id).kategorie === "blende") return "leiste";
-  return "schrank";
-}
-
-const NAME: Record<Rolle, string> = {
-  kuehlschrank: "Kühlschrank",
-  backofen: "Backofen",
-  spuele: "Spüle",
-  herd: "Herd",
-  spuelmaschine: "Spülmaschine",
-  schrank: "Schrank",
-  leiste: "",
-};
+const NAME = ROLLE_NAME;
 
 export function Kuechenbild({
   typ,
@@ -65,7 +38,7 @@ export function Kuechenbild({
   const fenster = typ.oeffnungen.filter((o) => o.art === "fenster" && o.wand === zeile.wand);
 
   const randX = 180;
-  const randUnten = mitNamen ? 420 : 160;
+  const randUnten = mitNamen ? 560 : 160;
   const vb = `${-randX} ${-140} ${zeile.laenge + 2 * randX} ${RH + 140 + randUnten}`;
 
   return (
@@ -266,11 +239,14 @@ export function Kuechenbild({
         plaetze.map((p) => {
           const n = NAME[rolleVon(p.modulId)];
           if (!n || p.breite < 400) return null;
+          // Lange Wörter wie "Spülmaschine" sind breiter als ein 60er Schrank.
+          // Deshalb abwechselnd zwei Zeilen: so stösst nichts aneinander.
+          const zweite = p.index % 2 === 1;
           return (
             <text
               key={`n-${p.index}`}
               x={p.von + p.breite / 2}
-              y={RH + 260}
+              y={RH + (zweite ? 420 : 260)}
               textAnchor="middle"
               fontSize={135}
               fontFamily="Plus Jakarta Sans, sans-serif"
