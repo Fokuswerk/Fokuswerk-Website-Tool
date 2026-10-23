@@ -10,12 +10,12 @@ import { ARTEN, geraet, geraeteFuer, type GeraeteArt } from "@/data/geraete";
 import { eur } from "@/lib/berechnung";
 import {
   alleVorschlaege, alsKuechentyp, ausBelegung, befundeZeile, drehungen, drehungName, FORMEN, kuechenwaende,
-  befundeGesamt, tauschMoeglich, tauschPlan,
+  austauschbar, befundeGesamt, ersetzePlan, istStauraum, tauschMoeglich, tauschPlan,
   pruefeAngaben, wandlaenge, WANDNAME, type Raumform, type Vorschlag, type WandId,
 } from "@/lib/planer";
 import { schrittFolge, useKueche } from "@/store/kueche";
 import { Kuechenbild, Raumbild } from "@/components/warm/Kuechenbild";
-import { Geraetebild } from "@/components/warm/Geraetebild";
+import { Geraetebild, Schrankbild } from "@/components/warm/Geraetebild";
 
 import { Fortschritt, GrosseWahl, GrosseZahl, Karte, Notiz, Schieber, WKnopf } from "@/components/warm/Kit";
 import { BeispielPlan, Planauflage, RAHMEN_START, type Rahmen } from "@/components/warm/Planauflage";
@@ -787,19 +787,55 @@ export default function Kuechenplaner() {
           return (
             <>
               <Kopf vor={schrittText} titel={info.frage} satz={info.hilfe} />
-              <div className="mt-7">
-                <GrosseWahl<string>
-                  wert={raum.geraete[geraeteArt]}
-                  setze={(id) => setzeGeraet(geraeteArt, id)}
-                  spalten={geraeteFuer(geraeteArt).length > 2 ? 3 : 2}
-                  optionen={geraeteFuer(geraeteArt).map((g) => ({
-                    id: g.id,
-                    titel: g.name,
-                    satz: g.satz,
-                    zusatz: g.aufpreis === 0 ? "im Preis" : `${g.aufpreis > 0 ? "+" : "−"}${eur(Math.abs(g.aufpreis))}`,
-                    bild: <Geraetebild id={g.id} />,
-                  }))}
-                />
+              <div className="mt-7 grid gap-3 sm:grid-cols-2">
+                {geraeteFuer(geraeteArt).map((g) => {
+                  const aktiv = raum.geraete[geraeteArt] === g.id;
+                  return (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => setzeGeraet(geraeteArt, g.id)}
+                      aria-pressed={aktiv}
+                      className={`warm-wahl flaeche rounded-[14px] p-4 text-left ${
+                        aktiv ? "flaeche-hoch !border-kohle ring-1 ring-kohle" : "hover:!border-linie-stark"
+                      }`}
+                    >
+                      <div className="flex gap-4">
+                        <div className="vertieft w-[104px] shrink-0 overflow-hidden rounded-[10px] bg-creme-2">
+                          <Geraetebild id={g.id} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          {g.klasse && <div className="vorzeile">{g.klasse}</div>}
+                          <div className="gross mt-1 text-[16px] font-bold leading-tight text-kohle">{g.name}</div>
+                          <div className="mt-1.5 text-[13.5px] leading-snug text-kohle-2">{g.satz}</div>
+                        </div>
+                      </div>
+
+                      {g.daten && g.daten.length > 0 && (
+                        <dl className="mt-3.5 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-linie-warm pt-3">
+                          {g.daten.map(([k, v]) => (
+                            <div key={k} className="flex items-baseline justify-between gap-2 text-[12.5px]">
+                              <dt className="shrink-0 text-kohle-3">{k}</dt>
+                              <dd className="ziffern truncate text-right font-medium text-kohle-2">{v}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      )}
+
+                      <div className="ziffern mt-3 border-t border-linie-warm pt-3 text-[13.5px] font-semibold text-kohle">
+                        {g.aufpreis === 0 ? "im Preis enthalten" : `${g.aufpreis > 0 ? "+" : "−"}${eur(Math.abs(g.aufpreis))}`}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-5">
+                <Notiz>
+                  Klassen, Maße und technische Daten sind Beispielwerte für den Prototyp. Marken
+                  und konkrete Modelle kommen aus der Preisliste des Lieferanten — das ist eine
+                  Tabelle, kein Umbau: Name, Daten, Preis, fertig.
+                </Notiz>
               </div>
             </>
           );
@@ -936,6 +972,72 @@ export default function Kuechenplaner() {
                         moeglich: zielMoeglich,
                       }}
                     />
+
+                    {angefasst && (() => {
+                      const jetzt = (gewaehlterVorschlag.belegung[angefasst.zeile] ?? [])[angefasst.index];
+                      if (!jetzt || !istStauraum(jetzt)) return null;
+                      const optionen = austauschbar(jetzt)
+                        .map((id) => {
+                          const plan = ersetzePlan(typ, gewaehlterVorschlag.belegung, angefasst, id);
+                          if ("grund" in plan) return null;
+                          const neu = ausBelegung(raum, typ, grundVorschlag!.strategie, {
+                            ...gewaehlterVorschlag.belegung, ...plan.belegung,
+                          });
+                          return { id, belegung: plan.belegung, delta: neu.preis - gewaehlterVorschlag.preis };
+                        })
+                        .filter((x): x is { id: string; belegung: Record<string, string[]>; delta: number } => !!x);
+
+                      return (
+                        <Karte className="mt-5 px-5 py-5">
+                          <div className="flex flex-wrap items-baseline justify-between gap-2">
+                            <div className="text-[15px] font-semibold text-kohle">
+                              Hier steht: {modul(jetzt).bezeichnung}
+                            </div>
+                            <div className="ziffern text-[13px] text-kohle-3">
+                              {Math.round((modul(jetzt).breite ?? 0) / 10)} cm breit
+                            </div>
+                          </div>
+                          {optionen.length === 0 ? (
+                            <p className="mt-2 text-[14px] text-kohle-2">
+                              An dieser Stelle passt kein anderer Typ — die Zeile geht sonst nicht auf.
+                            </p>
+                          ) : (
+                            <>
+                              <p className="mt-1.5 text-[13.5px] text-kohle-2">
+                                Anderer Typ an dieselbe Stelle. Der Preis ist der Unterschied für die
+                                ganze Küche, Passleiste schon eingerechnet.
+                              </p>
+                              <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                                {optionen.map((o) => (
+                                  <button
+                                    key={o.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setzeBelegung(grundVorschlag!.strategie, { ...(eigen ?? {}), ...o.belegung });
+                                      setTauschGrund(null);
+                                    }}
+                                    className="warm-wahl flaeche rounded-[12px] p-3 text-left hover:!border-linie-stark"
+                                  >
+                                    <div className="vertieft mb-2.5 overflow-hidden rounded-[8px] bg-creme-2">
+                                      <Schrankbild id={o.id} />
+                                    </div>
+                                    <div className="text-[14px] font-semibold leading-tight text-kohle">
+                                      {modul(o.id).bezeichnung}
+                                    </div>
+                                    <div className="ziffern mt-1.5 flex items-baseline justify-between gap-2 text-[12.5px]">
+                                      <span className="text-kohle-3">{Math.round((modul(o.id).breite ?? 0) / 10)} cm</span>
+                                      <span className="font-semibold text-kohle">
+                                        {o.delta === 0 ? "gleicher Preis" : `${o.delta > 0 ? "+" : "−"}${eur(Math.abs(o.delta))}`}
+                                      </span>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </Karte>
+                      );
+                    })()}
 
                     {tauschGrund && (
                       <div className="mt-4">

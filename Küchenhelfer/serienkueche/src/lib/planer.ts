@@ -668,3 +668,44 @@ export function befundeGesamt(a: Raumangaben, typ: Kuechentyp, belegung: Record<
   }
   return hin;
 }
+
+/** Stauraumschränke, die man gegeneinander tauschen darf. Geräte- und
+    Spülenschränke nicht: die folgen der Geräteauswahl. */
+const STAURAUM = ["US600", "US450", "US300", "AZ600", "AZ300", "UT600", "UT450", "MU600"];
+
+export function istStauraum(id: string): boolean {
+  return STAURAUM.includes(id);
+}
+
+/** Welche anderen Typen an dieser Stelle in Frage kommen. */
+export function austauschbar(id: string): string[] {
+  if (!istStauraum(id)) return [];
+  return STAURAUM.filter((x) => x !== id);
+}
+
+/**
+ * Einen Schrank gegen einen anderen Typ tauschen. Ist der neue schmaler
+ * oder breiter, fängt die Passleiste der Zeile den Unterschied auf — wie
+ * beim Tausch über die Wandgrenze.
+ */
+export function ersetzePlan(
+  typ: Kuechentyp,
+  belegung: Record<string, string[]>,
+  platz: { zeile: string; index: number },
+  neueId: string,
+): { belegung: Record<string, string[]> } | { grund: string } {
+  const ids = [...(belegung[platz.zeile] ?? [])];
+  const alt = ids[platz.index];
+  if (!alt) return { grund: "Diesen Platz gibt es nicht mehr." };
+
+  const diff = (modul(neueId).breite ?? 0) - (modul(alt).breite ?? 0);
+  ids[platz.index] = neueId;
+  const fertig = passeAn(ids, -diff);
+  if (!fertig) {
+    const seite = typ.zeilen.find((z) => z.id === platz.zeile)?.wand;
+    return {
+      grund: `${modul(neueId).bezeichnung} ist ${cm(Math.abs(diff))} ${diff > 0 ? "breiter" : "schmaler"}. An der ${seite ? wandDativ(seite) : "Wand"} geht das nicht auf.`,
+    };
+  }
+  return { belegung: { [platz.zeile]: fertig } };
+}

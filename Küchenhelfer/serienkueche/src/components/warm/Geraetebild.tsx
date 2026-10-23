@@ -32,6 +32,7 @@ export function Geraetebild({ id }: { id: string }) {
   switch (id) {
     /* ---------------- Kühlschrank ---------------- */
     case "kuehl-gross":
+    case "kuehl-nofrost":
       return (
         <Rahmen
           kinder={
@@ -72,6 +73,7 @@ export function Geraetebild({ id }: { id: string }) {
     /* ---------------- Kochfeld ---------------- */
     case "kf-ceran":
     case "kf-induktion":
+    case "kf-flex":
       return (
         <Rahmen
           kinder={
@@ -80,7 +82,7 @@ export function Geraetebild({ id }: { id: string }) {
               {[42, 60, 78].map((cx, i) => (
                 <circle key={cx} cx={cx} cy={i === 1 ? 46 : 54} r={i === 1 ? 7 : 6} fill="none" className="stroke-creme-2" strokeWidth="1.6" />
               ))}
-              {id === "kf-induktion" && (
+              {(id === "kf-induktion" || id === "kf-flex") && (
                 <rect x="34" y="60" width="20" height="3" rx="1.5" className="fill-creme-2" />
               )}
             </>
@@ -138,8 +140,9 @@ export function Geraetebild({ id }: { id: string }) {
 
     /* ---------------- Spülmaschine ---------------- */
     case "gs-60":
+    case "gs-leise":
     case "gs-45": {
-      const br = id === "gs-60" ? 44 : 32;
+      const br = id === "gs-45" ? 32 : 44;
       return (
         <Rahmen
           kinder={
@@ -154,6 +157,7 @@ export function Geraetebild({ id }: { id: string }) {
         />
       );
     }
+    case "ofen-keiner":
     case "gs-keine":
       return (
         <Rahmen
@@ -176,6 +180,21 @@ export function Geraetebild({ id }: { id: string }) {
               <path d="M44 12 H76 V30 L86 40 H34 L44 30 Z" className={korpus} strokeWidth="1.4" />
               <rect x="34" y="40" width="52" height="4" rx="2" className={griff} />
               <rect x="30" y="62" width="60" height="8" rx="3" className={glas} />
+            </>
+          }
+        />
+      );
+    case "da-mulde":
+      return (
+        <Rahmen
+          kinder={
+            <>
+              <rect x="22" y="40" width="76" height="34" rx="5" className={glas} />
+              <rect x="54" y="44" width="12" height="26" rx="3" className="fill-creme-2" />
+              {[36, 84].map((cx) => (
+                <circle key={cx} cx={cx} cy="57" r="8" fill="none" className="stroke-creme-2" strokeWidth="1.6" />
+              ))}
+              <path d="M60 36 q0 -8 -8 -8 M60 36 q0 -8 8 -8" fill="none" className="stroke-kohle-3" strokeWidth="1.6" strokeLinecap="round" />
             </>
           }
         />
@@ -208,4 +227,60 @@ export function Geraetebild({ id }: { id: string }) {
     default:
       return <Rahmen kinder={<rect x="40" y="30" width="40" height="40" rx="4" className={korpus} strokeWidth="1.4" />} />;
   }
+}
+
+/* ---------------------------------------------------------------- */
+
+/**
+ * Die Front eines Stauraumschranks. Zeigt auf einen Blick, ob sich eine Tür
+ * öffnet, Auszüge herausfahren oder ein schmaler Apothekerauszug drinsteckt.
+ */
+export function Schrankbild({ id }: { id: string }) {
+  const breit = id.endsWith("600") ? 72 : id.endsWith("450") ? 54 : 36;
+  const x = (B - breit) / 2;
+  const front = "fill-papier stroke-kohle-3";
+  const fuge = "stroke-kohle-3";
+
+  const faecher = (n: number) => {
+    const h = 64 / n;
+    return Array.from({ length: n }, (_, i) => (
+      <g key={i}>
+        <rect x={x + 2} y={14 + i * h + 2} width={breit - 4} height={h - 4} rx="2" className={front} strokeWidth="1.2" />
+        <rect x={x + breit / 2 - 9} y={14 + i * h + h / 2 - 1.5} width="18" height="3" rx="1.5" className={griff} />
+      </g>
+    ));
+  };
+
+  return (
+    <Rahmen
+      kinder={
+        <>
+          <rect x={x} y="12" width={breit} height="68" rx="3" className={front} strokeWidth="1.4" />
+          {(id === "UT600" || id === "UT450") && (
+            <>
+              <path d={`M${x + breit - 10} 26 V66`} className={fuge} strokeWidth="1.2" />
+              <rect x={x + breit - 14} y="40" width="3" height="14" rx="1.5" className={griff} />
+            </>
+          )}
+          {id === "US600" && faecher(2)}
+          {id === "US450" && faecher(3)}
+          {id === "US300" && faecher(2)}
+          {(id === "AZ600" || id === "AZ300") && (
+            <>
+              <rect x={x + 5} y="17" width={breit - 10} height="58" rx="2" className="fill-creme-2 stroke-kohle-3" strokeWidth="1.2" />
+              <path d={`M${x + breit / 2} 24 V68`} className={fuge} strokeWidth="1.2" strokeDasharray="3 3" />
+              <rect x={x + breit / 2 - 10} y="44" width="20" height="3" rx="1.5" className={griff} />
+            </>
+          )}
+          {id === "MU600" && (
+            <>
+              {faecher(2)}
+              <path d={`M${x + 18} 50 h${breit - 36} l-3 18 h-${breit - 42} Z`} className="fill-creme-2 stroke-kohle-3" strokeWidth="1.2" />
+              <path d={`M${x + 16} 50 h${breit - 32}`} className={fuge} strokeWidth="1.6" />
+            </>
+          )}
+        </>
+      }
+    />
+  );
 }

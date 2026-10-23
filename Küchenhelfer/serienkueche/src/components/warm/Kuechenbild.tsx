@@ -128,14 +128,30 @@ export function Kuechenbild({
         );
       })}
 
-      {/* Arbeitsplatte */}
-      <rect x={0} y={y(AP_OK)} width={zeile.laenge} height={PLATTE} rx={14} className="fill-kohle" />
+      {/* Arbeitsplatte — nur dort, wo sie wirklich liegt. Vor einem
+          Hochschrank gibt es keine, sonst steht sie als Stummel in der Front. */}
+      {(() => {
+        const stuecke: Array<{ von: number; bis: number }> = [];
+        for (const p of plaetze) {
+          const r = rolleVon(p.modulId);
+          if (r === "kuehlschrank" || r === "backofen") continue;
+          const letztes = stuecke[stuecke.length - 1];
+          if (letztes && letztes.bis === p.von) letztes.bis = p.bis;
+          else stuecke.push({ von: p.von, bis: p.bis });
+        }
+        return stuecke.map((st) => (
+          <rect key={st.von} x={st.von} y={y(AP_OK)} width={st.bis - st.von} height={PLATTE} rx={14} className="fill-kohle" />
+        ));
+      })()}
 
       {/* Schränke und Geräte */}
       {plaetze.map((p) => {
         const rolle = rolleVon(p.modulId);
         const hoch = rolle === "kuehlschrank" || rolle === "backofen";
-        const oben = hoch ? SOCKEL + HOCH_H : SOCKEL + KORPUS;
+        // Hochschraenke schliessen oben mit den Haengeschraenken ab und
+        // stehen auf dem eigenen Sockel — genau wie im raeumlichen Bild.
+        const oben = hoch ? HOCH_H : SOCKEL + KORPUS;
+        const unten = hoch ? 0 : SOCKEL;
         const mitte = p.von + p.breite / 2;
 
         if (rolle === "leiste") {
@@ -158,15 +174,15 @@ export function Kuechenbild({
               x={p.von + 16}
               y={y(oben)}
               width={p.breite - 32}
-              height={oben - SOCKEL}
+              height={oben - unten}
               rx={R}
-              className={hoch ? "fill-papier" : "fill-papier"}
+              className="fill-papier"
             />
             <rect
               x={p.von + 16}
               y={y(oben)}
               width={p.breite - 32}
-              height={oben - SOCKEL}
+              height={oben - unten}
               rx={R}
               fill="none"
               strokeWidth={12}
