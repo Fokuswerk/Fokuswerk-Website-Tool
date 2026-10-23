@@ -2,7 +2,7 @@ import { modul } from "@/data/module";
 import { platzierung } from "@/lib/berechnung";
 import {
   AP_OK, HOCH_H, KORPUS, OS_H, OS_UK, PLATTE, RAUMHOEHE,
-  rolleVon, SOCKEL, TIEFE_OBEN, TIEFE_UNTEN,
+  rolleVon, ROLLE_NAME, SOCKEL, TIEFE_OBEN, TIEFE_UNTEN,
 } from "@/lib/masse";
 import type { Kuechentyp, Wandseite } from "@/lib/typen";
 import type { VarianteRoh } from "@/data/varianten";
@@ -70,8 +70,20 @@ export interface Wandkoerper {
   kaesten: Kasten[];
 }
 
+/** Ein Gerät mit seinem Platz — für die Beschriftung im räumlichen Bild. */
+export interface Marke {
+  id: string;
+  name: string;
+  wand: Wandseite;
+  /** Punkt, an dem das Schild hängt, in mm. */
+  pos: [number, number, number];
+  /** Umriss des Geräts, für die Hervorhebung. */
+  kasten: { x: number; y: number; z: number; bx: number; by: number; bz: number };
+}
+
 export interface Szene {
   kaesten: Kasten[];
+  marken: Marke[];
   /** Der Boden wird zuerst gezeichnet, darauf die weichen Schatten. */
   boden: Kasten;
   waende: Wandkoerper[];
@@ -90,27 +102,36 @@ function achsen(wand: Wandseite, breite: number, tiefe: number) {
 export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
   const { breite, tiefe } = typ.raum;
   const kaesten: Kasten[] = [];
+  const marken: Marke[] = [];
   let lauf = 0;
 
-  /** Körper in Wandkoordinaten: s entlang der Wand, d in den Raum, z nach oben. */
+  /** Maße in Wandkoordinaten zu einem Quader im Raum machen:
+      s entlang der Wand, d in den Raum, z nach oben. */
+  const quader = (wand: Wandseite, s0: number, s1: number, d0: number, d1: number, z0: number, z1: number) => {
+    const a = achsen(wand, breite, tiefe);
+    const xs = [a.o[0] + a.e[0] * s0 + a.n[0] * d0, a.o[0] + a.e[0] * s1 + a.n[0] * d1];
+    const ys = [a.o[1] + a.e[1] * s0 + a.n[1] * d0, a.o[1] + a.e[1] * s1 + a.n[1] * d1];
+    return {
+      x: Math.min(xs[0], xs[1]),
+      y: Math.min(ys[0], ys[1]),
+      z: z0,
+      bx: Math.max(1, Math.abs(xs[1] - xs[0])),
+      by: Math.max(1, Math.abs(ys[1] - ys[0])),
+      bz: Math.max(1, z1 - z0),
+    };
+  };
+
+  /** Punkt in Wandkoordinaten als Weltpunkt. */
+  const punkt = (wand: Wandseite, sx: number, d: number, z: number): [number, number, number] => {
+    const a = achsen(wand, breite, tiefe);
+    return [a.o[0] + a.e[0] * sx + a.n[0] * d, a.o[1] + a.e[1] * sx + a.n[1] * d, z];
+  };
+
   const stelle = (
     wand: Wandseite, s0: number, s1: number, d0: number, d1: number,
     z0: number, z1: number, farbe: RGB,
   ) => {
-    const a = achsen(wand, breite, tiefe);
-    const xs = [a.o[0] + a.e[0] * s0 + a.n[0] * d0, a.o[0] + a.e[0] * s1 + a.n[0] * d1];
-    const ys = [a.o[1] + a.e[1] * s0 + a.n[1] * d0, a.o[1] + a.e[1] * s1 + a.n[1] * d1];
-    const x = Math.min(xs[0], xs[1]);
-    const y = Math.min(ys[0], ys[1]);
-    kaesten.push({
-      id: `k${lauf++}`,
-      x, y, z: z0,
-      bx: Math.max(1, Math.abs(xs[1] - xs[0])),
-      by: Math.max(1, Math.abs(ys[1] - ys[0])),
-      bz: Math.max(1, z1 - z0),
-      farbe,
-      stoff: STOFF.get(farbe),
-    });
+    kaesten.push({ id: `k${lauf++}`, ...quader(wand, s0, s1, d0, d1, z0, z1), farbe, stoff: STOFF.get(farbe) });
   };
 
   /** Schrank mit sichtbarer Fuge: dunklerer Korpus, davor die Frontplatte. */
@@ -163,6 +184,12 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
     einsortieren();
   }
 
+  // Steht der Backofen nicht als Hochschrank in der Zeile, sitzt er unter
+  // dem Kochfeld. Dann sieht man ihn sonst gar nicht.
+  const ofenHoch = typ.zeilen.some((z) =>
+    platzierung(variante, z.id).some((p) => p.modulId === "HB600"),
+  );
+
   // --- Die Küchenzeilen ---
   for (const zeile of typ.zeilen) {
     const plaetze = platzierung(variante, zeile.id);
@@ -180,6 +207,17 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
       const m = (s0 + s1) / 2;
       const rolle = rolleVon(p.modulId);
 
+      // Geräte bekommen eine Marke: Umriss und Punkt für das Schild.
+      const merke = (d0: number, d1: number, z0: number, z1: number, zSchild: number, dSchild: number) => {
+        marken.push({
+          id: `${zeile.id}-${p.index}`,
+          name: ROLLE_NAME[rolle],
+          wand: zeile.wand,
+          pos: punkt(zeile.wand, m, dSchild, zSchild),
+          kasten: quader(zeile.wand, s0, s1, d0, d1, z0, z1),
+        });
+      };
+
       if (rolle === "leiste") {
         schrank(zeile.wand, s0, s1, TIEFE_UNTEN, 0, AP_OK - PLATTE);
         continue;
@@ -187,6 +225,7 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
 
       if (rolle === "kuehlschrank" || rolle === "backofen") {
         schrank(zeile.wand, s0, s1, TIEFE_UNTEN, 0, HOCH_H);
+        merke(0, TIEFE_UNTEN, 0, HOCH_H, rolle === "kuehlschrank" ? 1700 : 1560, TIEFE_UNTEN + 40);
         if (rolle === "kuehlschrank") {
           // Fugen zwischen den beiden Türen sichtbar machen
           stelle(zeile.wand, s0 + 18, s1 - 18, TIEFE_UNTEN, TIEFE_UNTEN + 8, 40, 1330, MATERIAL.front);
@@ -208,10 +247,24 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
         SOCKEL + KORPUS - 96, SOCKEL + KORPUS - 70, MATERIAL.griff,
       );
       if (rolle === "spuelmaschine") {
+        merke(0, TIEFE_UNTEN, SOCKEL, SOCKEL + KORPUS, SOCKEL + KORPUS / 2, TIEFE_UNTEN + 40);
         stelle(zeile.wand, s0 + 20, s1 - 20, TIEFE_UNTEN, TIEFE_UNTEN + 10, SOCKEL + KORPUS - 60, SOCKEL + KORPUS - 10, MATERIAL.graphit);
       }
 
       if (rolle === "herd") {
+        if (!ofenHoch) {
+          // Backofentür in der Front darunter, mit Griffleiste.
+          stelle(zeile.wand, s0 + 32, s1 - 32, TIEFE_UNTEN, TIEFE_UNTEN + 16, SOCKEL + 30, SOCKEL + KORPUS - 150, MATERIAL.glas);
+          stelle(zeile.wand, s0 + 70, s1 - 70, TIEFE_UNTEN + 16, TIEFE_UNTEN + 34, SOCKEL + KORPUS - 205, SOCKEL + KORPUS - 165, MATERIAL.stahl);
+          marken.push({
+            id: `${zeile.id}-${p.index}-ofen`,
+            name: "Backofen",
+            wand: zeile.wand,
+            pos: punkt(zeile.wand, m, TIEFE_UNTEN + 40, SOCKEL + 260),
+            kasten: quader(zeile.wand, s0, s1, 0, TIEFE_UNTEN, SOCKEL, SOCKEL + KORPUS - 140),
+          });
+        }
+        merke(40, 560, AP_OK, AP_OK + 14, AP_OK + 120, 300);
         stelle(zeile.wand, m - 290, m + 290, 40, 560, AP_OK, AP_OK + 14, MATERIAL.glas);
         for (const dx of [-140, 140]) {
           for (const dy of [160, 400]) {
@@ -229,6 +282,7 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
       }
 
       if (rolle === "spuele") {
+        merke(60, 520, AP_OK - 150, AP_OK + 6, AP_OK + 150, 300);
         stelle(zeile.wand, m - 270, m + 270, 60, 520, AP_OK - 8, AP_OK + 6, MATERIAL.stahl);
         stelle(zeile.wand, m - 230, m + 230, 95, 485, AP_OK - 150, AP_OK - 8, [138, 138, 134]);
         stelle(zeile.wand, m - 22, m + 22, 90, 134, AP_OK + 6, AP_OK + 290, MATERIAL.stahl);
@@ -248,7 +302,7 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
     }
   }
 
-  return { kaesten, boden, waende, mitte: [breite / 2, tiefe / 2, 1100] };
+  return { kaesten, marken, boden, waende, mitte: [breite / 2, tiefe / 2, 1100] };
 }
 
 /** Die Rollen, die in dieser Küche vorkommen — für die Bildunterschrift. */

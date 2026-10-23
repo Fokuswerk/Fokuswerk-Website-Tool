@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Rahmen } from "@/components/layout/Rahmen";
+import { Torwaechter } from "@/components/warm/Torwaechter";
 
 export const metadata: Metadata = {
   title: "Serienküche",
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
+        <Torwaechter />
         <Rahmen>{children}</Rahmen>
       </body>
     </html>

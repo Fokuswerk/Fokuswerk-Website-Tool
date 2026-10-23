@@ -86,8 +86,34 @@ body {
 }
 
 /* ------- Weg fuer Privatkunden ------- */
+/* Tiefe entsteht aus Licht, nicht aus Rahmen: der Grund ist oben heller,
+   Flaechen tragen eine feine Oberkante und werfen einen weiten, weichen
+   Schatten. Vertiefte Stellen bekommen den Schatten nach innen. */
+.warm .flaeche {
+  background: linear-gradient(180deg, #ffffff 0%, #fcfbf9 100%);
+  border: 1px solid rgba(21, 20, 15, 0.055);
+  box-shadow:
+    0 1px 2px rgba(21, 20, 15, 0.04),
+    0 14px 34px -20px rgba(21, 20, 15, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.warm .flaeche-hoch {
+  box-shadow:
+    0 2px 5px rgba(21, 20, 15, 0.055),
+    0 30px 60px -26px rgba(21, 20, 15, 0.32),
+    inset 0 1px 0 #ffffff;
+}
+.warm .vertieft {
+  box-shadow:
+    inset 0 2px 5px rgba(21, 20, 15, 0.09),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.7);
+}
+
 .warm {
-  background: var(--color-creme);
+  background:
+    radial-gradient(130% 62% at 50% -8%, #fffefc 0%, rgba(255, 254, 252, 0) 58%),
+    linear-gradient(180deg, #f8f7f4 0%, var(--color-creme) 34%);
+  background-attachment: fixed;
   color: var(--color-kohle);
   font-family: var(--font-warm);
   font-size: 16.5px;
@@ -129,23 +155,31 @@ body {
 /* Schieber einheitlich und schlank, in jedem Browser gleich. */
 .warm input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; }
 .warm input[type="range"]::-webkit-slider-runnable-track {
-  height: 3px; border-radius: 999px; background: var(--color-linie-stark);
+  height: 6px; border-radius: 999px;
+  background: linear-gradient(180deg, #dcd7cc 0%, #e8e4db 100%);
+  box-shadow: inset 0 1px 2px rgba(21, 20, 15, 0.14);
 }
 .warm input[type="range"]::-moz-range-track {
-  height: 3px; border-radius: 999px; background: var(--color-linie-stark);
+  height: 6px; border-radius: 999px;
+  background: linear-gradient(180deg, #dcd7cc 0%, #e8e4db 100%);
+  box-shadow: inset 0 1px 2px rgba(21, 20, 15, 0.14);
 }
 .warm input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
-  height: 22px; width: 22px; margin-top: -9.5px;
-  border-radius: 999px; background: var(--color-kohle);
-  border: 3px solid var(--color-papier);
-  box-shadow: 0 1px 4px rgba(21,20,15,.28);
-  cursor: pointer;
+  height: 26px; width: 26px; margin-top: -10px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #3a3730 0%, var(--color-kohle) 70%);
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(21, 20, 15, 0.34), 0 0 0 1px rgba(21, 20, 15, 0.08);
+  cursor: grab;
+  transition: transform .12s ease;
 }
+.warm input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.08); cursor: grabbing; }
 .warm input[type="range"]::-moz-range-thumb {
-  height: 22px; width: 22px;
-  border-radius: 999px; background: var(--color-kohle);
-  border: 3px solid var(--color-papier);
-  box-shadow: 0 1px 4px rgba(21,20,15,.28);
-  cursor: pointer;
+  height: 26px; width: 26px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #3a3730 0%, var(--color-kohle) 70%);
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(21, 20, 15, 0.34), 0 0 0 1px rgba(21, 20, 15, 0.08);
+  cursor: grab;
 }

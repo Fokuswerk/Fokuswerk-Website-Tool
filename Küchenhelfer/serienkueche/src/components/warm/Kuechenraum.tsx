@@ -2,9 +2,9 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows, Environment, Lightformer, OrbitControls } from "@react-three/drei";
-import { Vector3, type Group, type PerspectiveCamera } from "three";
-import { baueSzene, type Kasten, type Stoff } from "@/lib/szene";
+import { ContactShadows, Environment, Html, Lightformer, OrbitControls } from "@react-three/drei";
+import { BoxGeometry, Vector3, type PerspectiveCamera } from "three";
+import { baueSzene, type Kasten, type Marke, type Stoff } from "@/lib/szene";
 import { RAUMHOEHE } from "@/lib/masse";
 import type { Kuechentyp, Wandseite } from "@/lib/typen";
 import type { VarianteRoh } from "@/data/varianten";
@@ -66,34 +66,53 @@ function Koerper({ k }: { k: Kasten }) {
   );
 }
 
-/** Was in einer Wand steckt, verschwindet mit ihr, sobald man davorsteht. */
-function Wandteile({
-  seite, breite, tiefe, kaesten,
-}: {
-  seite: Wandseite; breite: number; tiefe: number; kaesten: Kasten[];
-}) {
-  const gruppe = useRef<Group>(null);
-  const { camera } = useThree();
-  useFrame(() => {
-    if (!gruppe.current) return;
+type Sicht = Record<Wandseite, boolean>;
+
+/** Welche Wände man gerade von innen sieht. Ändert sich selten, deshalb
+    nur dann neu setzen — sonst rechnet React in jedem Bild mit. */
+function useSichtbareWaende(breite: number, tiefe: number): Sicht {
+  const [sicht, setSicht] = useState<Sicht>({ nord: true, ost: true, sued: true, west: true });
+  const letzte = useRef(sicht);
+  useFrame(({ camera }) => {
     const x = camera.position.x / M;
     const z = camera.position.z / M;
-    gruppe.current.visible =
-      seite === "nord" ? z > 0
-      : seite === "sued" ? z < tiefe
-      : seite === "west" ? x > 0
-      : x < breite;
+    const neu: Sicht = { nord: z > 0, sued: z < tiefe, west: x > 0, ost: x < breite };
+    const l = letzte.current;
+    if (neu.nord !== l.nord || neu.sued !== l.sued || neu.west !== l.west || neu.ost !== l.ost) {
+      letzte.current = neu;
+      setSicht(neu);
+    }
   });
+  return sicht;
+}
+
+/** Schild an einem Gerät: ein Punkt, ein feiner Umriss, der Name. */
+function Geraetemarke({ marke }: { marke: Marke }) {
+  const k = marke.kasten;
   return (
-    <group ref={gruppe}>
-      {kaesten.map((k) => <Koerper key={k.id} k={k} />)}
+    <group>
+      <lineSegments position={[(k.x + k.bx / 2) * M, (k.z + k.bz / 2) * M, (k.y + k.by / 2) * M]}>
+        <edgesGeometry args={[new BoxGeometry(k.bx * M * 1.004, k.bz * M * 1.004, k.by * M * 1.004)]} />
+        <lineBasicMaterial color="#15140f" transparent opacity={0.38} />
+      </lineSegments>
+      <Html
+        position={[marke.pos[0] * M, marke.pos[2] * M, marke.pos[1] * M]}
+        center
+        zIndexRange={[30, 10]}
+        style={{ pointerEvents: "none" }}
+      >
+        <span className="whitespace-nowrap rounded-full bg-kohle/90 px-2.5 py-1 text-[11px] font-semibold text-creme shadow-[0_2px_8px_rgba(21,20,15,.35)] backdrop-blur-sm">
+          {marke.name}
+        </span>
+      </Html>
     </group>
   );
 }
 
-function Raum({ typ, variante }: { typ: Kuechentyp; variante: VarianteRoh }) {
+function Raum({ typ, variante, zeigeGeraete }: { typ: Kuechentyp; variante: VarianteRoh; zeigeGeraete: boolean }) {
   const szene = useMemo(() => baueSzene(typ, variante), [typ, variante]);
   const { breite, tiefe } = typ.raum;
+  const sicht = useSichtbareWaende(breite, tiefe);
   const bx = breite * M;
   const bz = tiefe * M;
   const bh = RAUMHOEHE * M;
@@ -119,17 +138,23 @@ function Raum({ typ, variante }: { typ: Kuechentyp; variante: VarianteRoh }) {
         <meshStandardMaterial color={hex([190, 162, 126])} roughness={0.66} />
       </mesh>
 
-      {szene.waende.map((w) => (
-        <Wandteile
-          key={w.seite}
-          seite={w.seite}
-          breite={breite}
-          tiefe={tiefe}
-          kaesten={w.kaesten.filter((k) => !k.id.startsWith("w-"))}
-        />
-      ))}
+      {szene.waende
+        .filter((w) => sicht[w.seite])
+        .map((w) => (
+          <group key={w.seite}>
+            {w.kaesten.filter((k) => !k.id.startsWith("w-")).map((k) => <Koerper key={k.id} k={k} />)}
+          </group>
+        ))}
 
       {szene.kaesten.map((k) => <Koerper key={k.id} k={k} />)}
+
+      {/* Geräte benennen: sonst sieht man weiße Fronten und weiß nicht,
+          hinter welcher der Backofen steckt. Nur die Wände, auf die man
+          gerade schaut — sonst schweben Schilder vor der Küche. */}
+      {zeigeGeraete &&
+        szene.marken
+          .filter((m) => sicht[m.wand])
+          .map((m) => <Geraetemarke key={m.id} marke={m} />)}
 
       <ContactShadows
         position={[bx / 2, 0.005, bz / 2]}
@@ -206,6 +231,7 @@ export function Kuechenraum({
   hoehe = 440,
   rahmenGroesse,
   unterzeile = true,
+  geraeteSchalter = false,
 }: {
   typ: Kuechentyp;
   variante: VarianteRoh;
@@ -215,8 +241,11 @@ export function Kuechenraum({
       während des Schiebens ändert. */
   rahmenGroesse?: number;
   unterzeile?: boolean;
+  /** Schalter, um die Geräte zu benennen. */
+  geraeteSchalter?: boolean;
 }) {
   const [angefasst, setAngefasst] = useState(false);
+  const [zeigeGeraete, setZeigeGeraete] = useState(true);
   const { breite, tiefe } = typ.raum;
 
   // Von der Seite her schauen, an der die Küche steht — sonst sieht man
@@ -247,7 +276,7 @@ export function Kuechenraum({
   return (
     <div>
       <div
-        className="relative overflow-hidden rounded-[18px] bg-[#efebe3]"
+        className="vertieft relative overflow-hidden rounded-[18px] bg-[#efebe3] ring-1 ring-black/[0.06]"
         style={{ height: hoehe, touchAction: "none" }}
         onPointerDown={() => setAngefasst(true)}
       >
@@ -268,7 +297,7 @@ export function Kuechenraum({
           />
           <Suspense fallback={null}>
             <Licht />
-            <Raum typ={typ} variante={variante} />
+            <Raum typ={typ} variante={variante} zeigeGeraete={geraeteSchalter && zeigeGeraete} />
           </Suspense>
           <OrbitControls
             target={blick.ziel}
@@ -283,6 +312,13 @@ export function Kuechenraum({
           />
         </Canvas>
 
+        {/* Zarte Abdunklung an den Raendern: die Buehne wirkt wie ein
+            Ausschnitt, nicht wie ein aufgeklebtes Bild. */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ background: "radial-gradient(120% 85% at 50% 32%, rgba(0,0,0,0) 52%, rgba(44,38,26,0.16) 100%)" }}
+        />
+
         {!angefasst && (
           <span className="pointer-events-none absolute bottom-3.5 right-4 rounded-full bg-kohle/55 px-3 py-1 text-[11.5px] font-medium text-creme backdrop-blur-sm">
             Ziehen zum Drehen
@@ -290,10 +326,29 @@ export function Kuechenraum({
         )}
       </div>
 
-      {unterzeile && (
-        <p className="mt-3 text-center text-[12.5px] text-kohle-3">
-          Gerechnet, nicht gezeichnet: jeder Schrank steht hier so, wie er geliefert wird.
-        </p>
+      {(unterzeile || geraeteSchalter) && (
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+          {geraeteSchalter && (
+            <button
+              type="button"
+              onClick={() => setZeigeGeraete((v) => !v)}
+              aria-pressed={zeigeGeraete}
+              className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+                zeigeGeraete
+                  ? "bg-kohle text-creme"
+                  : "flaeche text-kohle-2 hover:!border-kohle-3"
+              }`}
+            >
+              <span className={`inline-block h-1.5 w-1.5 rounded-full ${zeigeGeraete ? "bg-creme" : "bg-kohle-3"}`} />
+              Geräte benennen
+            </button>
+          )}
+          {unterzeile && (
+            <p className="text-[12.5px] text-kohle-3">
+              Gerechnet, nicht gezeichnet: jeder Schrank steht so, wie er geliefert wird.
+            </p>
+          )}
+        </div>
       )}
     </div>
   );

@@ -66,7 +66,7 @@ function Schild({
 }
 
 export function Planauflage({
-  raum, rahmen, setzeRahmen, bild, kinder,
+  raum, rahmen, setzeRahmen, bild, kinder, maxHoehe = "48vh",
 }: {
   raum: Raumangaben;
   rahmen: Rahmen;
@@ -75,6 +75,9 @@ export function Planauflage({
   bild?: string | null;
   /** Platzhalterplan, wenn keine Bilddatei vorliegt. */
   kinder?: React.ReactNode;
+  /** Deckel für die Höhe, damit der Plan nicht das ganze Bild einnimmt und
+      die Liste darunter unerreichbar wird. */
+  maxHoehe?: string;
 }) {
   const huelle = useRef<HTMLDivElement>(null);
   const waende = kuechenwaende(raum);
@@ -126,11 +129,20 @@ export function Planauflage({
 
   return (
     <div>
-      <div ref={huelle} className="relative select-none overflow-hidden rounded-[18px] bg-papier">
+      <div
+        ref={huelle}
+        className="vertieft relative mx-auto w-fit max-w-full select-none overflow-hidden rounded-[18px] bg-papier ring-1 ring-black/[0.06]"
+      >
       {bild ? (
         // Beliebiger Upload, deshalb kein next/image.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={bild} alt="Dein hochgeladener Grundriss" className="block w-full" draggable={false} />
+        <img
+          src={bild}
+          alt="Dein hochgeladener Grundriss"
+          className="block max-w-full"
+          style={{ maxHeight: maxHoehe, width: "auto" }}
+          draggable={false}
+        />
       ) : (
         kinder
       )}
@@ -239,10 +251,16 @@ export function Planauflage({
 }
 
 /** Ein gezeichneter Beispielgrundriss, wenn die Datei ein PDF ist. */
-export function BeispielPlan() {
+export function BeispielPlan({ maxHoehe = "48vh" }: { maxHoehe?: string }) {
   const wand = "stroke-kohle-3";
   return (
-    <svg viewBox="0 0 400 300" className="block w-full bg-papier" role="img" aria-label="Beispielhafter Wohnungsgrundriss">
+    <svg
+      viewBox="0 0 400 300"
+      className="block max-w-full bg-papier"
+      style={{ height: maxHoehe, width: "auto" }}
+      role="img"
+      aria-label="Beispielhafter Wohnungsgrundriss"
+    >
       <rect x="14" y="14" width="372" height="272" fill="none" strokeWidth="7" className={wand} />
       <path d="M170 14 V130 M170 175 V286 M170 175 H386 M250 175 V286" strokeWidth="5" className={wand} fill="none" />
       <path d="M14 95 H60 M14 95" strokeWidth="5" className={wand} fill="none" />

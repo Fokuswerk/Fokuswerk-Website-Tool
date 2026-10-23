@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRef } from "react";
-import { ArrowLeft, ArrowRight, Check, ChevronDown, FileUp, PencilLine, RotateCcw, RotateCw, ScanLine } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, FileUp, PencilLine, RotateCcw, RotateCw, ScanLine } from "lucide-react";
 import { modul } from "@/data/module";
 import { ARTEN, geraet, geraeteFuer, type GeraeteArt } from "@/data/geraete";
 import { eur } from "@/lib/berechnung";
@@ -20,6 +20,25 @@ import { BeispielPlan, Planauflage, RAHMEN_START, type Rahmen } from "@/componen
 import { melde } from "@/components/ui/kit";
 
 const ALLE_WAENDE: WandId[] = ["haupt", "links", "rechts", "gegenueber"];
+
+/** Was beim Öffnen eines einzelnen Prüfpunkts oben steht. */
+const EDIT_TITEL: Record<string, string> = {
+  form: "An wie vielen Wänden soll die Küche stehen?",
+  breite: "Wie breit ist der Raum?",
+  tiefe: "Und wie tief?",
+  fenster: "Wo sitzt das Fenster?",
+  tuer: "Und die Tür?",
+  wasser: "Wo kommt das Wasser aus der Wand?",
+};
+
+const EDIT_SATZ: Record<string, string> = {
+  form: "Das sagt kein Plan — das entscheidest du.",
+  breite: "Die Länge der Hauptwand, von Ecke zu Ecke.",
+  tiefe: "Von der Hauptwand bis zur Wand gegenüber.",
+  fenster: "Vor einem Fenster darf nichts Hohes stehen. Deshalb zählt die Stelle.",
+  tuer: "Vor der Tür muss Platz bleiben, damit sie aufgeht.",
+  wasser: "Schau unter die alte Spüle oder in die Ecke mit den Leitungen. Dort bleibt die Spüle am besten.",
+};
 
 // Das räumliche Bild läuft nur im Browser: ein Renderer hat auf dem Server
 // nichts zu zeichnen, und der Code soll erst laden, wenn er gebraucht wird.
@@ -71,7 +90,7 @@ function VorschlagKarte({
 }) {
   const ersteZeile = typ.zeilen[0]?.id ?? "Z-haupt";
   return (
-    <Karte className={`overflow-hidden border ${aktiv ? "border-kohle ring-1 ring-kohle" : "border-linie-warm"}`}>
+    <Karte className={`overflow-hidden ${aktiv ? "flaeche-hoch !border-kohle ring-1 ring-kohle" : ""}`}>
       <div className="bg-creme-2/60 px-4 pt-4">
         <Kuechenbild typ={typ} variante={v.variante} zeileId={ersteZeile} hoehe={150} mitNamen={false} />
       </div>
@@ -121,9 +140,15 @@ export default function Kuechenplaner() {
   const [details, setDetails] = useState(false);
   const [lauf, setLauf] = useState<number | null>(null);
   const [ansicht, setAnsicht] = useState<"raum" | "vorn">("raum");
+  /** Im Prüfschritt geöffneter Einzelwert. null heißt Übersicht. */
+  const [offen, setOffen] = useState<string | null>(null);
   const [planBild, setPlanBild] = useState<string | null>(null);
   const [rahmen, setRahmen] = useState<Rahmen>(RAHMEN_START);
   const feld = useRef<HTMLInputElement>(null);
+
+  // Wer den Pruefschritt verlaesst, soll beim Zurueckkommen die Uebersicht
+  // sehen und nicht in einem alten Einzelwert stehen.
+  useEffect(() => { if (schritt !== "pruefen") setOffen(null); }, [schritt]);
 
   const folge = schrittFolge(raum, quelle);
   const pos = Math.max(0, folge.indexOf(schritt));
@@ -150,11 +175,14 @@ export default function Kuechenplaner() {
 
   const zeileWand = schritt.startsWith("zeile-") ? (schritt.slice(6) as WandId) : null;
   const geraeteArt = schritt.startsWith("geraet-") ? (schritt.slice(7) as GeraeteArt) : null;
+  const wandVon = (was: string | null): WandId | null =>
+    was === "fenster" ? raum.fenster?.wand ?? null
+    : was === "tuer" ? raum.tuer.wand
+    : was === "wasser" ? raum.wasser.wand
+    : null;
+
   const hervor: WandId | null =
-    zeileWand ?? (schritt === "fenster" ? raum.fenster?.wand ?? null
-      : schritt === "tuer" ? raum.tuer.wand
-      : schritt === "wasser" ? raum.wasser.wand
-      : null);
+    zeileWand ?? (schritt === "pruefen" ? wandVon(offen) : wandVon(schritt));
 
   // Die Zeichnung begleitet jede Frage, statt unter ihr zu liegen: wer eine
   // Zahl aendert, sieht die Wirkung sofort, ohne zu scrollen.
@@ -165,11 +193,33 @@ export default function Kuechenplaner() {
   const stufen = drehungen(raum.form);
   const dreh = () => setzeRaum({ ausrichtung: (raum.ausrichtung + 1) % stufen });
 
+  // Die Uebersicht im Pruefschritt: ein Punkt je Angabe, mit Herkunft.
+  const pruefpunkte = [
+    {
+      id: "form",
+      titel: "Form der Küche",
+      herkunft: "sagt der Plan nicht — entscheidest du",
+      sicher: false,
+      wert: FORMEN.find((f) => f.id === raum.form)!.titel,
+    },
+    { id: "breite", titel: "Raumbreite", herkunft: "aus dem Plan gelesen", sicher: true, wert: `${Math.round(raum.breite / 10)} cm` },
+    { id: "tiefe", titel: "Raumtiefe", herkunft: "aus dem Plan gelesen", sicher: true, wert: `${Math.round(raum.tiefe / 10)} cm` },
+    {
+      id: "fenster",
+      titel: "Fenster",
+      herkunft: "geschätzt — bitte prüfen",
+      sicher: false,
+      wert: raum.fenster ? `${WANDNAME[raum.fenster.wand]} · ${Math.round(raum.fenster.breite / 10)} cm` : "keins",
+    },
+    { id: "tuer", titel: "Tür", herkunft: "geschätzt — bitte prüfen", sicher: false, wert: WANDNAME[raum.tuer.wand] },
+    { id: "wasser", titel: "Wasseranschluss", herkunft: "im Plan nicht eingezeichnet — geraten", sicher: false, wert: WANDNAME[raum.wasser.wand] },
+  ];
+
   const drehKnopf = (
     <button
       type="button"
       onClick={dreh}
-      className="flex shrink-0 items-center gap-1.5 rounded-full border border-linie-warm bg-papier px-3 py-1.5 text-[13px] font-semibold text-kohle transition hover:bg-creme-2"
+      className="flaeche flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold text-kohle transition hover:!border-kohle-3"
     >
       <RotateCw size={13} strokeWidth={2.3} />
       Drehen
@@ -203,7 +253,7 @@ export default function Kuechenplaner() {
   );
 
   const bildTafel = (
-    <Karte className="border border-linie-warm px-4 py-4">
+    <Karte className="px-4 py-4">
       <Raumbild raum={raum} hervorhebung={hervor} hoehe={226} />
       <p className="mt-3 border-t border-linie-warm pt-3 text-center text-[13px] leading-snug text-kohle-3">
         {hervor
@@ -220,8 +270,8 @@ export default function Kuechenplaner() {
   );
 
   const bildStreifen = (
-    <div className="sticky top-[56px] z-10 -mx-5 bg-creme/95 px-5 pb-3 pt-2 backdrop-blur sm:-mx-8 sm:px-8 lg:hidden">
-      <div className="flex items-center gap-3 rounded-[16px] border border-linie-warm bg-papier py-2 pl-2 pr-3">
+    <div className="sticky top-[57px] z-10 -mx-5 bg-creme/80 px-5 pb-3 pt-2.5 backdrop-blur-xl backdrop-saturate-150 sm:-mx-8 sm:px-8 lg:hidden">
+      <div className="flaeche flex items-center gap-3 rounded-[16px] py-2 pl-2 pr-3">
         <div className="w-[96px] shrink-0">
           <Raumbild raum={raum} hervorhebung={hervor} hoehe={66} />
         </div>
@@ -250,7 +300,7 @@ export default function Kuechenplaner() {
 
   return (
     <div className="warm min-h-full">
-      <header className="sticky top-0 z-20 bg-creme/90 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-black/[0.055] bg-creme/80 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto flex h-[56px] max-w-[1180px] items-center gap-4 px-5 sm:px-8">
           <Link href="/" className="flex shrink-0 items-center gap-2">
             <svg width="18" height="18" viewBox="0 0 17 17" aria-hidden="true">
@@ -277,7 +327,7 @@ export default function Kuechenplaner() {
           <div className="warm-rein pt-4 text-center sm:pt-10">
             {moegliche[0] && (
               <div className="mx-auto mb-8 w-full max-w-[400px]">
-                <Karte className="border border-linie-warm px-5 py-5">
+                <Karte className="px-5 py-5">
                   <Kuechenbild typ={typ} variante={moegliche[moegliche.length - 1].variante} zeileId={typ.zeilen[0].id} hoehe={150} mitNamen={false} />
                 </Karte>
               </div>
@@ -319,7 +369,7 @@ export default function Kuechenplaner() {
           <>
             <Kopf vor={schrittText} titel="Lade deinen Grundriss hoch" satz="PDF oder Bild vom Wohnungsgrundriss. Wir lesen Wandlängen, Fenster und Tür heraus — und zeigen dir danach, was wir verstanden haben." />
             <div className="mt-7">
-              <Karte className="border border-linie-warm px-5 py-8 text-center">
+              <Karte className="px-5 py-8 text-center">
                 <input
                   ref={feld}
                   type="file"
@@ -378,127 +428,45 @@ export default function Kuechenplaner() {
           </>
         )}
 
-        {schritt === "pruefen" && (
+        {schritt === "pruefen" && !offen && (
           <>
             <Kopf
               vor={schrittText}
               titel="Haben wir das richtig gelesen?"
-              satz="Wände kann ein Plan sauber hergeben. Fenster und Türen sind das Schwierigste daran — da schätzen wir, und du korrigierst."
+              satz="Tipp auf einen Wert, um ihn zu ändern. Wandlängen lesen wir sicher — Fenster und Türen sind geschätzt."
             />
-            <div className="mt-6">
+            <div className="mt-7">
               <Planauflage raum={raum} rahmen={rahmen} setzeRahmen={setRahmen} bild={planBild} kinder={<BeispielPlan />} />
-              <p className="mt-2.5 text-[13px] leading-snug text-kohle-3">
+              <p className="mt-3 text-[13px] leading-snug text-kohle-3">
                 {planBild
-                  ? "Dein Plan mit unserer Lesart darüber. Wo im Bild dein Küchenraum liegt, erkennt keine Software sicher — zieh den Rahmen einmal passend, dann sitzt jede Zahl unten an der richtigen Wand."
-                  : "Von einer PDF zeigen wir im Prototyp keine Vorschau, deshalb hier ein gezeichneter Beispielplan. Der Rahmen und alle Maße darauf sind deine echten Angaben von unten."}
+                  ? "Dein Plan mit unserer Lesart darüber. Wo im Bild dein Küchenraum liegt, erkennt keine Software sicher — zieh den Rahmen einmal passend, dann sitzt jede Zahl an der richtigen Wand."
+                  : "Von einer PDF zeigen wir im Prototyp keine Vorschau, deshalb hier ein gezeichneter Beispielplan. Der Rahmen und alle Maße darauf sind deine echten Angaben."}
               </p>
             </div>
-            <div className="mt-6 space-y-3">
-              <Karte className="border border-linie-warm px-5 py-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-[15px] font-semibold text-kohle">An wie vielen Wänden soll die Küche stehen?</div>
-                    <div className="text-[13px] font-semibold text-kohle">sagt der Plan nicht — entscheidest du</div>
-                  </div>
-                </div>
-                <div className="mt-3 border-t border-linie-warm pt-3">
-                  <GrosseWahl<Raumform>
-                    wert={raum.form}
-                    setze={(f) => setzeRaum({ form: f })}
-                    optionen={FORMEN.map((f) => ({ id: f.id, titel: f.titel, satz: f.erklaerung }))}
-                  />
-                  {stufen > 1 && (
-                    <div className="mt-4 border-t border-linie-warm pt-4">
-                      <div className="mb-2 text-[13.5px] text-kohle-2">Und wie liegt sie im Raum?</div>
-                      {drehReihe}
-                    </div>
-                  )}
-                </div>
-              </Karte>
 
-              <Karte className="border border-linie-warm px-5 py-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-[15px] font-semibold text-kohle">Raumbreite</div>
-                    <div className="text-[13px] font-medium text-salbei">aus dem Plan gelesen</div>
-                  </div>
-                  <div className="num text-[18px] font-bold text-kohle">{Math.round(raum.breite / 10)} cm</div>
-                </div>
-                <div className="mt-3 border-t border-linie-warm pt-3">
-                  <GrosseZahl wert={raum.breite} setze={(mm) => setzeRaum({ breite: mm })} min={120} max={900} />
-                </div>
-              </Karte>
-
-              <Karte className="border border-linie-warm px-5 py-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-[15px] font-semibold text-kohle">Raumtiefe</div>
-                    <div className="text-[13px] font-medium text-salbei">aus dem Plan gelesen</div>
-                  </div>
-                  <div className="num text-[18px] font-bold text-kohle">{Math.round(raum.tiefe / 10)} cm</div>
-                </div>
-                <div className="mt-3 border-t border-linie-warm pt-3">
-                  <GrosseZahl wert={raum.tiefe} setze={(mm) => setzeRaum({ tiefe: mm })} min={150} max={900} />
-                </div>
-              </Karte>
-
-              {raum.fenster && (
-                <Karte className="border border-linie-warm px-5 py-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-[15px] font-semibold text-kohle">Fenster an der Hauptwand</div>
-                      <div className="text-[13px] font-semibold text-kohle">geschätzt — bitte prüfen</div>
-                    </div>
-                    <div className="num text-[18px] font-bold text-kohle">{Math.round(raum.fenster.breite / 10)} cm breit</div>
-                  </div>
-                  <div className="mt-3 border-t border-linie-warm pt-3">
-                    <Schieber
-                      wert={raum.fenster.von}
-                      max={Math.max(0, wandlaenge(raum, raum.fenster.wand) - raum.fenster.breite)}
-                      setze={(mm) => setzeRaum({ fenster: { ...raum.fenster!, von: mm } })}
-                      links="am Anfang"
-                      rechts="am Ende"
-                    />
-                    <div className="mt-4 flex justify-center">
-                      <WKnopf onClick={() => setzeRaum({ fenster: null })}>Es gibt gar kein Fenster</WKnopf>
+            <div className="mt-8 overflow-hidden rounded-[16px] flaeche">
+              {pruefpunkte.map((z, i) => (
+                <button
+                  key={z.id}
+                  type="button"
+                  onClick={() => setOffen(z.id)}
+                  className={`flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-creme/70 ${
+                    i > 0 ? "border-t border-linie-warm" : ""
+                  }`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[15.5px] font-semibold text-kohle">{z.titel}</div>
+                    <div className={`mt-0.5 text-[12.5px] ${z.sicher ? "font-medium text-salbei" : "font-semibold text-kohle-2"}`}>
+                      {z.herkunft}
                     </div>
                   </div>
-                </Karte>
-              )}
-
-              <Karte className="border border-linie-warm px-5 py-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-[15px] font-semibold text-kohle">Tür</div>
-                    <div className="text-[13px] font-semibold text-kohle">geschätzt — bitte prüfen</div>
-                  </div>
-                  <div className="num text-[15px] text-kohle-2">{WANDNAME[raum.tuer.wand]}</div>
-                </div>
-                <div className="mt-3 border-t border-linie-warm pt-3">
-                  {wandWahl(raum.tuer.wand, (w) => setzeRaum({ tuer: { ...raum.tuer, wand: w, von: 0 } }))}
-                </div>
-              </Karte>
-
-              <Karte className="border border-linie-warm px-5 py-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-[15px] font-semibold text-kohle">Wasseranschluss</div>
-                    <div className="text-[13px] font-semibold text-kohle">im Plan nicht eingezeichnet — geraten</div>
-                  </div>
-                  <div className="num text-[15px] text-kohle-2">{WANDNAME[raum.wasser.wand]}</div>
-                </div>
-                <div className="mt-3 border-t border-linie-warm pt-3">
-                  <Schieber
-                    wert={raum.wasser.von}
-                    max={wandlaenge(raum, raum.wasser.wand)}
-                    setze={(mm) => setzeRaum({ wasser: { ...raum.wasser, von: mm } })}
-                    links="am Anfang"
-                    rechts="am Ende"
-                  />
-                </div>
-              </Karte>
+                  <div className="ziffern shrink-0 text-right text-[14.5px] text-kohle-2">{z.wert}</div>
+                  <ChevronRight size={17} strokeWidth={2.2} className="shrink-0 text-kohle-3" />
+                </button>
+              ))}
             </div>
-            <div className="mt-5">
+
+            <div className="mt-6">
               <Notiz>
                 Warum du das prüfen musst: Wandlängen stehen als Zahlen im Plan, die lesen wir
                 sicher. Fenster und Türen sind gezeichnete Symbole — da liegt selbst gute
@@ -506,6 +474,111 @@ export default function Kuechenplaner() {
                 aus, ohne es zu sein.
               </Notiz>
             </div>
+          </>
+        )}
+
+        {schritt === "pruefen" && offen && (
+          <>
+            <Kopf
+              vor={pruefpunkte.find((z) => z.id === offen)?.herkunft}
+              titel={EDIT_TITEL[offen]}
+              satz={EDIT_SATZ[offen]}
+            />
+
+            {offen === "form" && (
+              <div className="mt-7">
+                <GrosseWahl<Raumform>
+                  wert={raum.form}
+                  setze={(f) => setzeRaum({ form: f })}
+                  optionen={FORMEN.map((f) => ({ id: f.id, titel: f.titel, satz: f.erklaerung, bild: <RaumSkizze form={f.id} ausrichtung={raum.ausrichtung} /> }))}
+                />
+                {stufen > 1 && (
+                  <Karte className="mt-4 px-5 py-5">
+                    <div className="mb-3 text-[14px] text-kohle-2">Und wie liegt sie im Raum?</div>
+                    {drehReihe}
+                  </Karte>
+                )}
+              </div>
+            )}
+
+            {offen === "breite" && (
+              <Karte className="mt-8 px-5 py-7">
+                <GrosseZahl wert={raum.breite} setze={(mm) => setzeRaum({ breite: mm })} min={120} max={900} />
+              </Karte>
+            )}
+
+            {offen === "tiefe" && (
+              <Karte className="mt-8 px-5 py-7">
+                <GrosseZahl wert={raum.tiefe} setze={(mm) => setzeRaum({ tiefe: mm })} min={150} max={900} />
+              </Karte>
+            )}
+
+            {offen === "fenster" && (
+              <div className="mt-7">
+                {raum.fenster ? (
+                  <>
+                    {wandWahl(raum.fenster.wand, (w) => setzeRaum({ fenster: { ...raum.fenster!, wand: w, von: 0 } }))}
+                    <Karte className="mt-4 px-5 py-6">
+                      <div className="ziffern mb-4 text-center text-[15px] text-kohle-2">
+                        {Math.round(raum.fenster.breite / 10)} cm breit
+                      </div>
+                      <Schieber
+                        wert={raum.fenster.von}
+                        max={Math.max(0, wandlaenge(raum, raum.fenster.wand) - raum.fenster.breite)}
+                        setze={(mm) => setzeRaum({ fenster: { ...raum.fenster!, von: mm } })}
+                        links="am Anfang"
+                        rechts="am Ende"
+                      />
+                    </Karte>
+                    <div className="mt-5 flex justify-center">
+                      <WKnopf onClick={() => setzeRaum({ fenster: null })}>Es gibt gar kein Fenster</WKnopf>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-center">
+                    <WKnopf
+                      art="primaer"
+                      onClick={() => setzeRaum({ fenster: { wand: kuechenwaende(raum)[0], von: 0, breite: 1200 } })}
+                    >
+                      Doch, es gibt ein Fenster
+                    </WKnopf>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {offen === "tuer" && (
+              <div className="mt-7">
+                {wandWahl(raum.tuer.wand, (w) => setzeRaum({ tuer: { ...raum.tuer, wand: w, von: 0 } }))}
+                <Karte className="mt-4 px-5 py-6">
+                  <Schieber
+                    wert={raum.tuer.von}
+                    max={Math.max(0, wandlaenge(raum, raum.tuer.wand) - raum.tuer.breite)}
+                    setze={(mm) => setzeRaum({ tuer: { ...raum.tuer, von: mm } })}
+                    links="am Anfang"
+                    rechts="am Ende"
+                  />
+                </Karte>
+              </div>
+            )}
+
+            {offen === "wasser" && (
+              <div className="mt-7">
+                {wandWahl(raum.wasser.wand, (w) => setzeRaum({ wasser: { wand: w, von: 0 } }))}
+                <Karte className="mt-4 px-5 py-6">
+                  <Schieber
+                    wert={raum.wasser.von}
+                    max={wandlaenge(raum, raum.wasser.wand)}
+                    setze={(mm) => setzeRaum({ wasser: { ...raum.wasser, von: mm } })}
+                    links="am Anfang"
+                    rechts="am Ende"
+                  />
+                </Karte>
+                <div className="mt-5">
+                  <Notiz>Der Anschluss darf auch an einer Wand ohne Küche liegen — dann rechnen wir den Weg dorthin mit.</Notiz>
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -550,7 +623,7 @@ export default function Kuechenplaner() {
         {schritt === "breite" && (
           <>
             <Kopf vor={schrittText} titel="Wie breit ist der Raum?" satz="Die Länge der Hauptwand, von Ecke zu Ecke." />
-            <Karte className="mt-8 border border-linie-warm px-5 py-7">
+            <Karte className="mt-8 px-5 py-7">
               <GrosseZahl wert={raum.breite} setze={(mm) => setzeRaum({ breite: mm })} min={120} max={900} />
             </Karte>
           </>
@@ -559,7 +632,7 @@ export default function Kuechenplaner() {
         {schritt === "tiefe" && (
           <>
             <Kopf vor={schrittText} titel="Und wie tief?" satz="Von der Hauptwand bis zur Wand gegenüber. Daran hängt, wie viel Platz zum Stehen bleibt." />
-            <Karte className="mt-8 border border-linie-warm px-5 py-7">
+            <Karte className="mt-8 px-5 py-7">
               <GrosseZahl wert={raum.tiefe} setze={(mm) => setzeRaum({ tiefe: mm })} min={150} max={900} />
             </Karte>
             {hinweise.length > 0 && (
@@ -575,7 +648,7 @@ export default function Kuechenplaner() {
               titel={`Wie lang wird die Zeile an der ${WANDNAME[zeileWand]}?`}
               satz={`Die Wand ist ${Math.round(wandlaenge(raum, zeileWand) / 10)} cm lang. Wenn eine Tür, ein Heizkörper oder ein Durchgang Platz wegnimmt, trag hier weniger ein.`}
             />
-            <Karte className="mt-8 border border-linie-warm px-5 py-7">
+            <Karte className="mt-8 px-5 py-7">
               <GrosseZahl
                 wert={raum.nutz[zeileWand]}
                 setze={(mm) => setzeNutz(zeileWand, mm)}
@@ -751,10 +824,10 @@ export default function Kuechenplaner() {
               </p>
             </div>
 
-            <Karte className="mt-8 overflow-hidden border border-linie-warm">
+            <Karte className="mt-8 overflow-hidden flaeche-hoch">
               <div className="bg-creme-2/40 px-4 pb-5 pt-5 sm:px-7">
                 <div className="mb-5 flex justify-center">
-                  <div className="inline-flex rounded-full bg-creme-2 p-1">
+                  <div className="vertieft inline-flex rounded-full bg-creme-2 p-1">
                     {([["raum", "Räumlich"], ["vorn", "Von vorn"]] as const).map(([id, t]) => (
                       <button
                         key={id}
@@ -762,7 +835,9 @@ export default function Kuechenplaner() {
                         onClick={() => setAnsicht(id)}
                         aria-pressed={ansicht === id}
                         className={`rounded-full px-4 py-1.5 text-[13.5px] font-semibold transition ${
-                          ansicht === id ? "bg-papier text-kohle shadow-sm" : "text-kohle-2 hover:text-kohle"
+                          ansicht === id
+                            ? "bg-gradient-to-b from-white to-[#fbfaf7] text-kohle shadow-[0_1px_2px_rgba(21,20,15,.1),0_3px_8px_-3px_rgba(21,20,15,.22),inset_0_1px_0_#fff]"
+                            : "text-kohle-2 hover:text-kohle"
                         }`}
                       >
                         {t}
@@ -772,7 +847,7 @@ export default function Kuechenplaner() {
                 </div>
 
                 {ansicht === "raum" ? (
-                  <Kuechenraum typ={typ} variante={gewaehlterVorschlag.variante} hoehe={420} />
+                  <Kuechenraum typ={typ} variante={gewaehlterVorschlag.variante} hoehe={420} geraeteSchalter />
                 ) : (
                   <div className="space-y-2">
                     {typ.zeilen.map((z) => (
@@ -804,7 +879,7 @@ export default function Kuechenplaner() {
                 ["Hängeschränke", String(gewaehlterVorschlag.haengeschraenke)],
                 ["Arbeitsfläche", `${Math.round(gewaehlterVorschlag.arbeitsflaeche / 10)} cm`],
               ].map(([a, b]) => (
-                <Karte key={a} className="border border-linie-warm px-5 py-4">
+                <Karte key={a} className="px-5 py-4">
                   <div className="vorzeile">{a}</div>
                   <div className="gross ziffern mt-2 text-[26px] font-bold leading-none text-kohle">{b}</div>
                 </Karte>
@@ -878,7 +953,20 @@ export default function Kuechenplaner() {
           </div>
         )}
 
-        {!istStart && (
+        {schritt === "pruefen" && offen && (
+          <div className="mt-9 flex items-center justify-between gap-4">
+            <WKnopf art="klar" onClick={() => setOffen(null)}>
+              <ArrowLeft size={16} strokeWidth={2.2} />
+              Zur Übersicht
+            </WKnopf>
+            <WKnopf art="primaer" gross onClick={() => setOffen(null)}>
+              Passt so
+              <Check size={18} strokeWidth={2.4} />
+            </WKnopf>
+          </div>
+        )}
+
+        {!istStart && !(schritt === "pruefen" && offen) && (
           <div className="mt-9 flex items-center justify-between gap-4">
             <WKnopf art="klar" onClick={zurueck}>
               <ArrowLeft size={16} strokeWidth={2.2} />

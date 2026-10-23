@@ -8,9 +8,9 @@ import { Minus, Plus } from "lucide-react";
 
 export function Fortschritt({ wert }: { wert: number }) {
   return (
-    <div className="h-[2px] w-full overflow-hidden rounded-full bg-linie-warm">
+    <div className="vertieft h-[5px] w-full overflow-hidden rounded-full bg-linie-warm">
       <div
-        className="h-full rounded-full bg-kohle transition-[width] duration-500 ease-out"
+        className="h-full rounded-full bg-gradient-to-b from-[#3a3730] to-kohle transition-[width] duration-500 ease-out"
         style={{ width: `${Math.round(wert * 100)}%` }}
       />
     </div>
@@ -36,10 +36,10 @@ export function WKnopf({
   const stil = aus
     ? "cursor-not-allowed bg-creme-2 text-kohle-3"
     : art === "primaer"
-      ? "bg-kohle text-creme hover:bg-[#312e25]"
+      ? "bg-gradient-to-b from-[#3b382f] to-kohle text-creme shadow-[0_1px_2px_rgba(21,20,15,.2),0_10px_24px_-10px_rgba(21,20,15,.55),inset_0_1px_0_rgba(255,255,255,.14)] hover:from-[#474338] hover:to-[#211f18] active:translate-y-px"
       : art === "klar"
         ? "text-kohle-2 hover:text-kohle"
-        : "border border-linie-stark bg-papier text-kohle hover:border-kohle";
+        : "flaeche text-kohle hover:border-kohle-3 active:translate-y-px";
   return (
     <button type="button" onClick={aus ? undefined : onClick} disabled={aus} className={`${basis} ${stil}`}>
       {children}
@@ -48,7 +48,7 @@ export function WKnopf({
 }
 
 export function Karte({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-[16px] bg-papier ${className}`}>{children}</div>;
+  return <div className={`flaeche rounded-[16px] ${className}`}>{children}</div>;
 }
 
 export function GrosseWahl<T extends string | number>({
@@ -73,10 +73,10 @@ export function GrosseWahl<T extends string | number>({
             type="button"
             onClick={() => setze(o.id)}
             aria-pressed={aktiv}
-            className={`warm-wahl rounded-[14px] border p-4 text-left ${
+            className={`warm-wahl flaeche rounded-[14px] p-4 text-left ${
               aktiv
-                ? "border-kohle bg-papier ring-1 ring-kohle"
-                : "border-linie-warm bg-papier hover:border-linie-stark"
+                ? "flaeche-hoch !border-kohle ring-1 ring-kohle"
+                : "hover:!border-linie-stark"
             }`}
           >
             {o.bild && <div className="mb-3">{o.bild}</div>}
@@ -114,7 +114,7 @@ export function GrosseZahl({
           type="button"
           onClick={() => setzeCm(cm - schritt)}
           aria-label="Kleiner"
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-linie-stark bg-papier text-kohle transition-colors hover:border-kohle active:scale-95"
+          className="flaeche flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-kohle transition-colors hover:!border-kohle-3 active:scale-95"
         >
           <Minus size={20} strokeWidth={2} />
         </button>
@@ -141,7 +141,7 @@ export function GrosseZahl({
           type="button"
           onClick={() => setzeCm(cm + schritt)}
           aria-label="Größer"
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-linie-stark bg-papier text-kohle transition-colors hover:border-kohle active:scale-95"
+          className="flaeche flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-kohle transition-colors hover:!border-kohle-3 active:scale-95"
         >
           <Plus size={20} strokeWidth={2} />
         </button>
@@ -200,8 +200,10 @@ export function Schieber({
 export function Notiz({ children, ton = "ruhig" }: { children: ReactNode; ton?: "ruhig" | "achtung" }) {
   return (
     <div
-      className={`rounded-[12px] border-l-2 py-2.5 pl-4 pr-3 text-[14px] leading-relaxed text-kohle-2 ${
-        ton === "achtung" ? "border-kohle bg-creme-2/70" : "border-linie-stark bg-papier"
+      className={`rounded-[12px] border-l-2 py-3 pl-4 pr-3.5 text-[14px] leading-relaxed text-kohle-2 ${
+        ton === "achtung"
+          ? "vertieft border-kohle bg-creme-2/80"
+          : "border-linie-stark bg-papier/70 shadow-[0_1px_2px_rgba(21,20,15,.035)]"
       }`}
     >
       {children}
