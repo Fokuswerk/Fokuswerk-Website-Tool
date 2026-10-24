@@ -87,6 +87,12 @@ export interface KuecheState {
   eigeneBelegung: Record<string, Record<string, string[]>>;
   /** Wurde die Umstellung gerade verworfen, weil sich der Raum geändert hat? */
   umstellungVerworfen: boolean;
+  /** Welche Felder der Nutzer selbst gesetzt hat. */
+  beruehrt: Feld[];
+  /** Was im Upload-Schritt ankam. */
+  planArt: Planart;
+  /** Zeitpunkt der letzten Änderung, als Millisekunden. */
+  stand: number;
 
   setzeQuelle: (q: Quelle) => void;
   uebernehmeErkennung: () => void;
@@ -100,8 +106,45 @@ export interface KuecheState {
   setzeBelegung: (schluessel: string, belegung: Record<string, string[]>) => void;
   /** Die Meldung über die verworfene Umstellung wegnehmen. */
   quittiereVerworfen: () => void;
+  /** Welche Art Datei hochgeladen wurde — damit nach einer alten Sitzung
+      erklärt werden kann, warum die Vorschau fehlt. */
+  merkePlanArt: (art: Planart) => void;
+  /** Den Hinweis auf den wiederhergestellten Stand wegnehmen. */
+  quittiereStand: () => void;
   neu: () => void;
 }
+
+/** Was im Upload-Schritt ankam. */
+export type Planart = null | "bild" | "pdf";
+
+/**
+ * Woher ein Wert stammt.
+ *
+ * Die Prüfseite behauptete feste Herkünfte — "aus dem Plan gelesen" stand auch
+ * über Standardwerten, die kein Plan geliefert hat, und blieb stehen, nachdem
+ * der Nutzer den Wert selbst geändert hatte.
+ */
+export type Herkunft = "plan" | "geschaetzt" | "geraten" | "geaendert" | "annahme";
+
+/** Welche Felder der Nutzer selbst angefasst hat. */
+export type Feld = "breite" | "tiefe" | "fenster" | "tuer" | "wasser" | "form";
+
+export function herkunftVon(feld: Feld, erkannt: boolean, beruehrt: Feld[]): Herkunft {
+  if (beruehrt.includes(feld)) return "geaendert";
+  if (!erkannt) return "annahme";
+  if (feld === "breite" || feld === "tiefe") return "plan";
+  if (feld === "wasser") return "geraten";
+  if (feld === "form") return "annahme";
+  return "geschaetzt";
+}
+
+export const HERKUNFT_TEXT: Record<Herkunft, string> = {
+  plan: "aus dem Plan gelesen",
+  geschaetzt: "geschätzt — bitte prüfen",
+  geraten: "im Plan nicht eingezeichnet — geraten",
+  geaendert: "von dir geändert",
+  annahme: "Annahme — sag uns den echten Wert",
+};
 
 /** Was der simulierte Erkennungslauf aus einem Plan liest. */
 export const ERKANNT: Raumangaben = {
@@ -121,6 +164,12 @@ const ANFANG = {
   schritt: "start" as SchrittId,
   gewaehlt: null as Strategie | null,
   eigeneBelegung: {} as Record<string, Record<string, string[]>>,
+  /** Welche Felder der Nutzer selbst gesetzt hat. */
+  beruehrt: [] as Feld[],
+  /** Was hochgeladen wurde; bleibt erhalten, das Bild selbst nicht. */
+  planArt: null as Planart,
+  /** Wann zuletzt etwas geändert wurde — für "Dein Stand von …". */
+  stand: 0,
   /** Wurde eine Umstellung von Hand gerade verworfen? Dann sagen wir es.
       Still zu verwerfen ist das Aergerlichste: man stellt seine Schraenke
       um, verschiebt die Tuer, und der eigene Plan ist spurlos weg. */
@@ -141,7 +190,20 @@ export const useKueche = create<KuecheState>()(
       ...ANFANG,
 
       setzeRaum: (teil) =>
-        set((s) => ({ raum: angleichen({ ...s.raum, ...teil }), ...ohneUmstellung(s) })),
+        set((s) => {
+          const felder: Feld[] = [];
+          for (const k of Object.keys(teil) as Array<keyof Raumangaben>) {
+            if (k === "breite" || k === "tiefe" || k === "fenster" || k === "tuer" || k === "wasser" || k === "form") {
+              felder.push(k as Feld);
+            }
+          }
+          return {
+            raum: angleichen({ ...s.raum, ...teil }),
+            beruehrt: [...new Set([...s.beruehrt, ...felder])],
+            stand: Date.now(),
+            ...ohneUmstellung(s),
+          };
+        }),
 
       setzeGeraet: (art, id) =>
         set((s) => ({
@@ -159,7 +221,14 @@ export const useKueche = create<KuecheState>()(
       setzeQuelle: (q) => set({ quelle: q }),
 
       uebernehmeErkennung: () =>
-        set({ raum: angleichen({ ...ERKANNT, geraete: { ...STANDARD_GERAETE } }), erkannt: true, eigeneBelegung: {} }),
+        set({
+          raum: angleichen({ ...ERKANNT, geraete: { ...STANDARD_GERAETE } }),
+          erkannt: true,
+          eigeneBelegung: {},
+          // Was der Lauf geliefert hat, gilt als nicht von Hand geaendert.
+          beruehrt: [],
+          stand: Date.now(),
+        }),
 
       geheZu: (id) => set({ schritt: id }),
 
@@ -181,6 +250,10 @@ export const useKueche = create<KuecheState>()(
         set((s) => ({ eigeneBelegung: { ...s.eigeneBelegung, [schluessel]: belegung }, umstellungVerworfen: false })),
 
       quittiereVerworfen: () => set({ umstellungVerworfen: false }),
+
+      merkePlanArt: (art) => set({ planArt: art, stand: Date.now() }),
+
+      quittiereStand: () => set({ stand: 0 }),
 
       neu: () =>
         set({

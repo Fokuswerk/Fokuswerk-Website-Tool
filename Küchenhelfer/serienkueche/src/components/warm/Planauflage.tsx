@@ -12,11 +12,15 @@ import { kuechenwaende, wandlaenge, WANDNAME, type Raumangaben, type WandId } fr
  * sie gehören. Fenster, Tür und Wasseranschluss sitzen an der Stelle der Wand,
  * die ihre Zahl angibt — wer unten eine Zahl ändert, sieht es hier sofort.
  *
- * Der Rahmen lässt sich frei ziehen. Ihn an das Seitenverhältnis der
- * eingegebenen Maße zu binden war falsch herum gedacht: der Plan ist das,
- * was man sieht, die Maße sind geschätzt. Wer einen schmalen Raum markiert,
- * meint einen schmalen Raum. Stattdessen sagen wir es, wenn Rahmen und Maße
- * auseinanderlaufen, und bieten an, die Tiefe an den Rahmen anzupassen.
+ * Der Rahmen lässt sich frei ziehen und bestimmt dabei die Raumtiefe: das
+ * Verhältnis, das man auf dem Plan aufzieht, ist das Verhältnis des Raums.
+ * Die Breite gibt den Maßstab, die Tiefe folgt daraus. Übernommen wird am
+ * Ende der Geste, nicht währenddessen — sonst zuckt die Skizze daneben bei
+ * jedem Pixel mit.
+ *
+ * Andersherum war es falsch gedacht: erst war der Rahmen an die geschätzten
+ * Maße gefesselt, dann musste man die Tiefe mit einem Knopf nachziehen. Der
+ * Plan ist das, was man sieht — die Maße sind das, was daraus folgt.
  */
 
 export interface Rahmen {
@@ -29,6 +33,9 @@ export interface Rahmen {
 export const RAHMEN_START: Rahmen = { x: 0.045, y: 0.055, b: 0.44, h: 0.44 };
 
 const MIN = 0.12;
+/** Was ein Küchenraum an Tiefe sein kann — dieselbe Spanne wie das Eingabefeld. */
+const TIEFE_MIN = 1500;
+const TIEFE_MAX = 9000;
 const klemm = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 
 /** Anteil 0..1 entlang einer Wand, im Uhrzeigersinn von ihrem Anfang. */
@@ -101,7 +108,7 @@ export function Planauflage({
   raum: Raumangaben;
   rahmen: Rahmen;
   setzeRahmen: (r: Rahmen) => void;
-  /** Erlaubt, die Raumtiefe aus dem gezogenen Rahmen zu uebernehmen. */
+  /** Setzt die Raumtiefe aus dem gezogenen Rahmen. */
   setzeTiefe?: (mm: number) => void;
   /** Der hochgeladene Plan. Fehlt er, wird nur der Platzhalter gezeigt. */
   bild?: string | null;
@@ -116,6 +123,11 @@ export function Planauflage({
   // Flacher oder schmaler Rahmen: dann stehen die Schilder davor statt darin.
   const [eng, setEng] = useState(false);
   const [box, setBox] = useState({ w: 0, h: 0 });
+  // Der Handler am Gestenende liest den Endstand, nicht den beim Anfassen.
+  const rahmenRef = useRef(rahmen);
+  rahmenRef.current = rahmen;
+  /** Hat der Nutzer den Rahmen schon selbst aufgezogen? */
+  const schonGezogen = useRef(false);
 
   // Nur messen, nicht mehr eingreifen: die Bildgroesse entscheidet, wo
   // Schilder hinpassen und wie flach der Rahmen wirklich ist.
@@ -128,6 +140,16 @@ export function Planauflage({
         ? alt
         : { w: kasten.width, h: kasten.height }));
     };
+    // Solange niemand gezogen hat, fuehren die gelesenen Masse: der Rahmen
+    // startet im Verhaeltnis des Raums. Danach fuehrt der Rahmen.
+    if (!schonGezogen.current && setzeTiefe) {
+      const kasten = huelle.current?.getBoundingClientRect();
+      if (kasten && kasten.width > 1 && kasten.height > 1 && raum.tiefe > 0) {
+        const sollH = (rahmen.b * kasten.width * raum.tiefe) / (raum.breite * kasten.height);
+        const h = Math.min(1 - rahmen.y, Math.max(MIN, sollH));
+        if (Math.abs(h - rahmen.h) > 0.004) setzeRahmen({ ...rahmen, h });
+      }
+    }
     richte();
     // Auch wenn das Bild erst spaeter laedt oder das Fenster schmaler wird,
     // muss der Rahmen neu passen.
@@ -136,7 +158,8 @@ export function Planauflage({
     const beobachter = new ResizeObserver(richte);
     beobachter.observe(el);
     return () => beobachter.disconnect();
-  }, [rahmen.b, rahmen.h, rahmen.x, rahmen.y]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rahmen.b, rahmen.h, rahmen.x, rahmen.y, raum.breite, raum.tiefe, bild]);
 
   const zieh = (art: "flaeche" | "ol" | "ur") => (e: ReactPointerEvent) => {
     e.preventDefault();
@@ -163,9 +186,39 @@ export function Planauflage({
     const ende = () => {
       window.removeEventListener("pointermove", bewege);
       window.removeEventListener("pointerup", ende);
+      // Die Tiefe folgt dem, was gerade aufgezogen wurde.
+      if (art !== "flaeche") { schonGezogen.current = true; tiefeAusRahmen(); }
     };
     window.addEventListener("pointermove", bewege);
     window.addEventListener("pointerup", ende);
+  };
+
+  /**
+   * Aus dem Verhältnis des Rahmens die Raumtiefe ableiten.
+   *
+   * Der Rahmen ist in Anteilen des Bildes angegeben, das Bild ist selten
+   * quadratisch — deshalb über die gemessene Pixelgröße.
+   */
+  const tiefeAusRahmen = () => {
+    if (!setzeTiefe) return;
+    const kasten = huelle.current?.getBoundingClientRect();
+    if (!kasten || kasten.width < 1 || kasten.height < 1) return;
+    const r = rahmenRef.current;
+    const breitePx = r.b * kasten.width;
+    const hoehePx = r.h * kasten.height;
+    if (breitePx < 1 || hoehePx < 1) return;
+    const neu = Math.round((raum.breite * hoehePx) / breitePx / 10) * 10;
+    const geklemmt = Math.min(TIEFE_MAX, Math.max(TIEFE_MIN, neu));
+    // Lag der Wunsch ausserhalb dessen, was ein Kuechenraum sein kann, zieht
+    // der Rahmen nach — sonst zeigen beide Bilder verschiedene Raeume, und
+    // genau das soll nie wieder passieren.
+    if (geklemmt !== neu) {
+      const sollH = (r.b * kasten.width * geklemmt) / (raum.breite * kasten.height);
+      const h = Math.min(1 - r.y, Math.max(MIN, sollH));
+      if (Math.abs(h - r.h) > 0.003) setzeRahmen({ ...r, h });
+    }
+    if (Math.abs(geklemmt - raum.tiefe) < 20) return;
+    setzeTiefe(geklemmt);
   };
 
   const griff = "absolute h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-kohle bg-papier shadow-md";
@@ -286,35 +339,6 @@ export function Planauflage({
         Zieh den Rahmen auf deinen Küchenraum
       </div>
       </div>
-
-      {/* Laeuft der gezogene Rahmen deutlich anders als die eingetragenen
-          Masse, sagen wir es — und bieten an, die Tiefe nachzuziehen. Die
-          Breite bleibt, die misst man am ehesten selbst nach. */}
-      {(() => {
-        if (!setzeTiefe || box.w < 1 || box.h < 1) return null;
-        const gezogen = (rahmen.b * box.w) / Math.max(1, rahmen.h * box.h);
-        const eingetragen = (raum.breite || 1) / (raum.tiefe || 1);
-        if (!isFinite(gezogen) || gezogen <= 0) return null;
-        if (Math.abs(gezogen - eingetragen) / eingetragen < 0.1) return null;
-        const neueTiefe = Math.min(6000, Math.max(1500, Math.round(raum.breite / gezogen / 10) * 10));
-        if (Math.abs(neueTiefe - raum.tiefe) < 50) return null;
-        return (
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-butter-2 bg-butter-soft px-4 py-3">
-            <span className="text-[13px] leading-snug text-kohle-2">
-              Der Rahmen ist {gezogen > eingetragen ? "flacher" : "tiefer"} als deine Maße
-              ({Math.round(raum.breite / 10)} × {Math.round(raum.tiefe / 10)} cm).
-              Zum Rahmen passen {Math.round(raum.breite / 10)} × {Math.round(neueTiefe / 10)} cm.
-            </span>
-            <button
-              type="button"
-              onClick={() => setzeTiefe(neueTiefe)}
-              className="shrink-0 rounded-full bg-kohle px-3.5 py-1.5 text-[12.5px] font-semibold text-creme"
-            >
-              Tiefe übernehmen
-            </button>
-          </div>
-        );
-      })()}
 
       {/* Legende unter dem Bild statt darauf — auf dem Handy deckt sie sonst den Plan zu */}
       <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-kohle-2">
