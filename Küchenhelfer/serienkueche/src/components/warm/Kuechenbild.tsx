@@ -390,21 +390,49 @@ export function Raumbild({
   const WD = 110; // Wandstaerke in der Zeichnung
   const KT = 600; // Korpustiefe
 
+  /**
+   * Die vier Waende laufen im Uhrzeigersinn, genau wie im raeumlichen Bild
+   * und in der Auflage auf dem hochgeladenen Grundriss: Hauptwand von links
+   * nach rechts, rechte Wand von oben nach unten, Wand gegenueber von rechts
+   * nach links, linke Wand von unten nach oben. Vorher lief diese Skizze auf
+   * den beiden letzten Waenden andersherum — dann lag die Tuer, die man im
+   * Grundriss rechts hingezogen hatte, hier links.
+   */
+  const laengsZuPlan = (w: WandId, von: number, lang: number) => {
+    if (w === "haupt") return { x: von, y: 0, laengs: lang, quer: 0 };
+    if (w === "rechts") return { x: breite, y: von, laengs: 0, quer: lang };
+    if (w === "gegenueber") return { x: breite - von - lang, y: tiefe, laengs: lang, quer: 0 };
+    return { x: 0, y: tiefe - von - lang, laengs: 0, quer: lang };
+  };
+
   /** Ein Stueck Wand als Rechteck, mittig auf der Raumkante. */
   const aufWand = (w: WandId, von: number, lang: number, dicke: number) => {
-    if (w === "haupt") return { x: von, y: -dicke / 2, w: lang, h: dicke };
-    if (w === "gegenueber") return { x: von, y: tiefe - dicke / 2, w: lang, h: dicke };
-    if (w === "links") return { x: -dicke / 2, y: von, w: dicke, h: lang };
-    return { x: breite - dicke / 2, y: von, w: dicke, h: lang };
+    const g = laengsZuPlan(w, von, lang);
+    const quer = w === "haupt" || w === "gegenueber";
+    return {
+      x: quer ? g.x : g.x - dicke / 2,
+      y: quer ? g.y - dicke / 2 : g.y,
+      w: quer ? lang : dicke,
+      h: quer ? dicke : lang,
+    };
   };
 
   /** Das Band, auf dem die Kueche steht. */
   const zeilenRect = (w: WandId) => {
     const { start, laenge } = zeilenBereich(raum, w);
-    if (w === "haupt") return { x: start, y: 0, w: laenge, h: KT };
-    if (w === "gegenueber") return { x: start, y: tiefe - KT, w: laenge, h: KT };
-    if (w === "links") return { x: 0, y: start, w: KT, h: laenge };
-    return { x: breite - KT, y: start, w: KT, h: laenge };
+    const g = laengsZuPlan(w, start, laenge);
+    if (w === "haupt") return { x: g.x, y: 0, w: laenge, h: KT };
+    if (w === "rechts") return { x: breite - KT, y: g.y, w: KT, h: laenge };
+    if (w === "gegenueber") return { x: g.x, y: tiefe - KT, w: laenge, h: KT };
+    return { x: 0, y: g.y, w: KT, h: laenge };
+  };
+
+  /** Ein einzelner Punkt auf einer Wand, in Planmassen. */
+  const punktAufWand = (w: WandId, von: number, tief: number) => {
+    if (w === "haupt") return { x: von, y: tief };
+    if (w === "rechts") return { x: breite - tief, y: von };
+    if (w === "gegenueber") return { x: breite - von, y: tiefe - tief };
+    return { x: tief, y: tiefe - von };
   };
 
   const istAktiv = (w: WandId) => hervorhebung === w;
@@ -433,7 +461,12 @@ export function Raumbild({
     const oben = (r.height - vbH * faktor) / 2;
     const ux = -rand + (e.clientX - r.left - links) / faktor;
     const uy = -rand + (e.clientY - r.top - oben) / faktor;
-    const laengs = greifWand === "haupt" || greifWand === "gegenueber" ? ux : uy;
+    // Dieselbe Richtung wie die Zeichnung: zwei Waende laufen rueckwaerts.
+    const laengs =
+      greifWand === "haupt" ? ux
+      : greifWand === "rechts" ? uy
+      : greifWand === "gegenueber" ? breite - ux
+      : tiefe - uy;
     const max = Math.max(0, wandlaenge(raum, greifWand) - greifBreite);
     return Math.round(Math.min(max, Math.max(0, laengs - greifBreite / 2)) / 10) * 10;
   };
@@ -512,11 +545,13 @@ export function Raumbild({
         const t = raum.tuer;
         const leer = aufWand(t.wand, t.von, t.breite, WD + 8);
         const b = t.breite;
+        // Das Band haengt am Anfang der Oeffnung und schlaegt in den Raum.
+        const anf = punktAufWand(t.wand, t.von, 0);
         const ecke =
-          t.wand === "haupt" ? { x: t.von, y: 0, d: `a${b} ${b} 0 0 1 ${b} ${b}` }
-          : t.wand === "gegenueber" ? { x: t.von, y: tiefe, d: `a${b} ${b} 0 0 0 ${b} ${-b}` }
-          : t.wand === "links" ? { x: 0, y: t.von, d: `a${b} ${b} 0 0 0 ${b} ${b}` }
-          : { x: breite, y: t.von, d: `a${b} ${b} 0 0 1 ${-b} ${b}` };
+          t.wand === "haupt" ? { x: anf.x, y: anf.y, d: `a${b} ${b} 0 0 1 ${b} ${b}` }
+          : t.wand === "rechts" ? { x: anf.x, y: anf.y, d: `a${b} ${b} 0 0 1 ${-b} ${b}` }
+          : t.wand === "gegenueber" ? { x: anf.x, y: anf.y, d: `a${b} ${b} 0 0 1 ${-b} ${-b}` }
+          : { x: anf.x, y: anf.y, d: `a${b} ${b} 0 0 1 ${b} ${-b}` };
         return (
           <g>
             <rect x={leer.x} y={leer.y} width={leer.w} height={leer.h} className="fill-papier" />
@@ -534,11 +569,7 @@ export function Raumbild({
       {/* Wasseranschluss */}
       {(() => {
         const w = raum.wasser.wand;
-        const p =
-          w === "haupt" ? { x: raum.wasser.von, y: 210 }
-          : w === "gegenueber" ? { x: raum.wasser.von, y: tiefe - 210 }
-          : w === "links" ? { x: 210, y: raum.wasser.von }
-          : { x: breite - 210, y: raum.wasser.von };
+        const p = punktAufWand(w, raum.wasser.von, 210);
         return (
           <g>
             <circle cx={p.x} cy={p.y} r={160} className="fill-papier" />
@@ -582,11 +613,9 @@ export function Raumbild({
         // Der Griff sitzt aussen vor der Wand: so verdeckt er nicht das
         // Fenster oder die Tür, um die es gerade geht.
         const AUS = 330;
-        const p =
-          greifWand === "haupt" ? { x: mitte, y: -AUS, ax: mitte, ay: 0 }
-          : greifWand === "gegenueber" ? { x: mitte, y: tiefe + AUS, ax: mitte, ay: tiefe }
-          : greifWand === "links" ? { x: -AUS, y: mitte, ax: 0, ay: mitte }
-          : { x: breite + AUS, y: mitte, ax: breite, ay: mitte };
+        const an = punktAufWand(greifWand, mitte, 0);
+        const aussen = punktAufWand(greifWand, mitte, -AUS);
+        const p = { x: aussen.x, y: aussen.y, ax: an.x, ay: an.y };
         return (
           <g>
             <path d={`M${p.x} ${p.y} L${p.ax} ${p.ay}`} strokeWidth={26} className="stroke-kohle-3" />
