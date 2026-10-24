@@ -1,7 +1,7 @@
 import { belegungsbreite, modul, PREISSTAND, PREIS_GUELTIG_BIS, LIEFERANT } from "@/data/module";
 import { ARTEN, geraet, MWST, PREISSTAND_GERAETE, type Geraetewahl } from "@/data/geraete";
 import { platzierung } from "@/lib/berechnung";
-import { AP_OK, HOCH_H, OS_UK, PLATTE, rolleVon, ROLLE_NAME, SOCKEL, TIEFE_UNTEN } from "@/lib/masse";
+import { AP_OK, HOCH_H, istHoch, OS_UK, PLATTE, rolleVon, ROLLE_NAME, SOCKEL, TIEFE_UNTEN } from "@/lib/masse";
 import { haengeplaetze, lageIn, platteLaenge, WANDNAME, type Raumangaben, type Vorschlag } from "@/lib/planer";
 import type { Kuechentyp } from "@/lib/typen";
 
@@ -312,7 +312,7 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
     anschluesse.push({ art: "Steckdose", wand: sp.kette.wand, abZeilenanfang: mitte(sp.pos), hoehe: H_UNTEN, hinweis: "für Untertischgerät oder Spülmaschine" });
   }
   const gsBreite = geraet(a.geraete.spuelmaschine).breite;
-  const gs = gsBreite === 600 ? findeModul("GS600") : gsBreite === 450 ? findeModul("US450") : null;
+  const gs = gsBreite === 600 ? findeModul("GS600") : gsBreite === 450 ? findeModul("GS450") : null;
   if (gs) {
     anschluesse.push({ art: "Wasser und Abwasser", wand: gs.kette.wand, abZeilenanfang: mitte(gs.pos), hoehe: H_UNTEN, hinweis: "kann mit der Spüle geteilt werden, wenn sie daneben steht" });
     anschluesse.push({ art: "Steckdose", wand: gs.kette.wand, abZeilenanfang: mitte(gs.pos), hoehe: H_UNTEN, hinweis: "eigener Stromkreis empfohlen" });
@@ -349,10 +349,10 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
 
   /* --- Geräte mit Einbaudaten und Platz in der Zeile --- */
   const modulFuer: Record<string, string | null> = {
-    kuehlschrank: geraet(a.geraete.kuehlschrank).bau === "hoch" ? "HK600" : "US600",
+    kuehlschrank: geraet(a.geraete.kuehlschrank).bau === "hoch" ? "HK600" : "KS600",
     kochfeld: "KF600",
     backofen: a.ofenHoch ? "HB600" : "KF600",
-    spuelmaschine: gsBreite === 450 ? "US450" : "GS600",
+    spuelmaschine: gsBreite === 450 ? "GS450" : "GS600",
     dunstabzug: "KF600",
   };
   const geraeteliste: Geraetezeile[] = [];
@@ -387,8 +387,7 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
     let lauf: { von: number; bis: number } | null = null;
     const stuecke: Array<{ von: number; bis: number }> = [];
     for (const p of k.positionen) {
-      const r = rolleVon(p.modulId);
-      if (r === "kuehlschrank" || r === "backofen") { lauf = null; continue; }
+      if (istHoch(p.modulId)) { lauf = null; continue; }
       if (lauf && lauf.bis === p.von) lauf.bis = p.bis;
       else { lauf = { von: p.von, bis: p.bis }; stuecke.push(lauf); }
       if (p.modulId.startsWith("PBX:") || modul(p.modulId).kategorie === "blende") {

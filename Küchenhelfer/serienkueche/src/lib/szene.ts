@@ -2,7 +2,7 @@ import { modul } from "@/data/module";
 import { platzierung } from "@/lib/berechnung";
 import {
   AP_OK, HOCH_H, KORPUS, OS_H, OS_UK, PLATTE, RAUMHOEHE,
-  rolleVon, ROLLE_NAME, SOCKEL, TIEFE_OBEN, TIEFE_UNTEN,
+  istHoch, rolleVon, ROLLE_NAME, SOCKEL, TIEFE_OBEN, TIEFE_UNTEN,
 } from "@/lib/masse";
 import type { Kuechentyp, Wandseite } from "@/lib/typen";
 import type { VarianteRoh } from "@/data/varianten";
@@ -222,8 +222,7 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh, ofenGewaehlt =
       let lauf: { von: number; bis: number } | null = null;
       const abschnitte: Array<{ von: number; bis: number }> = [];
       for (const p of plaetze) {
-        const r = rolleVon(p.modulId);
-        if (r === "kuehlschrank" || r === "backofen") { lauf = null; continue; }
+        if (istHoch(p.modulId)) { lauf = null; continue; }
         if (lauf && lauf.bis === p.von) lauf.bis = p.bis;
         else { lauf = { von: p.von, bis: p.bis }; abschnitte.push(lauf); }
       }
@@ -261,7 +260,7 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh, ofenGewaehlt =
         continue;
       }
 
-      if (rolle === "kuehlschrank" || rolle === "backofen") {
+      if (istHoch(p.modulId)) {
         schrank(zeile.wand, s0, s1, TIEFE_UNTEN, 0, HOCH_H);
         merke(0, TIEFE_UNTEN, 0, HOCH_H, rolle === "kuehlschrank" ? 1700 : 1560, TIEFE_UNTEN + 40);
         if (rolle === "kuehlschrank") {
@@ -287,6 +286,12 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh, ofenGewaehlt =
       if (rolle === "spuelmaschine") {
         merke(0, TIEFE_UNTEN, SOCKEL, SOCKEL + KORPUS, SOCKEL + KORPUS / 2, TIEFE_UNTEN + 40);
         stelle(zeile.wand, s0 + 20, s1 - 20, TIEFE_UNTEN, TIEFE_UNTEN + 10, SOCKEL + KORPUS - 60, SOCKEL + KORPUS - 10, MATERIAL.graphit);
+      }
+
+      // Kuehlschrank unter der Platte: eine Tuer, Griff seitlich.
+      if (rolle === "kuehlschrank") {
+        merke(0, TIEFE_UNTEN, SOCKEL, SOCKEL + KORPUS, SOCKEL + KORPUS / 2, TIEFE_UNTEN + 40);
+        stelle(zeile.wand, s1 - 86, s1 - 62, TIEFE_UNTEN, TIEFE_UNTEN + GRIFF, SOCKEL + 170, SOCKEL + 470, MATERIAL.griff);
       }
 
       if (rolle === "herd") {

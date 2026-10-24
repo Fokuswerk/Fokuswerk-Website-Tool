@@ -41,10 +41,10 @@ const ART_ZU_ROLLE: Record<GeraeteArt, string> = {
 /** An welchem Schrank das Gerät hängt. Steht keiner davon im Plan, sagen wir
     das auch, statt auf eine gelbe Markierung zu zeigen, die es nicht gibt. */
 const ART_ZU_MODUL: Record<GeraeteArt, string[]> = {
-  kuehlschrank: ["HK600"],
+  kuehlschrank: ["HK600", "KS600"],
   kochfeld: ["KF600"],
   backofen: ["HB600", "KF600"],
-  spuelmaschine: ["GS600"],
+  spuelmaschine: ["GS600", "GS450"],
   dunstabzug: ["KF600"],
 };
 

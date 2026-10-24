@@ -27,6 +27,11 @@ export const MODULE: NeutralesModul[] = [
   { id: "AZ300", bezeichnung: "Apothekerauszug, schmal", kategorie: "unterschrank", breite: 300, hoehe: 720, einheit: "stk", preis: 274, artikel: "US30-AP-M" },
   { id: "SP600", bezeichnung: "Spülenunterschrank", kategorie: "unterschrank", breite: 600, hoehe: 720, einheit: "stk", preis: 264, artikel: "US60-SP-M" },
   { id: "GS600", bezeichnung: "Geschirrspüler-Nische", kategorie: "unterschrank", breite: 600, hoehe: 720, einheit: "stk", preis: 148, artikel: "NI60-GS-M" },
+  // Geraeteschraenke brauchen eigene Kennungen. Standen sie als US600 und
+  // US450 im Plan, waren sie von Fuellschraenken nicht zu unterscheiden: die
+  // Unterlagen setzten Anschluss und Bohrmass an den erstbesten Treffer.
+  { id: "GS450", bezeichnung: "Geschirrspüler-Nische 45 cm", kategorie: "unterschrank", breite: 450, hoehe: 720, einheit: "stk", preis: 142, artikel: "NI45-GS-M" },
+  { id: "KS600", bezeichnung: "Unterbau-Kühlschrank-Schrank", kategorie: "unterschrank", breite: 600, hoehe: 720, einheit: "stk", preis: 238, artikel: "US60-KS-M" },
   { id: "KF600", bezeichnung: "Kochfeld-Unterschrank", kategorie: "unterschrank", breite: 600, hoehe: 720, einheit: "stk", preis: 286, artikel: "US60-KF-M" },
 
   // Hochschränke

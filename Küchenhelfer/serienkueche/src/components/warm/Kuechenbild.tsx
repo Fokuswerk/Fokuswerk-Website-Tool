@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { modul } from "@/data/module";
-import { AP_OK, HOCH_H, KORPUS, OS_H, OS_UK, PLATTE, rolleVon, ROLLE_NAME, SOCKEL } from "@/lib/masse";
+import { AP_OK, HOCH_H, istHoch, KORPUS, OS_H, OS_UK, PLATTE, rolleVon, ROLLE_NAME, SOCKEL } from "@/lib/masse";
 import { platzierung } from "@/lib/berechnung";
 import type { VarianteRoh } from "@/data/varianten";
 import type { Kuechentyp } from "@/lib/typen";
@@ -98,7 +98,7 @@ export function Kuechenbild({
       {/* Hängeschränke, nur wo kein Hochschrank und kein Fenster */}
       {plaetze.map((p) => {
         const r = rolleVon(p.modulId);
-        if (r === "kuehlschrank" || r === "backofen" || r === "leiste") return null;
+        if (istHoch(p.modulId) || r === "leiste") return null;
         const stoert = fenster.some((f) => {
           const v = f.von - zeile.start;
           return p.von < v + f.breite && p.bis > v;
@@ -139,8 +139,7 @@ export function Kuechenbild({
       {(() => {
         const stuecke: Array<{ von: number; bis: number }> = [];
         for (const p of plaetze) {
-          const r = rolleVon(p.modulId);
-          if (r === "kuehlschrank" || r === "backofen") continue;
+          if (istHoch(p.modulId)) continue;
           const letztes = stuecke[stuecke.length - 1];
           if (letztes && letztes.bis === p.von) letztes.bis = p.bis;
           else stuecke.push({ von: p.von, bis: p.bis });
@@ -153,7 +152,7 @@ export function Kuechenbild({
       {/* Schränke und Geräte */}
       {plaetze.map((p) => {
         const rolle = rolleVon(p.modulId);
-        const hoch = rolle === "kuehlschrank" || rolle === "backofen";
+        const hoch = istHoch(p.modulId);
         // Hochschraenke schliessen oben mit den Haengeschraenken ab und
         // stehen auf dem eigenen Sockel — genau wie im raeumlichen Bild.
         const oben = hoch ? HOCH_H : SOCKEL + KORPUS;
@@ -196,7 +195,7 @@ export function Kuechenbild({
             />
 
             {/* Kühlschrank: Tür mit Griff */}
-            {rolle === "kuehlschrank" && (
+            {rolle === "kuehlschrank" && hoch && (
               <>
                 <path d={`M${p.von + 16} ${y(oben - 760)} H${p.von + p.breite - 16}`} strokeWidth={12} className="stroke-linie-warm" />
                 <path d={`M${p.von + p.breite - 150} ${y(oben - 1050)} V${y(oben - 1420)}`} strokeWidth={26} strokeLinecap="round" className="stroke-kohle-2" />
@@ -243,6 +242,14 @@ export function Kuechenbild({
               <>
                 <rect x={p.von + 110} y={y(SOCKEL + KORPUS - 40)} width={p.breite - 220} height={90} rx={18} className="fill-kohle" />
                 <path d={`M${p.von + 170} ${y(SOCKEL + 230)} H${p.von + p.breite - 170}`} strokeWidth={26} strokeLinecap="round" className="stroke-kohle-2" />
+              </>
+            )}
+
+            {/* Kühlschrank unter der Platte: eine Tür mit Griff an der Seite */}
+            {rolle === "kuehlschrank" && !hoch && (
+              <>
+                <path d={`M${p.von + 110} ${y(SOCKEL + KORPUS - 70)} H${p.von + p.breite - 110}`} strokeWidth={12} className="stroke-linie-warm" />
+                <path d={`M${p.von + p.breite - 150} ${y(SOCKEL + 480)} V${y(SOCKEL + 180)}`} strokeWidth={26} strokeLinecap="round" className="stroke-kohle-2" />
               </>
             )}
 

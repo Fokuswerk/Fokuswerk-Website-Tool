@@ -384,11 +384,11 @@ function pflichtmodule(a: Raumangaben): string[] {
   if (geraet(g.kochfeld).breite > 0) liste.push("KF600");
   const ks = geraet(g.kuehlschrank);
   if (ks.bau === "hoch") liste.push("HK600");
-  else if (ks.bau === "unterbau") liste.push("US600");
+  else if (ks.bau === "unterbau") liste.push("KS600");
   if (a.ofenHoch && geraet(g.backofen).breite > 0) liste.push("HB600");
   const gs = geraet(g.spuelmaschine);
   if (gs.breite === 600) liste.push("GS600");
-  else if (gs.breite === 450) liste.push("US450");
+  else if (gs.breite === 450) liste.push("GS450");
   return liste;
 }
 
@@ -437,7 +437,7 @@ function verteile(
   if (spuelZeile && offen.includes("SP600")) lege("SP600", spuelZeile);
 
   // Spülmaschine direkt daneben — dann teilen sich beide den Anschluss.
-  for (const id of ["GS600", "US450"]) {
+  for (const id of ["GS600", "GS450"]) {
     if (spuelZeile && offen.includes(id) && lege(id, spuelZeile)) break;
   }
 
@@ -504,7 +504,20 @@ export function lageIn(ids: string[], index: number) {
 const RESTRIKTIV = ["HK600", "HB600", "KF600"];
 const SEITENABSTAND_KOCHFELD = 300;
 
-function anordnungen(module: string[], grenze = 20000): string[][] {
+/**
+ * Alle unterscheidbaren Reihenfolgen.
+ *
+ * Die alte Grenze von 20.000 Kandidaten schnitt nicht quer durch das Feld,
+ * sondern am Anfang ab: aufgezählt wird lexikografisch, also blieben bei
+ * neun Modulen nur die Reihenfolgen übrig, die mit Spüle oder Spülmaschine
+ * beginnen. Dadurch brach der Planer seine eigene Regel "Spülmaschine neben
+ * die Spüle" — bei 4,60 m standen sie an den entgegengesetzten Enden.
+ *
+ * Vollständig aufzählen, prüfen und bewerten kostet gemessen unter 30 ms bis
+ * elf Module. Die Grenze liegt jetzt so hoch, dass sie erst jenseits dessen
+ * greift, was ein Wohnungsraum hergibt, und sie wird gemeldet.
+ */
+function anordnungen(module: string[], grenze = 400000): string[][] {
   const zaehler = new Map<string, number>();
   for (const m of module) zaehler.set(m, (zaehler.get(m) ?? 0) + 1);
   const arten = [...zaehler.keys()];
@@ -560,7 +573,7 @@ function bewerte(ids: string[], strategie: Strategie, wasserZiel: number | null)
     punkte -= Math.abs((l.von + l.bis) / 2 - wasserZiel);
   }
   // Spuelmaschine gehoert neben die Spuele
-  const iGs = ids.indexOf("GS600");
+  const iGs = ids.findIndex((x) => x === "GS600" || x === "GS450");
   if (iSp >= 0 && iGs >= 0) punkte -= Math.abs(iSp - iGs) * 220;
   // Hochschraenke stehen am liebsten am Rand, Passleiste ebenso
   ids.forEach((id, i) => {
@@ -625,7 +638,7 @@ export function planeKueche(a: Raumangaben, strategie: Strategie): Vorschlag {
   const { zu: zuordnung, uebrig } = verteile(typ, a, pflicht);
   if (uebrig.length > 0) {
     const name = (id: string) =>
-      ROLLE_NAME[rolleVon(id)] || (id === "US600" ? "Unterbau-Kühlschrank" : id === "US450" ? "Spülmaschine 45 cm" : modul(id).bezeichnung);
+      ROLLE_NAME[rolleVon(id)] || modul(id).bezeichnung;
     const laengste = Math.max(...typ.zeilen.map((z) => z.laenge));
     return {
       ...leer,
@@ -769,6 +782,18 @@ export function ausBelegung(
   else if (passblende > 150) achtung.push(`${passblende} mm bleiben als Passleiste übrig. Das ist viel — ein Küchenbetrieb würde eher einen Schrank breiter wählen.`);
   if (kochfeldGerueckt) gut.push("Der Herd steht nicht direkt an der Wand, damit daneben Platz zum Abstellen bleibt.");
   if (fensterKonflikt) achtung.push("Vor dem Fenster steht ein hoher Schrank — er nimmt Licht. Verschieb das Fenster oder nutze mehr Wandlänge.");
+
+  // Die Befunde der einzelnen Zeilen gehoeren auch hierher. In der
+  // Umstellen-Ansicht standen sie schon; auf der Ergebnisseite wurde ein
+  // Verstoss gegen eine harte Regel verschluckt, weil `moeglich` dort fest
+  // auf true steht und nur der Fensterfall neu geprueft wurde — und der
+  // gefiltert auf Hochschraenke, waehrend ein Kochfeld vor dem Fenster ein
+  // Unterschrank ist.
+  for (const z of typ.zeilen) {
+    for (const b of befundeZeile(a, typ, z.id, belegung[z.id] ?? [])) {
+      if (!achtung.includes(b)) achtung.push(b);
+    }
+  }
   if (haengeschraenke === 0) achtung.push("Hängeschränke gehen hier nicht — Fenster oder Hochschränke belegen die Wand.");
   if (a.form === "zwei-waende" && a.tiefe - 1200 < 1200) {
     achtung.push(`Zwischen den Zeilen bleiben nur ${a.tiefe - 1200} mm Gang. Empfohlen sind 1.200 mm.`);
@@ -810,7 +835,7 @@ export function befundeZeile(a: Raumangaben, typ: Kuechentyp, zeileId: string, i
   }
 
   const iSp = ids.indexOf("SP600");
-  const iGs = ids.indexOf("GS600");
+  const iGs = ids.findIndex((x) => x === "GS600" || x === "GS450");
   if (iSp >= 0 && iGs >= 0 && Math.abs(iSp - iGs) > 1) {
     hin.push("Die Spülmaschine steht nicht mehr neben der Spüle — dann braucht sie eigene Anschlüsse.");
   }
@@ -926,7 +951,7 @@ export function befundeGesamt(a: Raumangaben, typ: Kuechentyp, belegung: Record<
   const hin: string[] = [];
   const wo = (m: string) => typ.zeilen.find((z) => (belegung[z.id] ?? []).includes(m));
   const zSp = wo("SP600");
-  const zGs = wo("GS600");
+  const zGs = typ.zeilen.find((z) => (belegung[z.id] ?? []).some((m) => m === "GS600" || m === "GS450"));
 
   if (zSp && zGs && zSp.id !== zGs.id) {
     hin.push(`Spüle und Spülmaschine stehen jetzt an verschiedenen Wänden (${zSp.bezeichnung} und ${zGs.bezeichnung}). Beide brauchen dann eigene Anschlüsse.`);

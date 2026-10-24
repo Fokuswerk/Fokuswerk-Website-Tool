@@ -26,12 +26,25 @@ export const RAUMHOEHE = 2600;
 
 export type Rolle = "kuehlschrank" | "backofen" | "spuele" | "herd" | "spuelmaschine" | "schrank" | "leiste";
 
+/**
+ * Reicht der Schrank bis unter die Hängeschränke?
+ *
+ * Das war vorher als `rolle === "kuehlschrank" || rolle === "backofen"`
+ * geschrieben — an vier Stellen, und jede davon meinte eigentlich "hoch".
+ * Seit es einen Kühlschrank unter der Arbeitsplatte gibt, ist das falsch:
+ * über dem liegt eine Platte und darüber hängt ein Schrank.
+ */
+export function istHoch(id: string): boolean {
+  return modul(id).kategorie === "hochschrank";
+}
+
 export function rolleVon(id: string): Rolle {
   if (id === "HK600") return "kuehlschrank";
   if (id === "HB600") return "backofen";
   if (id === "SP600") return "spuele";
   if (id === "KF600") return "herd";
-  if (id === "GS600") return "spuelmaschine";
+  if (id === "GS600" || id === "GS450") return "spuelmaschine";
+  if (id === "KS600") return "kuehlschrank";
   if (modul(id).kategorie === "blende") return "leiste";
   return "schrank";
 }
