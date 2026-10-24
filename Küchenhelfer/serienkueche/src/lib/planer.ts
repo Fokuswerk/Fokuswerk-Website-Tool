@@ -918,23 +918,33 @@ export function ausBelegung(
   }
 
   if (wegZumWasser <= 600) gut.push("Die Spüle bleibt am vorhandenen Anschluss — kein Installateur nötig.");
-  else achtung.push(`Die Spüle liegt etwa ${Math.round(wegZumWasser / 100) * 10} cm vom heutigen Anschluss entfernt. Das muss verlegt werden.`);
+  // Aufgerundet, nicht gerundet: bei 64 cm stand hier "60 cm — das muss
+  // verlegt werden", waehrend 60 cm eine Zeile darueber als "bleibt am
+  // Anschluss" durchgeht. Zweimal dieselbe Zahl, zwei Urteile.
+  else achtung.push(`Die Spüle liegt etwa ${Math.ceil(wegZumWasser / 100) * 10} cm vom heutigen Anschluss entfernt. Das muss verlegt werden.`);
 
   if (passblende > 0 && passblende <= 150) gut.push(`${passblende} mm Rest schließt eine Passleiste — das ist normal und wird vor Ort zugeschnitten.`);
   else if (passblende > 150) achtung.push(`${passblende} mm bleiben als Passleiste übrig. Das ist viel — ein Küchenbetrieb würde eher einen Schrank breiter wählen.`);
   if (kochfeldGerueckt) gut.push("Der Herd steht nicht direkt an der Wand, damit daneben Platz zum Abstellen bleibt.");
-  if (fensterKonflikt) achtung.push("Vor dem Fenster steht ein hoher Schrank — er nimmt Licht. Verschieb das Fenster oder nutze mehr Wandlänge.");
 
-  // Die Befunde der einzelnen Zeilen gehoeren auch hierher. In der
-  // Umstellen-Ansicht standen sie schon; auf der Ergebnisseite wurde ein
-  // Verstoss gegen eine harte Regel verschluckt, weil `moeglich` dort fest
-  // auf true steht und nur der Fensterfall neu geprueft wurde — und der
-  // gefiltert auf Hochschraenke, waehrend ein Kochfeld vor dem Fenster ein
-  // Unterschrank ist.
-  for (const z of typ.zeilen) {
-    for (const b of befundeZeile(a, typ, z.id, belegung[z.id] ?? [])) {
-      if (!achtung.includes(b)) achtung.push(b);
-    }
+  /* Die Befunde der einzelnen Zeilen gehoeren auch hierher. In der
+     Umstellen-Ansicht standen sie schon; auf der Ergebnisseite wurde ein
+     Verstoss gegen eine harte Regel verschluckt, weil `moeglich` dort fest
+     auf true steht und nur der Fensterfall neu geprueft wurde — und der
+     gefiltert auf Hochschraenke, waehrend ein Kochfeld vor dem Fenster ein
+     Unterschrank ist.
+
+     Zum Wasser steht oben schon der bessere Satz — er nennt die Folge. Und
+     steht wirklich etwas vor dem Fenster, sagt die Zeilenpruefung, was: das
+     ist mehr als "ein hoher Schrank". */
+  const ausZeilen: Befund[] = typ.zeilen.flatMap((z) => befundeZeile(a, typ, z.id, belegung[z.id] ?? []));
+  const zumFenster = ausZeilen.some((b) => b.thema === "fenster");
+  if (fensterKonflikt && !zumFenster) {
+    achtung.push("Vor dem Fenster steht ein hoher Schrank — er nimmt Licht. Verschieb das Fenster oder nutze mehr Wandlänge.");
+  }
+  for (const b of ausZeilen) {
+    if (b.thema === "wasser") continue;
+    if (!achtung.includes(b.text)) achtung.push(b.text);
   }
   if (haengeschraenke === 0) achtung.push("Hängeschränke gehen hier nicht — Fenster oder Hochschränke belegen die Wand.");
   if (a.form === "zwei-waende" && a.tiefe - 1200 < 1200) {
@@ -950,10 +960,25 @@ export function ausBelegung(
  * getauscht, deshalb stimmt die Breite immer — was kippen kann, sind die
  * Regeln, die ein Laie nicht kennt.
  */
-export function befundeZeile(a: Raumangaben, typ: Kuechentyp, zeileId: string, ids: string[]): string[] {
+/**
+ * Woran ein Befund hängt.
+ *
+ * Ohne das Thema liessen sich Doppelungen nur am Wortlaut erkennen: die
+ * Gesamtrechnung sagte "Vor dem Fenster steht ein hoher Schrank" und die
+ * Zeilenprüfung gleich darunter "Der Kühlschrank steht vor dem Fenster" —
+ * zweimal dasselbe, in zwei Sätzen. Dasselbe beim Weg zum Wasser.
+ */
+export type Befundthema = "fenster" | "herd" | "spuelmaschine" | "wasser";
+
+export interface Befund {
+  thema: Befundthema;
+  text: string;
+}
+
+export function befundeZeile(a: Raumangaben, typ: Kuechentyp, zeileId: string, ids: string[]): Befund[] {
   const z = typ.zeilen.find((x) => x.id === zeileId);
   if (!z) return [];
-  const hin: string[] = [];
+  const hin: Befund[] = [];
   const f = typ.oeffnungen.find((o) => o.art === "fenster" && o.wand === z.wand);
   const zone = f ? { von: f.von - z.start, bis: f.von + f.breite - z.start } : null;
 
@@ -962,26 +987,28 @@ export function befundeZeile(a: Raumangaben, typ: Kuechentyp, zeileId: string, i
     const l = lageIn(ids, i);
     const m = modul(id);
     if (zone && m.kategorie === "hochschrank" && l.von < zone.bis && l.bis > zone.von) {
-      hin.push(`Der ${ROLLE_NAME[rolleVon(id)] || "hohe Schrank"} steht vor dem Fenster und nimmt Licht.`);
+      hin.push({ thema: "fenster", text: `Der ${ROLLE_NAME[rolleVon(id)] || "hohe Schrank"} steht vor dem Fenster und nimmt Licht. Verschieb das Fenster oder nutze mehr Wandlänge.` });
     }
     if (zone && id === "KF600" && l.von < zone.bis && l.bis > zone.von) {
       // Die Suche verbietet das (KF600 steht in RESTRIKTIV), von Hand ging es
       // trotzdem — und niemand sagte ein Wort dazu.
-      hin.push("Der Herd steht vor dem Fenster. Darüber lässt sich das Fenster nicht mehr gefahrlos öffnen, und der Vorhang hängt über der Flamme.");
+      hin.push({ thema: "fenster", text: "Der Herd steht vor dem Fenster. Darüber lässt sich das Fenster nicht mehr gefahrlos öffnen, und der Vorhang hängt über der Flamme." });
     }
     if (id === "KF600" && (HOCH.includes(ids[i - 1]) || HOCH.includes(ids[i + 1]))) {
       // Die Suche laesst das nie zu, der Nutzer darf es aber von Hand bauen.
       // Gemeldet wurde es bisher nicht — als einzige der harten Regeln.
-      hin.push("Direkt neben dem Herd steht ein hoher Schrank. Dort wird es heiß, und zum Abstellen bleibt keine Fläche.");
+      hin.push({ thema: "herd", text: "Direkt neben dem Herd steht ein hoher Schrank. Dort wird es heiß, und zum Abstellen bleibt keine Fläche." });
     }
     if (id === "KF600") {
       const abstand = Math.min(l.von, z.laenge - l.bis);
       if (abstand < SEITENABSTAND_KOCHFELD) {
-        hin.push(
-          abstand <= 0
-            ? "Der Herd steht direkt an der Wand — daneben bleibt kein Platz zum Abstellen."
-            : `Neben dem Herd bleiben nur ${Math.round(abstand / 10)} cm bis zur Wand. Empfohlen sind ${SEITENABSTAND_KOCHFELD / 10} cm.`,
-        );
+        hin.push({
+          thema: "herd",
+          text:
+            abstand <= 0
+              ? "Der Herd steht direkt an der Wand — daneben bleibt kein Platz zum Abstellen."
+              : `Neben dem Herd bleiben nur ${Math.round(abstand / 10)} cm bis zur Wand. Empfohlen sind ${SEITENABSTAND_KOCHFELD / 10} cm.`,
+        });
       }
     }
   }
@@ -989,12 +1016,12 @@ export function befundeZeile(a: Raumangaben, typ: Kuechentyp, zeileId: string, i
   const iSp = ids.indexOf("SP600");
   const iGs = ids.findIndex((x) => x === "GS600" || x === "GS450");
   if (iSp >= 0 && iGs >= 0 && Math.abs(iSp - iGs) > 1) {
-    hin.push("Die Spülmaschine steht nicht mehr neben der Spüle — dann braucht sie eigene Anschlüsse.");
+    hin.push({ thema: "spuelmaschine", text: "Die Spülmaschine steht nicht mehr neben der Spüle — dann braucht sie eigene Anschlüsse." });
   }
   if (SEITE[a.wasser.wand] === z.wand && iSp >= 0) {
     const l = lageIn(ids, iSp);
     const weg = Math.abs((l.von + l.bis) / 2 - (a.wasser.von - z.start));
-    if (weg > 900) hin.push(`Die Spüle liegt jetzt rund ${Math.round(weg / 100) * 10} cm vom Wasseranschluss entfernt.`);
+    if (weg > 900) hin.push({ thema: "wasser", text: `Die Spüle liegt jetzt rund ${Math.ceil(weg / 100) * 10} cm vom Wasseranschluss entfernt.` });
   }
   return hin;
 }

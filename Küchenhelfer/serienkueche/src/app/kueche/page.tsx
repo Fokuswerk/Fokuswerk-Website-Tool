@@ -1779,7 +1779,7 @@ export default function Kuechenplaner() {
 
                     <div className="mt-6 space-y-4">
                       {typ.zeilen.map((z) => {
-                        const hin = befundeZeile(raum, typ, z.id, gewaehlterVorschlag.belegung[z.id] ?? []);
+                        const hin = befundeZeile(raum, typ, z.id, gewaehlterVorschlag.belegung[z.id] ?? []).map((b) => b.text);
                         return (
                           <div key={z.id}>
                             {typ.zeilen.length > 1 && (
