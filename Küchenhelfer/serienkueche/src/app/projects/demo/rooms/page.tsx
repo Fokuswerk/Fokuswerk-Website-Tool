@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { KUECHENTYPEN } from "@/data/projekt";
 import { zahl } from "@/lib/berechnung";
@@ -161,9 +160,7 @@ export default function Raumpruefung() {
                 <Hinweisband art="ruhig" titel="Bereit zur Planung">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <span>Alle Pflichtattribute von {typ.id} sind bestätigt. Die Planung ist freigegeben.</span>
-                    <Link href="/projects/demo/planning">
-                      <Knopf>Zur Küchenplanung<ArrowRight size={13} strokeWidth={1.8} /></Knopf>
-                    </Link>
+                    <Knopf href="/projects/demo/planning">Zur Küchenplanung<ArrowRight size={13} strokeWidth={1.8} /></Knopf>
                   </div>
                 </Hinweisband>
               </div>

@@ -64,12 +64,10 @@ export default function Dashboard() {
         aktionen={
           <>
             <Marke ton="mute">{PROJEKT.status}</Marke>
-            <Link href={naechster.ziel}>
-              <Knopf art="primaer">
+            <Knopf href={naechster.ziel} art="primaer">
                 {naechster.label}
                 <ArrowRight size={14} strokeWidth={1.8} />
               </Knopf>
-            </Link>
           </>
         }
       />
@@ -230,12 +228,10 @@ export default function Dashboard() {
           <Hinweisband art={offen.length > 0 ? "flag" : "ruhig"} titel={offen.length > 0 ? "Prüfung offen" : "Bereit"}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="max-w-[72ch]">{naechster.text}</span>
-              <Link href={naechster.ziel}>
-                <Knopf>
+              <Knopf href={naechster.ziel}>
                   {naechster.label}
                   <ArrowRight size={13} strokeWidth={1.8} />
                 </Knopf>
-              </Link>
             </div>
           </Hinweisband>
         </Abschnitt>

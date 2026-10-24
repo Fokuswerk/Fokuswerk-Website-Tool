@@ -142,8 +142,14 @@ export default function Start() {
 
   return (
     <div className="warm min-h-full overflow-x-clip">
+      <a
+        href="#inhalt"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-kohle focus:px-4 focus:py-2 focus:text-[14px] focus:font-semibold focus:text-creme"
+      >
+        Zum Inhalt springen
+      </a>
       {/* ---------- Auftakt: ein Bild, ein Satz ---------- */}
-      <section className="relative isolate flex min-h-[86vh] flex-col">
+      <section className="auf-dunkel relative isolate flex min-h-[86vh] flex-col">
         <div className="absolute inset-0 -z-10 overflow-hidden bg-kohle">
           <Bild f={FOTOS.hero} breite={2400} hoehe={1500} schleier={false} prioritaet masse="100vw" />
           <span
@@ -167,7 +173,7 @@ export default function Start() {
           </Link>
         </header>
 
-        <div className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col justify-center px-5 pb-28 pt-10 sm:px-8 sm:pb-36">
+        <main id="inhalt" className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col justify-center px-5 pb-28 pt-10 sm:px-8 sm:pb-36">
           <h1 className="gross gross-xl max-w-[18ch] text-[44px] font-bold text-creme sm:text-[68px] lg:text-[86px]">
             Deine neue Küche. Ohne Termin im Küchenstudio.
           </h1>
@@ -181,7 +187,7 @@ export default function Start() {
               Fünf Minuten · kein Konto · kostenlos
             </span>
           </div>
-        </div>
+        </main>
       </section>
 
       {/* ---------- Der Beweis, halb ins Bild geschoben ---------- */}
@@ -294,7 +300,7 @@ export default function Start() {
       </section>
 
       {/* ---------- Dunkles Band, Bild bis an die Kante ---------- */}
-      <section className="relative isolate overflow-hidden bg-kohle text-creme">
+      <section className="auf-dunkel relative isolate overflow-hidden bg-kohle text-creme">
         <div className="lg:grid lg:grid-cols-[1fr_minmax(0,36%)]">
           <div className="mx-auto w-full max-w-[1240px] px-5 py-24 sm:px-8 sm:py-32 lg:ml-auto lg:mr-0 lg:max-w-[760px] lg:pr-16">
             <h2 className="gross text-[32px] font-bold leading-[1.08] sm:text-[46px]">

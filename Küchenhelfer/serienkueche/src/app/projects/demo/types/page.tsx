@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { ArrowRight, FlipHorizontal2 } from "lucide-react";
 import { KUECHENTYPEN, nischenspanne, TOLERANZBAND, WOHNUNGEN } from "@/data/projekt";
 import { eur, kennzahlen, variante, zahl } from "@/lib/berechnung";
@@ -257,13 +256,9 @@ export default function Kuechentypen() {
                 </dl>
                 <div className="mt-3 border-t border-line-2 pt-3">
                   {istFreigegeben(typ, freigaben) ? (
-                    <Link href="/projects/demo/planning">
-                      <Knopf art="primaer">Planung öffnen<ArrowRight size={13} strokeWidth={1.8} /></Knopf>
-                    </Link>
+                    <Knopf href="/projects/demo/planning" art="primaer">Planung öffnen<ArrowRight size={13} strokeWidth={1.8} /></Knopf>
                   ) : (
-                    <Link href="/projects/demo/rooms">
-                      <Knopf>Prüffälle bearbeiten<ArrowRight size={13} strokeWidth={1.8} /></Knopf>
-                    </Link>
+                    <Knopf href="/projects/demo/rooms">Prüffälle bearbeiten<ArrowRight size={13} strokeWidth={1.8} /></Knopf>
                   )}
                 </div>
               </Flaeche>

@@ -191,9 +191,7 @@ export default function Planung() {
                   hier keinen.
                 </p>
                 <div className="mt-4">
-                  <Link href="/projects/demo/rooms">
-                    <Knopf art="primaer">Zur Raumprüfung<ArrowRight size={13} strokeWidth={1.8} /></Knopf>
-                  </Link>
+                  <Knopf href="/projects/demo/rooms" art="primaer">Zur Raumprüfung<ArrowRight size={13} strokeWidth={1.8} /></Knopf>
                 </div>
               </Flaeche>
             ) : lauf !== null ? (

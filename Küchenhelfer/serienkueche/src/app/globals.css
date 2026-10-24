@@ -10,7 +10,7 @@
   --color-paper: #ffffff;
   --color-ink: #1a1a16;
   --color-ink-2: #56544c;
-  --color-ink-3: #8c8980;
+  --color-ink-3: #6b6860;
   --color-line: #e4e1da;
   --color-line-2: #f0ede7;
   --color-accent: #27465f;
@@ -33,7 +33,7 @@
   --color-papier: #ffffff;
   --color-kohle: #15140f;
   --color-kohle-2: #56534a;
-  --color-kohle-3: #8e8a80;
+  --color-kohle-3: #6c6860;
   /* Nur noch im Produkt selbst, nicht in der Oberflaeche. */
   --color-butter: #c9a227;
   --color-butter-2: #e4cf8e;
@@ -80,7 +80,20 @@ body {
   box-shadow: inset 0 2px 4px rgba(26, 26, 22, 0.07), inset 0 -1px 0 rgba(255, 255, 255, 0.6);
 }
 
-:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; border-radius: 2px; }
+/* Der Fokusring folgt der Form des Elements von allein — das feste
+   border-radius: 2px hat jeden runden Knopf beim Tabben zum Rechteck
+   gemacht. Der helle Saum macht ihn auch auf dunklem Grund sichtbar. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(245, 243, 239, 0.95);
+}
+.warm :focus-visible { outline-color: var(--color-kohle); }
+/* Auf dem dunklen Auftakt dreht sich das Verhaeltnis um. */
+.auf-dunkel :focus-visible {
+  outline-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(21, 20, 15, 0.85);
+}
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: #d6d6d2; border-radius: 6px; border: 3px solid var(--color-ground); }

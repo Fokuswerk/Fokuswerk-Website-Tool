@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 /* Kleines eigenes Baukastenset statt einer Komponentenbibliothek:
@@ -132,6 +133,7 @@ export function Knopf({
   deaktiviert,
   titel,
   typ = "button",
+  href,
 }: {
   children: ReactNode;
   onClick?: () => void;
@@ -140,6 +142,9 @@ export function Knopf({
   deaktiviert?: boolean;
   titel?: string;
   typ?: "button" | "submit";
+  /** Fuehrt der Knopf woandershin, ist er ein Link — nicht ein Knopf in
+      einem Link. Das waren zwei Tabstopps fuer eine Handlung. */
+  href?: string;
 }) {
   const basis = `inline-flex items-center gap-1.5 rounded-sm font-medium transition-colors ${
     gross ? "px-3.5 py-2 text-[13px]" : "px-2.5 py-1.5 text-[12.5px]"
@@ -151,6 +156,13 @@ export function Knopf({
       : art === "klar"
         ? "text-ink-2 hover:bg-ground"
         : "border border-line bg-paper text-ink-2 hover:border-ink-3 hover:text-ink";
+  if (href && !deaktiviert) {
+    return (
+      <Link href={href} title={titel} onClick={onClick} className={`${basis} ${stil}`}>
+        {children}
+      </Link>
+    );
+  }
   return (
     <button type={typ} title={titel} onClick={deaktiviert ? undefined : onClick} disabled={deaktiviert} className={`${basis} ${stil}`}>
       {children}
@@ -325,9 +337,16 @@ export function Toasts() {
       melder = null;
     };
   }, []);
-  if (liste.length === 0) return null;
+  // Der Behaelter bleibt im Baum, auch wenn nichts darin steht: wird die
+  // Live-Region erst mit ihrem Inhalt eingehaengt, liest keine
+  // Vorlesesoftware sie vor.
   return (
-    <div className="pointer-events-none fixed bottom-5 right-5 z-50 flex flex-col gap-2">
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="false"
+      className="pointer-events-none fixed bottom-5 right-5 z-50 flex flex-col gap-2"
+    >
       {liste.map((t) => (
         <div key={t.id} className="rise rounded-md border border-line bg-paper px-3.5 py-2.5 text-[12.5px] text-ink shadow-[0_6px_20px_rgba(27,30,35,0.08)]">
           {t.text}
@@ -335,6 +354,54 @@ export function Toasts() {
       ))}
     </div>
   );
+}
+
+/**
+ * Was ein Overlay braucht, damit man mit der Tastatur herauskommt.
+ *
+ * Escape schliesst, der Fokus wandert hinein und beim Schliessen dorthin
+ * zurueck, wo er herkam, und Tab laeuft im Kreis statt hinter das Overlay.
+ * Zwei Overlays koennen gleichzeitig offen sein (Bestaetigung in der
+ * Schublade) — deshalb ein Stapel, und nur das oberste hoert zu.
+ */
+const overlayStapel: symbol[] = [];
+
+export function useOverlay(offen: boolean, schliessen: () => void) {
+  const kasten = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!offen) return;
+    const ich = Symbol("overlay");
+    overlayStapel.push(ich);
+    const vorher = document.activeElement as HTMLElement | null;
+    const greifbar = () =>
+      Array.from(
+        kasten.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      ).filter((el) => el.offsetParent !== null);
+    greifbar()[0]?.focus();
+
+    const amZug = () => overlayStapel[overlayStapel.length - 1] === ich;
+    const taste = (e: KeyboardEvent) => {
+      if (!amZug()) return;
+      if (e.key === "Escape") { e.stopPropagation(); schliessen(); return; }
+      if (e.key !== "Tab") return;
+      const liste = greifbar();
+      if (liste.length === 0) return;
+      const erster = liste[0];
+      const letzter = liste[liste.length - 1];
+      if (e.shiftKey && document.activeElement === erster) { e.preventDefault(); letzter.focus(); }
+      else if (!e.shiftKey && document.activeElement === letzter) { e.preventDefault(); erster.focus(); }
+    };
+    document.addEventListener("keydown", taste, true);
+    return () => {
+      document.removeEventListener("keydown", taste, true);
+      const i = overlayStapel.indexOf(ich);
+      if (i >= 0) overlayStapel.splice(i, 1);
+      vorher?.focus?.();
+    };
+  }, [offen, schliessen]);
+  return kasten;
 }
 
 export function Bestaetigung({
@@ -352,11 +419,18 @@ export function Bestaetigung({
   abbrechen: () => void;
   knopf?: string;
 }) {
+  const kasten = useOverlay(offen, abbrechen);
   if (!offen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/20 px-4" role="dialog" aria-modal="true">
-      <div className="rise w-full max-w-[460px] rounded-md border border-line bg-paper p-5 shadow-[0_18px_50px_rgba(27,30,35,0.16)]">
-        <h3 className="text-[15px] font-semibold text-ink">{titel}</h3>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/20 px-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="dialog-titel"
+      onClick={(e) => { if (e.target === e.currentTarget) abbrechen(); }}
+    >
+      <div ref={kasten} className="rise w-full max-w-[460px] rounded-md border border-line bg-paper p-5 shadow-[0_18px_50px_rgba(27,30,35,0.16)]">
+        <h3 id="dialog-titel" className="text-[15px] font-semibold text-ink">{titel}</h3>
         <div className="mt-2 text-[12.5px] leading-relaxed text-ink-2">{text}</div>
         <div className="mt-5 flex justify-end gap-2">
           <Knopf onClick={abbrechen}>Abbrechen</Knopf>
