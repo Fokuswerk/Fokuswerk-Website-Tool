@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
-import { eur } from "@/lib/berechnung";
+import { brutto, eur } from "@/lib/berechnung";
 import { alsKuechentyp, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/lib/planer";
 
 /**
@@ -57,9 +57,9 @@ export function LiveHero() {
             </div>
           </div>
           <div className="text-right">
-            <div className="vorzeile">Komplett, mit Geräten</div>
+            <div className="vorzeile">Komplett, inkl. MwSt.</div>
             <div className="gross ziffern mt-1.5 text-[25px] font-bold leading-none text-kohle">
-              {eur(vorschlag.preis)}
+              {eur(brutto(vorschlag.preis))}
             </div>
           </div>
         </div>

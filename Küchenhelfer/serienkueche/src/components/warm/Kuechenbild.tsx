@@ -22,6 +22,7 @@ export function Kuechenbild({
   variante,
   zeileId = "Z1",
   hoehe = 260,
+  volleBreite = false,
   nummernAb,
   waehlbar = false,
   gewaehlt = null,
@@ -32,6 +33,9 @@ export function Kuechenbild({
   variante: VarianteRoh;
   zeileId?: string;
   hoehe?: number;
+  /** Die Zeichnung nimmt die volle Breite und richtet die Höhe danach —
+      so, wie eine Zeichnung in einem Dokument stehen soll. */
+  volleBreite?: boolean;
   /** Positionsnummern wie im Küchenplan, fortlaufend ab dieser Zahl.
       Dieselbe Nummer steht später in der Stückliste. */
   nummernAb?: number;
@@ -58,7 +62,7 @@ export function Kuechenbild({
   return (
     <svg
       viewBox={vb}
-      style={{ height: hoehe, width: "100%" }}
+      style={volleBreite ? { width: "100%", height: "auto" } : { height: hoehe, width: "100%" }}
       className="block max-w-full"
       role="img"
       aria-label={`Die Küche von vorn: ${plaetze.map((p) => ROLLE_NAME[rolleVon(p.modulId)]).filter(Boolean).join(", ")}`}
@@ -366,11 +370,14 @@ export function Raumbild({
   raum,
   hervorhebung,
   hoehe = 210,
+  volleBreite = false,
   ziehen,
 }: {
   raum: Raumangaben;
   hervorhebung?: WandId | null;
   hoehe?: number;
+  /** Volle Breite statt fester Höhe — für die Unterlagen. */
+  volleBreite?: boolean;
   /** Macht ein Element im Plan greifbar: anfassen und an der Wand
       entlangschieben. Genauer als ein Regler, weil man sieht, wohin. */
   ziehen?: { was: Ziehbar; setze: (von: number) => void };
@@ -440,7 +447,10 @@ export function Raumbild({
     <svg
       ref={svgRef}
       viewBox={`${-rand} ${-rand} ${breite + 2 * rand} ${tiefe + 2 * rand}`}
-      style={{ height: hoehe, width: "100%", touchAction: ziehen ? "none" : undefined }}
+      style={{
+        ...(volleBreite ? { width: "100%", height: "auto" } : { height: hoehe, width: "100%" }),
+        touchAction: ziehen ? "none" : undefined,
+      }}
       onPointerDown={ziehen ? (e) => {
         (e.target as Element).setPointerCapture?.(e.pointerId);
         setZieht(true);

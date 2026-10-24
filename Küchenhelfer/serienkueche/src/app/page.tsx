@@ -4,7 +4,7 @@ import { useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
-import { eur } from "@/lib/berechnung";
+import { brutto, eur } from "@/lib/berechnung";
 import { alsKuechentyp, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/lib/planer";
 import { Kuechenbild } from "@/components/warm/Kuechenbild";
 import { LiveHero } from "@/components/warm/LiveHero";
@@ -352,8 +352,8 @@ export default function Start() {
           Was kostet so eine Küche?
         </h2>
         <p className="ziffern mt-6 max-w-[58ch] text-[16.5px] leading-relaxed text-kohle-2">
-          Je nach Raum und Ausstattung zwischen {eur(von)} und {eur(bis)} — komplett, mit Geräten und
-          Montage. Die drei Beispiele sind mit demselben Planer gerechnet, der gleich auch deine
+          Je nach Raum und Ausstattung zwischen {eur(brutto(von))} und {eur(brutto(bis))} — komplett, mit Geräten,
+          Montage und Mehrwertsteuer. Die drei Beispiele sind mit demselben Planer gerechnet, der gleich auch deine
           Küche rechnet.
         </p>
 
@@ -369,7 +369,7 @@ export default function Start() {
                 <div className="gross text-[19px] font-bold text-kohle">{b.titel}</div>
                 <div className="mt-1.5 text-[14.5px] leading-snug text-kohle-2">{b.satz}</div>
                 <div className="gross ziffern mt-5 border-t border-linie-warm pt-4 text-[28px] font-bold leading-none text-kohle">
-                  {eur(b.plan.preis)}
+                  {eur(brutto(b.plan.preis))}
                 </div>
               </div>
             </div>

@@ -246,6 +246,32 @@ export interface Vorschlag {
 }
 
 /** Die Posten, aus denen sich der Preis zusammensetzt. Alles EUR netto. */
+/**
+ * Wo ein Hängeschrank hinpasst: über jedem breiten Unterschrank, der kein
+ * Hochschrank ist und nicht vor dem Fenster steht. Die Unterlagen brauchen
+ * die einzelnen Plätze, der Preis nur ihre Zahl — darum eine Quelle.
+ */
+export function haengeplaetze(
+  typ: Kuechentyp,
+  belegung: Record<string, string[]>,
+): Array<{ zeileId: string; wand: string; von: number; bis: number }> {
+  const aus: Array<{ zeileId: string; wand: string; von: number; bis: number }> = [];
+  for (const z of typ.zeilen) {
+    const f = typ.oeffnungen.find((o) => o.art === "fenster" && o.wand === z.wand);
+    let x = 0;
+    for (const id of belegung[z.id] ?? []) {
+      const b = modul(id).breite ?? 0;
+      const kat = modul(id).kategorie;
+      const stoert = f ? x < f.von + f.breite - z.start && x + b > f.von - z.start : false;
+      if (kat !== "hochschrank" && kat !== "blende" && b >= 450 && !stoert) {
+        aus.push({ zeileId: z.id, wand: z.bezeichnung, von: x, bis: x + b });
+      }
+      x += b;
+    }
+  }
+  return aus;
+}
+
 export interface Kosten {
   korpusse: number;
   haenge: number;
@@ -573,18 +599,7 @@ export function ausBelegung(
     bezeichnung: titel, belegung, weitere: [], staerken: [], schwaechen: [], begruendung: "",
   };
 
-  let haengeschraenke = 0;
-  for (const z of typ.zeilen) {
-    const f = typ.oeffnungen.find((o) => o.art === "fenster" && o.wand === z.wand);
-    let x = 0;
-    for (const id of belegung[z.id]) {
-      const b = modul(id).breite ?? 0;
-      const kat = modul(id).kategorie;
-      const stoert = f ? x < f.von + f.breite - z.start && x + b > f.von - z.start : false;
-      if (kat !== "hochschrank" && kat !== "blende" && b >= 450 && !stoert) haengeschraenke += 1;
-      x += b;
-    }
-  }
+  const haengeschraenke = haengeplaetze(typ, belegung).length;
 
   // Der Preis zerfaellt in Posten, die man einzeln nachrechnen kann.
   // Die Ausstattungsstufe schlaegt auf Moebel und Arbeit, nicht auf Geraete:
@@ -602,9 +617,11 @@ export function ausBelegung(
   const moebel = korpusse + haenge + platte + sockel + spuele + montage;
   const zuschlag = Math.round(moebel * aufschlag) - moebel;
 
+  // Netto, wie alles andere auch: der Richtpreis eines Geraets ist ein
+  // Strassenpreis und damit brutto.
   let geraete = 0;
   for (const art of Object.keys(a.geraete) as Array<keyof Geraetewahl>) {
-    geraete += geraet(a.geraete[art]).richtpreis;
+    geraete += geraet(a.geraete[art]).netto;
   }
 
   const kosten = {

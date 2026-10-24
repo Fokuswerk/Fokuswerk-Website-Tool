@@ -1,8 +1,8 @@
 import { belegungsbreite, modul, PREISSTAND, PREIS_GUELTIG_BIS, LIEFERANT } from "@/data/module";
-import { geraet, PREISSTAND_GERAETE, type Geraetewahl } from "@/data/geraete";
+import { ARTEN, geraet, MWST, PREISSTAND_GERAETE, type Geraetewahl } from "@/data/geraete";
 import { platzierung } from "@/lib/berechnung";
 import { AP_OK, HOCH_H, OS_UK, PLATTE, rolleVon, ROLLE_NAME, SOCKEL, TIEFE_UNTEN } from "@/lib/masse";
-import { lageIn, WANDNAME, type Raumangaben, type Vorschlag } from "@/lib/planer";
+import { haengeplaetze, lageIn, WANDNAME, type Raumangaben, type Vorschlag } from "@/lib/planer";
 import type { Kuechentyp } from "@/lib/typen";
 
 /**
@@ -94,10 +94,32 @@ export interface Zuschnitt {
   sockelLfm: number;
 }
 
+/* ------------------------------- Geräte ------------------------------- */
+
+export interface Geraetezeile {
+  art: string;
+  bezeichnung: string;
+  modell: string;
+  einbau: string;
+  nische: string;
+  /** Wo es sitzt — Wand und Maß ab Zeilenanfang. */
+  platz: string;
+}
+
+/* ---------------------------- Hängeschränke --------------------------- */
+
+export interface Haengezeile {
+  wand: string;
+  von: number;
+  bis: number;
+  breite: number;
+}
+
 /* ------------------------------ Das Ganze ----------------------------- */
 
 export interface Unterlagen {
   kopf: {
+    vorgang: string;
     erstellt: string;
     preisstand: string;
     gueltigBis: string;
@@ -108,8 +130,13 @@ export interface Unterlagen {
   };
   raum: Array<[string, string]>;
   massketten: Masskette[];
+  haenge: Haengezeile[];
+  geraeteliste: Geraetezeile[];
   liste: Listenzeile[];
   summen: Array<[string, number]>;
+  /** Netto, Umsatzsteuer, Endpreis. */
+  netto: number;
+  steuer: number;
   gesamt: number;
   anschluesse: Anschlusspunkt[];
   zuschnitt: Zuschnitt;
@@ -130,6 +157,21 @@ const H_UNTEN = 450;
 const H_HOCH = 1800;
 const H_PLATTE = 1150;
 const H_HAUBE = 2000;
+
+/**
+ * Eine Vorgangsnummer, die zum Plan gehört und nicht zum Zufall: derselbe
+ * Plan ergibt dieselbe Nummer, eine Änderung eine andere. So lässt sich ein
+ * ausgedrucktes Blatt später wieder zuordnen.
+ */
+function vorgangsnummer(a: Raumangaben, v: Vorschlag): string {
+  const text = JSON.stringify([a.form, a.breite, a.tiefe, a.niveau, a.geraete, v.strategie, v.belegung]);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return `SK-${new Date().getFullYear()}-${h.toString(36).toUpperCase().padStart(6, "0").slice(-6)}`;
+}
 
 export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): Unterlagen {
   const heute = new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" });
@@ -200,15 +242,15 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
 
   for (const art of Object.keys(a.geraete) as Array<keyof Geraetewahl>) {
     const g = geraet(a.geraete[art]);
-    if (g.richtpreis <= 0) continue;
+    if (g.netto <= 0) continue;
     liste.push({
       pos: "—",
-      bezeichnung: `${g.marke}${g.serie ? ` ${g.serie}` : ""} ${g.modell ?? g.name}`,
+      bezeichnung: `${g.marke}${g.serie ? ` ${g.serie}` : ""} ${g.name}`,
       artikel: g.modell ?? g.id,
       menge: 1,
       einheit: "Stk",
-      einzel: g.richtpreis,
-      summe: g.richtpreis,
+      einzel: g.netto,
+      summe: g.netto,
     });
   }
 
@@ -217,6 +259,35 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
     [`Ausstattung ${NIVEAU_NAME[a.niveau]}`, v.kosten.zuschlag],
     ["Geräte", v.kosten.geraete],
   ];
+  const netto = v.kosten.gesamt;
+  const steuer = Math.round(netto * MWST);
+
+  /* --- Geräte mit Einbaudaten: das braucht, wer sie einbaut --- */
+  const ARTNAME: Record<string, string> = {
+    kuehlschrank: "Kühlschrank",
+    kochfeld: "Kochfeld",
+    backofen: "Backofen",
+    spuelmaschine: "Spülmaschine",
+    dunstabzug: "Dunstabzug",
+  };
+  const EINBAU: Record<string, string> = {
+    kuehlschrank: "Einbau, Schlepptür",
+    kochfeld: "Autark, in die Platte eingelassen",
+    backofen: "Einbau, 60er Nische",
+    spuelmaschine: "Vollintegriert, mit Möbelfront",
+    dunstabzug: "Flachschirm, im Hängeschrank",
+  };
+  const nischeVon = (art: string, g: ReturnType<typeof geraet>): string => {
+    if (art === "kuehlschrank") {
+      if (g.bau === "unterbau") return "820 × 600 × 550 mm (H × B × T)";
+      if (g.bau === "hoch") return "1775 × 600 × 550 mm (H × B × T)";
+      return "—";
+    }
+    if (art === "kochfeld") return `Ausschnitt ${KOCHFELD_AUSSCHNITT.breite} × ${KOCHFELD_AUSSCHNITT.tiefe} mm`;
+    if (art === "backofen") return "595 × 560 × 550 mm (H × B × T)";
+    if (art === "spuelmaschine") return `${g.breite === 450 ? "450" : "600"} mm Nischenbreite`;
+    return "600 mm Hängeschrank, Unterkante 1540 mm";
+  };
 
   /* --- Anschlüsse --- */
   const anschluesse: Anschlusspunkt[] = [];
@@ -235,7 +306,8 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
     anschluesse.push({ art: "Abwasser DN 50", wand: sp.kette.wand, abZeilenanfang: mitte(sp.pos), hoehe: 400, hinweis: "Siphon im Unterschrank" });
     anschluesse.push({ art: "Steckdose", wand: sp.kette.wand, abZeilenanfang: mitte(sp.pos), hoehe: H_UNTEN, hinweis: "für Untertischgerät oder Spülmaschine" });
   }
-  const gs = findeModul("GS600");
+  const gsBreite = geraet(a.geraete.spuelmaschine).breite;
+  const gs = gsBreite === 600 ? findeModul("GS600") : gsBreite === 450 ? findeModul("US450") : null;
   if (gs) {
     anschluesse.push({ art: "Wasser und Abwasser", wand: gs.kette.wand, abZeilenanfang: mitte(gs.pos), hoehe: H_UNTEN, hinweis: "kann mit der Spüle geteilt werden, wenn sie daneben steht" });
     anschluesse.push({ art: "Steckdose", wand: gs.kette.wand, abZeilenanfang: mitte(gs.pos), hoehe: H_UNTEN, hinweis: "eigener Stromkreis empfohlen" });
@@ -269,6 +341,38 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
       });
     }
   }
+
+  /* --- Geräte mit Einbaudaten und Platz in der Zeile --- */
+  const modulFuer: Record<string, string | null> = {
+    kuehlschrank: geraet(a.geraete.kuehlschrank).bau === "hoch" ? "HK600" : "US600",
+    kochfeld: "KF600",
+    backofen: a.ofenHoch ? "HB600" : "KF600",
+    spuelmaschine: gsBreite === 450 ? "US450" : "GS600",
+    dunstabzug: "KF600",
+  };
+  const geraeteliste: Geraetezeile[] = [];
+  for (const { art } of ARTEN) {
+    const g = geraet(a.geraete[art]);
+    if (g.netto <= 0) continue;
+    const id = modulFuer[art];
+    const sitz = id ? findeModul(id) : null;
+    geraeteliste.push({
+      art: ARTNAME[art] ?? art,
+      bezeichnung: `${g.marke}${g.serie ? ` ${g.serie}` : ""} — ${g.name}`,
+      modell: g.modell ?? "—",
+      einbau: EINBAU[art] ?? "—",
+      nische: nischeVon(art, g),
+      platz: sitz ? `${sitz.kette.wand}, ${sitz.pos.von}–${sitz.pos.bis} mm` : "ohne eigenen Platz an der Wand",
+    });
+  }
+
+  /* --- Hängeschränke: im Preis, aber bisher nirgends vermaßt --- */
+  const haenge: Haengezeile[] = haengeplaetze(typ, v.belegung).map((h) => ({
+    wand: h.wand,
+    von: h.von,
+    bis: h.bis,
+    breite: h.bis - h.von,
+  }));
 
   /* --- Zuschnitt --- */
   const platten: Plattenstueck[] = [];
@@ -316,6 +420,7 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
 
   return {
     kopf: {
+      vorgang: vorgangsnummer(a, v),
       erstellt: heute,
       preisstand: PREISSTAND,
       gueltigBis: PREIS_GUELTIG_BIS,
@@ -335,9 +440,13 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
       ["Sockelhöhe", `${SOCKEL} mm`],
     ],
     massketten,
+    haenge,
+    geraeteliste,
     liste,
     summen,
-    gesamt: v.kosten.gesamt,
+    netto,
+    steuer,
+    gesamt: netto + steuer,
     anschluesse,
     zuschnitt: { platten, leisten, sockelLfm: runden(lfm) },
     pruefen,

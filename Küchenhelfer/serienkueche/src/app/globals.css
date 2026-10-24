@@ -199,18 +199,73 @@ body {
   cursor: grab;
 }
 
-/* ------- Unterlagen auf Papier ------- */
+/* ------- Unterlagen auf Papier -------
+   Das Blatt soll fuer sich stehen: eigener Briefkopf, Fusszeile auf jeder
+   Seite, Tabellen in voller Breite und Ueberschriften, die nicht allein am
+   Seitenende haengen bleiben. */
+.nur-drucken { display: none; }
+
 @media print {
   /* Alles, was nur am Bildschirm hilft, verschwindet. */
   header, .nicht-drucken { display: none !important; }
   .warm { background: #ffffff !important; }
   body { background: #ffffff !important; }
+  .nur-drucken { display: block; }
+
+  /* Graue Linien und die Zeichnungen muessen mitdrucken, sonst steht da
+     eine leere Flaeche, wo der Grundriss sein soll. */
+  .warm .unterlagen,
+  .warm .unterlagen * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
   .warm .unterlagen { color: #000; font-size: 10.5pt; }
-  .warm .unterlagen table { font-size: 9.5pt; }
+  /* Die hellen Grautoene sind fuer Bildschirme gemacht; auf Papier waeren
+     Beschriftungen und Hinweise damit kaum zu lesen. */
+  .warm .unterlagen [class*="text-kohle-3"] { color: #555 !important; }
+  .warm .unterlagen [class*="text-kohle-2"] { color: #222 !important; }
+  .warm .unterlagen table { font-size: 9pt; }
   .warm .unterlagen .flaeche,
   .warm .unterlagen .flaeche-hoch { box-shadow: none !important; border-color: #ccc !important; }
-  .warm .unterlagen section { break-inside: avoid; }
+
+  /* Tabellen duerfen am Bildschirm schieben, auf Papier nicht: dort wuerde
+     rechts einfach etwas fehlen. */
+  .warm .unterlagen .overflow-x-auto { overflow: visible !important; }
+  .warm .unterlagen table { min-width: 0 !important; width: 100% !important; table-layout: auto; }
+  .warm .unterlagen td, .warm .unterlagen th { word-break: break-word; }
+
+  /* Lange Abschnitte duerfen umbrechen — sonst schiebt eine Stueckliste,
+     die nicht auf eine Seite passt, eine halbe Leerseite davor. */
+  .warm .unterlagen section { break-inside: auto; }
+  .warm .unterlagen section > div:first-child,
+  .warm .unterlagen h2 { break-after: avoid; }
   .warm .unterlagen table { break-inside: auto; }
+  .warm .unterlagen thead { display: table-header-group; }
   .warm .unterlagen tr { break-inside: avoid; }
-  @page { margin: 16mm; }
+  .warm .unterlagen .break-inside-avoid { break-inside: avoid; }
+
+  .drucken-kopf {
+    border-bottom: 1.2pt solid #000;
+    padding-bottom: 6pt;
+    margin-bottom: 14pt;
+  }
+  .drucken-kopf-zeile {
+    display: flex;
+    justify-content: space-between;
+    gap: 12pt;
+    font-size: 10pt;
+  }
+  .drucken-kopf-zeile.drucken-fein { margin-top: 3pt; font-size: 8.5pt; color: #555; }
+
+  /* Chrome druckt fest positionierte Elemente auf jeder Seite. */
+  .drucken-fuss {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 0.6pt solid #bbb;
+    padding-top: 4pt;
+    font-size: 7.5pt;
+    color: #666;
+  }
+
+  @page { margin: 16mm 16mm 20mm 16mm; }
 }

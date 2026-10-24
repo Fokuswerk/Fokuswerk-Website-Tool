@@ -6,9 +6,9 @@ import dynamic from "next/dynamic";
 import { useRef } from "react";
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, FileUp, PencilLine, Printer, RotateCcw, RotateCw, ScanLine } from "lucide-react";
 import { modul } from "@/data/module";
-import { rolleVon, ROLLE_NAME } from "@/lib/masse";
-import { ARTEN, FOTO_QUELLE, geraet, geraeteFuer, markenFuer, PREISSTAND_GERAETE, QUELLEN, type GeraeteArt } from "@/data/geraete";
-import { eur } from "@/lib/berechnung";
+import { HOCH_H, OS_UK, rolleVon, ROLLE_NAME } from "@/lib/masse";
+import { ARTEN, FOTO_QUELLE, geraet, geraeteFuer, markenFuer, MWST, PREISSTAND_GERAETE, QUELLEN, type GeraeteArt } from "@/data/geraete";
+import { brutto, eur } from "@/lib/berechnung";
 import {
   alleVorschlaege, alsKuechentyp, ausBelegung, befundeZeile, drehungen, drehungName, FORMEN, kuechenwaende,
   planeKueche,
@@ -168,7 +168,7 @@ function VorschlagKarte({
               {v.arbeitsflaeche > 0 ? `${Math.round(v.arbeitsflaeche / 10)} cm Arbeitsfläche` : "Spüle und Herd nebeneinander"}
             </div>
           </div>
-          <div className="gross shrink-0 text-right text-[23px] font-bold leading-none text-kohle">{eur(v.preis)}</div>
+          <div className="gross shrink-0 text-right text-[23px] font-bold leading-none text-kohle">{eur(brutto(v.preis))}</div>
         </div>
         <ul className="mt-4 space-y-2 border-t border-linie-warm pt-4 text-[14px] leading-snug">
           {v.gutPunkte.slice(0, 2).map((g) => (
@@ -1392,8 +1392,8 @@ export default function Kuechenplaner() {
               </div>
               <div className="grid gap-6 p-6 sm:grid-cols-[1fr_auto] sm:items-end sm:p-8">
                 <div>
-                  <div className="vorzeile">Komplett, mit Geräten und Montage</div>
-                  <div className="gross ziffern mt-2 text-[44px] font-bold leading-none tracking-[-0.04em] text-kohle">{eur(gewaehlterVorschlag.preis)}</div>
+                  <div className="vorzeile">Komplett, mit Geräten und Montage, inkl. MwSt.</div>
+                  <div className="gross ziffern mt-2 text-[44px] font-bold leading-none tracking-[-0.04em] text-kohle">{eur(brutto(gewaehlterVorschlag.preis))}</div>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <WKnopf art="primaer" gross onClick={() => geheZu("unterlagen")}>Angebot anfordern</WKnopf>
@@ -1509,8 +1509,24 @@ export default function Kuechenplaner() {
           const mm = (x: number) => x.toLocaleString("de-DE");
           return (
             <div className="warm-rein unterlagen">
+              {/* Nur auf Papier: ein Briefkopf, damit das Blatt für sich steht,
+                  und eine Fußzeile, die Chrome auf jeder Seite wiederholt. */}
+              <div className="nur-drucken drucken-kopf">
+                <div className="drucken-kopf-zeile">
+                  <strong>Serienküche — Küchenplanung</strong>
+                  <span>Vorgang {u.kopf.vorgang}</span>
+                </div>
+                <div className="drucken-kopf-zeile drucken-fein">
+                  <span>Planungsunterlagen zur Angebotsanfrage · {u.kopf.form}, Ausstattung {u.kopf.niveau}</span>
+                  <span>Erstellt {u.kopf.erstellt}</span>
+                </div>
+              </div>
+              <div className="nur-drucken drucken-fuss">
+                Serienküche · Vorgang {u.kopf.vorgang} · {u.kopf.erstellt} · Prototyp, kein verbindliches Angebot
+              </div>
+
               <div className="flex flex-wrap items-end justify-between gap-5">
-                <div>
+                <div className="nicht-drucken">
                   <div className="vorzeile">Unterlagen zur Anfrage</div>
                   <h1 className="gross gross-xl mt-3 text-[34px] font-bold text-kohle sm:text-[46px]">
                     Das geht mit raus.
@@ -1534,6 +1550,7 @@ export default function Kuechenplaner() {
 
               <dl className="mt-9 grid gap-x-8 gap-y-2.5 border-t border-linie-warm pt-6 sm:grid-cols-2 lg:grid-cols-3">
                 {[
+                  ["Vorgang", u.kopf.vorgang],
                   ["Erstellt", u.kopf.erstellt],
                   ["Form", u.kopf.form],
                   ["Ausstattung", u.kopf.niveau],
@@ -1559,7 +1576,39 @@ export default function Kuechenplaner() {
                 </dl>
               </Abschnitt>
 
-              <Abschnitt titel="Maßketten" nr="2" satz="Jede Zeile von links nach rechts, Maße ab Zeilenanfang.">
+              {/* Die Unterlagen verweisen auf „Positionsnummern wie in der
+                  Zeichnung" — dann muss die Zeichnung auch dabei sein. */}
+              <Abschnitt titel="Zeichnungen" nr="2" satz="Grundriss und jede Zeile von vorn, mit denselben Positionsnummern wie in den Tabellen.">
+                <div className="flaeche rounded-[14px] px-4 py-4">
+                  {/* Der Grundriss braucht nicht die volle Blattbreite — er
+                      ist fast quadratisch und wuerde sonst eine Seite fuellen. */}
+                  <div className="mx-auto max-w-[460px]">
+                    <Raumbild raum={raum} volleBreite />
+                  </div>
+                  <p className="mt-2 border-t border-linie-warm pt-2 text-center text-[12.5px] text-kohle-3">
+                    Grundriss, von oben. Gelb die Wände mit Küche, der Tropfen der Wasseranschluss.
+                  </p>
+                </div>
+                <div className="mt-5 space-y-5">
+                  {typ.zeilen.map((z) => (
+                    <div key={z.id} className="flaeche break-inside-avoid rounded-[14px] px-4 py-4">
+                      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
+                        <div className="gross text-[15px] font-bold text-kohle">{z.bezeichnung}</div>
+                        <div className="ziffern text-[12.5px] text-kohle-3">{mm(z.laenge)} mm</div>
+                      </div>
+                      <Kuechenbild
+                        typ={typ}
+                        variante={gewaehlterVorschlag.variante}
+                        zeileId={z.id}
+                        volleBreite
+                        nummernAb={nummerAb(z.id)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </Abschnitt>
+
+              <Abschnitt titel="Maßketten" nr="3" satz="Jede Zeile von links nach rechts, Maße ab Zeilenanfang.">
                 <div className="space-y-7">
                   {u.massketten.map((k) => (
                     <div key={k.zeileId}>
@@ -1587,7 +1636,34 @@ export default function Kuechenplaner() {
                 </div>
               </Abschnitt>
 
-              <Abschnitt titel="Stückliste" nr="3" satz="Positionsnummern wie in der Zeichnung. Preise netto.">
+              {u.haenge.length > 0 && (
+                <Abschnitt
+                  titel="Hängeschränke"
+                  nr="4"
+                  satz={`${u.haenge.length} Stück, je 600 mm breit. Unterkante ${mm(OS_UK)} mm, Oberkante ${mm(HOCH_H)} mm über Fertigfußboden.`}
+                >
+                  <Tabelle
+                    kopf={["Nr", "Wand", "von", "bis", "Breite"]}
+                    rechts={[2, 3, 4]}
+                    zeilen={u.haenge.map((h, i) => [
+                      String(i + 1), h.wand, `${mm(h.von)} mm`, `${mm(h.bis)} mm`, `${mm(h.breite)} mm`,
+                    ])}
+                  />
+                </Abschnitt>
+              )}
+
+              <Abschnitt titel="Geräte" nr="5" satz="Was eingebaut wird, wie es eingebaut wird und in welche Nische.">
+                <Tabelle
+                  kopf={["Gerät", "Modell", "Einbau", "Nische", "Platz in der Zeile"]}
+                  zeilen={u.geraeteliste.map((g) => [g.bezeichnung, g.modell, g.einbau, g.nische, g.platz])}
+                />
+                <p className="mt-4 text-[13px] leading-relaxed text-kohle-3">
+                  Nischenmaße sind die üblichen Normmaße der Bauart, nicht aus dem Datenblatt des
+                  einzelnen Geräts. Vor der Bestellung gegen das Datenblatt halten.
+                </p>
+              </Abschnitt>
+
+              <Abschnitt titel="Stückliste" nr="6" satz="Positionsnummern wie in der Zeichnung. Alle Preise netto.">
                 <Tabelle
                   kopf={["Pos", "Bezeichnung", "Artikel", "Menge", "Einzel", "Summe"]}
                   rechts={[3, 4, 5]}
@@ -1604,14 +1680,22 @@ export default function Kuechenplaner() {
                       <span className="ziffern text-kohle">{eur(v)}</span>
                     </div>
                   ))}
+                  <div className="flex items-baseline justify-between gap-4 border-t border-linie-stark pt-2.5 text-[14px]">
+                    <span className="font-semibold text-kohle">Summe netto</span>
+                    <span className="ziffern font-semibold text-kohle">{eur(u.netto)}</span>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-4 text-[14px]">
+                    <span className="text-kohle-2">zzgl. {Math.round(MWST * 100)} % Umsatzsteuer</span>
+                    <span className="ziffern text-kohle">{eur(u.steuer)}</span>
+                  </div>
                   <div className="flex items-baseline justify-between gap-4 border-t border-kohle pt-2.5">
-                    <span className="gross text-[16px] font-bold text-kohle">Gesamt, netto</span>
+                    <span className="gross text-[16px] font-bold text-kohle">Endpreis</span>
                     <span className="gross ziffern text-[22px] font-bold text-kohle">{eur(u.gesamt)}</span>
                   </div>
                 </div>
               </Abschnitt>
 
-              <Abschnitt titel="Anschlüsse" nr="4" satz="Maße ab Zeilenanfang, Höhen über Fertigfußboden.">
+              <Abschnitt titel="Anschlüsse" nr="7" satz="Maße ab Zeilenanfang, Höhen über Fertigfußboden.">
                 <Tabelle
                   kopf={["Anschluss", "Wand", "ab Anfang", "Höhe", "Hinweis"]}
                   rechts={[2, 3]}
@@ -1621,7 +1705,7 @@ export default function Kuechenplaner() {
                 />
               </Abschnitt>
 
-              <Abschnitt titel="Zuschnitt" nr="5" satz="Arbeitsplatte, Passleisten und Sockel.">
+              <Abschnitt titel="Zuschnitt" nr="8" satz="Arbeitsplatte, Passleisten und Sockel.">
                 <Tabelle
                   kopf={["Platte", "Länge", "Tiefe", "Stärke", "Ausschnitte"]}
                   rechts={[1, 2, 3]}
@@ -1653,7 +1737,7 @@ export default function Kuechenplaner() {
                 </p>
               </Abschnitt>
 
-              <Abschnitt titel="Vor Ort prüfen" nr="6">
+              <Abschnitt titel="Vor Ort prüfen" nr="9">
                 <ul className="space-y-2.5">
                   {u.pruefen.map((t) => (
                     <li key={t} className="flex gap-3 text-[14.5px] leading-relaxed text-kohle-2">
@@ -1662,6 +1746,30 @@ export default function Kuechenplaner() {
                     </li>
                   ))}
                 </ul>
+              </Abschnitt>
+
+              <Abschnitt titel="Weiteres Vorgehen" nr="10">
+                <ol className="space-y-2.5 text-[14.5px] leading-relaxed text-kohle-2">
+                  {[
+                    "Diese Unterlagen gehen mit der Anfrage an den Lieferanten.",
+                    "Der Lieferant bestätigt Verfügbarkeit und Preise oder meldet Abweichungen zurück.",
+                    "Vor der Bestellung misst jemand den fertigen Raum nach und zeichnet das Aufmaß gegen.",
+                    "Erst danach wird bestellt. Bis dahin ist nichts verbindlich.",
+                  ].map((t, i) => (
+                    <li key={t} className="flex gap-3">
+                      <span className="ziffern shrink-0 font-semibold text-kohle">{i + 1}.</span>
+                      {t}
+                    </li>
+                  ))}
+                </ol>
+                <div className="mt-9 grid gap-8 break-inside-avoid sm:grid-cols-2">
+                  {["Aufmaß genommen am, Name", "Planung geprüft und freigegeben"].map((t) => (
+                    <div key={t}>
+                      <div className="h-11 border-b border-kohle-3" />
+                      <div className="mt-2 text-[12.5px] text-kohle-3">{t}</div>
+                    </div>
+                  ))}
+                </div>
               </Abschnitt>
 
               <div className="mt-10">

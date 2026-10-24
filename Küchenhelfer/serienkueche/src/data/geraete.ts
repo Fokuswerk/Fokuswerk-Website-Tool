@@ -2,7 +2,11 @@
  * Geräte, die man einzeln auswählt.
  *
  * Es sind echte, in Deutschland gängige Einbaugeräte mit ihrer
- * Modellbezeichnung. Die Preise sind recherchierte Straßenpreise und
+ * Modellbezeichnung. Die Preise sind recherchierte Straßenpreise — also
+ * Endkundenpreise und damit **brutto**, während die Modulpreise netto sind.
+ * Damit nicht zwei Grundlagen in einer Summe landen, trägt jedes Gerät
+ * zusätzlich seinen Nettowert; gerechnet wird in der ganzen Anwendung netto.
+ * Die Preise sind
  * Momentaufnahmen, keine Einkaufskonditionen — Stand siehe PREISSTAND_GERAETE,
  * Quellen in QUELLEN. Für ein echtes Angebot ersetzt die Preisliste des
  * Lieferanten diese Tabelle; am Aufbau ändert das nichts.
@@ -18,6 +22,9 @@
  */
 
 export const PREISSTAND_GERAETE = "Oktober 2026";
+
+/** Umsatzsteuersatz für Küchen als Lieferung mit Montage. */
+export const MWST = 0.19;
 export const QUELLEN = "geizhals.de, testbericht.de, vergleich.org, otto.de, ebay.de";
 export const FOTO_QUELLE = "Produktfotos: Bosch und Siemens (BSH Hausgeräte)";
 
@@ -37,8 +44,10 @@ export interface Geraet {
   satz: string;
   /** Belegte technische Daten. */
   daten?: Array<[string, string]>;
-  /** Recherchierter Straßenpreis in EUR. 0 = kein Gerät. */
+  /** Recherchierter Straßenpreis in EUR, brutto. 0 = kein Gerät. */
   richtpreis: number;
+  /** Derselbe Preis netto — damit gerechnet wird. */
+  netto: number;
   /** Breite des Korpus, den das Gerät belegt. 0 = belegt keinen eigenen Platz. */
   breite: number;
   /** Herstellerfoto des Modells, unter /public/geraete. */
@@ -49,7 +58,7 @@ export interface Geraet {
   aufpreis: number;
 }
 
-const ROH: Array<Omit<Geraet, "aufpreis">> = [
+const ROH: Array<Omit<Geraet, "aufpreis" | "netto">> = [
   /* ---------------- Kühlschrank ---------------- */
   {
     id: "ks-keiner", art: "kuehlschrank", marke: "—", name: "Keiner",
@@ -203,7 +212,11 @@ export const GERAETE: Geraet[] = (() => {
     const b = basis.get(g.art);
     if (b === undefined || g.richtpreis < b) basis.set(g.art, g.richtpreis);
   }
-  return ROH.map((g) => ({ ...g, aufpreis: g.richtpreis - (basis.get(g.art) ?? 0) }));
+  return ROH.map((g) => ({
+    ...g,
+    netto: Math.round(g.richtpreis / (1 + MWST)),
+    aufpreis: g.richtpreis - (basis.get(g.art) ?? 0),
+  }));
 })();
 
 export interface Geraetewahl {
@@ -227,7 +240,7 @@ const INDEX = new Map(GERAETE.map((g) => [g.id, g]));
 /** Notnagel, falls eine Kennung gar nicht aufzulösen ist. */
 const UNBEKANNT: Geraet = {
   id: "unbekannt", art: "kuehlschrank", marke: "—", name: "Gerät", satz: "",
-  richtpreis: 0, aufpreis: 0, breite: 600,
+  richtpreis: 0, netto: 0, aufpreis: 0, breite: 600,
 };
 
 export function geraet(id: string): Geraet {

@@ -2,6 +2,7 @@ import { MODULE, belegungsbreite, modul } from "@/data/module";
 import { KUECHENTYPEN, WOHNUNGEN, typFuer } from "@/data/projekt";
 import { VARIANTEN, type VarianteRoh } from "@/data/varianten";
 import type { Kuechentyp, Position, Zeile } from "@/lib/typen";
+import { MWST } from "@/data/geraete";
 
 /**
  * Alle Mengen und Kosten werden hier aus Modulkatalog und Variantenbelegung
@@ -307,6 +308,14 @@ export function pruefeBelegungen(): string[] {
     }
   }
   return fehler;
+}
+
+/**
+ * Gerechnet wird netto — im Haus, gegenüber dem Lieferanten, im Angebot.
+ * Was ein Verbraucher sieht, muss dagegen der Endpreis sein, also brutto.
+ */
+export function brutto(netto: number): number {
+  return Math.round(netto * (1 + MWST));
 }
 
 export function eur(wert: number): string {
