@@ -127,9 +127,13 @@ export default function Aufmass() {
             <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <Flaeche className="p-3">
                 <div className="mb-1.5 text-[10.5px] font-medium uppercase tracking-[0.06em] text-ink-3">
-                  Messpunkte im Grundriss
+                  Grundriss des Typs {typ.id}
                 </div>
-                <Grundriss typ={typ} variante={v} hoehe={250} />
+                <Grundriss typ={typ} variante={v} volleBreite />
+                <p className="mt-2 text-[11.5px] leading-relaxed text-ink-3">
+                  Die Messpunkte M1 bis M5 stehen in der Tabelle daneben — der Grundriss zeigt den
+                  Typ, nicht die einzelne Einheit.
+                </p>
               </Flaeche>
 
               <Flaeche className="overflow-hidden">

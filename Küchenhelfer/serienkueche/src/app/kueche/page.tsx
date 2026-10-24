@@ -1568,7 +1568,10 @@ export default function Kuechenplaner() {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <WKnopf art="primaer" gross onClick={() => geheZu("unterlagen")}>Angebot anfordern</WKnopf>
-                  <WKnopf gross onClick={() => window.print()}>Speichern</WKnopf>
+                  {/* Vorher stand hier "Speichern" und druckte den Bildschirm
+                      samt Knoepfen. Die Unterlagen daneben sind die Seite, die
+                      zum Drucken gemacht ist. */}
+                  <WKnopf gross onClick={() => geheZu("unterlagen")}>Unterlagen ansehen</WKnopf>
                 </div>
               </div>
             </Karte>

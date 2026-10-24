@@ -53,7 +53,13 @@ export function Druckbogen({
   zeile?: string;
   stand?: string;
 }) {
-  const heute = new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" });
+  // Das Datum erst nach dem Mounten setzen: auf dem Server entsteht sonst
+  // das Builddatum, im Browser das heutige — ein echter Hydration-Fehler
+  // auf jeder Seite des Profibereichs.
+  const [heute, setHeute] = useState("");
+  useEffect(() => {
+    setHeute(new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" }));
+  }, []);
   return (
     <>
       <div className="nur-drucken drucken-kopf">
