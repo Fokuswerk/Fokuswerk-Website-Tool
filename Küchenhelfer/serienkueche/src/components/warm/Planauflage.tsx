@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { kuechenwaende, wandlaenge, WANDNAME, type Raumangaben, type WandId } from "@/lib/planer";
 
 /**
@@ -11,6 +11,11 @@ import { kuechenwaende, wandlaenge, WANDNAME, type Raumangaben, type WandId } fr
  * Maße in den Schildern kommen aus seinen Angaben, der Rahmen sagt nur, wozu
  * sie gehören. Fenster, Tür und Wasseranschluss sitzen an der Stelle der Wand,
  * die ihre Zahl angibt — wer unten eine Zahl ändert, sieht es hier sofort.
+ *
+ * Der Rahmen hält dabei das Seitenverhältnis aus Raumbreite und Raumtiefe:
+ * ein Raum von 3,40 × 2,80 m lässt sich nicht als Quadrat aufziehen. Sonst
+ * stimmen zwar die Zahlen, das Bild daneben sieht aber aus wie ein anderer
+ * Raum — und genau das verwirrt.
  */
 
 export interface Rahmen {
@@ -39,20 +44,44 @@ function punkt(r: Rahmen, w: WandId, t: number) {
 }
 
 function Schild({
-  r, w, t, text, ton = "dunkel", versatz = 6, nurGross = false,
+  r, w, t, text, ton = "dunkel", versatz = 6, nurGross = false, aussen = false, notfallsWeg = false, box,
 }: {
   r: Rahmen; w: WandId; t: number; text: string; ton?: "dunkel" | "hell"; versatz?: number;
   /** Auf dem Handy ist im Rahmen kein Platz fuer vier Schilder. */
   nurGross?: boolean;
+  /** Bei einem flachen Rahmen stapeln sich die Schilder innen uebereinander.
+      Dann stehen sie besser davor als darin. */
+  aussen?: boolean;
+  /** Masszahlen stehen auch in der Liste unter dem Bild. Passen sie im engen
+      Rahmen nirgends hin, lassen wir sie lieber weg, als sie zu stapeln. */
+  notfallsWeg?: boolean;
+  /** Gemessene Bildgröße in Pixeln — nur damit lässt sich sagen, ob neben
+      dem Rahmen wirklich ein Schild hinpasst. */
+  box?: { w: number; h: number };
 }) {
   const p = punkt(r, w, t);
-  // Immer nach innen schieben, damit kein Schild am Bildrand abgeschnitten wird.
-  // Der Versatz haelt zwei Schilder auf derselben Wand auseinander.
+  // Nach aussen nur, wo zwischen Rahmen und Bildrand auch Platz ist —
+  // sonst steht das Schild halb neben dem Bild.
+  // Oben und unten braucht ein Schild ~30 px, links und rechts ~120 px.
+  const bw = box?.w ?? 0;
+  const bh = box?.h ?? 0;
+  const platz =
+    w === "haupt" ? r.y * bh > 34
+    : w === "gegenueber" ? (1 - (r.y + r.h)) * bh > 34
+    : w === "links" ? r.x * bw > 124
+    : (1 - (r.x + r.b)) * bw > 124;
+  const raus = aussen && platz;
+  if (aussen && !platz && notfallsWeg) return null;
+  // Normalerweise nach innen schieben, damit kein Schild am Bildrand
+  // abgeschnitten wird. Der Versatz haelt zwei Schilder auf derselben Wand
+  // auseinander.
+  // Auch draußen bleiben zwei Schilder derselben Wand auf zwei Zeilen.
+  const abstand = raus ? (versatz > 20 ? 32 : 6) : versatz;
   const nachInnen =
-    w === "haupt" ? `translate(-50%, ${versatz}px)`
-    : w === "gegenueber" ? `translate(-50%, calc(-100% - ${versatz}px))`
-    : w === "links" ? `translate(${versatz}px, -50%)`
-    : `translate(calc(-100% - ${versatz}px), -50%)`;
+    w === "haupt" ? (raus ? `translate(-50%, calc(-100% - ${abstand}px))` : `translate(-50%, ${abstand}px)`)
+    : w === "gegenueber" ? (raus ? `translate(-50%, ${abstand}px)` : `translate(-50%, calc(-100% - ${abstand}px))`)
+    : w === "links" ? (raus ? `translate(calc(-100% - ${abstand}px), -50%)` : `translate(${abstand}px, -50%)`)
+    : (raus ? `translate(${abstand}px, -50%)` : `translate(calc(-100% - ${abstand}px), -50%)`);
   return (
     <span
       className={`pointer-events-none absolute whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-semibold shadow-sm sm:px-2.5 sm:py-1 sm:text-[11.5px] ${
@@ -81,6 +110,53 @@ export function Planauflage({
 }) {
   const huelle = useRef<HTMLDivElement>(null);
   const waende = kuechenwaende(raum);
+  // Flacher oder schmaler Rahmen: dann stehen die Schilder davor statt darin.
+  const [eng, setEng] = useState(false);
+  const [box, setBox] = useState({ w: 0, h: 0 });
+
+  /**
+   * Breite und Höhe des Rahmens sind Anteile am Bild, und das Bild ist
+   * selten quadratisch. Darum rechnen beide Richtungen über die gemessene
+   * Bildgröße ineinander um.
+   */
+  const masseFuer = useCallback(
+    (bWunsch: number, maxB: number, maxH: number, kasten: { width: number; height: number }) => {
+      const seite = (raum.breite || 1) / (raum.tiefe || 1);
+      const hAus = (b: number) => (b * kasten.width) / (seite * kasten.height);
+      const bAus = (h: number) => (h * kasten.height * seite) / kasten.width;
+      let b = Math.max(MIN, bWunsch);
+      let h = hAus(b);
+      if (h < MIN) { h = MIN; b = bAus(h); }
+      const f = Math.min(1, maxB / b, maxH / h);
+      if (f < 1) { b *= f; h *= f; }
+      return { b, h, bAus };
+    },
+    [raum.breite, raum.tiefe],
+  );
+
+  // Ändert jemand unten die Raummaße, soll der Rahmen sofort nachziehen —
+  // nicht erst, wenn man ihn das nächste Mal anfasst.
+  useEffect(() => {
+    const richte = () => {
+      const kasten = huelle.current?.getBoundingClientRect();
+      if (!kasten || kasten.width < 1 || kasten.height < 1) return;
+      setEng(rahmen.h * kasten.height < 150 || rahmen.b * kasten.width < 210);
+      setBox((alt) => (Math.abs(alt.w - kasten.width) < 1 && Math.abs(alt.h - kasten.height) < 1
+        ? alt
+        : { w: kasten.width, h: kasten.height }));
+      const { b, h } = masseFuer(rahmen.b, 1 - rahmen.x, 1 - rahmen.y, kasten);
+      if (Math.abs(b - rahmen.b) < 0.004 && Math.abs(h - rahmen.h) < 0.004) return;
+      setzeRahmen({ ...rahmen, b, h });
+    };
+    richte();
+    // Auch wenn das Bild erst spaeter laedt oder das Fenster schmaler wird,
+    // muss der Rahmen neu passen.
+    const el = huelle.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const beobachter = new ResizeObserver(richte);
+    beobachter.observe(el);
+    return () => beobachter.disconnect();
+  }, [masseFuer, rahmen, setzeRahmen]);
 
   const zieh = (art: "flaeche" | "ol" | "ur") => (e: ReactPointerEvent) => {
     e.preventDefault();
@@ -96,12 +172,23 @@ export function Planauflage({
       const dy = (ev.clientY - vonY) / kasten.height;
       if (art === "flaeche") {
         setzeRahmen({ ...start, x: klemm(start.x + dx, 0, 1 - start.b), y: klemm(start.y + dy, 0, 1 - start.h) });
-      } else if (art === "ur") {
-        setzeRahmen({ ...start, b: klemm(start.b + dx, MIN, 1 - start.x), h: klemm(start.h + dy, MIN, 1 - start.y) });
+        return;
+      }
+      // Beim Ziehen an einer Ecke gibt die Richtung den Ton an, in die der
+      // Zeiger weiter gewandert ist; die andere Seite folgt dem Verhältnis.
+      const vz = art === "ur" ? 1 : -1;
+      const hilf = masseFuer(start.b, 1, 1, kasten);
+      const bRoh = Math.abs(dx) >= Math.abs(dy)
+        ? start.b + vz * dx
+        : hilf.bAus(start.h + vz * dy);
+      if (art === "ur") {
+        const { b, h } = masseFuer(bRoh, 1 - start.x, 1 - start.y, kasten);
+        setzeRahmen({ ...start, b, h });
       } else {
-        const nx = klemm(start.x + dx, 0, start.x + start.b - MIN);
-        const ny = klemm(start.y + dy, 0, start.y + start.h - MIN);
-        setzeRahmen({ x: nx, y: ny, b: start.b + (start.x - nx), h: start.h + (start.y - ny) });
+        const rechts = start.x + start.b;
+        const unten = start.y + start.h;
+        const { b, h } = masseFuer(bRoh, rechts, unten, kasten);
+        setzeRahmen({ x: rechts - b, y: unten - h, b, h });
       }
     };
     const ende = () => {
@@ -195,8 +282,8 @@ export function Planauflage({
       })()}
 
       {/* Schilder */}
-      <Schild r={r} w="haupt" t={0.5} text={`Raumbreite ${Math.round(raum.breite / 10)} cm`} />
-      <Schild r={r} w="links" t={0.5} text={`Raumtiefe ${Math.round(raum.tiefe / 10)} cm`} />
+      <Schild r={r} w="haupt" t={0.5} text={`Raumbreite ${Math.round(raum.breite / 10)} cm`} aussen={eng} notfallsWeg box={box} />
+      <Schild r={r} w="links" t={0.5} text={`Raumtiefe ${Math.round(raum.tiefe / 10)} cm`} aussen={eng} notfallsWeg box={box} />
       {raum.fenster && (
         <Schild
           r={r}
@@ -206,6 +293,8 @@ export function Planauflage({
           ton="hell"
           versatz={34}
           nurGross
+          aussen={eng}
+          box={box}
         />
       )}
       <Schild
@@ -216,6 +305,8 @@ export function Planauflage({
         ton="hell"
         versatz={34}
         nurGross
+        aussen={eng}
+        box={box}
       />
 
       {/* Griffe zum Aufziehen */}
