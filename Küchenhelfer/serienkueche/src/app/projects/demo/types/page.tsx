@@ -89,7 +89,7 @@ export default function Kuechentypen() {
                       className="rounded-md border border-line bg-paper p-3 text-left transition-colors hover:border-ink-3"
                     >
                       <div className="rounded-sm bg-ground p-2">
-                        <Grundriss typ={t} variante={frei ? v : undefined} zeigeModule={frei} zeigeMasse={false} hoehe={150} />
+                        <Grundriss typ={t} variante={frei ? v : undefined} zeigeModule={frei} zeigeMasse={false} volleBreite />
                       </div>
                       <div className="mt-3 flex items-start justify-between gap-2">
                         <div className="min-w-0">
@@ -127,7 +127,7 @@ export default function Kuechentypen() {
                   typ={typ}
                   variante={istFreigegeben(typ, freigaben) ? variante(auswahl[typ.id]) : undefined}
                   zeigeModule={istFreigegeben(typ, freigaben)}
-                  hoehe={420}
+                  volleBreite
                 />
               </Flaeche>
 

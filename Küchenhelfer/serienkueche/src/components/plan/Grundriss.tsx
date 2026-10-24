@@ -142,6 +142,7 @@ export function Grundriss({
   gewaehltesModul,
   aufModul,
   hoehe = 420,
+  volleBreite = false,
 }: {
   typ: Kuechentyp;
   variante?: VarianteRoh;
@@ -150,15 +151,20 @@ export function Grundriss({
   gewaehltesModul?: string | null;
   aufModul?: (schluessel: string | null) => void;
   hoehe?: number;
+  /** Volle Breite statt fester Hoehe. Mit fester Hoehe schrumpft der
+      Grundriss auf die Haelfte der Kachel und man erkennt nichts mehr. */
+  volleBreite?: boolean;
 }) {
   const raum = typ.raum;
-  const rand = zeigeMasse ? 1150 : 500;
+  // Ohne Masskette braucht es nur so viel Luft, dass die Wandstaerke und
+  // der Tuerbogen nicht am Rand kleben.
+  const rand = zeigeMasse ? 1150 : 240;
   const vb = `${-WAND - rand} ${-WAND - rand} ${raum.breite + 2 * WAND + 2 * rand} ${raum.tiefe + 2 * WAND + 2 * rand}`;
 
   return (
     <svg
       viewBox={vb}
-      style={{ height: hoehe, width: "100%" }}
+      style={volleBreite ? { width: "100%", height: "auto" } : { height: hoehe, width: "100%" }}
       className="block max-w-full"
       role="img"
       aria-label={`Grundriss ${typ.id}, ${typ.bezeichnung}, Nischenlänge ${typ.zeilen[0].laenge} Millimeter`}

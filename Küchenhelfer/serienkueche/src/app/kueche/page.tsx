@@ -269,6 +269,8 @@ export default function Kuechenplaner() {
   /** Im Prüfschritt geöffneter Einzelwert. null heißt Übersicht. */
   const [offen, setOffen] = useState<string | null>(null);
   const [planBild, setPlanBild] = useState<string | null>(null);
+  /** Laufende Uhr des nachgestellten Erkennungslaufs. */
+  const laufUhr = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [rahmen, setRahmen] = useState<Rahmen>(RAHMEN_START);
   const feld = useRef<HTMLInputElement>(null);
 
@@ -567,22 +569,27 @@ export default function Kuechenplaner() {
               <p className="mt-5 text-[13.5px] text-kohle-3">Etwa fünf Minuten. Kein Konto, kein Termin.</p>
             </div>
 
-            <div className="relative">
-              <div className="h-[clamp(260px,42vw,460px)] overflow-hidden rounded-[22px]">
-                <NextImage
-                  src={fotoUrl(FOTOS.gruen, 1200)}
-                  alt={FOTOS.gruen.alt}
-                  width={1200}
-                  height={1500}
-                  priority
-                  className="h-full w-full object-cover"
-                  sizes="(max-width: 1024px) 100vw, 48vw"
-                />
-              </div>
+            {/* Die Karte liegt im Bild, nicht darunter: vorher hing sie zur
+                Haelfte in der Leere unter dem Foto und sah kaputt aus. */}
+            <div className="relative h-[clamp(300px,46vw,500px)] overflow-hidden rounded-[22px]">
+              <NextImage
+                src={fotoUrl(FOTOS.gruen, 1200)}
+                alt={FOTOS.gruen.alt}
+                width={1200}
+                height={1500}
+                priority
+                className="h-full w-full object-cover"
+                sizes="(max-width: 1024px) 100vw, 48vw"
+              />
               {moegliche[0] && (
-                <div className="flaeche flaeche-hoch -mt-16 ml-auto mr-4 w-[min(320px,80%)] rounded-[16px] px-4 py-4 sm:-mt-20 sm:w-[340px]">
-                  <div className="vorzeile mb-2">Beispiel, gerade gerechnet</div>
-                  <Kuechenbild typ={typ} variante={moegliche[moegliche.length - 1].variante} zeileId={typ.zeilen[0].id} hoehe={120} />
+                <div className="flaeche flaeche-hoch absolute bottom-4 left-4 right-4 rounded-[16px] px-3.5 pb-2.5 pt-3 sm:left-auto sm:w-[252px]">
+                  <div className="vorzeile mb-1.5">Beispiel, gerade gerechnet</div>
+                  <Kuechenbild
+                    typ={typ}
+                    variante={moegliche[moegliche.length - 1].variante}
+                    zeileId={typ.zeilen[0].id}
+                    volleBreite
+                  />
                 </div>
               )}
             </div>
@@ -619,14 +626,25 @@ export default function Kuechenplaner() {
                     // Nur Bilder lassen sich hier anzeigen; fuer PDF zeigen wir
                     // einen gezeichneten Beispielplan und sagen es dazu.
                     setPlanBild(datei && datei.type.startsWith("image/") ? URL.createObjectURL(datei) : null);
+                    // Ein zweiter Upload darf den ersten Lauf nicht
+                    // weiterlaufen lassen — sonst zaehlen zwei Laeufe hoch.
+                    if (laufUhr.current) clearTimeout(laufUhr.current);
                     setLauf(0);
                     let i = 0;
                     const weiterLauf = () => {
                       i += 1;
-                      if (i < 4) { setLauf(i); setTimeout(weiterLauf, 620); }
-                      else { setLauf(null); uebernehmeErkennung(); weiter(); }
+                      if (i < 4) { setLauf(i); laufUhr.current = setTimeout(weiterLauf, 620); }
+                      else {
+                        laufUhr.current = null;
+                        setLauf(null);
+                        uebernehmeErkennung();
+                        // Gezielt zum Pruefschritt, nicht "einen weiter": wer
+                        // waehrend des Laufs selbst blaettert, landete sonst
+                        // eine Station zu weit und musste zurueck.
+                        geheZu("pruefen");
+                      }
                     };
-                    setTimeout(weiterLauf, 620);
+                    laufUhr.current = setTimeout(weiterLauf, 620);
                   }}
                 />
                 {lauf === null ? (
@@ -676,7 +694,14 @@ export default function Kuechenplaner() {
               satz="Tipp auf einen Wert, um ihn zu ändern. Wandlängen lesen wir sicher — Fenster und Türen sind geschätzt."
             />
             <div className="mt-7">
-              <Planauflage raum={raum} rahmen={rahmen} setzeRahmen={setRahmen} bild={planBild} kinder={<BeispielPlan />} />
+              <Planauflage
+                raum={raum}
+                rahmen={rahmen}
+                setzeRahmen={setRahmen}
+                bild={planBild}
+                kinder={<BeispielPlan />}
+                setzeTiefe={(mm) => setzeRaum({ tiefe: mm, nutz: { ...raum.nutz, links: mm, rechts: mm } })}
+              />
               <p className="mt-3 text-[13px] leading-snug text-kohle-3">
                 {planBild
                   ? "Dein Plan mit unserer Lesart darüber. Wo im Bild dein Küchenraum liegt, erkennt keine Software sicher — zieh den Rahmen einmal passend, dann sitzt jede Zahl an der richtigen Wand."

@@ -3,7 +3,8 @@
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { brutto, eur } from "@/lib/berechnung";
-import { alsKuechentyp, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/lib/planer";
+import { alsKuechentyp, istStauraum, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/lib/planer";
+import { modul } from "@/data/module";
 
 /**
  * Der Hero zeigt das Produkt, statt es zu beschreiben: ein Regler für die
@@ -36,7 +37,11 @@ export function LiveHero() {
     return { typ: alsKuechentyp(raum), vorschlag: planeKueche(raum, "arbeiten") };
   }, [laenge]);
 
-  const schraenke = Object.values(vorschlag.belegung).flat().length;
+  // Passleisten sind Zuschnitt, keine Schraenke — sie mitzuzaehlen hat die
+  // Zahl aufgeblasen.
+  const schraenke = Object.values(vorschlag.belegung)
+    .flat()
+    .filter((id) => !id.startsWith("PBX:") && modul(id).kategorie !== "blende").length;
 
   return (
     <div>
@@ -64,6 +69,23 @@ export function LiveHero() {
           </div>
         </div>
 
+        {/* Was sich beim Schieben mitaendert, steht in einer eigenen Zeile.
+            Vorher lagen die Enden des Reglers und die gerechneten Werte in
+            einer Reihe und lasen sich wie ein einziger Satz. */}
+        <div className="ziffern mt-5 flex flex-wrap items-baseline gap-x-5 gap-y-1 border-t border-linie-warm pt-4 text-[13.5px] text-kohle-2">
+          <span>
+            <strong className="font-semibold text-kohle">{schraenke}</strong> Schränke
+          </span>
+          {vorschlag.arbeitsflaeche > 0 && (
+            <span>
+              <strong className="font-semibold text-kohle">
+                {(vorschlag.arbeitsflaeche / 1000).toFixed(2).replace(".", ",")} m
+              </strong>{" "}
+              Arbeitsfläche zwischen Spüle und Herd
+            </span>
+          )}
+        </div>
+
         <label htmlFor="herolaenge" className="sr-only">Wandlänge</label>
         <input
           id="herolaenge"
@@ -75,13 +97,9 @@ export function LiveHero() {
           onChange={(e) => setLaenge(Number(e.target.value))}
           className="mt-6 w-full cursor-pointer"
         />
-        <div className="mt-3 flex items-center justify-between gap-4 text-[13px] text-kohle-3">
-          <span>kleine Küche</span>
-          <span className="ziffern hidden sm:inline">
-            {schraenke} Schränke
-            {vorschlag.arbeitsflaeche > 0 ? ` · ${Math.round(vorschlag.arbeitsflaeche / 10)} cm Arbeitsfläche` : ""}
-          </span>
-          <span>großer Raum</span>
+        <div className="ziffern mt-2.5 flex items-center justify-between gap-4 text-[12.5px] text-kohle-3">
+          <span>{(MIN / 1000).toFixed(2).replace(".", ",")} m</span>
+          <span>{(MAX / 1000).toFixed(2).replace(".", ",")} m</span>
         </div>
       </div>
     </div>

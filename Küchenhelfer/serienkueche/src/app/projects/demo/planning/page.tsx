@@ -250,7 +250,7 @@ export default function Planung() {
                     variante={gewaehlt}
                     gewaehltesModul={modulWahl}
                     aufModul={setModulWahl}
-                    hoehe={330}
+                    volleBreite
                   />
                 </Flaeche>
 
