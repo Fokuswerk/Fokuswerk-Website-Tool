@@ -652,9 +652,14 @@ export default function Kuechenplaner() {
     </div>
   );
 
+  /* Der eigene Grundriss bleibt unter der Skizze stehen, solange die Sitzung
+     laeuft. Ohne ihn ist die Skizze ein leeres Rechteck, und die Frage
+     "wo sitzt das Fenster" laesst sich nicht beantworten, sondern nur raten. */
+  const untergrund = quelle === "plan" && planBild ? { bild: planBild, rahmen } : null;
+
   const bildTafel = (
     <Karte className="px-4 py-4">
-      <Raumbild raum={raum} hervorhebung={hervor} hoehe={226} />
+      <Raumbild raum={raum} hervorhebung={hervor} hoehe={226} untergrund={untergrund} />
       <p className="mt-3 border-t border-linie-warm pt-3 text-center text-[13px] leading-snug text-kohle-3">
         {hervor
           ? <>Schwarz markiert ist die <strong className="font-semibold text-kohle">{WANDNAME[hervor]}</strong>.</>
@@ -721,9 +726,11 @@ export default function Kuechenplaner() {
       Regler darunter bleibt für die letzten Zentimeter. */
   const ziehKarte = (was: "fenster" | "tuer" | "wasser", setze: (mm: number) => void) => (
     <Karte className="mt-4 overflow-hidden px-3 pb-3 pt-4">
-      <Raumbild raum={raum} hervorhebung={hervor} hoehe={320} ziehen={{ was, setze }} />
+      <Raumbild raum={raum} hervorhebung={hervor} hoehe={320} ziehen={{ was, setze }} untergrund={untergrund} />
       <p className="mt-2 border-t border-linie-warm pt-3 text-center text-[13px] leading-snug text-kohle-3">
-        Den Punkt an die Wand ziehen, wo es wirklich sitzt.
+        {untergrund
+          ? "Dein Grundriss liegt darunter — zieh den Punkt dorthin, wo es im Plan sitzt."
+          : "Den Punkt an die Wand ziehen, wo es wirklich sitzt."}
       </p>
     </Karte>
   );

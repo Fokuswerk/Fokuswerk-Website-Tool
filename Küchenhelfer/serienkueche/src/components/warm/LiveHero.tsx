@@ -1,31 +1,38 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { brutto, eur } from "@/lib/berechnung";
-import { alsKuechentyp, istStauraum, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/lib/planer";
+import { alsKuechentyp, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/lib/planer";
 import { modul } from "@/data/module";
+import { Kuechenbild } from "@/components/warm/Kuechenbild";
 
 /**
- * Der Hero zeigt das Produkt, statt es zu beschreiben: ein Regler für die
- * Wandlänge, die Küche baut sich neu auf, der Preis läuft mit. Gerechnet
- * wird mit demselben Planer wie in der Strecke — nichts ist hier Attrappe.
+ * Der Hero zeigt das Produkt, statt es zu beschreiben.
+ *
+ * Vorher stand hier ein kleines räumliches Bild in einem großen leeren
+ * Kasten, darunter zwei beschriftete Zahlen nebeneinander — Wandlänge und
+ * Preis, wie auf einem Formular. Das behauptete "das rechnet gerade", bewies
+ * es aber nicht: man sah nichts rechnen.
+ *
+ * Jetzt ist die Wand selbst der Regler. Am rechten Ende hängt ein Griff; zieht
+ * man daran, wird die Wand länger, und die Küche darunter baut sich neu auf —
+ * maßstäblich, mit denselben Schränken, die später in der Stückliste stehen.
+ * Der Griff sitzt genau am Wandende, weil die Maßlinie und der Regler
+ * denselben Weg zurücklegen.
  */
 
-const Kuechenraum = dynamic(
-  () => import("@/components/warm/Kuechenraum").then((m) => m.Kuechenraum),
-  { ssr: false, loading: () => <div className="rounded-[18px] bg-creme-2" style={{ height: HOEHE }} /> },
-);
-
-// Unter 2.500 mm geht die Pflichtbelegung (Spüle, Kochfeld, Kühlschrank,
-// Spülmaschine) nicht auf — der Planer gibt dann einen leeren Vorschlag
-// zurück, und am linken Anschlag standen 0 € und 0 Schränke.
 const MIN = 2500;
 const MAX = 4600;
-const HOEHE = "clamp(290px, 44vw, 470px)";
+/** Seitlicher Rand der Zeichnung, muss zu `randX` in Kuechenbild passen. */
+const RAND = 180;
+/** Wie breit die Zeichnung bei der kürzesten Wand ist, als Anteil. */
+const SCHMALSTE = (MIN + 2 * RAND) / (MAX + 2 * RAND);
+
+const meter = (mm: number) => (mm / 1000).toFixed(2).replace(".", ",");
 
 export function LiveHero() {
   const [laenge, setLaenge] = useState(3400);
+  const [zieht, setZieht] = useState(false);
 
   const { typ, vorschlag } = useMemo(() => {
     const raum: Raumangaben = {
@@ -40,54 +47,32 @@ export function LiveHero() {
     return { typ: alsKuechentyp(raum), vorschlag: planeKueche(raum, "arbeiten") };
   }, [laenge]);
 
-  // Passleisten sind Zuschnitt, keine Schraenke — sie mitzuzaehlen hat die
-  // Zahl aufgeblasen.
+  // Passleisten sind Zuschnitt, keine Schraenke.
   const schraenke = Object.values(vorschlag.belegung)
     .flat()
     .filter((id) => !id.startsWith("PBX:") && modul(id).kategorie !== "blende").length;
 
+  const anteil = (laenge + 2 * RAND) / (MAX + 2 * RAND);
+
   return (
-    <div>
-      <Kuechenraum
-        typ={typ}
-        variante={vorschlag.variante}
-        hoehe={HOEHE}
-        rahmenGroesse={3.9}
-        unterzeile={false}
-        scrollen
-      />
-
-      <div className="mx-auto mt-8 max-w-[640px]">
-        <div className="flex items-end justify-between gap-6">
-          <div>
-            <div className="vorzeile">Wandlänge</div>
-            <div className="gross ziffern mt-1.5 text-[25px] font-bold leading-none text-kohle">
-              {(laenge / 1000).toFixed(2).replace(".", ",")} m
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="vorzeile">Komplett, inkl. MwSt.</div>
-            <div className="gross ziffern mt-1.5 text-[25px] font-bold leading-none text-kohle">
-              {eur(brutto(vorschlag.preis))}
-            </div>
-          </div>
-        </div>
-
-        {/* Was sich beim Schieben mitaendert, steht in einer eigenen Zeile.
-            Vorher lagen die Enden des Reglers und die gerechneten Werte in
-            einer Reihe und lasen sich wie ein einziger Satz. */}
-        <div className="ziffern mt-5 flex flex-wrap items-baseline gap-x-5 gap-y-1 border-t border-linie-warm pt-4 text-[13.5px] text-kohle-2">
-          <span>
-            <strong className="font-semibold text-kohle">{schraenke}</strong> Schränke
-          </span>
-          {vorschlag.arbeitsflaeche > 0 && (
-            <span>
-              <strong className="font-semibold text-kohle">
-                {(vorschlag.arbeitsflaeche / 1000).toFixed(2).replace(".", ",")} m
-              </strong>{" "}
-              Arbeitsfläche zwischen Spüle und Herd
-            </span>
-          )}
+    <div className="grid items-start gap-x-10 gap-y-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="min-w-0">
+      {/* Die Maßlinie ist die Wand und zugleich der Regler. */}
+      <div className="relative h-[46px] select-none">
+        <div
+          className="absolute top-[22px] h-[2px] bg-kohle transition-[width] duration-100 ease-out"
+          style={{ width: `${anteil * 100}%` }}
+        />
+        <div className="absolute left-0 top-[14px] h-[18px] w-[2px] bg-kohle" />
+        <div
+          className="absolute top-[14px] h-[18px] w-[2px] bg-kohle transition-[left] duration-100 ease-out"
+          style={{ left: `calc(${anteil * 100}% - 2px)` }}
+        />
+        <div
+          className="gross ziffern absolute top-0 -translate-x-1/2 whitespace-nowrap bg-papier px-2 text-[19px] font-bold leading-none text-kohle transition-[left] duration-100 ease-out sm:text-[22px]"
+          style={{ left: `${(anteil * 100) / 2}%` }}
+        >
+          {meter(laenge)} m
         </div>
 
         <label htmlFor="herolaenge" className="sr-only">Wandlänge</label>
@@ -99,14 +84,52 @@ export function LiveHero() {
           step={100}
           value={laenge}
           onChange={(e) => setLaenge(Number(e.target.value))}
-          aria-valuetext={`${(laenge / 1000).toFixed(2).replace(".", ",")} Meter Wandlänge`}
-          style={{ ["--fuell" as string]: `${((laenge - MIN) / (MAX - MIN)) * 100}%` }}
-          className="mt-6 w-full cursor-pointer"
+          onPointerDown={() => setZieht(true)}
+          onPointerUp={() => setZieht(false)}
+          onPointerCancel={() => setZieht(false)}
+          aria-valuetext={`${meter(laenge)} Meter Wandlänge`}
+          className="wandregler absolute top-0"
+          style={{ left: `${SCHMALSTE * 100}%`, width: `${(1 - SCHMALSTE) * 100}%` }}
         />
-        <div className="ziffern mt-2.5 flex items-center justify-between gap-4 text-[12.5px] text-kohle-3">
-          <span>{(MIN / 1000).toFixed(2).replace(".", ",")} m</span>
-          <span>{(MAX / 1000).toFixed(2).replace(".", ",")} m</span>
+      </div>
+
+      {/* Die Küche wächst mit der Wand — gleicher Maßstab, mehr Wand. */}
+      <div
+        className="transition-[width] duration-100 ease-out"
+        style={{ width: `${anteil * 100}%` }}
+      >
+        <Kuechenbild typ={typ} variante={vorschlag.variante} zeileId={typ.zeilen[0].id} volleBreite />
+      </div>
+
+      <p
+        className={`mt-2 text-[12.5px] text-kohle-3 transition-opacity ${zieht ? "opacity-0" : "opacity-100"}`}
+      >
+        Am Griff ziehen — die Wand wird länger, die Küche rechnet sich neu.
+      </p>
+      </div>
+
+      <div className="border-t border-linie-warm pt-5 lg:border-l lg:border-t-0 lg:pl-9 lg:pt-1">
+        <div>
+          <div className="gross ziffern text-[30px] font-bold leading-none text-kohle sm:text-[38px]">
+            {eur(brutto(vorschlag.preis))}
+          </div>
+          <div className="mt-1.5 text-[13px] text-kohle-3">Komplett, mit Geräten und Montage, inkl. MwSt.</div>
         </div>
+        <p className="mt-5 text-[14.5px] leading-snug text-kohle-2">
+          Dafür stehen{" "}
+          <strong className="ziffern font-semibold text-kohle">{schraenke} Schränke</strong> an der Wand
+          {vorschlag.arbeitsflaeche > 0 ? (
+            <>
+              , mit{" "}
+              <strong className="ziffern font-semibold text-kohle">
+                {meter(vorschlag.arbeitsflaeche)} m
+              </strong>{" "}
+              freier Fläche zwischen Spüle und Herd.
+            </>
+          ) : (
+            <>. Spüle und Herd liegen nebeneinander — für mehr fehlt die Wand.</>
+          )}
+        </p>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { modul } from "@/data/module";
 import { AP_OK, HOCH_H, istHoch, KORPUS, OS_H, OS_UK, PLATTE, rolleVon, ROLLE_NAME, SOCKEL } from "@/lib/masse";
 import { platzierung } from "@/lib/berechnung";
@@ -379,6 +379,7 @@ export function Raumbild({
   hoehe = 210,
   volleBreite = false,
   ziehen,
+  untergrund,
 }: {
   raum: Raumangaben;
   hervorhebung?: WandId | null;
@@ -388,9 +389,19 @@ export function Raumbild({
   /** Macht ein Element im Plan greifbar: anfassen und an der Wand
       entlangschieben. Genauer als ein Regler, weil man sieht, wohin. */
   ziehen?: { was: Ziehbar; setze: (von: number) => void };
+  /**
+   * Der hochgeladene Grundriss unter der Zeichnung.
+   *
+   * Ohne ihn ist die Skizze ein leeres Rechteck: wer sein Fenster an die
+   * richtige Stelle ziehen soll, hat nichts, woran er das misst. Der
+   * Ausschnitt ist derselbe Rahmen, den er vorher über seinen Plan gezogen
+   * hat — deshalb liegt die Skizze genau über seiner Küche.
+   */
+  untergrund?: { bild: string; rahmen: { x: number; y: number; b: number; h: number } } | null;
 }) {
   const { breite, tiefe } = raum;
   const rand = 760;
+  const zeichenId = useId();
   const svgRef = useRef<SVGSVGElement>(null);
   const [zieht, setZieht] = useState(false);
   const waende = kuechenwaende(raum);
@@ -548,8 +559,38 @@ export function Raumbild({
           : "Der Raum von oben"
       }
     >
-      {/* Bodenflaeche */}
-      <rect x={0} y={0} width={breite} height={tiefe} className="fill-papier" />
+      {/* Der eigene Grundriss darunter, auf den Rahmen zugeschnitten */}
+      {untergrund && (
+        <>
+          <defs>
+            <clipPath id={`${zeichenId}-raum`}>
+              <rect x={0} y={0} width={breite} height={tiefe} />
+            </clipPath>
+          </defs>
+          <image
+            href={untergrund.bild}
+            clipPath={`url(#${zeichenId}-raum)`}
+            x={-(untergrund.rahmen.x / untergrund.rahmen.b) * breite}
+            y={-(untergrund.rahmen.y / untergrund.rahmen.h) * tiefe}
+            width={breite / untergrund.rahmen.b}
+            height={tiefe / untergrund.rahmen.h}
+            preserveAspectRatio="none"
+          />
+        </>
+      )}
+
+      {/* Bodenflaeche. Ueber dem Plan nur ein duenner Schleier: er soll den
+          Plan beruhigen, nicht verstecken — beurteilen laesst sich nur, was
+          man sieht. Die Kuechenbaender und der Griffpunkt darueber bringen
+          ihren eigenen Kontrast mit. */}
+      <rect
+        x={0}
+        y={0}
+        width={breite}
+        height={tiefe}
+        className="fill-papier"
+        opacity={untergrund ? 0.26 : 1}
+      />
 
       {/* Kuechenbaender */}
       {waende.map((w) => {

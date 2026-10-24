@@ -228,6 +228,20 @@ body {
   cursor: grab;
 }
 
+/* Der Regler im Hero: die Massline darunter ist die Spur, der Griff sitzt
+   genau am Wandende. Deshalb bringt er keine eigene mit. Der Kasten ist
+   44 px hoch, damit der Daumen ihn trifft — der Griff liegt darin so, dass
+   er genau auf der Masslinie sitzt. */
+.warm input[type="range"].wandregler { height: 44px; }
+.warm input[type="range"].wandregler::-webkit-slider-runnable-track {
+  background: transparent;
+  box-shadow: none;
+}
+.warm input[type="range"].wandregler::-moz-range-track {
+  background: transparent;
+  box-shadow: none;
+}
+
 /* Dieselben Schieber im Profibereich: dort waren sie 4 px hoch und hatten
    gar keinen sichtbaren Griff. */
 .pro-schieber {
