@@ -1,5 +1,8 @@
 # Arbeitsliste — Stand
 
+> **Zweite Runde:** 60 weitere Befunde, abgearbeitet. Siehe
+> `Arbeitsliste-Pruefung-2.md` und die Commits ab `01fbbe92`.
+
 64 Punkte aus der Pruefung mit Agenten. **63 erledigt**, 1 teilweise
 (Rang 29: die verworfene Umstellung wird jetzt gemeldet statt still
 verworfen — wiederherstellbar ist sie nicht).
@@ -62,3 +65,35 @@ Stueckliste die Nettosumme ergibt. `datentest.ts` prueft, dass jedes als
   teilweise zu uebernehmen — das ist ein eigener Umbau, kein Nachtrag.
 - **Backend.** Preise, Lieferantenkatalog und Bestellstrecke sind Demo-Daten.
   Das war von Anfang an so gesetzt.
+
+---
+
+## Zweite Prüfrunde
+
+Sechs Spuren, die die erste nicht hatte: Regressionen im Geänderten,
+Rechenaufwand, Zustand und Wiederkehr, Käufersicht, Bedienwege, Sprache.
+84 Rohbefunde, **60 nach dem Angriff bestätigt**, 24 durchgefallen. Alle 60
+abgearbeitet.
+
+Die Befunde im Einzelnen stehen in `Arbeitsliste-Pruefung-2.md`.
+
+**Was dabei am meisten wog:**
+
+- Zwei Stellen, an denen der Unterbau-Kühlschrank noch als Hochschrank galt:
+  die Stückliste nannte 2,8 lfm Arbeitsplatte, der Zuschnitt auf demselben
+  Blatt 3.400 mm.
+- Der Planer war zu langsam und lief zu oft. Die Suche schrieb erst alle
+  Anordnungen in ein Feld, prüfte die harten Regeln erst am fertigen Band und
+  sortierte austauschbare Füllschränke millionenfach um. Gemessen: 5,20 m Wand
+  von 105 auf 22 ms.
+- Der Stand wurde nur von wenigen Settern gestempelt — das Wiederkehr-Band
+  nannte eine Uhrzeit, die eineinhalb Stunden zurücklag.
+- Die Datenschutzerklärung bescheinigte dem Besucher eine USA-Übermittlung,
+  die sein Browser nicht macht.
+
+**Prüfbefehle** (neu, vorher standen sie nur in der README):
+
+```bash
+npm run verify           # Typprüfung plus die drei Rechenprüfungen
+npm run zeitmessung      # wie lange der Planer je Raumgröße braucht
+```
