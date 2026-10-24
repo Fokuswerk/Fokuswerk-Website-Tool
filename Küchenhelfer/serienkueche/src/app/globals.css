@@ -270,6 +270,12 @@ body {
   cursor: grab;
 }
 
+/* Die Felder der Massleiste.
+   Auf dem Handy gleich breit, damit die Namen lesbar bleiben; ab Tablet in
+   ihrer echten Spanne, denn das ist der Sinn einer Masskette. */
+.massfeld { flex-grow: 1; }
+@media (min-width: 640px) { .massfeld { flex-grow: var(--spanne, 1); } }
+
 /* Der Regler im Hero: die Massline darunter ist die Spur, der Griff sitzt
    genau am Wandende. Deshalb bringt er keine eigene mit. Der Kasten ist
    44 px hoch, damit der Daumen ihn trifft — der Griff liegt darin so, dass

@@ -16,11 +16,12 @@ import {
   pruefeAngaben, wandlaenge, WANDNAME, WANDNAME_DAT, zeilenBereich,
   type Raumform, type Strategie, type Vorschlag, type WandId,
 } from "@/lib/planer";
-import { herkunftVon, HERKUNFT_TEXT, schrittFolge, useKueche, type Feld, type Herkunft } from "@/store/kueche";
+import { herkunftVon, HERKUNFT_TEXT, schrittFolge, useKueche, type Feld, type Herkunft, type SchrittId } from "@/store/kueche";
 import { Kuechenbild, Raumbild } from "@/components/warm/Kuechenbild";
 import { Geraetebild, Schrankbild } from "@/components/warm/Geraetebild";
 
-import { Fortschritt, GrosseWahl, GrosseZahl, Karte, Notiz, Schieber, WKnopf } from "@/components/warm/Kit";
+import { GrosseWahl, GrosseZahl, Karte, Notiz, Schieber, WKnopf } from "@/components/warm/Kit";
+import { Massleiste } from "@/components/warm/Massleiste";
 import { baueUnterlagen } from "@/lib/unterlagen";
 import { FOTOS, GERAETEFOTOS, fotoUrl } from "@/data/fotos";
 import NextImage from "next/image";
@@ -533,6 +534,37 @@ export default function Kuechenplaner() {
   ];
   const schrittText = ABSCHNITT.find(([, passt]) => passt(schritt))![0];
 
+  /* Die vier Stationen mit ihren echten Spannen. Sie kommen aus derselben
+     Folge, durch die der Nutzer laeuft — nicht aus einer zweiten Liste, die
+     irgendwann auseinanderlaeuft. "Kueche planen" ist die Startseite und
+     zaehlt nicht mit. */
+  const stationen = useMemo(() => {
+    const zaehlbar: SchrittId[] = folge.filter((id) => id !== "start");
+    const bisHier = zaehlbar.indexOf(schritt);
+    /* Jeder Schritt gehoert zur ERSTEN passenden Station, so wie es die
+       Einzelzuordnung oben auch macht. Filtert jede Station fuer sich, dann
+       schluckt der Auffangfall "Dein Ergebnis" alle achtzehn. */
+    const stationVon = (id: SchrittId) => ABSCHNITT.findIndex(([, passt]) => passt(id));
+    const KURZ = ["Raum", "Geräte", "Ausstattung", "Ergebnis"];
+    return ABSCHNITT.slice(1).map(([name], nr) => {
+      const meine = zaehlbar.filter((id) => stationVon(id) === nr + 1);
+      const erledigt = meine.filter((id) => zaehlbar.indexOf(id) < Math.max(0, bisHier)).length;
+      const jetzt = meine.includes(schritt);
+      const erster = meine[0];
+      return {
+        name,
+        kurz: KURZ[nr] ?? name,
+        gesamt: meine.length,
+        erledigt: jetzt ? erledigt : erledigt + (meine.length && zaehlbar.indexOf(meine[meine.length - 1]) < bisHier ? 1 : 0),
+        jetzt,
+        // Zurueckspringen ja, vorspringen nein: was noch nicht beantwortet
+        // ist, laesst sich nicht ueberspringen.
+        hin: !jetzt && erster && zaehlbar.indexOf(erster) < bisHier ? () => geheZu(erster) : undefined,
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [folge, schritt]);
+
   const istStart = schritt === "start";
   const istErgebnis = schritt === "ergebnis";
   const istUnterlagen = schritt === "unterlagen";
@@ -825,14 +857,13 @@ export default function Kuechenplaner() {
               <rect x="0.75" y="0.75" width="15.5" height="15.5" rx="3" fill="none" strokeWidth="1.4" className="stroke-kohle" />
               <path d="M0.75 5.6 H16.25" strokeWidth="1.4" className="stroke-kohle-3" />
             </svg>
-            <span className="gross text-[15px] font-bold text-kohle">Serienküche</span>
+            <span className="gross hidden text-[15px] font-bold text-kohle sm:inline">Serienküche</span>
           </Link>
-          <div className="min-w-0 flex-1">
-            <Fortschritt
-              wert={(pos + 1) / folge.length}
-              text={`${schrittText}, Schritt ${pos + 1} von ${folge.length}`}
-            />
-          </div>
+          {istStart ? (
+            <div className="min-w-0 flex-1" />
+          ) : (
+            <Massleiste stationen={stationen} />
+          )}
           <button
             onClick={neuStarten}
             aria-label={neuGefragt ? "Wirklich alles zurücksetzen" : "Alles zurücksetzen und neu beginnen"}
