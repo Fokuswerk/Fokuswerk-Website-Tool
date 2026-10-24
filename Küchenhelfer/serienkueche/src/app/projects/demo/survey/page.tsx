@@ -4,7 +4,7 @@ import { useState } from "react";
 import { PackageCheck } from "lucide-react";
 import { KUECHENTYPEN, WOHNUNGEN } from "@/data/projekt";
 import { eur, stueckliste, variante, zahl } from "@/lib/berechnung";
-import { abweichung, aufmassLage, fertigungsmasse, type AufmassLage } from "@/lib/ableitung";
+import { abweichung, aufmassLage, fertigungsmasse, type AufmassLage, typMitFreigabe } from "@/lib/ableitung";
 import { useDemo } from "@/store/demo";
 import { Grundriss } from "@/components/plan/Grundriss";
 import {
@@ -20,12 +20,12 @@ const LAGE: Record<AufmassLage, { ton: "ok" | "flag" | "mute" | "good"; text: st
 };
 
 export default function Aufmass() {
-  const { aufmass, setzeAufmass, auswahl, snapshots } = useDemo();
+  const { aufmass, setzeAufmass, auswahl, snapshots, freigaben } = useDemo();
   const [aktiv, setAktiv] = useState<string>(WOHNUNGEN[0].nr);
   const [filter, setFilter] = useState<"alle" | AufmassLage>("alle");
 
   const wohnung = WOHNUNGEN.find((w) => w.nr === aktiv)!;
-  const typ = KUECHENTYPEN.find((t) => t.id === wohnung.typId)!;
+  const typ = typMitFreigabe(KUECHENTYPEN.find((t) => t.id === wohnung.typId)!, freigaben);
   const v = variante(auswahl[typ.id]);
   const werte = aufmass[wohnung.nr] ?? {};
   const lage = aufmassLage(wohnung.messpunkte, werte);

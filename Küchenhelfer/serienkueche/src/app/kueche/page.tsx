@@ -534,17 +534,23 @@ export default function Kuechenplaner() {
     if (!geraeteArt) return null;
     const strategie: Strategie = gewaehlt ?? "arbeiten";
     const jetzt = planeKueche(raum, strategie);
-    const aus = new Map<string, number | null>();
+    // Was an der Küche ohne die Geräte hängt — daran erklärt sich, warum ein
+    // billigeres Gerät die Küche teurer machen kann.
+    const moebel = (v: Vorschlag) => v.kosten.gesamt - v.kosten.geraete;
+    const aus = new Map<string, { delta: number | null; moebel: number; wand: number }>();
+    const jetztGeraet = geraet(raum.geraete[geraeteArt]);
     for (const g of geraeteFuer(geraeteArt)) {
-      if (g.id === raum.geraete[geraeteArt]) { aus.set(g.id, 0); continue; }
+      if (g.id === raum.geraete[geraeteArt]) { aus.set(g.id, { delta: 0, moebel: 0, wand: 0 }); continue; }
       const probe = planeKueche(
         angleichen({ ...raum, geraete: { ...raum.geraete, [geraeteArt]: g.id } }),
         strategie,
       );
-      aus.set(
-        g.id,
-        probe.moeglich && jetzt.moeglich ? brutto(probe.preis) - brutto(jetzt.preis) : null,
-      );
+      const geht = probe.moeglich && jetzt.moeglich;
+      aus.set(g.id, {
+        delta: geht ? brutto(probe.preis) - brutto(jetzt.preis) : null,
+        moebel: geht ? brutto(moebel(probe)) - brutto(moebel(jetzt)) : 0,
+        wand: g.breite - jetztGeraet.breite,
+      });
     }
     return aus;
   }, [geraeteArt, raum, gewaehlt]);
@@ -1390,19 +1396,41 @@ export default function Kuechenplaner() {
                             {g.richtpreis > 0 ? `Gerät ca. ${eur(g.richtpreis)}` : "kein Gerät"}
                           </span>
                           {(() => {
-                            const d = geraeteWirkung?.get(g.id);
-                            if (d === undefined) return null;
-                            if (d === null) {
+                            const w = geraeteWirkung?.get(g.id);
+                            if (!w) return null;
+                            if (w.delta === null) {
                               return <span className="font-semibold text-kohle-3">passt nicht in den Raum</span>;
                             }
                             if (aktiv) return <span className="font-semibold text-kohle">gewählt</span>;
                             return (
                               <span className="font-semibold text-kohle">
-                                {d === 0 ? "gleicher Preis" : `${d > 0 ? "+" : "−"}${eur(Math.abs(d))}`}
+                                {w.delta === 0 ? "gleicher Preis" : `${w.delta > 0 ? "+" : "−"}${eur(Math.abs(w.delta))}`}
                               </span>
                             );
                           })()}
                         </div>
+                        {/* Ein billigeres Geraet kann die Kueche teurer machen: wird
+                            Wand frei, stellt der Plan dort breitere Schraenke hin. Ohne
+                            diesen Satz sieht die Zahl daneben nach einem Fehler aus. */}
+                        {(() => {
+                          const w = geraeteWirkung?.get(g.id);
+                          if (!w || w.delta === null || aktiv) return null;
+                          const geraeteDelta = g.richtpreis - geraet(raum.geraete[geraeteArt]).richtpreis;
+                          if (geraeteDelta === 0 || Math.sign(geraeteDelta) === Math.sign(w.delta)) return null;
+                          const cm = Math.abs(w.wand) / 10;
+                          return (
+                            <div className="mt-1.5 text-[12.5px] leading-snug text-kohle-3">
+                              {geraeteDelta < 0 ? "Das Gerät ist günstiger, die Küche nicht" : "Das Gerät ist teurer, die Küche nicht"}
+                              {": "}
+                              {w.wand < 0
+                                ? `es gibt ${cm} cm Wand frei, und dort stehen dann mehr Schränke`
+                                : w.wand > 0
+                                  ? `es nimmt ${cm} cm mehr Wand, und dort fehlt dann Schrank`
+                                  : "die Schränke daneben fallen anders aus"}
+                              {` — ${w.moebel > 0 ? "+" : "−"}${eur(Math.abs(w.moebel))} an Möbeln.`}
+                            </div>
+                          );
+                        })()}
                       </button>
                     );
                   })}

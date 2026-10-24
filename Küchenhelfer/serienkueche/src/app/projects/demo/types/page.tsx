@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ArrowRight, FlipHorizontal2 } from "lucide-react";
 import { KUECHENTYPEN, nischenspanne, TOLERANZBAND, WOHNUNGEN } from "@/data/projekt";
 import { eur, kennzahlen, variante, zahl } from "@/lib/berechnung";
-import { istFreigegeben, offeneFreigaben } from "@/lib/ableitung";
+import { istFreigegeben, offeneFreigaben, typMitFreigabe } from "@/lib/ableitung";
 import { useDemo } from "@/store/demo";
 import { Grundriss } from "@/components/plan/Grundriss";
 import {
@@ -15,7 +15,7 @@ import {
 export default function Kuechentypen() {
   const { auswahl, freigaben } = useDemo();
   const [detail, setDetail] = useState<string | null>(null);
-  const typ = detail ? KUECHENTYPEN.find((t) => t.id === detail)! : null;
+  const typ = detail ? typMitFreigabe(KUECHENTYPEN.find((t) => t.id === detail)!, freigaben) : null;
 
   return (
     <>

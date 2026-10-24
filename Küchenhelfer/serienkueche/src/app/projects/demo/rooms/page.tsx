@@ -5,8 +5,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { KUECHENTYPEN } from "@/data/projekt";
 import { zahl } from "@/lib/berechnung";
 import {
-  alleBestaetigt, attributeMitFreigabe, istFreigegeben, offeneFreigaben, pruefpunkte,
-  zwangspunkteMitFreigabe,
+  attributeMitFreigabe, istFreigegeben, offeneFreigaben, pruefpunkte, typMitFreigabe,
 } from "@/lib/ableitung";
 import { useDemo } from "@/store/demo";
 import { Grundriss } from "@/components/plan/Grundriss";
@@ -48,7 +47,7 @@ export default function Raumpruefung() {
   // Attribute und Zwangspunkte folgen den Bestaetigungen, statt daneben rot
   // zu bleiben und das Gegenteil zu behaupten.
   const attribute = attributeMitFreigabe(typ, freigaben);
-  const zwangspunkte = zwangspunkteMitFreigabe(typ, freigaben);
+  const gezeigt = typMitFreigabe(typ, freigaben);
   const restOffen = punkte.filter((p) => p.freigabe === "offen").length;
 
   const bestaetigeAlle = () => {
@@ -109,7 +108,7 @@ export default function Raumpruefung() {
           {/* Mitte: Grundriss */}
           <div className="min-w-0">
             <Flaeche className="p-3">
-              <Grundriss typ={typ} zeigeModule={false} hoehe={430} />
+              <Grundriss typ={gezeigt} zeigeModule={false} hoehe={430} />
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 border-t border-line-2 pt-2 text-[11.5px] text-ink-3">
                 <span><i className="mr-1.5 inline-block h-[3px] w-4 bg-ink align-middle" />Wandkontur</span>
                 <span><i className="mr-1.5 inline-block h-[3px] w-4 bg-accent align-middle" />Fenster</span>
@@ -235,7 +234,7 @@ export default function Raumpruefung() {
                       </Td>
                     </tr>
                   ))}
-                  {zwangspunkte.map((z) => (
+                  {gezeigt.zwangspunkte.map((z) => (
                     <tr key={z.id}>
                       <Td stumm>{z.bezeichnung}</Td>
                       <Td rechts>

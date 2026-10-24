@@ -143,6 +143,26 @@ export function zwangspunkteMitFreigabe(
   return typ.zwangspunkte.map((z) => (z.freigabe === "offen" ? { ...z, freigabe: "bestaetigt" } : z));
 }
 
+/**
+ * Der ganze Typ mit den Bestätigungen darüber.
+ *
+ * Damit nicht jede Seite selbst daran denken muss: die Eigenschaftentabelle
+ * hatte es gelernt, der Grundriss zeichnete den Fallstrang weiter gestrichelt
+ * in Ocker und die Legende nannte ihn "ungeprüft".
+ */
+export function typMitFreigabe(
+  typ: Kuechentyp,
+  freigaben: Record<string, Record<string, boolean>>,
+): Kuechentyp {
+  if (!alleBestaetigt(typ, freigaben)) return typ;
+  return {
+    ...typ,
+    attribute: attributeMitFreigabe(typ, freigaben),
+    zwangspunkte: zwangspunkteMitFreigabe(typ, freigaben),
+    pruefpunkte: pruefpunkte(typ, freigaben),
+  };
+}
+
 export function offeneFreigaben(
   typ: Kuechentyp,
   freigaben: Record<string, Record<string, boolean>>,

@@ -6,7 +6,7 @@ import { ArrowRight, Check, Lock, Sparkles } from "lucide-react";
 import { KUECHENTYPEN, PROJEKT } from "@/data/projekt";
 import { modul } from "@/data/module";
 import { eur, kennzahlen, platzierung, variantenFuer, variante, zahl } from "@/lib/berechnung";
-import { anschluesse, istFreigegeben, offeneFreigaben } from "@/lib/ableitung";
+import { anschluesse, istFreigegeben, offeneFreigaben, typMitFreigabe } from "@/lib/ableitung";
 import { arbeitshoeheVon } from "@/lib/masse";
 import { useDemo } from "@/store/demo";
 import { Grundriss } from "@/components/plan/Grundriss";
@@ -42,7 +42,9 @@ export default function Planung() {
   const starteRef = useRef<(() => void) | null>(null);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
-  const typ = KUECHENTYPEN.find((t) => t.id === aktiv)!;
+  // Bestaetigungen gelten auch im Bild: sonst zeichnet der Grundriss
+  // Zwangspunkte weiter als ungeprueft, die oben als fest gelten.
+  const typ = typMitFreigabe(KUECHENTYPEN.find((t) => t.id === aktiv)!, freigaben);
   const frei = istFreigegeben(typ, freigaben);
   // Vorher war "generiert || frei" innerhalb des frei-Zweigs immer wahr —
   // der Rechenlauf samt dem Satz "Demo-Simulation, es laeuft kein echter
