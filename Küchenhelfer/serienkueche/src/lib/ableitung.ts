@@ -1,6 +1,7 @@
 import { platzierung } from "@/lib/berechnung";
 import type { VarianteRoh } from "@/data/varianten";
 import type { Anschluss, Kuechentyp, Pruefpunkt } from "@/lib/typen";
+import { AP_OK } from "@/lib/masse";
 
 /**
  * Aus der gewählten Variante abgeleitete Angaben: Anschlusspositionen und
@@ -8,7 +9,7 @@ import type { Anschluss, Kuechentyp, Pruefpunkt } from "@/lib/typen";
  * Variante, ändern sich die Anschlüsse mit.
  */
 
-const AP_OK = 910;
+// Arbeitshoehe kommt aus masse.ts, nicht aus einer zweiten Kopie.
 
 function suche(v: VarianteRoh, typ: Kuechentyp, modulId: string) {
   for (const z of typ.zeilen) {

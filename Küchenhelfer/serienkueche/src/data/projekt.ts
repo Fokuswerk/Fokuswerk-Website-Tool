@@ -54,7 +54,9 @@ export const KUECHENTYPEN: Kuechentyp[] = [
       bruestungshoehe: { wert: 900, einheit: "mm", herkunft: "gelesen", freigabe: "bestaetigt", quelle: "Schnitt A-A" },
       tuerbreite: { wert: 885, einheit: "mm", herkunft: "gelesen", freigabe: "bestaetigt", quelle: "Block TUER-885" },
       wasseranschluss: { wert: 1950, einheit: "mm", herkunft: "gerechnet", freigabe: "bestaetigt", quelle: "aus Spülenposition" },
-      flaeche: { wert: 81, einheit: "m2", herkunft: "gerechnet", freigabe: "bestaetigt", quelle: "aus Raumpolygon, Wert in dm²" },
+      // Der Wert steht in dm², die Tabelle teilt durch 100. 8,10 m² sind 810,
+      // nicht 81 — daneben stand im Grundriss die richtige Zahl.
+      flaeche: { wert: 810, einheit: "m2", herkunft: "gerechnet", freigabe: "bestaetigt", quelle: "aus Nischenlänge × Raumtiefe" },
     },
     pruefpunkte: [
       { id: "P1", titel: "Maßstab 1:50 bestätigt", beschreibung: "Maßkette nennt 3.000 mm, aus der Geometrie gerechnet 3.000 mm. Abweichung 0 mm.", freigabe: "bestaetigt", blockierend: true },

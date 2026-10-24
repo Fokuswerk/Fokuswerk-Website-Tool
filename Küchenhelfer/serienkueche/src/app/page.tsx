@@ -74,7 +74,7 @@ const SCHRITTE = [
 ];
 
 const ZUSAGEN = [
-  ["Wir rechnen auf den Zentimeter", "Die Summe aller Schrankbreiten ergibt exakt deine Wandlänge. Immer."],
+  ["Wir rechnen auf den Zentimeter", "Die Summe aller Schrankbreiten ergibt exakt die Länge deiner Küchenzeile — die Passleiste eingerechnet. Immer."],
   ["Wir kennen die Regeln", "Nichts Hohes vor dem Fenster, Abstand neben dem Herd, Spüle am Wasseranschluss."],
   ["Vor der Bestellung misst jemand nach", "Wände sind nie ganz gerade. Dein Plan bleibt, die Maße werden bestätigt."],
 ];

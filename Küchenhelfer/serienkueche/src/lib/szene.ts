@@ -216,8 +216,21 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh, ofenGewaehlt =
     const ab = zeile.start;
     platzJetzt = null;
 
-    // Arbeitsplatte über die ganze Zeile, 20 mm Überstand nach vorn
-    stelle(zeile.wand, ab, ab + zeile.laenge, 0, TIEFE_UNTEN + 20, AP_OK - PLATTE, AP_OK, MATERIAL.platte);
+    // Arbeitsplatte, 20 mm Überstand nach vorn — aber nur über den
+    // Abschnitten ohne Hochschrank. Vorher lief sie mitten durch sie hindurch.
+    {
+      let lauf: { von: number; bis: number } | null = null;
+      const abschnitte: Array<{ von: number; bis: number }> = [];
+      for (const p of plaetze) {
+        const r = rolleVon(p.modulId);
+        if (r === "kuehlschrank" || r === "backofen") { lauf = null; continue; }
+        if (lauf && lauf.bis === p.von) lauf.bis = p.bis;
+        else { lauf = { von: p.von, bis: p.bis }; abschnitte.push(lauf); }
+      }
+      for (const a of abschnitte) {
+        stelle(zeile.wand, ab + a.von, ab + a.bis, 0, TIEFE_UNTEN + 20, AP_OK - PLATTE, AP_OK, MATERIAL.platte);
+      }
+    }
 
 
     for (const p of plaetze) {

@@ -272,6 +272,25 @@ export function haengeplaetze(
   return aus;
 }
 
+/**
+ * Laufende Millimeter Arbeitsplatte.
+ *
+ * Über Hoch- und Kühlschränke läuft keine Platte — die gehen bis oben durch.
+ * Gerechnet wurde bisher die ganze Zeilenlänge: je Hochschrank waren 600 mm
+ * Platte bezahlt, die im Zuschnitt gar nicht auftauchten.
+ */
+export function platteLaenge(typ: Kuechentyp, belegung: Record<string, string[]>): number {
+  let mm = 0;
+  for (const z of typ.zeilen) {
+    for (const id of belegung[z.id] ?? []) {
+      const r = rolleVon(id);
+      if (r === "kuehlschrank" || r === "backofen") continue;
+      mm += modul(id).breite ?? 0;
+    }
+  }
+  return mm;
+}
+
 export interface Kosten {
   korpusse: number;
   haenge: number;
@@ -610,7 +629,7 @@ export function ausBelegung(
   let korpusse = 0;
   for (const z of typ.zeilen) for (const id of belegung[z.id]) korpusse += modul(id).preis;
   const haenge = haengeschraenke * modul("HS600").preis;
-  const platte = Math.round(modul("AP").preis * lfm);
+  const platte = Math.round((modul("AP").preis * platteLaenge(typ, belegung)) / 1000);
   const sockel = Math.round(modul("SO").preis * lfm);
   const spuele = modul("SPA").preis;
   const montage = Math.round(modul("MON").preis * lfm);

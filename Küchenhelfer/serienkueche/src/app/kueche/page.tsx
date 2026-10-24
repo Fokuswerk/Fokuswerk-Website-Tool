@@ -1490,7 +1490,7 @@ export default function Kuechenplaner() {
 
                     <p className="mt-5 text-[12.5px] leading-relaxed text-kohle-3">
                       Getauscht wird immer Platz gegen Platz — so bleibt die Summe der Breiten
-                      genau deine Wandlänge. Preis, Hängeschränke und Arbeitsfläche rechnen wir
+                      genau die Länge deiner Küchenzeile. Preis, Hängeschränke und Arbeitsfläche rechnen wir
                       sofort neu, und wenn eine Regel kippt, steht es direkt darunter.
                     </p>
                   </div>
@@ -1651,8 +1651,8 @@ export default function Kuechenplaner() {
                   </h1>
                   <p className="mt-4 max-w-[62ch] text-[16px] leading-relaxed text-kohle-2">
                     Alles darin stammt aus deinem Plan: die Positionsnummern sind dieselben wie in
-                    der Zeichnung, die Maßkette ergibt deine Wandlänge, und die Summe der
-                    Stückliste ist der Preis, der dir angezeigt wurde.
+                    der Zeichnung, die Maßkette ergibt die Länge deiner Küchenzeile, und die
+                    Summe der Stückliste ist der Preis, der dir angezeigt wurde.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-3 nicht-drucken">

@@ -2,7 +2,7 @@ import { belegungsbreite, modul, PREISSTAND, PREIS_GUELTIG_BIS, LIEFERANT } from
 import { ARTEN, geraet, MWST, PREISSTAND_GERAETE, type Geraetewahl } from "@/data/geraete";
 import { platzierung } from "@/lib/berechnung";
 import { AP_OK, HOCH_H, OS_UK, PLATTE, rolleVon, ROLLE_NAME, SOCKEL, TIEFE_UNTEN } from "@/lib/masse";
-import { haengeplaetze, lageIn, WANDNAME, type Raumangaben, type Vorschlag } from "@/lib/planer";
+import { haengeplaetze, lageIn, platteLaenge, WANDNAME, type Raumangaben, type Vorschlag } from "@/lib/planer";
 import type { Kuechentyp } from "@/lib/typen";
 
 /**
@@ -155,7 +155,9 @@ const SPUELE_AUSSCHNITT = { breite: 490, tiefe: 400 };
 const PLATTE_TIEFE = TIEFE_UNTEN + 20;
 const H_UNTEN = 450;
 const H_HOCH = 1800;
-const H_PLATTE = 1150;
+/** Steckdose über der Arbeitsplatte: 240 mm darüber, nicht fest 1.150 mm —
+    sonst wandert sie nicht mit, wenn die Arbeitshöhe sich ändert. */
+const H_PLATTE = AP_OK + 240;
 const H_HAUBE = 2000;
 
 /**
@@ -221,6 +223,9 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
   }
 
   const lfm = typ.zeilen.reduce((s, z) => s + z.laenge, 0) / 1000;
+  // Die Platte laeuft nicht ueber Hochschraenke — Stueckliste und Zuschnitt
+  // muessen dieselbe Laenge nennen.
+  const platteLfm = platteLaenge(typ, v.belegung) / 1000;
   const runden = (x: number) => Math.round(x * 100) / 100;
 
   if (v.haengeschraenke > 0) {
@@ -228,7 +233,7 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
     liste.push({ pos: "—", bezeichnung: m.bezeichnung, artikel: m.artikel, menge: v.haengeschraenke, einheit: "Stk", einzel: m.preis, summe: v.kosten.haenge });
   }
   for (const [id, menge, summe] of [
-    ["AP", runden(lfm), v.kosten.platte],
+    ["AP", runden(platteLfm), v.kosten.platte],
     ["SO", runden(lfm), v.kosten.sockel],
     ["MON", runden(lfm), v.kosten.montage],
   ] as Array<[string, number, number]>) {

@@ -10,7 +10,9 @@ import { modul } from "@/data/module";
 
 export const SOCKEL = 150;
 export const KORPUS = 720;
-export const PLATTE = 45;
+/** Plattenstärke. Muss zum Artikel "Arbeitsplatte Schichtstoff 40 mm"
+    im Katalog passen — sonst steht in der Stückliste 40 und im Zuschnitt 45. */
+export const PLATTE = 40;
 /** Oberkante Arbeitsplatte über Fertigfußboden. */
 export const AP_OK = SOCKEL + KORPUS + PLATTE;
 /** Unterkante Hängeschrank. */

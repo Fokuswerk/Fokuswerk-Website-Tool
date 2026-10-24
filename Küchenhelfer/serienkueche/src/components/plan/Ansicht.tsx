@@ -1,6 +1,7 @@
 "use client";
 
 import { modul } from "@/data/module";
+import { AP_OK, HOCH_H, KORPUS, OS_H, OS_UK, PLATTE, SOCKEL } from "@/lib/masse";
 import { platzierung } from "@/lib/berechnung";
 import type { VarianteRoh } from "@/data/varianten";
 import type { Anschluss, Kuechentyp } from "@/lib/typen";
@@ -10,13 +11,8 @@ import type { Anschluss, Kuechentyp } from "@/lib/typen";
  * Oberkante Fertigfußboden. In SVG wird y gespiegelt.
  */
 
-const SOCKEL = 150;
-const KORPUS = 720;
-const PLATTE = 40;
-const AP_OK = SOCKEL + KORPUS + PLATTE; // 910
-const OS_UK = 1450;
-const OS_H = 720;
-const HOCH_H = 2060;
+// Die Masse stehen in masse.ts. Hier standen sie ein zweites Mal und mit
+// anderen Werten — daher 910 gegen 915 mm und zwei Haubenunterkanten.
 
 const SYMBOL: Record<string, { zeichen: string; farbe: string }> = {
   kaltwasser: { zeichen: "KW", farbe: "text-accent" },
@@ -160,7 +156,8 @@ export function Ansicht({
         const blende = m.kategorie === "blende";
         const schluessel = `${zeileId}:${p.index}`;
         const aktiv = gewaehltesModul === schluessel;
-        const oben = hoch ? SOCKEL + HOCH_H : SOCKEL + KORPUS;
+        // HOCH_H misst ab Fertigfussboden, nicht ab Sockeloberkante.
+        const oben = hoch ? HOCH_H : SOCKEL + KORPUS;
         // Im Spuelenschrank sitzen Kalt-, Warm- und Abwasser dicht
         // beieinander. Wo zwei oder mehr Kuerzel stehen, bleibt der
         // Schranktyp weg — er steht in der Stueckliste. Die Anschluesse
@@ -180,7 +177,7 @@ export function Ansicht({
               x={p.von}
               y={y(oben)}
               width={p.breite}
-              height={oben - SOCKEL}
+              height={oben - (hoch ? 0 : SOCKEL)}
               className={
                 aktiv
                   ? "fill-accent/35 stroke-accent"
@@ -197,7 +194,7 @@ export function Ansicht({
                 x={p.von + p.breite / 2}
                 // Im Unterschrank sitzt der Name knapp unter der Platte: in
                 // der Mitte lag er genau auf den Anschlusszeichen.
-                y={hoch ? y(SOCKEL + HOCH_H / 2) : y(AP_OK - 190)}
+                y={hoch ? y(HOCH_H / 2) : y(AP_OK - 190)}
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={94}
