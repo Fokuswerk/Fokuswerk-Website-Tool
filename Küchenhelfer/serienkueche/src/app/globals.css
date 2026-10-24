@@ -125,10 +125,15 @@ body {
 }
 
 .warm {
+  /* Kein background-attachment: fixed — damit klebt das Licht von oben am
+     Fensterrand statt am Seitenanfang, und beim Scrollen wandert es mit. */
   background:
     radial-gradient(130% 62% at 50% -8%, #fffefc 0%, rgba(255, 254, 252, 0) 58%),
     linear-gradient(180deg, #f8f7f4 0%, var(--color-creme) 34%);
-  background-attachment: fixed;
+  background-repeat: no-repeat, no-repeat;
+  background-position: top center, top center;
+  background-size: 100% 900px, 100% 1400px;
+  background-color: var(--color-creme);
   color: var(--color-kohle);
   font-family: var(--font-warm);
   font-size: 16.5px;
@@ -198,6 +203,10 @@ body {
   box-shadow: 0 2px 6px rgba(21, 20, 15, 0.34), 0 0 0 1px rgba(21, 20, 15, 0.08);
   cursor: grab;
 }
+
+/* three.js setzt auf seinem eigenen Behaelter touch-action: none. Wo der
+   Raum mitten im Scrollweg liegt, muss senkrechtes Wischen durchkommen. */
+.raum-scrollbar > div { touch-action: pan-y !important; }
 
 /* ------- Unterlagen auf Papier -------
    Das Blatt soll fuer sich stehen: eigener Briefkopf, Fusszeile auf jeder

@@ -1106,7 +1106,7 @@ export default function Kuechenplaner() {
                   className="h-full w-full object-cover"
                   sizes="(max-width: 768px) 100vw, 60vw"
                 />
-                <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/70 to-transparent p-3 text-[11.5px] text-creme">
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/85 via-kohle/80 via-70% to-transparent p-3 text-[11.5px] text-creme">
                   Beispielbild. Die Modelle darunter zeigen das Foto des Herstellers.
                 </span>
               </div>
@@ -1317,7 +1317,7 @@ export default function Kuechenplaner() {
                 </div>
 
                 {ansicht === "raum" && (
-                  <Kuechenraum typ={typ} variante={gewaehlterVorschlag.variante} hoehe={420} geraeteSchalter ofenGewaehlt={ofenDa} />
+                  <Kuechenraum typ={typ} variante={gewaehlterVorschlag.variante} hoehe={420} geraeteSchalter ofenGewaehlt={ofenDa} scrollen />
                 )}
 
                 {ansicht === "vorn" && (

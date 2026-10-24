@@ -372,6 +372,7 @@ export function Kuechenraum({
   umstellen,
   betont,
   ofenGewaehlt = true,
+  scrollen = false,
 }: {
   typ: Kuechentyp;
   variante: VarianteRoh;
@@ -396,6 +397,10 @@ export function Kuechenraum({
   betont?: string;
   /** Ist überhaupt ein Backofen gewählt? Ohne ihn zeichnen wir auch keinen. */
   ofenGewaehlt?: boolean;
+  /** Senkrecht wischen scrollt die Seite, seitwärts dreht den Raum.
+      Ohne das bleibt die Seite auf dem Handy stehen, sobald der Daumen im
+      Bild landet — und das liest sich wie eine hängende Seite. */
+  scrollen?: boolean;
 }) {
   const [angefasst, setAngefasst] = useState(false);
   const [zeigeGeraete, setZeigeGeraete] = useState(true);
@@ -461,8 +466,8 @@ export function Kuechenraum({
     <div>
       <div
         ref={buehne}
-        className="vertieft relative overflow-hidden rounded-[18px] bg-[#efebe3] ring-1 ring-black/[0.06]"
-        style={{ height: hoehe, touchAction: "none" }}
+        className={`vertieft relative overflow-hidden rounded-[18px] bg-[#efebe3] ring-1 ring-black/[0.06] ${scrollen ? "raum-scrollbar" : ""}`}
+        style={{ height: hoehe, touchAction: scrollen ? "pan-y" : "none" }}
         onPointerDown={(e) => { setAngefasst(true); merkeStart(e); }}
         onPointerMove={merkeWeg}
       >
@@ -516,7 +521,7 @@ export function Kuechenraum({
 
         {!angefasst && (
           <span className="pointer-events-none absolute bottom-3.5 right-4 rounded-full bg-kohle/55 px-3 py-1 text-[11.5px] font-medium text-creme backdrop-blur-sm">
-            Ziehen zum Drehen
+            {scrollen ? "Seitwärts ziehen zum Drehen" : "Ziehen zum Drehen"}
           </span>
         )}
       </div>

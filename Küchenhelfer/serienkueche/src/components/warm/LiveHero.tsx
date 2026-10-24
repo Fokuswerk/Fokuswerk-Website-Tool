@@ -17,7 +17,10 @@ const Kuechenraum = dynamic(
   { ssr: false, loading: () => <div className="rounded-[18px] bg-creme-2" style={{ height: HOEHE }} /> },
 );
 
-const MIN = 2200;
+// Unter 2.500 mm geht die Pflichtbelegung (Spüle, Kochfeld, Kühlschrank,
+// Spülmaschine) nicht auf — der Planer gibt dann einen leeren Vorschlag
+// zurück, und am linken Anschlag standen 0 € und 0 Schränke.
+const MIN = 2500;
 const MAX = 4600;
 const HOEHE = "clamp(290px, 44vw, 470px)";
 
@@ -51,6 +54,7 @@ export function LiveHero() {
         hoehe={HOEHE}
         rahmenGroesse={3.9}
         unterzeile={false}
+        scrollen
       />
 
       <div className="mx-auto mt-8 max-w-[640px]">

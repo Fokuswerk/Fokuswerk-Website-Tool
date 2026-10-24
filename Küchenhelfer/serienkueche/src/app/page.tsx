@@ -82,9 +82,13 @@ const ZUSAGEN = [
 /** Ein Foto, das seinen Platz füllt, mit einem warmen Schleier darüber,
     damit die Bilder zur Farbigkeit der Seite passen. */
 function Bild({
-  f, breite, hoehe, schleier = true, prioritaet = false,
+  f, breite, hoehe, schleier = true, prioritaet = false, masse = "(max-width: 1023px) 100vw, 60vw",
 }: {
   f: Foto; breite: number; hoehe: number; schleier?: boolean; prioritaet?: boolean;
+  /** Wie breit das Bild an seinem Platz wirklich wird. Ein einziger Wert für
+      sieben verschiedene Plätze lädt für den Hero zu wenig und für die
+      kleinen Kacheln zu viel. */
+  masse?: string;
 }) {
   return (
     <>
@@ -95,7 +99,7 @@ function Bild({
         height={hoehe}
         priority={prioritaet}
         className="h-full w-full object-cover"
-        sizes="(max-width: 768px) 100vw, 60vw"
+        sizes={masse}
       />
       {schleier && (
         <span
@@ -141,7 +145,7 @@ export default function Start() {
       {/* ---------- Auftakt: ein Bild, ein Satz ---------- */}
       <section className="relative isolate flex min-h-[86vh] flex-col">
         <div className="absolute inset-0 -z-10 overflow-hidden bg-kohle">
-          <Bild f={FOTOS.hero} breite={2400} hoehe={1500} schleier={false} prioritaet />
+          <Bild f={FOTOS.hero} breite={2400} hoehe={1500} schleier={false} prioritaet masse="100vw" />
           <span
             aria-hidden="true"
             className="absolute inset-0"
@@ -243,7 +247,7 @@ export default function Start() {
                       width={400}
                       height={400}
                       className="h-full w-full object-contain p-4"
-                      sizes="(max-width: 640px) 100vw, 240px"
+                      sizes="(max-width: 639.98px) 46vw, (max-width: 1023.98px) 31vw, 240px"
                     />
                   </div>
                   <div className="flex flex-1 flex-col px-3.5 pb-3.5 pt-3.5 sm:px-4 sm:pb-4 sm:pt-4">
@@ -271,8 +275,8 @@ export default function Start() {
 
       {/* ---------- Bild, das über den Rand läuft ---------- */}
       <section className="mx-auto grid max-w-[1240px] items-center gap-10 px-5 pb-24 sm:px-8 sm:pb-32 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
-        <div className="relative h-[clamp(280px,46vw,540px)] overflow-hidden rounded-[22px] lg:-ml-[max(0px,calc((100vw-1240px)/2+2rem))] lg:rounded-l-none">
-          <Bild f={FOTOS.gruen} breite={1800} hoehe={1200} />
+        <div className="relative h-[clamp(280px,46vw,540px)] overflow-hidden rounded-[22px] lg:-ml-[max(2rem,calc((100vw-1240px)/2+2rem))] lg:rounded-l-none">
+          <Bild f={FOTOS.gruen} breite={1800} hoehe={1200} masse="(max-width: 1023px) 100vw, calc(50vw + 8px)" />
         </div>
         <div>
           <h2 className="gross max-w-[18ch] text-[30px] font-bold leading-[1.08] text-kohle sm:text-[40px]">
@@ -311,7 +315,7 @@ export default function Start() {
             </div>
           </div>
           <div className="relative h-[clamp(220px,46vw,340px)] lg:h-auto">
-            <Bild f={FOTOS.detail} breite={1200} hoehe={1600} schleier={false} />
+            <Bild f={FOTOS.detail} breite={1200} hoehe={1600} schleier={false} masse="(max-width: 1023px) 100vw, 36vw" />
           </div>
         </div>
       </section>
@@ -323,21 +327,21 @@ export default function Start() {
         </h2>
         <div className="mt-12 grid gap-5 lg:grid-cols-[1.35fr_1fr]">
           <figure className="relative h-[clamp(260px,42vw,480px)] overflow-hidden rounded-[22px]">
-            <Bild f={FOTOS.insel} breite={1800} hoehe={1200} />
-            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/80 to-transparent p-5 text-[13.5px] font-medium text-creme">
+            <Bild f={FOTOS.insel} breite={1800} hoehe={1200} masse="(max-width: 1023px) 100vw, 664px" />
+            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/85 via-kohle/80 via-70% to-transparent p-5 text-[13.5px] font-medium text-creme">
               Dunkle Fronten, heller Stein — dieselbe Technik, andere Oberfläche.
             </figcaption>
           </figure>
           <div className="grid gap-5">
             <figure className="relative h-[clamp(180px,20vw,230px)] overflow-hidden rounded-[22px]">
-              <Bild f={FOTOS.licht} breite={1200} hoehe={700} />
-              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/80 to-transparent p-4 text-[13px] font-medium text-creme">
+              <Bild f={FOTOS.licht} breite={1200} hoehe={700} masse="(max-width: 1023px) 100vw, 492px" />
+              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/85 via-kohle/80 via-70% to-transparent p-4 text-[13px] font-medium text-creme">
                 Kochfeld in der Platte, nichts hängt darüber.
               </figcaption>
             </figure>
             <figure className="relative h-[clamp(180px,20vw,230px)] overflow-hidden rounded-[22px]">
-              <Bild f={FOTOS.marmor} breite={1200} hoehe={700} />
-              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/80 to-transparent p-4 text-[13px] font-medium text-creme">
+              <Bild f={FOTOS.marmor} breite={1200} hoehe={700} masse="(max-width: 1023px) 100vw, 492px" />
+              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/85 via-kohle/80 via-70% to-transparent p-4 text-[13px] font-medium text-creme">
                 Wandlänge gibt den Takt vor, nicht der Geschmack.
               </figcaption>
             </figure>
@@ -352,9 +356,9 @@ export default function Start() {
           Was kostet so eine Küche?
         </h2>
         <p className="ziffern mt-6 max-w-[58ch] text-[16.5px] leading-relaxed text-kohle-2">
-          Je nach Raum und Ausstattung zwischen {eur(brutto(von))} und {eur(brutto(bis))} — komplett, mit Geräten,
-          Montage und Mehrwertsteuer. Die drei Beispiele sind mit demselben Planer gerechnet, der gleich auch deine
-          Küche rechnet.
+          Diese drei Beispiele liegen zwischen {eur(brutto(von))} und {eur(brutto(bis))} — komplett, mit Geräten,
+          Montage und Mehrwertsteuer. Größere Räume und gehobene Ausstattung kosten mehr. Gerechnet sind sie
+          mit demselben Planer, der gleich auch deine Küche rechnet.
         </p>
 
         <div className="mt-12 grid gap-4 sm:grid-cols-3">
