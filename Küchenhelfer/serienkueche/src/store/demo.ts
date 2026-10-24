@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { STANDARDWAHL } from "@/data/varianten";
+import { STANDARDWAHL, VARIANTEN } from "@/data/varianten";
 import { GEWICHTUNG_STANDARD, type Gewichtung } from "@/lib/berechnung";
 import type { Dokument, SpezifikationSnapshot } from "@/lib/typen";
 
@@ -46,6 +46,20 @@ const ANFANG = {
   generiert: [] as string[],
 };
 
+/**
+ * Eine gespeicherte Variantenwahl kann auf eine Variante zeigen, die es nicht
+ * mehr gibt. `variante()` wirft dann beim Rendern, und der ganze
+ * Bauträgerbereich bleibt weiß — ohne Hinweis, was los ist. Beim Laden
+ * einmal geradeziehen, wie es der Privatkunden-Zustand mit den Geräten tut.
+ */
+function bereinigeAuswahl(alt: Record<string, string> | undefined): Record<string, string> {
+  const aus: Record<string, string> = { ...STANDARDWAHL };
+  for (const [typId, variantId] of Object.entries(alt ?? {})) {
+    if (VARIANTEN.some((v) => v.id === variantId && v.typId === typId)) aus[typId] = variantId;
+  }
+  return aus;
+}
+
 export const useDemo = create<DemoState>()(
   persist(
     (set) => ({
@@ -84,6 +98,17 @@ export const useDemo = create<DemoState>()(
 
       zuruecksetzen: () => set({ ...ANFANG, auswahl: { ...STANDARDWAHL }, gewichtung: { ...GEWICHTUNG_STANDARD } }),
     }),
-    { name: "serienkueche-demo-v1" },
+    {
+      name: "serienkueche-demo-v1",
+      merge: (gespeichert, jetzt) => {
+        const alt = gespeichert as Partial<DemoState> | undefined;
+        return {
+          ...jetzt,
+          ...alt,
+          auswahl: bereinigeAuswahl(alt?.auswahl),
+          gewichtung: { ...GEWICHTUNG_STANDARD, ...(alt?.gewichtung ?? {}) },
+        } as DemoState;
+      },
+    },
   ),
 );

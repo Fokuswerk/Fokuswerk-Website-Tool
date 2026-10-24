@@ -7,6 +7,7 @@ import { KUECHENTYPEN, PROJEKT } from "@/data/projekt";
 import { modul } from "@/data/module";
 import { eur, kennzahlen, platzierung, variantenFuer, variante, zahl } from "@/lib/berechnung";
 import { anschluesse, istFreigegeben, offeneFreigaben } from "@/lib/ableitung";
+import { arbeitshoeheVon } from "@/lib/masse";
 import { useDemo } from "@/store/demo";
 import { Grundriss } from "@/components/plan/Grundriss";
 import { Ansicht } from "@/components/plan/Ansicht";
@@ -156,7 +157,7 @@ export default function Planung() {
                 <dt className="text-ink-3">Budget je Küche</dt>
                 <dd className="num text-right text-ink-2">{eur(PROJEKT.budgetVon)}–{eur(PROJEKT.budgetBis)}</dd>
                 <dt className="text-ink-3">Arbeitshöhe</dt>
-                <dd className="num text-right text-ink-2">910 mm OFF</dd>
+                <dd className="num text-right text-ink-2">{zahl(arbeitshoeheVon(typ))} mm OFF</dd>
                 <dt className="text-ink-3">Raster</dt>
                 <dd className="num text-right text-ink-2">600 / 450 / 150</dd>
                 <dt className="text-ink-3">Geschirrspüler</dt>

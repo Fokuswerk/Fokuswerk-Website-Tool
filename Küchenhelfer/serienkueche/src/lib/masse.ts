@@ -15,6 +15,26 @@ export const KORPUS = 720;
 export const PLATTE = 40;
 /** Oberkante Arbeitsplatte über Fertigfußboden. */
 export const AP_OK = SOCKEL + KORPUS + PLATTE;
+/**
+ * Arbeitshöhe eines Küchentyps über Fertigfußboden.
+ *
+ * K-06 ist als barrierearmer Typ auf 850 mm festgelegt und blockiert dafür
+ * sogar eine Freigabe ("Wirkt auf Anschlusshöhen und Nischenmaße"). Gezeichnet
+ * und bemaßt wurde er trotzdem mit den 910 mm des Standards. Wer so ein
+ * Datenblatt einmal gegen die Zeichnung hält, glaubt dem Werkzeug nichts mehr.
+ *
+ * Den Unterschied nimmt der Sockel auf: Korpus und Platte bleiben, was sie
+ * sind, der Sockel wird niedriger. So baut man das auch.
+ */
+export function arbeitshoeheVon(typ: { attribute: Record<string, { wert: number }> }): number {
+  return typ.attribute.arbeitshoehe?.wert ?? AP_OK;
+}
+
+/** Sockelhöhe, die zu einer Arbeitshöhe gehört. */
+export function sockelZu(apOk: number): number {
+  return apOk - KORPUS - PLATTE;
+}
+
 /** Unterkante Hängeschrank. */
 export const OS_UK = 1460;
 export const OS_H = 700;

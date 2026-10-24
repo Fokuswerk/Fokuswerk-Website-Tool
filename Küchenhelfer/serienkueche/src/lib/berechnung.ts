@@ -152,15 +152,18 @@ export function installationsweg(v: VarianteRoh, typ: Kuechentyp): number {
   return bisEcke + fsMitte;
 }
 
-/** Bewegungsfläche vor der Zeile, in mm. */
+/**
+ * Bewegungsfläche vor der Zeile, in mm: Raumtiefe abzüglich der Korpustiefe
+ * jeder Zeile, die in diese Tiefe hineinragt. Bei zwei Zeilen gegenüber sind
+ * das zwei, sonst eine — eine L-Form ragt nur mit einer Zeile in die Tiefe.
+ *
+ * Vorher stand hier ein Ausdruck, der in beiden Zweigen dasselbe lieferte und
+ * am Ende null abzog. Er sah nach einer Rechnung aus und war keine.
+ */
 export function bewegungsflaeche(typ: Kuechentyp): number {
   const korpus = 600;
-  const zeilen = typ.zeilen.length;
-  const gegenueber =
-    typ.grundform === "zweizeilig" ? korpus * 2 : korpus;
-  const tiefe =
-    typ.grundform === "zweizeilig" ? typ.raum.tiefe : typ.raum.tiefe;
-  return tiefe - gegenueber - (zeilen > 1 && typ.grundform === "l-form" ? 0 : 0);
+  const zeilenInDerTiefe = typ.grundform === "zweizeilig" ? 2 : 1;
+  return typ.raum.tiefe - zeilenInDerTiefe * korpus;
 }
 
 export interface Kennzahlen {

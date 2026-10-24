@@ -3,9 +3,8 @@
 import { useState } from "react";
 import { PackageCheck } from "lucide-react";
 import { KUECHENTYPEN, WOHNUNGEN } from "@/data/projekt";
-import { modul } from "@/data/module";
-import { eur, platzierung, stueckliste, variante, zahl } from "@/lib/berechnung";
-import { abweichung, aufmassLage, type AufmassLage } from "@/lib/ableitung";
+import { eur, stueckliste, variante, zahl } from "@/lib/berechnung";
+import { abweichung, aufmassLage, fertigungsmasse, type AufmassLage } from "@/lib/ableitung";
 import { useDemo } from "@/store/demo";
 import { Grundriss } from "@/components/plan/Grundriss";
 import {
@@ -35,10 +34,7 @@ export default function Aufmass() {
     (w) => filter === "alle" || aufmassLage(w.messpunkte, aufmass[w.nr]) === filter,
   );
 
-  const haupt = wohnung.messpunkte.find((m) => m.id === "M1")!;
-  const d1 = abweichung(haupt.planmass, werte.M1 ?? null);
-  const passblende = platzierung(v, typ.zeilen[0].id).find((p) => modul(p.modulId).kategorie === "blende");
-  const neuePassblende = passblende && d1 !== null ? (passblende.breite ?? 0) + d1 : null;
+  const fertigung = fertigungsmasse(typ, v, werte, wohnung.messpunkte);
   const bestellbar = lage === "bestaetigt" && snapshots.length > 0;
 
   const zaehler = (l: AufmassLage) =>
@@ -190,12 +186,14 @@ export default function Aufmass() {
                   </tbody>
                 </Tabelle>
                 <div className="border-t border-line-2 px-3 py-2 text-[11px] text-ink-3">
-                  Abweichungen über 15 mm wirken auf Passblenden und Arbeitsplattenlängen.
+                  Jede Abweichung ändert den Zuschnitt der Arbeitsplatte und der Passblende. Die
+                  Modulauswahl muss erst dann angefasst werden, wenn die Passblende aus ihrem
+                  Bereich von 20 bis 150 mm läuft — ab 15 mm lohnt deshalb der Blick darauf.
                 </div>
               </Flaeche>
             </div>
 
-            {d1 !== null && (
+            {fertigung && (
               <Abschnitt titel="Wirkung auf die Fertigungsmaße">
                 <Flaeche>
                   <Tabelle dicht>
@@ -204,39 +202,35 @@ export default function Aufmass() {
                         <Th>Maß</Th>
                         <Th rechts>aus der Planung</Th>
                         <Th rechts>nach Aufmaß</Th>
+                        <Th rechts nebensache>Differenz</Th>
                         <Th>Folge</Th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <Td>Nischenlänge Hauptzeile</Td>
-                        <Td num rechts stumm>{zahl(haupt.planmass)} mm</Td>
-                        <Td num rechts>{zahl(werte.M1 ?? haupt.planmass)} mm</Td>
-                        <Td stumm>Grundlage für alle folgenden Maße</Td>
-                      </tr>
-                      {neuePassblende !== null && passblende && (
-                        <tr>
-                          <Td>Passblende</Td>
-                          <Td num rechts stumm>{zahl(passblende.breite)} mm</Td>
-                          <Td num rechts>
-                            <span className={neuePassblende < 50 ? "text-flag" : ""}>{zahl(neuePassblende)} mm</span>
-                          </Td>
-                          <Td stumm>
-                            {neuePassblende < 50
-                              ? "Unter dem kleinsten Fertigungsmaß — Modulauswahl muss angepasst werden"
-                              : "Zuschnitt vor Ort, Modulauswahl unverändert"}
-                          </Td>
-                        </tr>
-                      )}
-                      <tr>
-                        <Td>Arbeitsplatte Hauptzeile</Td>
-                        <Td num rechts stumm>{zahl(typ.zeilen[0].laenge)} mm</Td>
-                        <Td num rechts>{zahl((werte.M1 ?? haupt.planmass))} mm</Td>
-                        <Td stumm>Zuschnittlänge für die Fertigung</Td>
-                      </tr>
+                      {fertigung.zeilen.map((f) => {
+                        const d = f.ist - f.plan;
+                        return (
+                          <tr key={f.bezeichnung} className="align-top">
+                            <Td>{f.bezeichnung}</Td>
+                            <Td num rechts stumm>{zahl(f.plan)} mm</Td>
+                            <Td num rechts>
+                              <span className={f.kritisch ? "text-flag" : ""}>{zahl(f.ist)} mm</span>
+                            </Td>
+                            <Td num rechts nebensache stumm>
+                              {d === 0 ? "—" : `${d > 0 ? "+" : "−"}${zahl(Math.abs(d))}`}
+                            </Td>
+                            <Td stumm>{f.folge}</Td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </Tabelle>
                 </Flaeche>
+                {fertigung.weg && (
+                  <div className="mt-3">
+                    <Hinweisband titel={fertigung.weg.titel}>{fertigung.weg.text}</Hinweisband>
+                  </div>
+                )}
               </Abschnitt>
             )}
 

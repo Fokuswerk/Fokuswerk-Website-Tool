@@ -271,6 +271,11 @@ export interface Vorschlag {
   achtungPunkte: string[];
   /** Der Preis in seinen Posten — damit die Stückliste aufgeht. */
   kosten: Kosten;
+  /** Führt diese Strategie zum selben Plan wie eine frühere? Dann steht sie
+      nicht als eigene Karte da. */
+  gleichWie?: Strategie;
+  /** Welche anderen Wege hier zum selben Plan führen. */
+  auchAls?: string[];
 }
 
 /** Die Posten, aus denen sich der Preis zusammensetzt. Alles EUR netto. */
@@ -471,8 +476,24 @@ function breiteVon(ids: string[]): number {
   return ids.reduce((s, id) => s + (modul(id).breite ?? 0), 0);
 }
 
+/**
+ * Woraus eine Strategie den Rest der Zeile füllt.
+ *
+ * Vorher nahmen zwei der drei Strategien denselben Schrank — bei Räumen ohne
+ * Spielraum kamen dann zwei identische Vorschläge heraus, und drei gleiche
+ * Karten nebeneinander sehen aus wie ein Fehler. Die Schränke unterscheiden
+ * sich jetzt so, wie die Karten es versprechen: Tür und Boden ist das
+ * günstigste pro Meter, der Apothekerauszug fasst am meisten, Auszüge sind
+ * der Mittelweg.
+ */
+const FUELLER: Record<Strategie, { breit: string; schmal: string }> = {
+  guenstig: { breit: "UT600", schmal: "UT450" },
+  stauraum: { breit: "AZ600", schmal: "US450" },
+  arbeiten: { breit: "US600", schmal: "US450" },
+};
+
 function fuellung(rest: number, strategie: Strategie): string[] {
-  const breit = strategie === "stauraum" ? "AZ600" : "US600";
+  const { breit, schmal } = FUELLER[strategie];
   let besteA = 0, besteB = 0, bestBelegt = -1;
   for (let a = 0; a * 600 <= rest; a++) {
     for (let b = 0; a * 600 + b * 450 <= rest; b++) {
@@ -482,7 +503,7 @@ function fuellung(rest: number, strategie: Strategie): string[] {
       }
     }
   }
-  const aus = [...Array<string>(besteA).fill(breit), ...Array<string>(besteB).fill("US450")];
+  const aus = [...Array<string>(besteA).fill(breit), ...Array<string>(besteB).fill(schmal)];
   const uebrig = rest - bestBelegt;
   // Auch wenige Millimeter bekommen eine Leiste. Sonst ginge die Zeile nicht
   // auf, und genau das passiert, wenn eine Tür die Wandlänge krumm macht.
@@ -570,11 +591,14 @@ function bewerte(ids: string[], strategie: Strategie, wasserZiel: number | null)
   }
   if (iSp >= 0 && wasserZiel !== null) {
     const l = lageIn(ids, iSp);
-    punkte -= Math.abs((l.von + l.bis) / 2 - wasserZiel);
+    // "Kurze Leitungswege" steht auf der sparsamen Karte — dort muss der Weg
+    // zum Anschluss auch wirklich schwerer wiegen als sonst.
+    punkte -= Math.abs((l.von + l.bis) / 2 - wasserZiel) * (strategie === "guenstig" ? 3 : 1);
   }
-  // Spuelmaschine gehoert neben die Spuele
+  // Spuelmaschine gehoert neben die Spuele. Sparsam heisst: ein Anschluss
+  // fuer beide, also zaehlt die Nachbarschaft dort doppelt.
   const iGs = ids.findIndex((x) => x === "GS600" || x === "GS450");
-  if (iSp >= 0 && iGs >= 0) punkte -= Math.abs(iSp - iGs) * 220;
+  if (iSp >= 0 && iGs >= 0) punkte -= Math.abs(iSp - iGs) * (strategie === "guenstig" ? 480 : 220);
   // Hochschraenke stehen am liebsten am Rand, Passleiste ebenso
   ids.forEach((id, i) => {
     const amRand = i === 0 || i === ids.length - 1;
@@ -667,7 +691,24 @@ export function planeKueche(a: Raumangaben, strategie: Strategie): Vorschlag {
 }
 
 export function alleVorschlaege(a: Raumangaben): Vorschlag[] {
-  return STRATEGIEN.map((s) => planeKueche(a, s.id));
+  const alle = STRATEGIEN.map((s) => planeKueche(a, s.id));
+  /* In einem knappen Raum gibt es nichts zu variieren: die Pflichtmodule
+     stehen fest, für einen Füllschrank bleibt kein Platz. Dann kommen zwei
+     Wege beim selben Plan heraus. Das als zwei getrennte Karten mit
+     verschiedenen Namen und gleichem Inhalt hinzustellen, ist die
+     unangenehmste Art zu zeigen, dass gerade nichts gerechnet wurde. */
+  const schluessel = (v: Vorschlag) =>
+    JSON.stringify(Object.keys(v.belegung).sort().map((k) => [k, v.belegung[k]]));
+  for (let i = 1; i < alle.length; i++) {
+    if (!alle[i].moeglich) continue;
+    const gleich = alle
+      .slice(0, i)
+      .find((x) => x.moeglich && !x.gleichWie && schluessel(x) === schluessel(alle[i]));
+    if (!gleich) continue;
+    alle[i].gleichWie = gleich.strategie;
+    gleich.auchAls = [...(gleich.auchAls ?? []), alle[i].titel];
+  }
+  return alle;
 }
 
 export function pruefeAngaben(a: Raumangaben): string[] {

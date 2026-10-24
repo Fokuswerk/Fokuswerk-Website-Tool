@@ -149,7 +149,8 @@ export const KUECHENTYPEN: Kuechentyp[] = [
     attribute: {
       nischenlaenge: { wert: 3000, einheit: "mm", herkunft: "gelesen", freigabe: "bestaetigt", quelle: "Maßkette A-MASS, Haus B EG" },
       nischenlaenge2: { wert: 2400, einheit: "mm", herkunft: "gelesen", freigabe: "bestaetigt", quelle: "Maßkette A-MASS" },
-      gangbreite: { wert: 1240, einheit: "mm", herkunft: "gerechnet", freigabe: "offen", quelle: "Raumtiefe abzüglich zweier Korpustiefen", hinweis: "Liegt über den empfohlenen 1.200 mm, muss aber gegen die Raumtiefe bestätigt werden." },
+      // Wert wird unten aus der Raumtiefe gerechnet — siehe leiteAb().
+      gangbreite: { wert: 0, einheit: "mm", herkunft: "gerechnet", freigabe: "offen", quelle: "Raumtiefe abzüglich zweier Korpustiefen von je 600 mm", hinweis: "Rechenwert aus dem Plan. Gegen die Örtlichkeit zu bestätigen, bevor er in die Ausführung geht." },
       raumtiefe: { wert: 3840, einheit: "mm", herkunft: "gelesen", freigabe: "bestaetigt", quelle: "Maßkette A-MASS" },
       raumhoehe: { wert: 2600, einheit: "mm", herkunft: "gelesen", freigabe: "bestaetigt", quelle: "Schnitt B-B" },
       bruestungshoehe: { wert: 900, einheit: "mm", herkunft: "angenommen", freigabe: "offen", quelle: "aus Haus A übernommen", hinweis: "Für Haus B liegt kein Schnitt vor. Wert aus Haus A angenommen." },
@@ -158,7 +159,7 @@ export const KUECHENTYPEN: Kuechentyp[] = [
       { id: "P1", titel: "Maßstab 1:50 bestätigt", beschreibung: "Maßkette und Geometrie stimmen überein.", freigabe: "bestaetigt", blockierend: true },
       { id: "P2", titel: "Brüstungshöhe Haus B", beschreibung: "Für Haus B liegt kein Schnitt vor. Die Brüstungshöhe ist aus Haus A übernommen und muss belegt werden, bevor Oberschränke und Arbeitsplatte festgelegt werden.", freigabe: "offen", blockierend: true },
       { id: "P3", titel: "Lage Abwasserfallstrang", beschreibung: "Im Sanitärplan für Haus B nicht eindeutig. Der Fallstrang ist Zwangspunkt für die Spüle.", freigabe: "offen", blockierend: true },
-      { id: "P4", titel: "Gangbreite 1.240 mm", beschreibung: "Gerechnet aus Raumtiefe abzüglich zweier Korpustiefen. Gegen die Örtlichkeit zu bestätigen.", freigabe: "offen", blockierend: false },
+      { id: "P4", titel: "Gangbreite zwischen den Zeilen", beschreibung: "Gerechnet aus Raumtiefe abzüglich zweier Korpustiefen von je 600 mm. Gegen die Örtlichkeit zu bestätigen.", freigabe: "offen", blockierend: false },
     ],
     wohnungen: [],
     gespiegelt: ["WE 29", "WE 31"],
@@ -214,19 +215,40 @@ export const KUECHENTYPEN: Kuechentyp[] = [
       nischenlaenge: { wert: 3000, einheit: "mm", herkunft: "gelesen", freigabe: "bestaetigt", quelle: "Maßkette A-MASS, Haus B 1. OG" },
       raumtiefe: { wert: 3300, einheit: "mm", herkunft: "gelesen", freigabe: "bestaetigt", quelle: "Maßkette A-MASS" },
       raumhoehe: { wert: 2600, einheit: "mm", herkunft: "gelesen", freigabe: "bestaetigt", quelle: "Schnitt B-B" },
-      bewegungsflaeche: { wert: 1500, einheit: "mm", herkunft: "gerechnet", freigabe: "offen", quelle: "Raumtiefe abzüglich Korpustiefe", hinweis: "1.500 mm sind für Rollstuhlnutzung vorgesehen. Ob das Projekt diese Anforderung verbindlich stellt, ist nicht belegt." },
+      // Wert wird unten aus der Raumtiefe gerechnet — siehe leiteAb().
+      bewegungsflaeche: { wert: 0, einheit: "mm", herkunft: "gerechnet", freigabe: "offen", quelle: "Raumtiefe abzüglich einer Korpustiefe von 600 mm", hinweis: "Rechenwert aus dem Plan. Für Rollstuhlnutzung sind 1.500 mm vorgesehen; ob das Projekt diese Anforderung verbindlich stellt, ist nicht belegt." },
       arbeitshoehe: { wert: 850, einheit: "mm", herkunft: "angenommen", freigabe: "offen", quelle: "abgesenkt gegenüber Standard 910 mm", hinweis: "Abgesenkte Arbeitshöhe ist eine Projektfestlegung und muss bestätigt werden." },
     },
     pruefpunkte: [
       { id: "P1", titel: "Maßstab 1:50 bestätigt", beschreibung: "Maßkette und Geometrie stimmen überein.", freigabe: "bestaetigt", blockierend: true },
       { id: "P2", titel: "Anforderungsniveau Barrierefreiheit", beschreibung: "Der Typ ist barrierearm vorbereitet. Ob das Projekt eine verbindliche Anforderung stellt, ist aus den Unterlagen nicht belegt. Ohne Festlegung keine Freigabe.", freigabe: "offen", blockierend: true },
-      { id: "P3", titel: "Abgesenkte Arbeitshöhe 850 mm", beschreibung: "Weicht vom Projektstandard 910 mm ab. Wirkt auf Anschlusshöhen und Nischenmaße der Geräte.", freigabe: "offen", blockierend: true },
+      { id: "P3", titel: "Abgesenkte Arbeitshöhe 850 mm", beschreibung: "Weicht vom Projektstandard 910 mm ab. Der Unterschied wird im Sockel aufgenommen: 90 statt 150 mm. Korpus- und Nischenhöhen der Geräte bleiben, die Steckdosen über der Arbeitsplatte rutschen mit nach unten.", freigabe: "offen", blockierend: true },
     ],
     wohnungen: [],
     gespiegelt: ["WE 39"],
     hinweis: "Barrierearm ist in dieser Demo eine Projekteigenschaft und keine geprüfte Konformitätszusage.",
   },
 ];
+
+/**
+ * Maße, die sich aus anderen Maßen ergeben, werden gerechnet — nicht getippt.
+ *
+ * Vorher stand bei K-04 eine Gangbreite von 1.240 mm und bei K-06 eine
+ * Bewegungsfläche von 1.500 mm, beide mit der Herkunft "gerechnet" und einer
+ * Regel daneben. Nach dieser Regel kommt aus 3.840 mm Raumtiefe aber 2.640 mm
+ * heraus, nicht 1.240. Eine Zahl, die ihre eigene Rechnung nicht aushält,
+ * nimmt dem ganzen Datenblatt den Wert — deshalb rechnet hier die Regel.
+ */
+const KORPUSTIEFE = 600;
+
+for (const typ of KUECHENTYPEN) {
+  const tiefe = typ.attribute.raumtiefe?.wert;
+  if (!tiefe) continue;
+  const gang = typ.attribute.gangbreite;
+  if (gang) gang.wert = tiefe - 2 * KORPUSTIEFE;
+  const bew = typ.attribute.bewegungsflaeche;
+  if (bew) bew.wert = tiefe - KORPUSTIEFE;
+}
 
 /** Zuordnung Wohnungen zu Typen. Verbindlich, alle Ansichten rechnen damit. */
 const ZUORDNUNG: Array<{ typId: string; von: number; bis: number }> = [

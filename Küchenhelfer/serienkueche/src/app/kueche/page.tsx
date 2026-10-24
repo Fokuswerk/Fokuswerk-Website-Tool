@@ -198,6 +198,12 @@ function VorschlagKarte({
             <div className="mt-0.5 text-[14px] text-kohle-2">
               {v.arbeitsflaeche > 0 ? `${Math.round(v.arbeitsflaeche / 10)} cm Arbeitsfläche` : "Spüle und Herd nebeneinander"}
             </div>
+            {v.auchAls && (
+              <div className="mt-1 text-[13px] text-kohle-3">
+                In diesem Raum kommt {v.auchAls.length > 1 ? "auch" : ""} „{v.auchAls.join("“ und „")}“ auf
+                denselben Plan — der Platz lässt keine andere Aufteilung zu.
+              </div>
+            )}
           </div>
           <div className="gross shrink-0 text-right text-[23px] font-bold leading-none text-kohle">{eur(brutto(v.preis))}</div>
         </div>
@@ -331,10 +337,18 @@ export default function Kuechenplaner() {
   const brauchtPlan = schritt === "vorschlaege" || schritt === "ergebnis" || schritt === "unterlagen" || schritt === "start";
   const vorschlaege = useMemo(() => (brauchtPlan ? alleVorschlaege(raum) : []), [raum, brauchtPlan]);
   const moegliche = vorschlaege.filter((v) => v.moeglich);
-  const empfehlung = [...moegliche].sort(
+  // Was als eigene Karte dasteht: Doppelungen nennt die verbliebene Karte.
+  const karten = moegliche.filter((v) => !v.gleichWie);
+  const empfehlung = [...karten].sort(
     (a, b) => b.arbeitsflaeche - a.arbeitsflaeche || a.wegZumWasser - b.wegZumWasser || a.preis - b.preis,
   )[0];
-  const grundVorschlag = moegliche.find((v) => v.strategie === gewaehlt) ?? empfehlung;
+  // Eine früher gewählte Strategie kann inzwischen in einer anderen
+  // aufgegangen sein — dann gilt die, in der sie aufging.
+  const gewaehltRoh = moegliche.find((v) => v.strategie === gewaehlt);
+  const grundVorschlag =
+    (gewaehltRoh?.gleichWie
+      ? karten.find((v) => v.strategie === gewaehltRoh.gleichWie)
+      : gewaehltRoh) ?? empfehlung;
 
   // Von Hand umgestellt wird nur getauscht, die Breite bleibt also stimmen.
   // Alles andere — Preis, Hängeschränke, Hinweise — rechnen wir neu, sonst
@@ -1421,8 +1435,8 @@ export default function Kuechenplaner() {
                 </div>
               </div>
             ) : (
-              <div className="mt-8 grid gap-5 lg:grid-cols-3">
-                {moegliche.map((v) => (
+              <div className={`mt-8 grid gap-5 ${karten.length > 2 ? "lg:grid-cols-3" : "sm:grid-cols-2"}`}>
+                {karten.map((v) => (
                   <VorschlagKarte
                     key={v.strategie}
                     v={v}

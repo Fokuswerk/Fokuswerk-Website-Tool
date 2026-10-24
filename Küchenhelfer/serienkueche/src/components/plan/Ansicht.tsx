@@ -1,7 +1,7 @@
 "use client";
 
 import { modul } from "@/data/module";
-import { AP_OK, HOCH_H, KORPUS, OS_H, OS_UK, PLATTE, SOCKEL } from "@/lib/masse";
+import { arbeitshoeheVon, HOCH_H, KORPUS, OS_H, OS_UK, PLATTE, sockelZu } from "@/lib/masse";
 import { platzierung } from "@/lib/berechnung";
 import type { VarianteRoh } from "@/data/varianten";
 import type { Anschluss, Kuechentyp } from "@/lib/typen";
@@ -47,6 +47,9 @@ export function Ansicht({
   volleBreite?: boolean;
 }) {
   const zeile = typ.zeilen.find((z) => z.id === zeileId);
+  // Arbeitshoehe und Sockel kommen vom Typ — K-06 steht auf 850 mm.
+  const AP_OK = arbeitshoeheVon(typ);
+  const SOCKEL = sockelZu(AP_OK);
   if (!zeile) return null;
   const RH = typ.raum.hoehe;
   const y = (wert: number) => RH - wert;

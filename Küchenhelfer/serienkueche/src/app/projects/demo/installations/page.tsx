@@ -5,6 +5,7 @@ import { Printer } from "lucide-react";
 import { KUECHENTYPEN, PROJEKT } from "@/data/projekt";
 import { variante, zahl } from "@/lib/berechnung";
 import { anschluesse, istFreigegeben } from "@/lib/ableitung";
+import { arbeitshoeheVon } from "@/lib/masse";
 import { useDemo } from "@/store/demo";
 import { Ansicht } from "@/components/plan/Ansicht";
 import {
@@ -160,7 +161,7 @@ export default function Installationsplanung() {
                   <dt className="text-ink-3">Variante</dt>
                   <dd className="num text-right text-ink-2">{v.kurz} · {v.bezeichnung}</dd>
                   <dt className="text-ink-3">Arbeitshöhe</dt>
-                  <dd className="num text-right text-ink-2">910 mm OFF</dd>
+                  <dd className="num text-right text-ink-2">{zahl(arbeitshoeheVon(typ))} mm OFF</dd>
                   <dt className="text-ink-3">Einheiten</dt>
                   <dd className="num text-right text-ink-2">{typ.wohnungen.length}</dd>
                   <dt className="text-ink-3">Fallstrang</dt>
