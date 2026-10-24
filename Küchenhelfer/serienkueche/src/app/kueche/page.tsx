@@ -570,17 +570,22 @@ export default function Kuechenplaner() {
     // Was an der Küche ohne die Geräte hängt — daran erklärt sich, warum ein
     // billigeres Gerät die Küche teurer machen kann.
     const moebel = (v: Vorschlag) => v.kosten.gesamt - v.kosten.geraete;
-    const aus = new Map<string, { delta: number | null; moebel: number; wand: number }>();
+    const aus = new Map<string, { delta: number | null; passt: boolean; moebel: number; wand: number }>();
     const jetztGeraet = geraet(raum.geraete[geraeteArt]);
     for (const g of geraeteFuer(geraeteArt)) {
-      if (g.id === raum.geraete[geraeteArt]) { aus.set(g.id, { delta: 0, moebel: 0, wand: 0 }); continue; }
+      if (g.id === raum.geraete[geraeteArt]) { aus.set(g.id, { delta: 0, passt: jetzt.moeglich, moebel: 0, wand: 0 }); continue; }
       const probe = planeKueche(
         angleichen({ ...raum, geraete: { ...raum.geraete, [geraeteArt]: g.id } }),
         strategie,
       );
+      /* Passt die aktuelle Wahl selbst nicht in den Raum, gibt es keinen
+         Vergleichswert — aber die Frage, die der Nutzer dann hat, ist eine
+         andere: womit geht es denn? Vorher trug in genau dieser Lage jede
+         Karte das Schild "passt nicht in den Raum", auch die, die passt. */
       const geht = probe.moeglich && jetzt.moeglich;
       aus.set(g.id, {
         delta: geht ? brutto(probe.preis) - brutto(jetzt.preis) : null,
+        passt: probe.moeglich,
         moebel: geht ? brutto(moebel(probe)) - brutto(moebel(jetzt)) : 0,
         wand: g.breite - jetztGeraet.breite,
       });
@@ -1438,10 +1443,13 @@ export default function Kuechenplaner() {
                           {(() => {
                             const w = geraeteWirkung?.get(g.id);
                             if (!w) return null;
-                            if (w.delta === null) {
+                            if (!w.passt) {
                               return <span className="font-semibold text-kohle-3">passt nicht in den Raum</span>;
                             }
                             if (aktiv) return <span className="font-semibold text-kohle">gewählt</span>;
+                            if (w.delta === null) {
+                              return <span className="font-semibold text-salbei">damit geht es</span>;
+                            }
                             return (
                               <span className="font-semibold text-kohle">
                                 {w.delta === 0 ? "gleicher Preis" : `${w.delta > 0 ? "+" : "−"}${eur(Math.abs(w.delta))}`}

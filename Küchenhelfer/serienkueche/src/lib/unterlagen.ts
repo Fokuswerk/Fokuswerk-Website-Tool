@@ -354,9 +354,16 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
   } else if (kf && geraet(a.geraete.backofen).richtpreis > 0) {
     anschluesse.push({ art: "Anschluss Backofen", wand: kf.kette.wand, abZeilenanfang: mitte(kf.pos), hoehe: H_UNTEN, hinweis: "Ofen sitzt unter dem Kochfeld, gemeinsamer Anschluss" });
   }
+  /* Der Kuehlschrank braucht Strom, egal wie er gebaut ist. Als mit den
+     eigenen Kennungen KS600 dazukam, wurde dieser Zweig als einziger nicht
+     mitgezogen: das Geraet stand mit Nischenmass in der Liste, der
+     Elektriker bekam keinen Punkt dafuer. */
   const hk = findeModul("HK600");
+  const ksUnten = hk ? null : findeModul("KS600");
   if (hk) {
     anschluesse.push({ art: "Steckdose Kühlschrank", wand: hk.kette.wand, abZeilenanfang: mitte(hk.pos), hoehe: H_HOCH, hinweis: "im Hochschrank, oben" });
+  } else if (ksUnten) {
+    anschluesse.push({ art: "Steckdose Kühlschrank", wand: ksUnten.kette.wand, abZeilenanfang: mitte(ksUnten.pos), hoehe: H_UNTEN, hinweis: "im Unterschrank, hinter dem Gerät" });
   }
   if (kf && geraet(a.geraete.dunstabzug).richtpreis > 0) {
     anschluesse.push({ art: "Steckdose Dunstabzug", wand: kf.kette.wand, abZeilenanfang: mitte(kf.pos), hoehe: H_HAUBE, hinweis: "über dem Kochfeld, im Hängeschrank" });

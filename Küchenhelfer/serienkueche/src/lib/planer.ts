@@ -1,6 +1,6 @@
 import { istBekanntesModul, modul } from "@/data/module";
 import { geraet, STANDARD_GERAETE, type Geraetewahl } from "@/data/geraete";
-import { ROLLE_NAME, rolleVon } from "@/lib/masse";
+import { istHoch, ROLLE_NAME, rolleVon } from "@/lib/masse";
 import type { Kuechentyp, Oeffnung, Wandseite, Zeile } from "@/lib/typen";
 import type { VarianteRoh } from "@/data/varianten";
 
@@ -342,8 +342,10 @@ export function platteLaenge(typ: Kuechentyp, belegung: Record<string, string[]>
   let mm = 0;
   for (const z of typ.zeilen) {
     for (const id of belegung[z.id] ?? []) {
-      const r = rolleVon(id);
-      if (r === "kuehlschrank" || r === "backofen") continue;
+      // Nicht "ist das ein Kuehlschrank", sondern "reicht der Schrank bis
+      // oben". Ueber einem Kuehlschrank unter der Platte laeuft die Platte
+      // durch — das sagt der Geraetetext selbst.
+      if (istHoch(id)) continue;
       mm += modul(id).breite ?? 0;
     }
   }
@@ -386,10 +388,7 @@ export function freieFlaeche(
   let mm = 0;
   for (let i = Math.min(iSp, iKf) + 1; i < Math.max(iSp, iKf); i++) {
     if (band[i].id === "LUECKE") return 0;
-    if (band[i].id !== "ECKE") {
-      const r = rolleVon(band[i].id);
-      if (r === "kuehlschrank" || r === "backofen") continue;
-    }
+    if (band[i].id !== "ECKE" && istHoch(band[i].id)) continue;
     mm += band[i].breite;
   }
   return mm;
@@ -577,31 +576,6 @@ const SEITENABSTAND_KOCHFELD = 300;
  * elf Module. Die Grenze liegt jetzt so hoch, dass sie erst jenseits dessen
  * greift, was ein Wohnungsraum hergibt, und sie wird gemeldet.
  */
-function anordnungen(module: string[], grenze = 400000): string[][] {
-  const zaehler = new Map<string, number>();
-  for (const m of module) zaehler.set(m, (zaehler.get(m) ?? 0) + 1);
-  const arten = [...zaehler.keys()];
-  const aus: string[][] = [];
-  const aktuell: string[] = [];
-
-  const schritt = () => {
-    if (aus.length >= grenze) return;
-    if (aktuell.length === module.length) { aus.push([...aktuell]); return; }
-    for (const art of arten) {
-      const n = zaehler.get(art)!;
-      if (n === 0) continue;
-      zaehler.set(art, n - 1);
-      aktuell.push(art);
-      schritt();
-      aktuell.pop();
-      zaehler.set(art, n);
-      if (aus.length >= grenze) return;
-    }
-  };
-  schritt();
-  return aus;
-}
-
 const HOCH = ["HK600", "HB600"];
 
 function zulaessig(ids: string[], laenge: number, zone: { von: number; bis: number } | null): boolean {
@@ -684,6 +658,29 @@ function bewerte(ids: string[], strategie: Strategie, wasserZiel: number | null)
   return punkte;
 }
 
+/**
+ * Die beste Anordnung einer Zeile.
+ *
+ * Vorher wurden erst alle Anordnungen in ein Feld geschrieben und danach der
+ * Reihe nach bewertet. Bei elf Modulen sind das Hunderttausende Listen — bis
+ * zu 75 MB für eine Zeile, von denen genau eine gebraucht wird. Und weil die
+ * harten Regeln erst am fertigen Band geprüft wurden, lief die Suche durch
+ * jeden Ast, der schon beim zweiten Modul verloren war.
+ *
+ * Jetzt läuft die Suche durch den Baum und behält nur die beste Anordnung,
+ * und jede harte Regel greift, sobald sie entscheidbar ist: wo ein Modul
+ * liegt, steht fest, sobald alles davor steht. Ein Hochschrank im Fenster
+ * schneidet damit seinen ganzen Teilbaum ab statt ihn auszuzählen.
+ *
+ * Die Grenze ist eine Reißleine gegen Räume, die es nicht geben sollte, kein
+ * Teil der Rechnung: bis 6,40 m Wand wird sie nicht erreicht.
+ */
+const ARBEITSGRENZE = 300_000;
+
+/** Wie oft die Suche zuletzt an ihre Grenze gestossen ist. Nur zum Messen. */
+export let suchlaeufeAbgeschnitten = 0;
+export function zaehlerZuruecksetzen() { suchlaeufeAbgeschnitten = 0; }
+
 function besteAnordnung(
   module: string[],
   laenge: number,
@@ -691,26 +688,140 @@ function besteAnordnung(
   strategie: Strategie,
   wasserZiel: number | null,
 ): { ids: string[]; moeglich: boolean } {
-  const kandidaten = anordnungen(module);
-  let beste: string[] | null = null;
-  let bestPunkte = -Infinity;
-  for (const k of kandidaten) {
-    if (!zulaessig(k, laenge, zone)) continue;
-    const p = bewerte(k, strategie, wasserZiel);
-    if (p > bestPunkte) { bestPunkte = p; beste = k; }
-  }
-  if (beste) return { ids: beste, moeglich: true };
+  const zaehler = new Map<string, number>();
+  for (const m of module) zaehler.set(m, (zaehler.get(m) ?? 0) + 1);
+  const arten = [...zaehler.keys()];
+  const breiten = new Map(arten.map((a) => [a, modul(a).breite ?? 0]));
+
+  /**
+   * Schränke, auf die weder die Bewertung noch die harten Regeln schauen.
+   *
+   * `bewerte` kennt nur Spüle, Herd, Spülmaschine, Hochschränke und Leisten;
+   * `erlaubt` nur die drei eingeschränkten. Alles andere ist Stauraum, und
+   * ob an einer Stelle ein Auszug oder ein Türschrank derselben Breite steht,
+   * ändert an beidem nichts.
+   */
+  const neutral = (id: string) => {
+    if (id === "SP600" || id === "KF600" || id === "GS600" || id === "GS450") return false;
+    if (RESTRIKTIV.includes(id)) return false;
+    const k = modul(id).kategorie;
+    return k !== "hochschrank" && k !== "blende";
+  };
+  const istNeutral = new Map(arten.map((a) => [a, neutral(a)]));
+
+  /**
+   * Stehen mehrere neutrale Schränke nebeneinander, ist ihre Reihenfolge
+   * untereinander ohne jede Wirkung — die Gesamtbreite des Blocks bleibt, und
+   * was davor und dahinter steht, liegt genauso. Trotzdem hat die Suche
+   * sieben gleiche Unterschränke neben zwei schmalen millionenfach
+   * umsortiert. Deshalb gilt innerhalb eines solchen Blocks eine feste
+   * Ordnung: breit vor schmal, bei gleicher Breite nach Kennung. Damit bleibt
+   * von jeder Gruppe genau eine Anordnung übrig, und keine geht verloren.
+   */
+  const inOrdnung = (id: string, links: string | undefined): boolean => {
+    if (links === undefined || !istNeutral.get(links) || !istNeutral.get(id)) return true;
+    const bl = breiten.get(links) ?? 0;
+    const bi = breiten.get(id) ?? 0;
+    return bi < bl || (bi === bl && id >= links);
+  };
+
+  /** Darf dieses Modul an dieser Stelle stehen? Dieselben Regeln wie
+      `zulaessig`, nur eine Position nach der anderen. */
+  const erlaubt = (id: string, von: number, links: string | undefined): boolean => {
+    if (id === "KF600" && links !== undefined && HOCH.includes(links)) return false;
+    if (links === "KF600" && HOCH.includes(id)) return false;
+    if (!RESTRIKTIV.includes(id)) return true;
+    const bis = von + (breiten.get(id) ?? 0);
+    if (zone && von < zone.bis && bis > zone.von) return false;
+    if (id === "KF600" && Math.min(von, laenge - bis) < SEITENABSTAND_KOCHFELD) return false;
+    return true;
+  };
+
+  const durchlauf = (mitRegeln: boolean): { ids: string[] | null; punkte: number; abgeschnitten: boolean } => {
+    const band: string[] = [];
+    let beste: string[] | null = null;
+    let bestPunkte = -Infinity;
+    let blaetter = 0;
+
+    const schritt = (von: number) => {
+      if (blaetter >= ARBEITSGRENZE) return;
+      if (band.length === module.length) {
+        blaetter++;
+        const p = bewerte(band, strategie, wasserZiel);
+        if (p > bestPunkte) { bestPunkte = p; beste = [...band]; }
+        return;
+      }
+      for (const art of arten) {
+        const n = zaehler.get(art)!;
+        if (n === 0) continue;
+        const links = band[band.length - 1];
+        if (!inOrdnung(art, links)) continue;
+        if (mitRegeln && !erlaubt(art, von, links)) continue;
+        zaehler.set(art, n - 1);
+        band.push(art);
+        schritt(von + (breiten.get(art) ?? 0));
+        band.pop();
+        zaehler.set(art, n);
+        if (blaetter >= ARBEITSGRENZE) return;
+      }
+    };
+    schritt(0);
+    return { ids: beste, punkte: bestPunkte, abgeschnitten: blaetter >= ARBEITSGRENZE };
+  };
+
+  const mit = durchlauf(true);
+  if (mit.abgeschnitten) suchlaeufeAbgeschnitten++;
+  if (mit.ids) return { ids: mit.ids, moeglich: true };
   // Keine zulaessige Anordnung: die am wenigsten schlechte nehmen und melden.
-  let ersatz = kandidaten[0] ?? module;
-  let best2 = -Infinity;
-  for (const k of kandidaten) {
-    const p = bewerte(k, strategie, wasserZiel);
-    if (p > best2) { best2 = p; ersatz = k; }
-  }
-  return { ids: ersatz, moeglich: false };
+  const ohne = durchlauf(false);
+  return { ids: ohne.ids ?? module, moeglich: false };
 }
 
+/**
+ * Geht in diesem Raum ueberhaupt eine Kueche auf?
+ *
+ * Beantwortet dieselben zwei Fragen, an denen `rechnePlan` abbricht —
+ * reicht die Wand ueberhaupt, und passt jedes Geraet an irgendeine einzelne
+ * Wand — aber ohne die Suche nach der Anordnung. Das braucht die Rettung
+ * einer umgestellten Kueche, die bisher einen vollstaendigen Plan rechnen
+ * liess, um ein Ja oder Nein zu lesen: bei fuenf Metern Wand eine
+ * Viertelsekunde, bei jedem Tipp auf die Ausstattungsstufe.
+ */
+export function passtUeberhaupt(a: Raumangaben): boolean {
+  const typ = alsKuechentyp(a);
+  const pflicht = pflichtmodule(a);
+  if (breiteVon(pflicht) > typ.zeilen.reduce((s, z) => s + z.laenge, 0)) return false;
+  return verteile(typ, a, pflicht).uebrig.length === 0;
+}
+
+/**
+ * Fertige Plaene, die schon gerechnet wurden.
+ *
+ * Dieselbe Kueche wird an vielen Stellen gebraucht: die Vorschlagsseite
+ * rechnet drei Strategien, der Geraeteschritt fuer jedes Modell einen Plan,
+ * die Vorschau daneben noch einen, und React ruft all das bei jedem Rendern
+ * erneut auf. Gerechnet wurde jedes Mal neu — bei fuenf Metern Wand eine
+ * Viertelsekunde pro Tipp, in der die Oberflaeche steht.
+ *
+ * Der Schluessel ist der Raum selbst: gleiche Angaben, gleicher Plan. Die
+ * Ablage bleibt klein, damit sie beim Ziehen am Grundriss nicht volllaeuft.
+ */
+const PLANSPEICHER = new Map<string, Vorschlag>();
+const PLANSPEICHER_MAX = 80;
+
 export function planeKueche(a: Raumangaben, strategie: Strategie): Vorschlag {
+  const schluessel = `${strategie}|${JSON.stringify(a)}`;
+  const fertig = PLANSPEICHER.get(schluessel);
+  if (fertig) return fertig;
+  const neu = rechnePlan(a, strategie);
+  if (PLANSPEICHER.size >= PLANSPEICHER_MAX) {
+    PLANSPEICHER.delete(PLANSPEICHER.keys().next().value!);
+  }
+  PLANSPEICHER.set(schluessel, neu);
+  return neu;
+}
+
+function rechnePlan(a: Raumangaben, strategie: Strategie): Vorschlag {
   const typ = alsKuechentyp(a);
   const titel = STRATEGIEN.find((s) => s.id === strategie)!.titel;
   const leer: Vorschlag = {

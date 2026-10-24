@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { bereinigeGeraete, STANDARD_GERAETE, type GeraeteArt, type Geraetewahl } from "@/data/geraete";
 import {
-  angleichen, kuechenwaende, planeKueche, STANDARD_RAUM, uebernimmUmstellung,
+  angleichen, kuechenwaende, passtUeberhaupt, planeKueche, STANDARD_RAUM, uebernimmUmstellung,
   type Raumangaben, type Strategie, type WandId,
 } from "@/lib/planer";
 
@@ -202,7 +202,7 @@ function rette(
      liefert der Planer gar keine Belegung mehr. Dann ist die Geometrie nicht
      schuld, und die Umstellung wird nicht angetastet: nimmt der Nutzer das
      Gerät zurück, ist seine Anordnung wieder da. */
-  if (!planeKueche(neu, (schluessel[0] as Strategie) ?? "arbeiten").moeglich) {
+  if (!passtUeberhaupt(neu)) {
     return { eigeneBelegung: s.eigeneBelegung, umstellungVerworfen: s.umstellungVerworfen };
   }
 
