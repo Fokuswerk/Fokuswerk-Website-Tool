@@ -1,4 +1,4 @@
-import { modul } from "@/data/module";
+import { istBekanntesModul, modul } from "@/data/module";
 import { geraet, STANDARD_GERAETE, type Geraetewahl } from "@/data/geraete";
 import { ROLLE_NAME, rolleVon } from "@/lib/masse";
 import type { Kuechentyp, Oeffnung, Wandseite, Zeile } from "@/lib/typen";
@@ -409,7 +409,7 @@ export interface Kosten {
   gesamt: number;
 }
 
-function pflichtmodule(a: Raumangaben): string[] {
+export function pflichtmodule(a: Raumangaben): string[] {
   const g = a.geraete;
   const liste = ["SP600"];
   if (geraet(g.kochfeld).breite > 0) liste.push("KF600");
@@ -618,6 +618,40 @@ function zulaessig(ids: string[], laenge: number, zone: { von: number; bis: numb
   return true;
 }
 
+/**
+ * Dieselben harten Regeln wie `zulaessig`, aber mit einem Satz dazu.
+ *
+ * Die Suche braucht nur ja oder nein. Wenn aber eine von Hand gebaute
+ * Anordnung an der neuen Geometrie scheitert, will der Nutzer wissen, woran.
+ */
+export function hartePruefung(
+  ids: string[],
+  laenge: number,
+  zone: { von: number; bis: number } | null,
+): string | null {
+  for (let i = 0; i < ids.length; i++) {
+    const id = ids[i];
+    if (id === "KF600" && (HOCH.includes(ids[i - 1]) || HOCH.includes(ids[i + 1]))) {
+      return "neben dem Herd steht jetzt ein hoher Schrank";
+    }
+    if (!RESTRIKTIV.includes(id)) continue;
+    const { von, bis } = lageIn(ids, i);
+    if (zone && von < zone.bis && bis > zone.von) {
+      return `${ROLLE_NAME[rolleVon(id)] || modul(id).bezeichnung} steht jetzt vor dem Fenster`;
+    }
+    if (id === "KF600" && Math.min(von, laenge - bis) < SEITENABSTAND_KOCHFELD) {
+      return "neben dem Herd bleibt zur Wand hin kein Platz mehr";
+    }
+  }
+  return null;
+}
+
+/** Die Fensterzone einer Zeile, in Maßen ab Zeilenanfang. */
+export function fensterzone(typ: Kuechentyp, z: Zeile): { von: number; bis: number } | null {
+  const f = typ.oeffnungen.find((o) => o.art === "fenster" && o.wand === z.wand);
+  return f ? { von: f.von - z.start, bis: f.von + f.breite - z.start } : null;
+}
+
 function bewerte(ids: string[], strategie: Strategie, wasserZiel: number | null): number {
   const iSp = ids.indexOf("SP600");
   const iKf = ids.indexOf("KF600");
@@ -767,6 +801,36 @@ export function pruefeAngaben(a: Raumangaben): string[] {
  * von Hand umgestellte Küche durch dieselbe Rechnung läuft — sonst stünden
  * beim Umstellen falsche Zahlen und Hinweise da.
  */
+/**
+ * Wie weit die Spüle vom Wasseranschluss entfernt ist, in mm.
+ *
+ * Stand die Spüle nicht an der Wand mit dem Anschluss, setzte die Rechnung
+ * hier eine feste 1500 ein — eine erfundene Zahl, aus der dann der Satz
+ * "etwa 150 cm vom heutigen Anschluss entfernt" wurde, egal wo die Spüle
+ * wirklich stand. Die Wände bilden ein Rechteck; damit ist der Weg an der
+ * Wand entlang ausrechenbar.
+ */
+function wasserweg(a: Raumangaben, typ: Kuechentyp, belegung: Record<string, string[]>): number {
+  const umfang = 2 * (a.breite + a.tiefe);
+  /** Ein Punkt auf einer Wand als Maß im Uhrzeigersinn ab der linken oberen Ecke. */
+  const amUmfang = (w: WandId, x: number) =>
+    w === "haupt" ? x
+    : w === "rechts" ? a.breite + x
+    : w === "gegenueber" ? a.breite + a.tiefe + x
+    : 2 * a.breite + a.tiefe + x;
+
+  for (const z of typ.zeilen) {
+    const i = (belegung[z.id] ?? []).indexOf("SP600");
+    if (i < 0) continue;
+    const l = lageIn(belegung[z.id], i);
+    const w = z.id.slice(2) as WandId;
+    const d = Math.abs(amUmfang(w, z.start + (l.von + l.bis) / 2) - amUmfang(a.wasser.wand, a.wasser.von));
+    return Math.round(Math.min(d, umfang - d));
+  }
+  // Ohne Spüle gibt es keinen Weg — nicht 1,5 Meter.
+  return 0;
+}
+
 export function ausBelegung(
   a: Raumangaben,
   typ: Kuechentyp,
@@ -774,7 +838,6 @@ export function ausBelegung(
   belegung: Record<string, string[]>,
 ): Vorschlag {
   const titel = STRATEGIEN.find((s) => s.id === strategie)!.titel;
-  const wasserZeile = `Z-${a.wasser.wand}`;
 
   // Die beiden Befunde stehen in der Anordnung selbst, nicht im Weg dorthin.
   let fensterKonflikt = false;
@@ -837,12 +900,7 @@ export function ausBelegung(
   const preis = kosten.gesamt;
 
   const arbeitsflaeche = freieFlaeche(a, typ, belegung);
-  const wZeile = typ.zeilen.find((z) => z.id === wasserZeile);
-  const spIdx = wZeile ? (belegung[wZeile.id] ?? []).indexOf("SP600") : -1;
-  const wegZumWasser =
-    wZeile && spIdx >= 0
-      ? Math.round(Math.abs((lageIn(belegung[wZeile.id], spIdx).von + lageIn(belegung[wZeile.id], spIdx).bis) / 2 - (a.wasser.von - wZeile.start)))
-      : 1500;
+  const wegZumWasser = wasserweg(a, typ, belegung);
   const passblende = breiteVon(Object.values(belegung).flat().filter((m) => modul(m).kategorie === "blende"));
 
   const gut: string[] = [];
@@ -906,6 +964,16 @@ export function befundeZeile(a: Raumangaben, typ: Kuechentyp, zeileId: string, i
     if (zone && m.kategorie === "hochschrank" && l.von < zone.bis && l.bis > zone.von) {
       hin.push(`Der ${ROLLE_NAME[rolleVon(id)] || "hohe Schrank"} steht vor dem Fenster und nimmt Licht.`);
     }
+    if (zone && id === "KF600" && l.von < zone.bis && l.bis > zone.von) {
+      // Die Suche verbietet das (KF600 steht in RESTRIKTIV), von Hand ging es
+      // trotzdem — und niemand sagte ein Wort dazu.
+      hin.push("Der Herd steht vor dem Fenster. Darüber lässt sich das Fenster nicht mehr gefahrlos öffnen, und der Vorhang hängt über der Flamme.");
+    }
+    if (id === "KF600" && (HOCH.includes(ids[i - 1]) || HOCH.includes(ids[i + 1]))) {
+      // Die Suche laesst das nie zu, der Nutzer darf es aber von Hand bauen.
+      // Gemeldet wurde es bisher nicht — als einzige der harten Regeln.
+      hin.push("Direkt neben dem Herd steht ein hoher Schrank. Dort wird es heiß, und zum Abstellen bleibt keine Fläche.");
+    }
     if (id === "KF600") {
       const abstand = Math.min(l.von, z.laenge - l.bis);
       if (abstand < SEITENABSTAND_KOCHFELD) {
@@ -937,7 +1005,7 @@ const PBX_MIN = 20;
 const PBX_MAX = 600;
 
 /** Die Passleiste einer Zeile um delta mm ändern, damit die Summe stimmt. */
-function passeAn(ids: string[], delta: number): string[] | null {
+export function passeAn(ids: string[], delta: number): string[] | null {
   if (delta === 0) return ids;
   const i = ids.findIndex((m) => m.startsWith("PBX:"));
   if (i < 0) {
@@ -1085,4 +1153,136 @@ export function ersetzePlan(
     };
   }
   return { belegung: { [platz.zeile]: fertig } };
+}
+
+/* ---------------------------------------------------------------- */
+/**
+ * Eine von Hand umgestellte Küche über eine Änderung retten.
+ *
+ * Bisher wurde jede Umstellung bei jeder Änderung weggeworfen — auch wenn
+ * sich an der Geometrie gar nichts getan hatte. Wer seine Schränke sortiert,
+ * zurückgeht und die Tür fünf Zentimeter verschiebt, fand wieder den
+ * Vorschlag vor.
+ *
+ * Der erste Entwurf wollte das zeilenweise retten und die geretteten Zeilen
+ * über einen frisch gerechneten Plan legen. Genau diese Mischung ist aber die
+ * Fehlerquelle: der frische Plan legt die Spüle woanders hin, die gerettete
+ * Zeile bringt ihre eigene mit, und die Küche hat zwei Spülen. Dasselbe in
+ * Grün für Kochfeld, Kühlschrank und Geschirrspüler. Deshalb wird hier eine
+ * vollständige Anordnung als Ganzes geprüft und als Ganzes übernommen oder
+ * verworfen — und wenn verworfen, dann mit einem Satz, der sagt, woran es lag.
+ *
+ * Was unterwegs repariert wird, statt daran zu scheitern:
+ *  - Längenunterschiede, die die Passleiste auffangen kann
+ *  - Geräteschränke, die ihren Partner haben: 60er gegen 45er Spülmaschine,
+ *    Kühlschrank hoch gegen Kühlschrank unter der Platte
+ *  - Geräteschränke, die ganz wegfallen, weil das Gerät abgewählt wurde
+ */
+
+/** Schränke, die an einem Gerät hängen — über die wacht `pflichtmodule`. */
+const GERAETEMODULE = ["SP600", "KF600", "HK600", "KS600", "HB600", "GS600", "GS450"];
+
+/** Was sich an Ort und Stelle gegeneinander austauschen lässt. */
+const PARTNER: Record<string, string> = {
+  GS600: "GS450", GS450: "GS600",
+  HK600: "KS600", KS600: "HK600",
+};
+
+const MODULNAME = (id: string) => ROLLE_NAME[rolleVon(id)] || modul(id).bezeichnung;
+
+export function uebernimmUmstellung(
+  neu: Raumangaben,
+  belegung: Record<string, string[]>,
+): { belegung: Record<string, string[]> } | { grund: string } {
+  const typ = alsKuechentyp(neu);
+
+  // Unbekannte Kennungen aus einer älteren Sitzung würden `modul()` werfen
+  // lassen — und zwar mitten im Setzen des Zustands.
+  for (const ids of Object.values(belegung)) {
+    if (!Array.isArray(ids) || !ids.every((id) => typeof id === "string" && istBekanntesModul(id))) {
+      return { grund: "Deine Anordnung stammt aus einer älteren Fassung und lässt sich nicht mehr lesen." };
+    }
+  }
+
+  // Zeilen, die es nicht mehr gibt, und Zeilen, für die es noch nichts gibt.
+  for (const z of typ.zeilen) {
+    if (!belegung[z.id]) {
+      return { grund: `Die ${WANDNAME_DAT[z.id.slice(2) as WandId]} ist neu dazugekommen — dafür gab es in deiner Anordnung noch nichts.` };
+    }
+  }
+  const aus: Record<string, string[]> = {};
+  for (const z of typ.zeilen) aus[z.id] = [...belegung[z.id]];
+
+  /* --- Geräteschränke an die neue Gerätewahl angleichen --- */
+  const soll = pflichtmodule(neu);
+  const zaehle = (liste: string[], id: string) => liste.filter((x) => x === id).length;
+  const alleIds = () => Object.values(aus).flat();
+
+  const fehlt: string[] = [];
+  const zuviel: string[] = [];
+  for (const id of GERAETEMODULE) {
+    const d = zaehle(soll, id) - zaehle(alleIds(), id);
+    for (let i = 0; i < d; i++) fehlt.push(id);
+    for (let i = 0; i < -d; i++) zuviel.push(id);
+  }
+
+  // Erst tauschen, wo es einen Partner gibt: die 45er Spülmaschine steht an
+  // derselben Stelle wie die 60er, nur schmaler.
+  for (const f of [...fehlt]) {
+    const partner = PARTNER[f];
+    const i = partner ? zuviel.indexOf(partner) : -1;
+    if (i < 0) continue;
+    for (const z of typ.zeilen) {
+      const k = aus[z.id].indexOf(partner);
+      if (k < 0) continue;
+      aus[z.id] = aus[z.id].map((x, j) => (j === k ? f : x));
+      break;
+    }
+    zuviel.splice(i, 1);
+    fehlt.splice(fehlt.indexOf(f), 1);
+  }
+
+  // Was übrig bleibt, fällt weg — das Gerät wurde abgewählt.
+  for (const z of zuviel) {
+    for (const zeile of typ.zeilen) {
+      const k = aus[zeile.id].indexOf(z);
+      if (k < 0) continue;
+      aus[zeile.id] = aus[zeile.id].filter((_, j) => j !== k);
+      break;
+    }
+  }
+
+  // Was jetzt noch fehlt, braucht einen Platz, den niemand vorgesehen hat.
+  if (fehlt.length > 0) {
+    return {
+      grund: `Für ${MODULNAME(fehlt[0])} braucht die Küche jetzt einen eigenen Schrank, und dafür war in deiner Anordnung kein Platz vorgesehen.`,
+    };
+  }
+
+  /* --- Längen nachziehen: dafür ist die Passleiste da --- */
+  for (const z of typ.zeilen) {
+    const delta = z.laenge - breiteVon(aus[z.id]);
+    const fertig = passeAn(aus[z.id], delta);
+    if (!fertig) {
+      return {
+        grund:
+          delta > 0
+            ? `An der ${WANDNAME_DAT[z.id.slice(2) as WandId]} sind ${Math.round(delta / 10)} cm mehr Platz, als deine Anordnung füllt — dafür reicht keine Passleiste.`
+            : `An der ${WANDNAME_DAT[z.id.slice(2) as WandId]} fehlen deiner Anordnung ${Math.round(-delta / 10)} cm. Dafür müsste ein Schrank weichen.`,
+      };
+    }
+    aus[z.id] = fertig;
+  }
+
+  /* Die harten Regeln der Suche werden hier bewusst NICHT erzwungen.
+     Sie beschraenken, was der Planer vorschlagen darf — nicht, was der
+     Nutzer bauen darf: `tauschPlan` laesst ihn den Hochschrank vors Fenster
+     stellen, und `ausBelegung` sagt ihm das als Hinweis. Wer seine Kueche so
+     gebaut hat und danach das Fenster verschiebt, soll seinen Hinweis
+     bekommen — nicht seine Arbeit verlieren. */
+
+  // Zeilen, die nicht mehr zur Küche gehören, fallen mitsamt ihren Schränken
+  // weg. Standen Geräteschränke darin, hat die Pflichtprüfung oben schon
+  // abgebrochen; war es Stauraum, bleibt die Anordnung gültig.
+  return { belegung: aus };
 }

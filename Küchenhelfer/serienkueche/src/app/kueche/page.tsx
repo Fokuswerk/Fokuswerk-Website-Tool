@@ -351,14 +351,31 @@ export default function Kuechenplaner() {
       ? karten.find((v) => v.strategie === gewaehltRoh.gleichWie)
       : gewaehltRoh) ?? empfehlung;
 
-  // Von Hand umgestellt wird nur getauscht, die Breite bleibt also stimmen.
-  // Alles andere — Preis, Hängeschränke, Hinweise — rechnen wir neu, sonst
-  // stünden beim Umstellen falsche Zahlen da.
-  const eigen = grundVorschlag ? eigeneBelegung[grundVorschlag.strategie] : undefined;
+  /* Eine von Hand umgestellte Anordnung wird vollständig gespeichert und
+     vollständig angezeigt. Vorher lagen nur die geänderten Zeilen im Zustand
+     und wurden über einen frisch gerechneten Plan gelegt — dabei brachte der
+     frische Plan seine eigene Spüle mit, und die Küche hatte zwei davon.
+     Preis, Hängeschränke und Hinweise rechnen wir trotzdem neu, sonst
+     stünden beim Umstellen falsche Zahlen da. */
+  /* Der Schlüssel kann wandern: geht eine Strategie in einer anderen auf
+     (gleichWie), liest die Seite unter deren Namen, gespeichert ist die
+     Anordnung aber noch unter dem alten. Beide Namen meinen denselben Plan,
+     also gelten beide. */
+  const eigenerSchluessel = useMemo(() => {
+    if (!grundVorschlag) return null;
+    if (eigeneBelegung[grundVorschlag.strategie]) return grundVorschlag.strategie;
+    const aufgegangen = vorschlaege.find(
+      (v) => v.gleichWie === grundVorschlag.strategie && eigeneBelegung[v.strategie],
+    );
+    return aufgegangen?.strategie ?? grundVorschlag.strategie;
+  }, [grundVorschlag, vorschlaege, eigeneBelegung]);
+  const eigen = eigenerSchluessel ? eigeneBelegung[eigenerSchluessel] : undefined;
   const gewaehlterVorschlag = useMemo(() => {
     if (!grundVorschlag || !eigen) return grundVorschlag;
-    return ausBelegung(raum, typ, grundVorschlag.strategie, { ...grundVorschlag.belegung, ...eigen });
+    return ausBelegung(raum, typ, grundVorschlag.strategie, eigen);
   }, [grundVorschlag, eigen, raum, typ]);
+  // Was bei der angezeigten Strategie verloren ging, falls etwas verloren ging.
+  const verworfenGrund = eigenerSchluessel ? umstellungVerworfen[eigenerSchluessel] : undefined;
 
   // Waehrend man Geraete aussucht, steht die Kueche daneben im Raum. Dafuer
   // genuegt ein einziger Plan — die ganze Auswahl zu rechnen waere Verschwendung.
@@ -465,7 +482,7 @@ export default function Kuechenplaner() {
       setAngefasst(ziel);
       return;
     }
-    setzeBelegung(grundVorschlag!.strategie, { ...(eigen ?? {}), ...plan.belegung });
+    setzeBelegung(eigenerSchluessel!, { ...gewaehlterVorschlag.belegung, ...plan.belegung });
     setAngefasst(null);
     setTauschGrund(null);
   };
@@ -1496,6 +1513,21 @@ export default function Kuechenplaner() {
                 Drei Möglichkeiten, alle auf den Zentimeter gerechnet und nach denselben Regeln geprüft.
               </p>
             </div>
+            {verworfenGrund && (
+              <div className="mx-auto mt-6 max-w-[620px]">
+                <Notiz ton="achtung">
+                  Deine Umstellung von Hand ist weg. {verworfenGrund} Wähl einen Vorschlag, dann
+                  kannst du gleich wieder umstellen.{" "}
+                  <button
+                    type="button"
+                    onClick={() => quittiereVerworfen(eigenerSchluessel!)}
+                    className="font-semibold underline underline-offset-2"
+                  >
+                    Verstanden
+                  </button>
+                </Notiz>
+              </div>
+            )}
             {moegliche.length === 0 ? (
               <div className="mx-auto mt-8 max-w-[560px]">
                 <Notiz ton="achtung">{vorschlaege[0]?.grund}</Notiz>
@@ -1588,7 +1620,7 @@ export default function Kuechenplaner() {
                       {eigen && Object.keys(eigen).length > 0 && (
                         <button
                           type="button"
-                          onClick={() => { setzeBelegung(grundVorschlag!.strategie, {}); setAngefasst(null); setTauschGrund(null); }}
+                          onClick={() => { setzeBelegung(eigenerSchluessel!, {}); setAngefasst(null); setTauschGrund(null); }}
                           className="flex items-center gap-1.5 text-[13.5px] font-semibold text-kohle-2 transition-colors hover:text-kohle"
                         >
                           <RotateCcw size={13} strokeWidth={2.2} />
@@ -1690,7 +1722,7 @@ export default function Kuechenplaner() {
                                     key={o.id}
                                     type="button"
                                     onClick={() => {
-                                      setzeBelegung(grundVorschlag!.strategie, { ...(eigen ?? {}), ...o.belegung });
+                                      setzeBelegung(eigenerSchluessel!, { ...gewaehlterVorschlag.belegung, ...o.belegung });
                                       setTauschGrund(null);
                                     }}
                                     className="warm-wahl flaeche rounded-[12px] p-3 text-left hover:!border-linie-stark"
@@ -1773,13 +1805,16 @@ export default function Kuechenplaner() {
               </div>
               <div className="grid gap-6 p-6 sm:grid-cols-[1fr_auto] sm:items-end sm:p-8">
                 <div>
-                  {umstellungVerworfen && (
+                  {verworfenGrund && (
                   <div className="mb-4">
                     <Notiz ton="achtung">
-                      Deine Umstellung von Hand ist weg: der Raum oder ein Gerät hat sich geändert,
-                      und damit stimmt die alte Reihenfolge nicht mehr. Du kannst gleich wieder
+                      Deine Umstellung von Hand ist weg. {verworfenGrund} Du kannst gleich wieder
                       umstellen.{" "}
-                      <button type="button" onClick={quittiereVerworfen} className="font-semibold underline underline-offset-2">
+                      <button
+                        type="button"
+                        onClick={() => quittiereVerworfen(eigenerSchluessel!)}
+                        className="font-semibold underline underline-offset-2"
+                      >
                         Verstanden
                       </button>
                     </Notiz>

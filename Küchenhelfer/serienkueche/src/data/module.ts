@@ -81,6 +81,24 @@ export function modul(id: string): NeutralesModul {
   return m;
 }
 
+/**
+ * Gibt es dieses Modul, und ist es als Breitenangabe brauchbar?
+ *
+ * `modul()` wirft bei einer unbekannten Kennung. Das ist richtig, solange
+ * Kennungen aus dem Code kommen — aber eine gespeicherte Belegung aus einer
+ * aelteren Sitzung kann Module nennen, die es nicht mehr gibt, und eine
+ * zugeschnittene Passleiste kann aus einer Rechnung mit einer Breite von
+ * null oder darunter kommen. Beides muss sich pruefen lassen, ohne dass die
+ * Seite dabei stehenbleibt.
+ */
+export function istBekanntesModul(id: string): boolean {
+  if (id.startsWith("PBX:")) {
+    const breite = Number(id.slice(4));
+    return Number.isFinite(breite) && breite > 0;
+  }
+  return INDEX.has(id);
+}
+
 export function istZeilenmodul(id: string): boolean {
   const k = modul(id).kategorie;
   return k === "unterschrank" || k === "hochschrank" || k === "blende";
