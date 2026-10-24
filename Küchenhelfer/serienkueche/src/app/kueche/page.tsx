@@ -1380,6 +1380,45 @@ export default function Kuechenplaner() {
                       }}
                     />
 
+                    {/* Derselbe Weg mit der Tastatur. Im Raum laesst sich nur
+                        mit dem Zeiger tippen — ohne diese Liste waere das
+                        Herzstueck der Ergebnisseite fuer Tastatur und
+                        Vorlesesoftware gar nicht bedienbar. */}
+                    <div className="mt-4">
+                      <div className="vorzeile mb-2">Oder hier: Platz wählen, dann Ziel wählen</div>
+                      {typ.zeilen.map((z) => (
+                        <div key={z.id} className="mt-2">
+                          <div className="mb-1.5 text-[12.5px] text-kohle-3">{z.bezeichnung}</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {(gewaehlterVorschlag.belegung[z.id] ?? []).map((id, i) => {
+                              const dran = angefasst?.zeile === z.id && angefasst?.index === i;
+                              const ziel = !!angefasst && !dran && zielMoeglich(z.id, i);
+                              const nr = nummerAb(z.id) + i;
+                              return (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => antippen(z.id, i)}
+                                  aria-pressed={dran}
+                                  aria-label={`Platz ${nr}, ${modulName(id)}${dran ? ", angefasst" : ziel ? ", mögliches Ziel" : ""}`}
+                                  className={`flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[12.5px] transition-colors ${
+                                    dran
+                                      ? "bg-kohle text-creme"
+                                      : ziel
+                                        ? "border-2 border-butter bg-butter-soft text-kohle"
+                                        : "flaeche text-kohle-2 hover:!border-kohle-3"
+                                  }`}
+                                >
+                                  <span className="ziffern font-bold">{nr}</span>
+                                  {modulName(id)}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
                     {angefasst && (() => {
                       const jetzt = (gewaehlterVorschlag.belegung[angefasst.zeile] ?? [])[angefasst.index];
                       if (!jetzt || !istStauraum(jetzt)) return null;
