@@ -1,45 +1,40 @@
 import type { Metadata } from "next";
-import { Archivo, Fraunces, IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
-import "./globals.css";
+import localFont from "next/font/local";
 import { Rahmen } from "@/components/layout/Rahmen";
+import "./globals.css";
 
-/**
- * Die Schriften liegen beim eigenen Server.
+/*
+ * Die Schriften liegen im Projekt, nicht bei Google.
  *
- * Vorher wurden sie bei jedem Seitenaufruf von fonts.googleapis.com geholt —
- * damit übertrug jeder Besucher der Verbraucherseite seine IP-Adresse an
- * Google. next/font lädt sie beim Bauen herunter und liefert sie von der
- * eigenen Domain aus; es wird kein Netz zu Google mehr aufgebaut.
+ * Vorher kamen alle vier ueber next/font/google — Archivo, IBM Plex Mono,
+ * Fraunces und Instrument Sans, zusammen 437 KB in 18 Dateien. Fraunces war
+ * davon die breiteste von 32 gemessenen Schriften: bei gleicher Lesegroesse
+ * lief sie rund 21 Prozent breiter als der Ersatz, was bei deutschen
+ * Komposita wie "Spuelenunterschrank" sofort auffaellt.
+ *
+ * Jetzt zwei veraenderliche Schriften der Indian Type Foundry, selbst
+ * ausgeliefert: Recia von Carlos de Toro fuer Ueberschriften und alle
+ * laufenden Zahlen (sie hat echte Tabellenziffern), Plein von Inga
+ * Ploennigs fuer den Text — eine deutsche Gestalterin, und das merkt man an
+ * den langen Woertern. Zusammen 65 KB in zwei Dateien, und beim Laden der
+ * Seite geht keine einzige Anfrage mehr nach aussen.
+ *
+ * Die Lizenz liegt daneben: ITF Free Font License, Selbsthosten ausdruecklich
+ * erlaubt und empfohlen.
  */
-/* Der Bautraegerbereich bleibt sachlich: Archivo und eine echte Monospace
-   fuer Masse und Artikelnummern. Da gehoert das hin. */
-const archivo = Archivo({ subsets: ["latin"], weight: ["300", "400", "500", "600"], variable: "--schrift-ui", display: "swap" });
-const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--schrift-data", display: "swap" });
-
-/* Der Privatkundenbereich hatte Outfit und Plus Jakarta Sans — die zwei
-   Schriften, die auf jeder zweiten vorlagengebauten Seite stehen. Technisch
-   einwandfrei und genau deshalb ohne Gesicht.
-   Fraunces ist eine veraenderliche Serif mit Achsen fuer optische Groesse,
-   Weichheit und Eigenwilligkeit: sie wirkt gezeichnet, nicht generiert, und
-   passt zu Holz, Stein und Essen. Instrument Sans daneben traegt den Text,
-   schmal genug fuer lange deutsche Woerter. */
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  axes: ["SOFT", "WONK", "opsz"],
+const recia = localFont({
+  src: "../schriften/Recia-Variable.woff2",
+  weight: "300 700",
   variable: "--schrift-gross",
   display: "swap",
 });
-const instrument = Instrument_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const plein = localFont({
+  src: "../schriften/Plein-Variable.woff2",
+  weight: "300 900",
   variable: "--schrift-warm",
   display: "swap",
 });
 
-/* Der Titel galt frueher ueberall — auch auf den Privatkundenseiten stand
-   damit "Serienplanung fuer Wohnbauprojekte" im Browsertab und in jeder
-   geteilten Vorschau. Die beiden Bereiche bekommen eigene Titel ueber ihre
-   eigenen `metadata`; hier steht nur noch, was fuer beide gilt. */
 export const metadata: Metadata = {
   title: { default: "Serienküche", template: "%s — Serienküche" },
   description:
@@ -48,7 +43,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="de" className={`${archivo.variable} ${plexMono.variable} ${fraunces.variable} ${instrument.variable}`}>
+    <html lang="de" className={`${recia.variable} ${plein.variable}`}>
       <body>
         <Rahmen>{children}</Rahmen>
       </body>

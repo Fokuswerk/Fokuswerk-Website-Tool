@@ -159,8 +159,15 @@ export default function Start() {
                abzudunkeln. Mit Fast-Schwarz wirkt ein Tageslichtfoto einfach
                dunkel; mit dem Oliv bekommt die ganze Seite ein Gesicht. */
             style={{
-              background:
-                "linear-gradient(180deg, rgba(27,36,26,0.86) 0%, rgba(44,58,42,0.46) 38%, rgba(27,36,26,0.90) 100%), linear-gradient(90deg, rgba(27,36,26,0.68) 0%, rgba(27,36,26,0.10) 62%)",
+              background: [
+                /* Von unten kraeftig, in der Mitte duenn: das Foto soll zu
+                   sehen sein, nicht nur zu ahnen. */
+                "linear-gradient(0deg, rgba(27,36,26,0.84) 0%, rgba(34,46,33,0.38) 46%, rgba(34,46,33,0.14) 72%)",
+                /* Von links, damit der Text auf ruhigem Grund steht. */
+                "linear-gradient(90deg, rgba(27,36,26,0.66) 0%, rgba(27,36,26,0.12) 58%, transparent 78%)",
+                /* Eigener Streifen oben fuer die Leiste. */
+                "linear-gradient(180deg, rgba(22,30,21,0.62) 0%, transparent 128px)",
+              ].join(", "),
             }}
           />
         </div>

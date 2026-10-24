@@ -21,8 +21,11 @@
   --color-good: #2f6b4f;
   --color-good-soft: #e9f2ed;
 
-  --font-ui: var(--schrift-ui), ui-sans-serif, system-ui, sans-serif;
-  --font-data: var(--schrift-data), ui-monospace, "SFMono-Regular", monospace;
+  /* Der Bautraegerbereich setzt in derselben Textschrift wie der Rest — und
+     fuer Masse und Artikelnummern in der Monospace, die das Geraet schon hat.
+     Eine eigene Schrift dafuer zu laden, war 100 KB fuer Zahlen in Tabellen. */
+  --font-ui: var(--schrift-warm), ui-sans-serif, system-ui, sans-serif;
+  --font-data: ui-monospace, "SF Mono", "SFMono-Regular", "Menlo", monospace;
 
 
   /* Weg der Privatkunden.
@@ -170,10 +173,7 @@ body {
 }
 .warm h1, .warm h2, .warm h3, .warm .gross {
   font-family: var(--font-gross);
-  /* Weich und leicht eigenwillig — das ist der Unterschied zwischen einer
-     Schrift, die gezeichnet wirkt, und einer, die eingestellt wirkt. */
-  font-variation-settings: "SOFT" 28, "WONK" 1;
-  letter-spacing: -0.018em;
+  letter-spacing: -0.012em;
 }
 /* Grosse Zeilen vertragen mehr Enge als kleine. */
 .warm .gross-xl { letter-spacing: -0.024em; line-height: 1.0; }
@@ -206,10 +206,13 @@ body {
    Aber in der Textschrift, nicht in einer Monospace: eine Monospace neben
    warmen Saetzen liest sich wie ein Terminalfenster. Masse und Artikelnummern
    im Bautraegerbereich behalten ihre echte Monospace — dort ist sie richtig. */
+/* Laufende Zahlen stehen in der Ueberschriftenschrift: Recia hat echte
+   Tabellenziffern (tnum), Plein nicht — dort zappeln Preise beim Rechnen um
+   bis zu 25 px. Gemessen, nicht vermutet. */
 .warm .ziffern {
-  font-family: var(--font-warm);
+  font-family: var(--font-gross);
   font-variant-numeric: tabular-nums lining-nums;
-  font-feature-settings: "ss01";
+  font-weight: 500;
 }
 
 @keyframes warmRein {
