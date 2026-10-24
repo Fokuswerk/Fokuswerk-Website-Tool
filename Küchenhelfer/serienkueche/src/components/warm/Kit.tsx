@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type ComponentPropsWithoutRef, type ReactNode } from "react";
 import { Minus, Plus } from "lucide-react";
 
 /* Bausteine für den Weg der Privatkunden. Große Flächen, wenig Text,
@@ -57,8 +57,12 @@ export function WKnopf({
   );
 }
 
-export function Karte({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`flaeche rounded-[16px] ${className}`}>{children}</div>;
+export function Karte({
+  children,
+  className = "",
+  ...rest
+}: { children: ReactNode; className?: string } & Omit<ComponentPropsWithoutRef<"div">, "className" | "children">) {
+  return <div className={`flaeche rounded-[16px] ${className}`} {...rest}>{children}</div>;
 }
 
 export function GrosseWahl<T extends string | number>({

@@ -36,7 +36,12 @@ export default function Planung() {
   const [aktiv, setAktiv] = useState(
     KUECHENTYPEN.find((t) => istFreigegeben(t, freigaben))?.id ?? KUECHENTYPEN[0].id,
   );
-  const [lauf, setLauf] = useState<number | null>(null);
+  /* Der Lauf gehoert zu einem Typ. Vorher war er nur eine Schrittnummer:
+     wer waehrend des Rechnens den Typ wechselte, bekam den fertigen Lauf
+     des alten Typs dem neuen gutgeschrieben — und die Kopfzeile bot danach
+     "Varianten generieren" fuer einen Typ an, der angeblich schon gerechnet
+     war. */
+  const [lauf, setLauf] = useState<{ typId: string; schritt: number } | null>(null);
   const [modulWahl, setModulWahl] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const starteRef = useRef<(() => void) | null>(null);
@@ -57,6 +62,10 @@ export default function Planung() {
   useEffect(() => {
     setZeileWahl(typ.zeilen[0].id);
     setModulWahl(null);
+    // Ein Lauf fuer den alten Typ wird abgebrochen, nicht dem neuen
+    // gutgeschrieben.
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    setLauf(null);
   }, [typ.id, typ.zeilen]);
 
   // Beim ersten Oeffnen eines freigegebenen Typs einmal laufen lassen.
@@ -68,17 +77,19 @@ export default function Planung() {
 
   const starte = () => {
     if (!frei) return;
-    setLauf(0);
+    const fuer = typ.id;
+    const anzahl = varianten.length;
+    setLauf({ typId: fuer, schritt: 0 });
     let i = 0;
     const weiter = () => {
       i += 1;
       if (i < RECHENSCHRITTE.length) {
-        setLauf(i);
+        setLauf({ typId: fuer, schritt: i });
         timer.current = setTimeout(weiter, 460);
       } else {
         setLauf(null);
-        merkeGeneriert(typ.id);
-        melde(`${varianten.length} zulässige Varianten für ${typ.id}.`);
+        merkeGeneriert(fuer);
+        melde(`${anzahl} zulässige Varianten für ${fuer}.`);
       }
     };
     timer.current = setTimeout(weiter, 460);
@@ -224,17 +235,17 @@ export default function Planung() {
                   <Knopf href="/projects/demo/rooms" art="primaer">Zur Raumprüfung<ArrowRight size={13} strokeWidth={1.8} /></Knopf>
                 </div>
               </Flaeche>
-            ) : lauf !== null ? (
+            ) : lauf !== null && lauf.typId === typ.id ? (
               <Flaeche className="px-6 py-10">
                 <div className="mx-auto max-w-[440px]">
                   <div className="laufband relative h-[3px] w-full overflow-hidden rounded-full bg-line-2">
-                    <div className="h-full bg-accent transition-[width] duration-400" style={{ width: `${((lauf + 1) / RECHENSCHRITTE.length) * 100}%` }} />
+                    <div className="h-full bg-accent transition-[width] duration-400" style={{ width: `${((lauf.schritt + 1) / RECHENSCHRITTE.length) * 100}%` }} />
                   </div>
                   <ol className="mt-4 space-y-1.5">
                     {RECHENSCHRITTE.map((s, i) => (
-                      <li key={s} className={`flex items-start gap-2 text-[12.5px] ${i <= lauf ? "text-ink-2" : "text-ink-3"}`}>
-                        <span className={`num w-4 shrink-0 text-right ${i < lauf ? "text-good" : i === lauf ? "text-accent" : "text-ink-3"}`}>
-                          {i < lauf ? "✓" : i + 1}
+                      <li key={s} className={`flex items-start gap-2 text-[12.5px] ${i <= lauf.schritt ? "text-ink-2" : "text-ink-3"}`}>
+                        <span className={`num w-4 shrink-0 text-right ${i < lauf.schritt ? "text-good" : i === lauf.schritt ? "text-accent" : "text-ink-3"}`}>
+                          {i < lauf.schritt ? "✓" : i + 1}
                         </span>
                         {s}
                       </li>

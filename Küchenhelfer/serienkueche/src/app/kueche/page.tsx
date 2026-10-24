@@ -13,7 +13,7 @@ import {
   alleVorschlaege, alsKuechentyp, angleichen, ausBelegung, befundeZeile, drehungen, drehungName, FORMEN, kuechenwaende,
   planeKueche,
   austauschbar, befundeGesamt, ersetzePlan, istStauraum, tauschMoeglich, tauschPlan,
-  pruefeAngaben, wandlaenge, WANDNAME, WANDNAME_DAT,
+  pruefeAngaben, wandlaenge, WANDNAME, WANDNAME_DAT, zeilenBereich,
   type Raumform, type Strategie, type Vorschlag, type WandId,
 } from "@/lib/planer";
 import { herkunftVon, HERKUNFT_TEXT, schrittFolge, useKueche, type Feld, type Herkunft } from "@/store/kueche";
@@ -535,6 +535,40 @@ export default function Kuechenplaner() {
   const istStart = schritt === "start";
   const istErgebnis = schritt === "ergebnis";
   const istUnterlagen = schritt === "unterlagen";
+  /* "Datei hierher ziehen" stand da, der Abwurf wurde aber nirgends
+     angenommen — der Browser oeffnete die Datei daraufhin selbst und verliess
+     den Planer. Derselbe Lauf gehoert an beide Wege, also steht er hier. */
+  const [ueberDerKarte, setUeberDerKarte] = useState(false);
+  const starteErkennung = (datei?: File) => {
+                    // Nur Bilder lassen sich hier anzeigen; fuer PDF zeigen wir
+                    // einen gezeichneten Beispielplan und sagen es dazu.
+                    if (bildUrl.current) URL.revokeObjectURL(bildUrl.current);
+                    bildUrl.current = datei && datei.type.startsWith("image/") ? URL.createObjectURL(datei) : null;
+                    setPlanBild(bildUrl.current);
+                    merkePlanArt(datei ? (datei.type.startsWith("image/") ? "bild" : "pdf") : null);
+                    // Ein zweiter Upload darf den ersten Lauf nicht
+                    // weiterlaufen lassen — sonst zaehlen zwei Laeufe hoch.
+                    if (laufUhr.current) clearTimeout(laufUhr.current);
+                    const meiner = ++laufNr.current;
+                    setLauf(0);
+                    let i = 0;
+                    const weiterLauf = () => {
+                      if (meiner !== laufNr.current) return;
+                      i += 1;
+                      if (i < 4) { setLauf(i); laufUhr.current = setTimeout(weiterLauf, 620); }
+                      else {
+                        laufUhr.current = null;
+                        setLauf(null);
+                        uebernehmeErkennung();
+                        // Gezielt zum Pruefschritt, nicht "einen weiter": wer
+                        // waehrend des Laufs selbst blaettert, landete sonst
+                        // eine Station zu weit und musste zurueck.
+                        geheZu("pruefen");
+                      }
+                    };
+                    laufUhr.current = setTimeout(weiterLauf, 620);
+  };
+
   const istVorschlaege = schritt === "vorschlaege";
 
   /* "Mit dem Tipp weiter" hat die Wahl bisher nicht festgeschrieben: gewaehlt
@@ -699,7 +733,19 @@ export default function Kuechenplaner() {
   // wohin es kommt, und nicht nur eine Liste von Modellen.
   // Neben dem Grundriss der Raum von innen: oben zieht man die Stelle hin,
   // daneben sieht man, was daraus wird.
-  const raumTafel = planSchritt && vorschau ? (
+  /* Passt nichts in den Raum, zeichnete die Vorschau einen leeren Raum unter
+     die Zeile "So sieht der Raum mit dieser Kueche aus" — die Kueche war die
+     leere Menge. Dort gehoert der Grund hin, nicht ein Bild. */
+  const vorschauLeer = vorschau && !vorschau.moeglich ? (
+    <Karte className="px-4 py-6">
+      <Notiz ton="achtung">{vorschau.grund}</Notiz>
+      <div className="mt-4 flex justify-center">
+        <WKnopf onClick={masseAendern}>Maße ändern</WKnopf>
+      </div>
+    </Karte>
+  ) : null;
+
+  const raumTafel = planSchritt && vorschauLeer ? vorschauLeer : planSchritt && vorschau ? (
     <Karte className="overflow-hidden p-0">
       <Kuechenraum typ={typ} variante={vorschau.variante} hoehe={300} unterzeile={false} ofenGewaehlt={ofenDa} />
       <p className="border-t border-linie-warm px-4 py-3 text-center text-[13px] leading-snug text-kohle-3">
@@ -708,7 +754,7 @@ export default function Kuechenplaner() {
     </Karte>
   ) : null;
 
-  const geraetTafel = geraeteArt && vorschau ? (
+  const geraetTafel = geraeteArt && vorschauLeer ? vorschauLeer : geraeteArt && vorschau ? (
     <Karte className="overflow-hidden p-0">
       <Kuechenraum
         typ={typ}
@@ -927,41 +973,17 @@ export default function Kuechenplaner() {
           <>
             <Kopf anker={ueberschrift} vor={schrittText} titel="Lade deinen Grundriss hoch" satz="PDF oder Bild vom Wohnungsgrundriss. Wir lesen Wandlängen, Fenster und Tür heraus — und zeigen dir danach, was wir verstanden haben." />
             <div className="mt-7">
-              <Karte className="px-5 py-8 text-center">
+              <Karte
+                className={`px-5 py-8 text-center transition-[outline-color] ${ueberDerKarte ? "outline-2 outline-dashed outline-offset-4 outline-kohle-3" : ""}`}
+                onDragOver={(e) => { e.preventDefault(); setUeberDerKarte(true); }}
+                onDragLeave={() => setUeberDerKarte(false)}
+                onDrop={(e) => { e.preventDefault(); setUeberDerKarte(false); starteErkennung(e.dataTransfer.files?.[0]); }}
+              >
                 <input
                   ref={feld}
                   type="file"
                   className="sr-only"
-                  onChange={(e) => {
-                    const datei = e.target.files?.[0];
-                    // Nur Bilder lassen sich hier anzeigen; fuer PDF zeigen wir
-                    // einen gezeichneten Beispielplan und sagen es dazu.
-                    if (bildUrl.current) URL.revokeObjectURL(bildUrl.current);
-                    bildUrl.current = datei && datei.type.startsWith("image/") ? URL.createObjectURL(datei) : null;
-                    setPlanBild(bildUrl.current);
-                    merkePlanArt(datei ? (datei.type.startsWith("image/") ? "bild" : "pdf") : null);
-                    // Ein zweiter Upload darf den ersten Lauf nicht
-                    // weiterlaufen lassen — sonst zaehlen zwei Laeufe hoch.
-                    if (laufUhr.current) clearTimeout(laufUhr.current);
-                    const meiner = ++laufNr.current;
-                    setLauf(0);
-                    let i = 0;
-                    const weiterLauf = () => {
-                      if (meiner !== laufNr.current) return;
-                      i += 1;
-                      if (i < 4) { setLauf(i); laufUhr.current = setTimeout(weiterLauf, 620); }
-                      else {
-                        laufUhr.current = null;
-                        setLauf(null);
-                        uebernehmeErkennung();
-                        // Gezielt zum Pruefschritt, nicht "einen weiter": wer
-                        // waehrend des Laufs selbst blaettert, landete sonst
-                        // eine Station zu weit und musste zurueck.
-                        geheZu("pruefen");
-                      }
-                    };
-                    laufUhr.current = setTimeout(weiterLauf, 620);
-                  }}
+                  onChange={(e) => starteErkennung(e.target.files?.[0])}
                 />
                 {lauf === null ? (
                   <>
@@ -1257,25 +1279,42 @@ export default function Kuechenplaner() {
 
         {zeileWand && (
           <>
-            <Kopf
-              anker={ueberschrift}
-              vor={schrittText}
-              titel={`Wie lang wird die Zeile an der ${WANDNAME_DAT[zeileWand]}?`}
-              satz={`Die Wand ist ${Math.round(wandlaenge(raum, zeileWand) / 10)} cm lang. Wenn eine Tür, ein Heizkörper oder ein Durchgang Platz wegnimmt, trag hier weniger ein.`}
-            />
-            <Karte className="mt-8 px-5 py-7">
-              <GrosseZahl
-                wert={raum.nutz[zeileWand]}
-                setze={(mm) => setzeNutz(zeileWand, mm)}
-                min={60}
-                max={Math.round(wandlaenge(raum, zeileWand) / 10)}
-              />
-              <div className="mt-5 flex justify-center">
-                <WKnopf onClick={() => setzeNutz(zeileWand, wandlaenge(raum, zeileWand))}>
-                  Ganze Wand nutzen
-                </WKnopf>
-              </div>
-            </Karte>
+            {(() => {
+              /* Der Hoechstwert war die Wandlaenge — gerechnet wird aber nur
+                 mit dem, was nach Ecke und Tuer uebrig bleibt. Die obere
+                 Haelfte des Feldes hatte deshalb keine Wirkung, und "Ganze
+                 Wand nutzen" trug eine Zahl ein, die nirgends ankam. */
+              const wand = wandlaenge(raum, zeileWand);
+              const nutzbar = zeilenBereich(raum, zeileWand).laenge;
+              const knapp = nutzbar < wand - 50;
+              return (
+                <>
+                  <Kopf
+                    anker={ueberschrift}
+                    vor={schrittText}
+                    titel={`Wie lang wird die Zeile an der ${WANDNAME_DAT[zeileWand]}?`}
+                    satz={
+                      knapp
+                        ? `Die Wand ist ${Math.round(wand / 10)} cm lang, nutzbar sind davon ${Math.round(nutzbar / 10)} cm — der Rest geht für Ecke oder Tür ab. Nimmt noch etwas Platz weg, trag hier weniger ein.`
+                        : `Die Wand ist ${Math.round(wand / 10)} cm lang. Wenn eine Tür, ein Heizkörper oder ein Durchgang Platz wegnimmt, trag hier weniger ein.`
+                    }
+                  />
+                  <Karte className="mt-8 px-5 py-7">
+                    <GrosseZahl
+                      wert={Math.min(raum.nutz[zeileWand], nutzbar)}
+                      setze={(mm) => setzeNutz(zeileWand, mm)}
+                      min={60}
+                      max={Math.round(nutzbar / 10)}
+                    />
+                    <div className="mt-5 flex justify-center">
+                      <WKnopf onClick={() => setzeNutz(zeileWand, nutzbar)}>
+                        {knapp ? "Alles Nutzbare" : "Ganze Wand nutzen"}
+                      </WKnopf>
+                    </div>
+                  </Karte>
+                </>
+              );
+            })()}
           </>
         )}
 
@@ -1576,7 +1615,11 @@ export default function Kuechenplaner() {
             <div className="text-center">
               <h1 className="gross text-[29px] font-bold leading-[1.12] text-kohle sm:text-[36px]">Das passt in deinen Raum.</h1>
               <p className="mx-auto mt-3 max-w-[52ch] text-[16px] leading-relaxed text-kohle-2">
-                Drei Möglichkeiten, alle auf den Zentimeter gerechnet und nach denselben Regeln geprüft.
+                {karten.length === 1
+                  ? "In diesem Raum geht genau eine Aufteilung auf — der Platz lässt keine zweite zu. Auf den Zentimeter gerechnet und nach denselben Regeln geprüft."
+                  : karten.length === 2
+                    ? "Zwei Möglichkeiten, beide auf den Zentimeter gerechnet und nach denselben Regeln geprüft."
+                    : "Drei Möglichkeiten, alle auf den Zentimeter gerechnet und nach denselben Regeln geprüft."}
               </p>
             </div>
             {verworfenGrund && (
@@ -1609,7 +1652,10 @@ export default function Kuechenplaner() {
                     key={v.strategie}
                     v={v}
                     typ={typ}
-                    aktiv={gewaehlt === v.strategie}
+                    // Nach dem Zusammenlegen zeigt die Seite unter einem
+                    // anderen Schluessel an als dem gewaehlten — markiert war
+                    // dann gar keine Karte.
+                    aktiv={grundVorschlag?.strategie === v.strategie}
                     empfohlen={empfehlung?.strategie === v.strategie}
                     waehlen={() => { waehle(v.strategie); weiter(); }}
                   />
@@ -1636,7 +1682,7 @@ export default function Kuechenplaner() {
                       <button
                         key={id}
                         type="button"
-                        onClick={() => { setAnsicht(id); setAngefasst(null); }}
+                        onClick={() => { setAnsicht(id); setAngefasst(null); setTauschGrund(null); }}
                         aria-pressed={ansicht === id}
                         className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition sm:px-4 sm:text-[13.5px] ${
                           ansicht === id
@@ -1890,10 +1936,12 @@ export default function Kuechenplaner() {
                   <div className="gross ziffern mt-2 text-[44px] font-bold leading-none tracking-[-0.04em] text-kohle">{eur(brutto(gewaehlterVorschlag.preis))}</div>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <WKnopf art="primaer" gross onClick={() => geheZu("unterlagen")}>Angebot anfordern</WKnopf>
-                  {/* Vorher stand hier "Speichern" und druckte den Bildschirm
-                      samt Knoepfen. Die Unterlagen daneben sind die Seite, die
-                      zum Drucken gemacht ist. */}
+                  {/* Beide Knoepfe fuehrten an dieselbe Stelle — nur der
+                      staerkere versprach mehr. Jetzt springt er wirklich ins
+                      Formular, der andere zeigt das Blatt. */}
+                  <WKnopf art="primaer" gross onClick={() => { geheZu("unterlagen"); setAnfrage(true); }}>
+                    Angebot anfordern
+                  </WKnopf>
                   <WKnopf gross onClick={() => geheZu("unterlagen")}>Unterlagen ansehen</WKnopf>
                 </div>
               </div>

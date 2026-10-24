@@ -4,7 +4,10 @@ import { useState } from "react";
 import { PackageCheck } from "lucide-react";
 import { KUECHENTYPEN, WOHNUNGEN } from "@/data/projekt";
 import { eur, stueckliste, variante, zahl } from "@/lib/berechnung";
-import { abweichung, aufmassLage, fertigungsmasse, type AufmassLage, typMitFreigabe } from "@/lib/ableitung";
+import {
+  abweichung, aufmassLage, BLENDE_MAX, BLENDE_MIN, fertigungsmasse, istFreigegeben, typMitFreigabe,
+  type AufmassLage,
+} from "@/lib/ableitung";
 import { useDemo } from "@/store/demo";
 import { Grundriss } from "@/components/plan/Grundriss";
 import {
@@ -35,7 +38,11 @@ export default function Aufmass() {
   );
 
   const fertigung = fertigungsmasse(typ, v, werte, wohnung.messpunkte);
-  const bestellbar = lage === "bestaetigt" && snapshots.length > 0;
+  /* Eine zurueckgenommene Bestaetigung muss bis in die Bestellung
+     durchschlagen. Vorher gab das Aufmass eine Bestellvorbereitung fuer
+     einen Typ heraus, den zwei Seiten weiter niemand mehr freigegeben hat. */
+  const typFrei = istFreigegeben(typ, freigaben);
+  const bestellbar = lage === "bestaetigt" && snapshots.length > 0 && typFrei;
 
   const zaehler = (l: AufmassLage) =>
     WOHNUNGEN.filter((w) => aufmassLage(w.messpunkte, aufmass[w.nr]) === l).length;
@@ -188,7 +195,8 @@ export default function Aufmass() {
                 <div className="border-t border-line-2 px-3 py-2 text-[11px] text-ink-3">
                   Jede Abweichung ändert den Zuschnitt der Arbeitsplatte und der Passblende. Die
                   Modulauswahl muss erst dann angefasst werden, wenn die Passblende aus ihrem
-                  Bereich von 20 bis 150 mm läuft — ab 15 mm lohnt deshalb der Blick darauf.
+                  Bereich von {BLENDE_MIN} bis {BLENDE_MAX} mm läuft — ab 15 mm lohnt deshalb der
+                  Blick darauf.
                 </div>
               </Flaeche>
             </div>
@@ -239,7 +247,9 @@ export default function Aufmass() {
                 <Hinweisband titel="Noch nicht bestellfähig">
                   {snapshots.length === 0
                     ? "Es ist keine Spezifikation festgeschrieben. Ohne festen Stand gibt es keine Bestellgrundlage."
-                    : "Das Aufmaß dieser Einheit ist nicht vollständig bestätigt. Fertigungsmaße entstehen erst aus den Ist-Maßen — eine Bestellung aus Planmaßen passt mit hoher Wahrscheinlichkeit nicht."}
+                    : !typFrei
+                      ? `Typ ${typ.id} ist nicht mehr bestätigt. Ein festgeschriebener Stand enthält ihn, die Bestätigung wurde danach zurückgenommen — erst wieder bestätigen, dann bestellen.`
+                      : "Das Aufmaß dieser Einheit ist nicht vollständig bestätigt. Fertigungsmaße entstehen erst aus den Ist-Maßen — eine Bestellung aus Planmaßen passt mit hoher Wahrscheinlichkeit nicht."}
                 </Hinweisband>
               ) : (
                 <Flaeche>
