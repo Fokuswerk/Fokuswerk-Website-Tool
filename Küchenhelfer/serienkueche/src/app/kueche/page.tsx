@@ -757,7 +757,10 @@ export default function Kuechenplaner() {
               <div className="mt-7">
                 {raum.fenster ? (
                   <>
-                    {wandWahl(raum.fenster.wand, (w) => setzeRaum({ fenster: { ...raum.fenster!, wand: w, von: 0 } }))}
+                    {ziehKarte("fenster", (mm) => setzeRaum({ fenster: { ...raum.fenster!, von: mm } }))}
+                    <div className="mt-4">
+                      {wandWahl(raum.fenster.wand, (w) => setzeRaum({ fenster: { ...raum.fenster!, wand: w, von: 0 } }))}
+                    </div>
                     <Karte className="mt-4 px-5 py-6">
                       <div className="ziffern mb-4 text-center text-[15px] text-kohle-2">
                         {Math.round(raum.fenster.breite / 10)} cm breit
@@ -789,7 +792,8 @@ export default function Kuechenplaner() {
 
             {offen === "tuer" && (
               <div className="mt-7">
-                {wandWahl(raum.tuer.wand, (w) => setzeRaum({ tuer: { ...raum.tuer, wand: w, von: 0 } }))}
+                {ziehKarte("tuer", (mm) => setzeRaum({ tuer: { ...raum.tuer, von: mm } }))}
+                <div className="mt-4">{wandWahl(raum.tuer.wand, (w) => setzeRaum({ tuer: { ...raum.tuer, wand: w, von: 0 } }))}</div>
                 <Karte className="mt-4 px-5 py-6">
                   <Schieber
                     wert={raum.tuer.von}
@@ -804,7 +808,8 @@ export default function Kuechenplaner() {
 
             {offen === "wasser" && (
               <div className="mt-7">
-                {wandWahl(raum.wasser.wand, (w) => setzeRaum({ wasser: { wand: w, von: 0 } }))}
+                {ziehKarte("wasser", (mm) => setzeRaum({ wasser: { ...raum.wasser, von: mm } }))}
+                <div className="mt-4">{wandWahl(raum.wasser.wand, (w) => setzeRaum({ wasser: { wand: w, von: 0 } }))}</div>
                 <Karte className="mt-4 px-5 py-6">
                   <Schieber
                     wert={raum.wasser.von}
