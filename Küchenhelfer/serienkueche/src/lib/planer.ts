@@ -80,7 +80,7 @@ export function drehungen(form: Raumform): number {
 }
 
 /** Dieselben Waende im Dativ — "an der linken Wand", nicht "an der linke Wand". */
-const WANDNAME_DAT: Record<WandId, string> = {
+export const WANDNAME_DAT: Record<WandId, string> = {
   haupt: "Hauptwand",
   links: "linken Wand",
   rechts: "rechten Wand",

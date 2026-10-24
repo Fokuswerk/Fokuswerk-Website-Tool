@@ -13,7 +13,7 @@ import {
   alleVorschlaege, alsKuechentyp, ausBelegung, befundeZeile, drehungen, drehungName, FORMEN, kuechenwaende,
   planeKueche,
   austauschbar, befundeGesamt, ersetzePlan, istStauraum, tauschMoeglich, tauschPlan,
-  pruefeAngaben, wandlaenge, WANDNAME, type Raumform, type Vorschlag, type WandId,
+  pruefeAngaben, wandlaenge, WANDNAME, WANDNAME_DAT, type Raumform, type Vorschlag, type WandId,
 } from "@/lib/planer";
 import { schrittFolge, useKueche } from "@/store/kueche";
 import { Kuechenbild, Raumbild } from "@/components/warm/Kuechenbild";
@@ -345,8 +345,17 @@ export default function Kuechenplaner() {
 
   // Orientierung: wo im Ablauf stehe ich gerade. Ohne Start- und Ergebnisbild,
   // die sind keine Fragen.
-  const gesamt = Math.max(1, folge.length - 2);
-  const schrittText = `Schritt ${Math.min(gesamt, Math.max(1, pos))} von ${gesamt}`;
+  // Keine Gesamtzahl mehr: sie haengt von der Raumform und davon ab, ob es
+  // ein Fenster gibt. Wer "Ueber Eck" waehlt, sah die Ziellinie von 17 auf 19
+  // wegrutschen. Der Balken oben zeigt den Fortschritt, hier steht, woran man
+  // gerade arbeitet.
+  const ABSCHNITT: Array<[string, (id: string) => boolean]> = [
+    ["Dein Raum", (id) => ["quelle", "upload", "pruefen", "form", "drehung", "breite", "tiefe", "fensterJa", "fenster", "tuer", "wasser"].includes(id) || id.startsWith("zeile-")],
+    ["Deine Geräte", (id) => id.startsWith("geraet-")],
+    ["Ausstattung", (id) => id === "niveau"],
+    ["Dein Ergebnis", () => true],
+  ];
+  const schrittText = ABSCHNITT.find(([, passt]) => passt(schritt))![0];
 
   const istStart = schritt === "start";
   const istErgebnis = schritt === "ergebnis";
@@ -915,7 +924,7 @@ export default function Kuechenplaner() {
           <>
             <Kopf
               vor={schrittText}
-              titel={`Wie lang wird die Zeile an der ${WANDNAME[zeileWand]}?`}
+              titel={`Wie lang wird die Zeile an der ${WANDNAME_DAT[zeileWand]}?`}
               satz={`Die Wand ist ${Math.round(wandlaenge(raum, zeileWand) / 10)} cm lang. Wenn eine Tür, ein Heizkörper oder ein Durchgang Platz wegnimmt, trag hier weniger ein.`}
             />
             <Karte className="mt-8 px-5 py-7">
