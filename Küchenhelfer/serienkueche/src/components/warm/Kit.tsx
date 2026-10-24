@@ -6,9 +6,17 @@ import { Minus, Plus } from "lucide-react";
 /* Bausteine für den Weg der Privatkunden. Große Flächen, wenig Text,
    alles mit dem Daumen bedienbar. */
 
-export function Fortschritt({ wert }: { wert: number }) {
+export function Fortschritt({ wert, text }: { wert: number; text?: string }) {
   return (
-    <div className="vertieft h-[5px] w-full overflow-hidden rounded-full bg-linie-warm">
+    <div
+      role="progressbar"
+      aria-valuenow={Math.round(wert * 100)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuetext={text}
+      aria-label="Fortschritt der Planung"
+      className="vertieft h-[5px] w-full overflow-hidden rounded-full bg-linie-warm"
+    >
       <div
         className="h-full rounded-full bg-gradient-to-b from-[#3a3730] to-kohle transition-[width] duration-500 ease-out"
         style={{ width: `${Math.round(wert * 100)}%` }}

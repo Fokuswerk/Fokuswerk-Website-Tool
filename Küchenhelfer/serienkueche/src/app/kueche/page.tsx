@@ -15,7 +15,7 @@ import {
   austauschbar, befundeGesamt, ersetzePlan, istStauraum, tauschMoeglich, tauschPlan,
   pruefeAngaben, wandlaenge, WANDNAME, WANDNAME_DAT, type Raumform, type Vorschlag, type WandId,
 } from "@/lib/planer";
-import { schrittFolge, useKueche } from "@/store/kueche";
+import { herkunftVon, HERKUNFT_TEXT, schrittFolge, useKueche, type Feld, type Herkunft } from "@/store/kueche";
 import { Kuechenbild, Raumbild } from "@/components/warm/Kuechenbild";
 import { Geraetebild, Schrankbild } from "@/components/warm/Geraetebild";
 
@@ -81,6 +81,31 @@ function Positionsliste({ ids, ab }: { ids: string[]; ab: number }) {
 }
 
 /** Was beim Öffnen eines einzelnen Prüfpunkts oben steht. */
+/** Die Frage je Schritt — fuer die Ansage an Vorlesesoftware. */
+const TITEL_FUER: Record<string, string> = {
+  start: "Fangen wir mit deinem Raum an",
+  quelle: "Wie willst du anfangen?",
+  upload: "Lade deinen Grundriss hoch",
+  pruefen: "Haben wir das richtig gelesen?",
+  form: "An wie vielen Wänden soll die Küche stehen?",
+  drehung: "Wie liegt die Küche im Raum?",
+  breite: "Wie breit ist der Raum?",
+  tiefe: "Und wie tief?",
+  fensterJa: "Gibt es im Raum ein Fenster?",
+  fenster: "Wo ist das Fenster?",
+  tuer: "Wo ist die Tür?",
+  wasser: "Wo kommt das Wasser aus der Wand?",
+  "geraet-kuehlschrank": "Welchen Kühlschrank?",
+  "geraet-kochfeld": "Worauf kochst du?",
+  "geraet-backofen": "Welchen Backofen?",
+  "geraet-spuelmaschine": "Spülmaschine?",
+  "geraet-dunstabzug": "Und der Dunstabzug?",
+  niveau: "Wie soll sie ausgestattet sein?",
+  vorschlaege: "Das passt in deinen Raum",
+  ergebnis: "Das ist deine Küche",
+  unterlagen: "Das geht mit raus",
+};
+
 const EDIT_TITEL: Record<string, string> = {
   form: "An wie vielen Wänden soll die Küche stehen?",
   breite: "Wie breit ist der Raum?",
@@ -128,11 +153,17 @@ function RaumSkizze({ form, ausrichtung }: { form: Raumform; ausrichtung: number
   );
 }
 
-function Kopf({ titel, satz, vor }: { titel: string; satz?: string; vor?: string }) {
+function Kopf({
+  titel, satz, vor, anker,
+}: {
+  titel: string; satz?: string; vor?: string;
+  /** Damit der Fokus nach einem Schrittwechsel hierher wandert. */
+  anker?: React.Ref<HTMLHeadingElement>;
+}) {
   return (
     <div className="warm-rein">
       {vor && <div className="vorzeile mb-3">{vor}</div>}
-      <h1 className="gross text-[31px] font-bold leading-[1.05] text-kohle sm:text-[40px]">{titel}</h1>
+      <h1 ref={anker} tabIndex={-1} className="gross text-[31px] font-bold leading-[1.05] text-kohle outline-none sm:text-[40px]">{titel}</h1>
       {satz && <p className="mt-4 max-w-[52ch] text-[16.5px] leading-relaxed text-kohle-2">{satz}</p>}
     </div>
   );
@@ -256,7 +287,7 @@ function Tabelle({
 }
 
 export default function Kuechenplaner() {
-  const { raum, quelle, erkannt, schritt, gewaehlt, eigeneBelegung, setzeRaum, setzeGeraet, setzeNutz, setzeQuelle, uebernehmeErkennung, geheZu, weiter, zurueck, waehle, setzeBelegung, umstellungVerworfen, quittiereVerworfen, neu } = useKueche();
+  const { raum, quelle, erkannt, schritt, gewaehlt, eigeneBelegung, setzeRaum, setzeGeraet, setzeNutz, setzeQuelle, uebernehmeErkennung, geheZu, weiter, zurueck, waehle, setzeBelegung, umstellungVerworfen, quittiereVerworfen, beruehrt, planArt, merkePlanArt, stand, quittiereStand, neu } = useKueche();
   const [details, setDetails] = useState(false);
   const [lauf, setLauf] = useState<number | null>(null);
   const [ansicht, setAnsicht] = useState<"raum" | "vorn" | "umstellen">("raum");
@@ -348,6 +379,45 @@ export default function Kuechenplaner() {
 
   // Im Grundrissweg gibt es keinen Schritt "breite" — dort fuehrt der Weg
   // zurueck auf die Pruefseite, mit der Breite schon aufgeklappt.
+  /**
+   * Hinweis auf einen Stand aus einer frueheren Sitzung.
+   *
+   * Wer wiederkommt, landete mitten in seiner alten Planung, ohne dass ihm
+   * jemand sagte, dass es seine alte ist. Erst nach dem Mounten rendern,
+   * sonst weicht der Server-Stand vom Browser-Stand ab.
+   */
+  const [montiert, setMontiert] = useState(false);
+  useEffect(() => { setMontiert(true); }, []);
+
+  /**
+   * Nach jedem Schrittwechsel an den Anfang und auf die neue Frage.
+   *
+   * Die ganze Strecke ist eine Seite, es gibt keinen Routenwechsel: mit
+   * Vorlesesoftware hoerte man nach "Weiter" nichts, der Fokus stand weiter
+   * auf dem Knopf, waehrend der Inhalt darueber komplett getauscht war. Und
+   * auf dem Handy blieb die Scrollposition stehen — man landete unten in der
+   * Fusszeile des naechsten Schritts.
+   */
+  const ueberschrift = useRef<HTMLHeadingElement>(null);
+  const ersterLauf = useRef(true);
+  useEffect(() => {
+    if (ersterLauf.current) { ersterLauf.current = false; return; }
+    const sanft = !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: sanft ? "smooth" : "auto" });
+    ueberschrift.current?.focus({ preventScroll: true });
+  }, [schritt]);
+  const standText = (() => {
+    if (!montiert || !stand || schritt === "start") return null;
+    const alter = Date.now() - stand;
+    if (alter < 1000 * 60 * 30) return null;
+    const d = new Date(stand);
+    const heute = new Date();
+    const gleicherTag = d.toDateString() === heute.toDateString();
+    return gleicherTag
+      ? `von heute, ${d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} Uhr`
+      : `vom ${d.toLocaleDateString("de-DE", { day: "2-digit", month: "long" })}`;
+  })();
+
   /** Das Formular fuer die Anfrage. Vorher endete der staerkste Knopf der
       Seite in einer Meldung, die nach dreieinhalb Sekunden verschwand — ohne
       Kontakt kommt aus dem ganzen Weg kein einziger Interessent an. */
@@ -400,6 +470,18 @@ export default function Kuechenplaner() {
     tauschMoeglich(typ, gewaehlterVorschlag.belegung, angefasst, { zeile: zeileId, index });
   const hinweise = pruefeAngaben(raum);
 
+  /**
+   * Woher ein Wert stammt — als Text und als Vertrauensstufe.
+   *
+   * Vorher standen hier feste Saetze: "aus dem Plan gelesen" auch ueber
+   * Standardwerten, die kein Plan geliefert hat, und unveraendert, nachdem
+   * der Nutzer den Wert selbst eingetragen hatte.
+   */
+  const woher = (feld: Feld): { herkunft: string; sicher: boolean; stufe: Herkunft } => {
+    const h = herkunftVon(feld, erkannt, beruehrt);
+    return { herkunft: HERKUNFT_TEXT[h], sicher: h === "plan", stufe: h };
+  };
+
   // Orientierung: wo im Ablauf stehe ich gerade. Ohne Start- und Ergebnisbild,
   // die sind keine Fragen.
   // Keine Gesamtzahl mehr: sie haengt von der Raumform und davon ab, ob es
@@ -450,19 +532,19 @@ export default function Kuechenplaner() {
       titel: "Form der Küche",
       herkunft: "sagt der Plan nicht — entscheidest du",
       sicher: false,
+      stufe: "annahme" as Herkunft,
       wert: FORMEN.find((f) => f.id === raum.form)!.titel,
     },
-    { id: "breite", titel: "Raumbreite", herkunft: "aus dem Plan gelesen", sicher: true, wert: `${Math.round(raum.breite / 10)} cm` },
-    { id: "tiefe", titel: "Raumtiefe", herkunft: "aus dem Plan gelesen", sicher: true, wert: `${Math.round(raum.tiefe / 10)} cm` },
+    { id: "breite", titel: "Raumbreite", ...woher("breite"), wert: `${Math.round(raum.breite / 10)} cm` },
+    { id: "tiefe", titel: "Raumtiefe", ...woher("tiefe"), wert: `${Math.round(raum.tiefe / 10)} cm` },
     {
       id: "fenster",
       titel: "Fenster",
-      herkunft: "geschätzt — bitte prüfen",
-      sicher: false,
+      ...woher("fenster"),
       wert: raum.fenster ? `${WANDNAME[raum.fenster.wand]} · ${Math.round(raum.fenster.breite / 10)} cm` : "keins",
     },
-    { id: "tuer", titel: "Tür", herkunft: "geschätzt — bitte prüfen", sicher: false, wert: WANDNAME[raum.tuer.wand] },
-    { id: "wasser", titel: "Wasseranschluss", herkunft: "im Plan nicht eingezeichnet — geraten", sicher: false, wert: WANDNAME[raum.wasser.wand] },
+    { id: "tuer", titel: "Tür", ...woher("tuer"), wert: WANDNAME[raum.tuer.wand] },
+    { id: "wasser", titel: "Wasseranschluss", ...woher("wasser"), wert: WANDNAME[raum.wasser.wand] },
   ];
 
   const drehKnopf = (
@@ -603,7 +685,10 @@ export default function Kuechenplaner() {
             <span className="gross text-[15px] font-bold text-kohle">Serienküche</span>
           </Link>
           <div className="min-w-0 flex-1">
-            <Fortschritt wert={(pos + 1) / folge.length} />
+            <Fortschritt
+              wert={(pos + 1) / folge.length}
+              text={`${schrittText}, Schritt ${pos + 1} von ${folge.length}`}
+            />
           </div>
           <button
             onClick={neuStarten}
@@ -618,7 +703,29 @@ export default function Kuechenplaner() {
         </div>
       </header>
 
+      {/* Still fuer das Auge, hoerbar fuer Vorlesesoftware: was gerade
+          gewechselt hat. */}
+      <p aria-live="polite" className="sr-only">
+        {schrittText}: {TITEL_FUER[schritt] ?? ""}
+      </p>
+
       <main className={`mx-auto px-5 pb-20 sm:px-8 ${breit ? "max-w-[1180px] pt-6" : istStart ? "max-w-[1180px] pt-6 sm:pt-10" : zeigeBild ? "max-w-[1180px] pt-0 lg:pt-7" : "max-w-[720px] pt-6"}`}>
+        {standText && (
+          <div className="nicht-drucken mb-5 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-butter-2 bg-butter-soft px-4 py-3">
+            <span className="text-[13.5px] leading-snug text-kohle-2">
+              Du planst an einem Stand {standText} weiter.
+            </span>
+            <div className="flex shrink-0 items-center gap-3">
+              <button type="button" onClick={quittiereStand} className="text-[13px] font-semibold text-kohle underline underline-offset-2">
+                Weiterplanen
+              </button>
+              <button type="button" onClick={neuStarten} className="text-[13px] text-kohle-2 underline underline-offset-2 hover:text-kohle">
+                Neu anfangen
+              </button>
+            </div>
+          </div>
+        )}
+
         {geometrie && bildStreifen}
         <div className={zeigeBild ? "lg:grid lg:grid-cols-[minmax(0,1fr)_372px] lg:items-start lg:gap-10" : ""}>
         <div className={zeigeBild ? "min-w-0 pt-5 lg:pt-0" : ""}>
@@ -671,7 +778,7 @@ export default function Kuechenplaner() {
 
         {schritt === "quelle" && (
           <>
-            <Kopf vor={schrittText} titel="Wie willst du anfangen?" satz="Beides führt zum selben Ergebnis — der eine Weg ist schneller, der andere braucht keinen Plan." />
+            <Kopf anker={ueberschrift} vor={schrittText} titel="Wie willst du anfangen?" satz="Beides führt zum selben Ergebnis — der eine Weg ist schneller, der andere braucht keinen Plan." />
             <div className="mt-7">
               <GrosseWahl<"fragen" | "plan">
                 wert={quelle}
@@ -687,7 +794,7 @@ export default function Kuechenplaner() {
 
         {schritt === "upload" && (
           <>
-            <Kopf vor={schrittText} titel="Lade deinen Grundriss hoch" satz="PDF oder Bild vom Wohnungsgrundriss. Wir lesen Wandlängen, Fenster und Tür heraus — und zeigen dir danach, was wir verstanden haben." />
+            <Kopf anker={ueberschrift} vor={schrittText} titel="Lade deinen Grundriss hoch" satz="PDF oder Bild vom Wohnungsgrundriss. Wir lesen Wandlängen, Fenster und Tür heraus — und zeigen dir danach, was wir verstanden haben." />
             <div className="mt-7">
               <Karte className="px-5 py-8 text-center">
                 <input
@@ -701,6 +808,7 @@ export default function Kuechenplaner() {
                     if (bildUrl.current) URL.revokeObjectURL(bildUrl.current);
                     bildUrl.current = datei && datei.type.startsWith("image/") ? URL.createObjectURL(datei) : null;
                     setPlanBild(bildUrl.current);
+                    merkePlanArt(datei ? (datei.type.startsWith("image/") ? "bild" : "pdf") : null);
                     // Ein zweiter Upload darf den ersten Lauf nicht
                     // weiterlaufen lassen — sonst zaehlen zwei Laeufe hoch.
                     if (laufUhr.current) clearTimeout(laufUhr.current);
@@ -737,8 +845,18 @@ export default function Kuechenplaner() {
                       In diesem Prototyp wird keine echte Datei gelesen. Es läuft ein nachgestellter
                       Erkennungslauf mit festen Beispielwerten.
                     </p>
-                    <div className="mt-5">
+                    <div className="mt-5 flex flex-wrap items-center justify-center gap-4">
                       <WKnopf onClick={() => feld.current?.click()}>Datei auswählen</WKnopf>
+                      {/* Ohne diesen Weg fuehren zwei Klicks auf "Weiter" ohne
+                          Datei in die Pruefseite, die dann Herkuenfte
+                          behauptet, die es nicht gibt. */}
+                      <button
+                        type="button"
+                        onClick={() => { setzeQuelle("fragen"); geheZu("form"); }}
+                        className="text-[14px] text-kohle-2 underline underline-offset-2 hover:text-kohle"
+                      >
+                        Ich habe keinen Plan — dann fragt uns
+                      </button>
                     </div>
                   </>
                 ) : (
@@ -766,6 +884,7 @@ export default function Kuechenplaner() {
         {schritt === "pruefen" && !offen && (
           <>
             <Kopf
+              anker={ueberschrift}
               vor={schrittText}
               titel="Haben wir das richtig gelesen?"
               satz="Tipp auf einen Wert, um ihn zu ändern. Wandlängen lesen wir sicher — Fenster und Türen sind geschätzt."
@@ -781,8 +900,12 @@ export default function Kuechenplaner() {
               />
               <p className="mt-3 text-[13px] leading-snug text-kohle-3">
                 {planBild
-                  ? "Dein Plan mit unserer Lesart darüber. Wo im Bild dein Küchenraum liegt, erkennt keine Software sicher — zieh den Rahmen einmal passend, dann sitzt jede Zahl an der richtigen Wand."
-                  : "Von einer PDF zeigen wir im Prototyp keine Vorschau, deshalb hier ein gezeichneter Beispielplan. Der Rahmen und alle Maße darauf sind deine echten Angaben."}
+                  ? "Dein Plan mit unserer Lesart darüber. Wo im Bild dein Küchenraum liegt, erkennt keine Software sicher — zieh den Rahmen einmal passend, dann folgen Tiefe und Verhältnis von selbst."
+                  : planArt === "pdf"
+                    ? "Von einer PDF zeigen wir im Prototyp keine Vorschau, deshalb hier ein gezeichneter Beispielplan. Der Rahmen und alle Maße darauf sind deine echten Angaben."
+                    : planArt === "bild"
+                      ? "Die Datei aus deiner letzten Sitzung liegt nicht mehr vor — Dateien bleiben im Browser und werden nicht gespeichert. Hier steht deshalb ein gezeichneter Beispielplan; deine Maße sind erhalten."
+                      : "Hier steht ein gezeichneter Beispielplan — eine Datei ist nie angekommen. Alle Maße darauf sind Annahmen, die du prüfen solltest."}
               </p>
             </div>
 
@@ -798,7 +921,19 @@ export default function Kuechenplaner() {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="text-[15.5px] font-semibold text-kohle">{z.titel}</div>
-                    <div className={`mt-0.5 text-[12.5px] ${z.sicher ? "font-medium text-salbei" : "font-semibold text-kohle-2"}`}>
+                    {/* Drei Stufen, drei Farben: gelesen ist gruen, selbst
+                        geaendert neutral-dunkel, Annahme und Schaetzung
+                        auffaellig — sonst sieht "von dir geaendert" aus wie
+                        eine Planmessung. */}
+                    <div
+                      className={`mt-0.5 text-[12.5px] ${
+                        z.stufe === "plan"
+                          ? "font-medium text-salbei"
+                          : z.stufe === "geaendert"
+                            ? "font-semibold text-kohle"
+                            : "font-semibold text-kohle-2"
+                      }`}
+                    >
                       {z.herkunft}
                     </div>
                   </div>
@@ -931,7 +1066,7 @@ export default function Kuechenplaner() {
 
         {schritt === "form" && (
           <>
-            <Kopf vor={schrittText} titel="An wie vielen Wänden soll die Küche stehen?" satz="Schau dich im Raum um. Du kannst das später jederzeit ändern." />
+            <Kopf anker={ueberschrift} vor={schrittText} titel="An wie vielen Wänden soll die Küche stehen?" satz="Schau dich im Raum um. Du kannst das später jederzeit ändern." />
             <div className="mt-7">
               <GrosseWahl<Raumform>
                 wert={raum.form}
@@ -945,6 +1080,7 @@ export default function Kuechenplaner() {
         {schritt === "drehung" && (
           <>
             <Kopf
+              anker={ueberschrift}
               vor={schrittText}
               titel={raum.form === "u-form" ? "Wohin ist das U offen?" : "Wie liegt die Küche im Raum?"}
               satz="Dreh sie so, wie es bei dir aussieht. Die Zeichnung zeigt dir deinen Raum von oben."
@@ -969,7 +1105,7 @@ export default function Kuechenplaner() {
 
         {schritt === "breite" && (
           <>
-            <Kopf vor={schrittText} titel="Wie breit ist der Raum?" satz="Die Länge der Hauptwand, von Ecke zu Ecke." />
+            <Kopf anker={ueberschrift} vor={schrittText} titel="Wie breit ist der Raum?" satz="Die Länge der Hauptwand, von Ecke zu Ecke." />
             <Karte className="mt-8 px-5 py-7">
               <GrosseZahl wert={raum.breite} setze={(mm) => setzeRaum({ breite: mm })} min={120} max={900} />
             </Karte>
@@ -978,7 +1114,7 @@ export default function Kuechenplaner() {
 
         {schritt === "tiefe" && (
           <>
-            <Kopf vor={schrittText} titel="Und wie tief?" satz="Von der Hauptwand bis zur Wand gegenüber. Daran hängt, wie viel Platz zum Stehen bleibt." />
+            <Kopf anker={ueberschrift} vor={schrittText} titel="Und wie tief?" satz="Von der Hauptwand bis zur Wand gegenüber. Daran hängt, wie viel Platz zum Stehen bleibt." />
             <Karte className="mt-8 px-5 py-7">
               <GrosseZahl wert={raum.tiefe} setze={(mm) => setzeRaum({ tiefe: mm })} min={150} max={900} />
             </Karte>
@@ -991,6 +1127,7 @@ export default function Kuechenplaner() {
         {zeileWand && (
           <>
             <Kopf
+              anker={ueberschrift}
               vor={schrittText}
               titel={`Wie lang wird die Zeile an der ${WANDNAME_DAT[zeileWand]}?`}
               satz={`Die Wand ist ${Math.round(wandlaenge(raum, zeileWand) / 10)} cm lang. Wenn eine Tür, ein Heizkörper oder ein Durchgang Platz wegnimmt, trag hier weniger ein.`}
@@ -1013,7 +1150,7 @@ export default function Kuechenplaner() {
 
         {schritt === "fensterJa" && (
           <>
-            <Kopf vor={schrittText} titel="Gibt es im Raum ein Fenster?" satz="Vor einem Fenster darf nichts Hohes stehen und darüber hängt kein Schrank. Deshalb fragen wir." />
+            <Kopf anker={ueberschrift} vor={schrittText} titel="Gibt es im Raum ein Fenster?" satz="Vor einem Fenster darf nichts Hohes stehen und darüber hängt kein Schrank. Deshalb fragen wir." />
             <div className="mt-7">
               <GrosseWahl<"ja" | "nein">
                 wert={raum.fenster ? "ja" : "nein"}
@@ -1040,7 +1177,7 @@ export default function Kuechenplaner() {
 
         {schritt === "fenster" && raum.fenster && (
           <>
-            <Kopf vor={schrittText} titel="Wo ist das Fenster?" satz="Zieh den Punkt an die Stelle — oder wähl darunter eine andere Wand." />
+            <Kopf anker={ueberschrift} vor={schrittText} titel="Wo ist das Fenster?" satz="Zieh den Punkt an die Stelle — oder wähl darunter eine andere Wand." />
             <div className="mt-7">{ziehKarte("fenster", (mm) => setzeRaum({ fenster: { ...raum.fenster!, von: mm } }))}</div>
             <div className="mt-4">{wandWahl(raum.fenster.wand, (w) => setzeRaum({ fenster: { ...raum.fenster!, wand: w, von: 0 } }))}</div>
             <Karte className="mt-4 px-5 py-6">
@@ -1066,7 +1203,7 @@ export default function Kuechenplaner() {
 
         {schritt === "tuer" && (
           <>
-            <Kopf vor={schrittText} titel="Wo ist die Tür?" satz="Eine Tür darf nicht gegen einen Schrank schlagen — zieh den Punkt an die richtige Stelle." />
+            <Kopf anker={ueberschrift} vor={schrittText} titel="Wo ist die Tür?" satz="Eine Tür darf nicht gegen einen Schrank schlagen — zieh den Punkt an die richtige Stelle." />
             <div className="mt-7">{ziehKarte("tuer", (mm) => setzeRaum({ tuer: { ...raum.tuer, von: mm } }))}</div>
             <div className="mt-4">{wandWahl(raum.tuer.wand, (w) => setzeRaum({ tuer: { ...raum.tuer, wand: w, von: 0 } }))}</div>
             <Karte className="mt-4 px-5 py-6">
@@ -1084,6 +1221,7 @@ export default function Kuechenplaner() {
         {schritt === "wasser" && (
           <>
             <Kopf
+              anker={ueberschrift}
               vor={schrittText}
               titel="Wo kommt das Wasser aus der Wand?"
               satz="Schau unter die alte Spüle oder in die Ecke mit den Leitungen. Dort bleibt die Spüle am besten — sonst muss ein Installateur verlegen."
@@ -1109,7 +1247,7 @@ export default function Kuechenplaner() {
           const info = ARTEN.find((x) => x.art === geraeteArt)!;
           return (
             <>
-              <Kopf vor={schrittText} titel={info.frage} satz={info.hilfe} />
+              <Kopf anker={ueberschrift} vor={schrittText} titel={info.frage} satz={info.hilfe} />
 
               <div className="vertieft relative mt-7 h-[clamp(140px,22vw,220px)] overflow-hidden rounded-[16px] bg-creme-2 ring-1 ring-black/[0.06]">
                 <NextImage
@@ -1245,7 +1383,7 @@ export default function Kuechenplaner() {
 
         {schritt === "niveau" && (
           <>
-            <Kopf vor={schrittText} titel="Wie soll sie ausgestattet sein?" satz="Das entscheidet über Fronten, Auszüge und Beschläge — und schlägt auf Möbel und Montage, nicht auf die Geräte." />
+            <Kopf anker={ueberschrift} vor={schrittText} titel="Wie soll sie ausgestattet sein?" satz="Das entscheidet über Fronten, Auszüge und Beschläge — und schlägt auf Möbel und Montage, nicht auf die Geräte." />
             <div className="mt-7">
               <GrosseWahl<"einfach" | "mittel" | "gehoben">
                 wert={raum.niveau}
@@ -2062,18 +2200,38 @@ export default function Kuechenplaner() {
         )}
 
         {!istStart && !(schritt === "pruefen" && offen) && (
-          <div className="mt-9 flex items-center justify-between gap-4">
-            <WKnopf art="klar" onClick={zurueck}>
-              <ArrowLeft size={16} strokeWidth={2.2} />
-              Zurück
-            </WKnopf>
-            {!istErgebnis && !istUnterlagen && (
-              <WKnopf art="primaer" gross onClick={weiter} aus={istVorschlaege && moegliche.length === 0}>
-                {istVorschlaege ? (gewaehlt ? "Weiter" : "Mit dem Tipp weiter") : "Weiter"}
-                <ArrowRight size={18} strokeWidth={2.2} />
+          <>
+            {/* Auf dem Handy lag "Weiter" bei den Geraeteschritten knapp
+                anderthalb Bildschirme unter dem Falz. Dort laeuft die
+                Fusszeile jetzt mit; ab 1024 px steht sie wie gehabt am Ende. */}
+            <div className="nicht-drucken sticky bottom-0 z-20 -mx-5 mt-9 border-t border-black/[0.055] bg-creme/85 px-5 py-3 backdrop-blur-xl backdrop-saturate-150 sm:-mx-8 sm:px-8 lg:hidden">
+              <div className="flex items-center justify-between gap-4">
+                <WKnopf art="klar" onClick={zurueck}>
+                  <ArrowLeft size={16} strokeWidth={2.2} />
+                  Zurück
+                </WKnopf>
+                {!istErgebnis && !istUnterlagen && (
+                  <WKnopf art="primaer" onClick={weiter} aus={istVorschlaege && moegliche.length === 0}>
+                    {istVorschlaege ? (gewaehlt ? "Weiter" : "Mit dem Tipp weiter") : "Weiter"}
+                    <ArrowRight size={17} strokeWidth={2.2} />
+                  </WKnopf>
+                )}
+              </div>
+            </div>
+
+            <div className="nicht-drucken mt-9 hidden items-center justify-between gap-4 lg:flex">
+              <WKnopf art="klar" onClick={zurueck}>
+                <ArrowLeft size={16} strokeWidth={2.2} />
+                Zurück
               </WKnopf>
-            )}
-          </div>
+              {!istErgebnis && !istUnterlagen && (
+                <WKnopf art="primaer" gross onClick={weiter} aus={istVorschlaege && moegliche.length === 0}>
+                  {istVorschlaege ? (gewaehlt ? "Weiter" : "Mit dem Tipp weiter") : "Weiter"}
+                  <ArrowRight size={18} strokeWidth={2.2} />
+                </WKnopf>
+              )}
+            </div>
+          </>
         )}
         </div>
         <aside className="hidden lg:sticky lg:top-[80px] lg:block">{geometrie ? bildTafel : (geraetTafel ?? raumTafel)}</aside>
