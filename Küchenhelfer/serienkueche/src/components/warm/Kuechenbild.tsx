@@ -284,7 +284,7 @@ export function Kuechenbild({
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={140}
-                fontFamily="Plus Jakarta Sans, sans-serif"
+                fontFamily="var(--font-warm)"
                 fontWeight={700}
                 className="fill-kohle"
               >
@@ -328,7 +328,7 @@ export function Kuechenbild({
                   textAnchor="middle"
                   fontSize={135}
                   fontWeight={700}
-                  fontFamily="Plus Jakarta Sans, sans-serif"
+                  fontFamily="var(--font-warm)"
                   className="fill-kohle"
                 >
                   ausgewählt
@@ -635,7 +635,7 @@ export function Raumbild({
             dominantBaseline="middle"
             fontSize={205}
             fontWeight={istAktiv(w) ? 700 : 500}
-            fontFamily="Plus Jakarta Sans, sans-serif"
+            fontFamily="var(--font-warm)"
             className={istAktiv(w) ? "fill-kohle" : "fill-kohle-3"}
             transform={p.dreh ? `rotate(${p.dreh} ${p.x} ${p.y})` : undefined}
           >

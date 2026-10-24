@@ -100,7 +100,7 @@ export function Ansicht({
               textAnchor="middle"
               dominantBaseline="central"
               fontSize={92}
-              fontFamily="IBM Plex Mono, monospace"
+              fontFamily="var(--font-data)"
               className="fill-ink-3"
             >
               FENSTER
@@ -136,7 +136,7 @@ export function Ansicht({
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={86}
-                fontFamily="IBM Plex Mono, monospace"
+                fontFamily="var(--font-data)"
                 className="fill-accent"
               >
                 ESSE
@@ -198,7 +198,7 @@ export function Ansicht({
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={94}
-                fontFamily="IBM Plex Mono, monospace"
+                fontFamily="var(--font-data)"
                 className="pointer-events-none fill-accent"
               >
                 {m.artikel.split("-")[0]}
@@ -211,7 +211,7 @@ export function Ansicht({
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={80}
-                fontFamily="IBM Plex Mono, monospace"
+                fontFamily="var(--font-data)"
                 className="pointer-events-none fill-flag"
               >
                 {p.breite}
@@ -243,7 +243,7 @@ export function Ansicht({
               y={darueber ? y(a.hoehe) + 180 : y(a.hoehe) - 110}
               textAnchor="middle"
               fontSize={82}
-              fontFamily="IBM Plex Mono, monospace"
+              fontFamily="var(--font-data)"
               fill="currentColor"
             >
               {s.zeichen}
@@ -255,7 +255,7 @@ export function Ansicht({
       {/* Höhenangabe Arbeitsplatte */}
       <g className="text-ink-3">
         <path d={`M${zeile.laenge + 120} ${y(AP_OK)} H${zeile.laenge + 300}`} stroke="currentColor" strokeWidth={12} fill="none" />
-        <text x={zeile.laenge + 320} y={y(AP_OK)} dominantBaseline="central" fontSize={88} fontFamily="IBM Plex Mono, monospace" fill="currentColor">
+        <text x={zeile.laenge + 320} y={y(AP_OK)} dominantBaseline="central" fontSize={88} fontFamily="var(--font-data)" fill="currentColor">
           {AP_OK} OFF
         </text>
       </g>
@@ -269,7 +269,7 @@ export function Ansicht({
           y={RH + 195}
           textAnchor="middle"
           fontSize={108}
-          fontFamily="IBM Plex Mono, monospace"
+          fontFamily="var(--font-data)"
           fill="currentColor"
           stroke="none"
         >

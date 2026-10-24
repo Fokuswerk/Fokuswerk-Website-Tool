@@ -53,7 +53,7 @@ export default function Kuechentypen() {
                       {KUECHENTYPEN.map((t, i) => (
                         <rect key={t.id} x={210 + i * 16} y={38} width={12} height={14} className="fill-accent/70" />
                       ))}
-                      <text x={310} y={49} fontSize="11" fontFamily="IBM Plex Mono, monospace" className="fill-ink-2">
+                      <text x={310} y={49} fontSize="11" fontFamily="var(--font-data)" className="fill-ink-2">
                         6 Typen
                       </text>
                     </svg>

@@ -359,10 +359,10 @@ export function BeispielPlan({ maxHoehe = "48vh" }: { maxHoehe?: string }) {
       {/* Türbögen */}
       <path d="M170 130 A45 45 0 0 1 125 175" strokeWidth="1.6" strokeDasharray="4 4" className="stroke-kohle-3" fill="none" />
       <path d="M250 220 A40 40 0 0 0 290 260" strokeWidth="1.6" strokeDasharray="4 4" className="stroke-kohle-3" fill="none" />
-      <text x="78" y="110" fontSize="13" fontFamily="Plus Jakarta Sans, sans-serif" className="fill-kohle-3">Küche</text>
-      <text x="268" y="105" fontSize="13" fontFamily="Plus Jakarta Sans, sans-serif" className="fill-kohle-3">Wohnen</text>
-      <text x="300" y="240" fontSize="13" fontFamily="Plus Jakarta Sans, sans-serif" className="fill-kohle-3">Bad</text>
-      <text x="190" y="240" fontSize="13" fontFamily="Plus Jakarta Sans, sans-serif" className="fill-kohle-3">Flur</text>
+      <text x="78" y="110" fontSize="13" fontFamily="var(--font-warm)" className="fill-kohle-3">Küche</text>
+      <text x="268" y="105" fontSize="13" fontFamily="var(--font-warm)" className="fill-kohle-3">Wohnen</text>
+      <text x="300" y="240" fontSize="13" fontFamily="var(--font-warm)" className="fill-kohle-3">Bad</text>
+      <text x="190" y="240" fontSize="13" fontFamily="var(--font-warm)" className="fill-kohle-3">Flur</text>
     </svg>
   );
 }

@@ -23,12 +23,14 @@ export function WKnopf({
   art = "still",
   gross,
   aus,
+  typ = "button",
 }: {
   children: ReactNode;
   onClick?: () => void;
   art?: "primaer" | "still" | "klar";
   gross?: boolean;
   aus?: boolean;
+  typ?: "button" | "submit";
 }) {
   const basis = `inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-colors ${
     gross ? "px-7 py-3.5 text-[16px]" : "px-5 py-2.5 text-[14.5px]"
@@ -41,7 +43,7 @@ export function WKnopf({
         ? "text-kohle-2 hover:text-kohle"
         : "flaeche text-kohle hover:border-kohle-3 active:translate-y-px";
   return (
-    <button type="button" onClick={aus ? undefined : onClick} disabled={aus} className={`${basis} ${stil}`}>
+    <button type={typ} onClick={aus ? undefined : onClick} disabled={aus} className={`${basis} ${stil}`}>
       {children}
     </button>
   );

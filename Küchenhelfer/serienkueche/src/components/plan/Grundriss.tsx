@@ -111,7 +111,7 @@ function Masskette({
         stroke="none"
         fontSize={150}
         textAnchor="middle"
-        fontFamily="IBM Plex Mono, monospace"
+        fontFamily="var(--font-data)"
         transform={senkrecht ? `rotate(-90 ${mx} ${my})` : undefined}
         dy={senkrecht ? -60 : 0}
       >
@@ -263,7 +263,7 @@ export function Grundriss({
                       textAnchor="middle"
                       dominantBaseline="central"
                       fontSize={126}
-                      fontFamily="IBM Plex Mono, monospace"
+                      fontFamily="var(--font-data)"
                       className="pointer-events-none fill-accent"
                       transform={z.wand === "west" || z.wand === "ost" ? `rotate(-90 ${r.x + r.w / 2} ${r.y + r.h / 2})` : undefined}
                     >
@@ -291,7 +291,7 @@ export function Grundriss({
         y={raum.tiefe - 320}
         textAnchor="middle"
         fontSize={150}
-        fontFamily="IBM Plex Mono, monospace"
+        fontFamily="var(--font-data)"
         className="fill-ink-3"
       >
         {typ.id} · {(raum.breite * raum.tiefe / 1_000_000).toFixed(2).replace(".", ",")} m²

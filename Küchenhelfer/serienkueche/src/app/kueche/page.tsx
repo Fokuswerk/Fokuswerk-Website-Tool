@@ -348,6 +348,15 @@ export default function Kuechenplaner() {
 
   // Im Grundrissweg gibt es keinen Schritt "breite" — dort fuehrt der Weg
   // zurueck auf die Pruefseite, mit der Breite schon aufgeklappt.
+  /** Das Formular fuer die Anfrage. Vorher endete der staerkste Knopf der
+      Seite in einer Meldung, die nach dreieinhalb Sekunden verschwand — ohne
+      Kontakt kommt aus dem ganzen Weg kein einziger Interessent an. */
+  const [anfrage, setAnfrage] = useState(false);
+  const [abgeschickt, setAbgeschickt] = useState(false);
+  const [kontakt, setKontakt] = useState({ name: "", mail: "", telefon: "", wann: "", text: "", ok: false });
+  const anfrageFeld = useRef<HTMLInputElement>(null);
+  const kontaktVoll = kontakt.name.trim().length > 1 && /.+@.+\..+/.test(kontakt.mail) && kontakt.ok;
+
   /** Ist ueberhaupt ein Backofen gewaehlt? */
   const ofenDa = geraet(raum.geraete.backofen).breite > 0;
 
@@ -1704,11 +1713,102 @@ export default function Kuechenplaner() {
                     <Printer size={16} strokeWidth={2} />
                     Drucken oder als PDF
                   </WKnopf>
-                  <WKnopf art="primaer" onClick={() => melde("Demo: Hier ginge die Anfrage mit allen Unterlagen raus.")}>
+                  <WKnopf art="primaer" onClick={() => { setAnfrage(true); setTimeout(() => anfrageFeld.current?.focus(), 60); }}>
                     Anfrage abschicken
                   </WKnopf>
                 </div>
               </div>
+
+              {/* Die Anfrage selbst. Ohne sie endet der ganze Weg im Nichts. */}
+              {anfrage && (
+                <Karte className="nicht-drucken mt-7 px-5 py-5 sm:px-7 sm:py-6">
+                  {abgeschickt ? (
+                    <div>
+                      <div className="gross text-[20px] font-bold text-kohle">Deine Anfrage liegt vor.</div>
+                      <p className="mt-2.5 max-w-[60ch] text-[15px] leading-relaxed text-kohle-2">
+                        Vorgang <strong className="ziffern font-semibold text-kohle">{u.kopf.vorgang}</strong>.
+                        Notiere dir die Nummer — darunter findet sich deine Planung wieder.
+                        Diese Unterlagen gehen mit der Anfrage mit; druck sie dir am besten
+                        zusätzlich aus.
+                      </p>
+                      <Notiz>
+                        Prototyp: Es wird nichts verschickt und nichts gespeichert, was dein Gerät
+                        verlässt. Im Betrieb ginge die Anfrage mit allen Unterlagen an den
+                        Lieferanten, und du bekämst eine Bestätigung per E-Mail.
+                      </Notiz>
+                    </div>
+                  ) : (
+                    <form
+                      onSubmit={(e) => { e.preventDefault(); if (kontaktVoll) setAbgeschickt(true); }}
+                    >
+                      <div className="gross text-[20px] font-bold text-kohle">Wohin dürfen wir antworten?</div>
+                      <p className="mt-2 max-w-[62ch] text-[14.5px] leading-relaxed text-kohle-2">
+                        Mit der Anfrage gehen diese Unterlagen mit — Zeichnungen, Maße, Stückliste,
+                        Anschlüsse und Zuschnitt. Du gehst damit nichts ein.
+                      </p>
+                      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                        {([
+                          ["name", "Name", "text", "Vor- und Nachname", true],
+                          ["mail", "E-Mail", "email", "name@beispiel.de", true],
+                          ["telefon", "Telefon (freiwillig)", "tel", "für Rückfragen", false],
+                          ["wann", "Wann soll sie stehen? (freiwillig)", "text", "z. B. im Frühjahr", false],
+                        ] as Array<[keyof typeof kontakt, string, string, string, boolean]>).map(([feld, label, typ, platz, pflicht], i) => (
+                          <label key={feld} className="block">
+                            <span className="mb-1.5 block text-[13px] font-semibold text-kohle-2">
+                              {label}
+                            </span>
+                            <input
+                              ref={i === 0 ? anfrageFeld : undefined}
+                              type={typ}
+                              required={pflicht}
+                              value={String(kontakt[feld])}
+                              onChange={(e) => setKontakt((k) => ({ ...k, [feld]: e.target.value }))}
+                              placeholder={platz}
+                              className="flaeche w-full rounded-[12px] px-3.5 py-2.5 text-[15px] text-kohle placeholder:text-kohle-3"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      <label className="mt-4 block">
+                        <span className="mb-1.5 block text-[13px] font-semibold text-kohle-2">
+                          Noch etwas dazu? (freiwillig)
+                        </span>
+                        <textarea
+                          value={kontakt.text}
+                          onChange={(e) => setKontakt((k) => ({ ...k, text: e.target.value }))}
+                          rows={3}
+                          className="flaeche w-full rounded-[12px] px-3.5 py-2.5 text-[15px] text-kohle placeholder:text-kohle-3"
+                          placeholder="Besonderheiten im Raum, Wünsche, Termine"
+                        />
+                      </label>
+                      <label className="mt-4 flex items-start gap-3 text-[13.5px] leading-snug text-kohle-2">
+                        <input
+                          type="checkbox"
+                          checked={kontakt.ok}
+                          onChange={(e) => setKontakt((k) => ({ ...k, ok: e.target.checked }))}
+                          className="mt-0.5 h-5 w-5 shrink-0 accent-kohle"
+                        />
+                        <span>
+                          Ich bin einverstanden, dass meine Angaben und meine Planung zur Bearbeitung
+                          dieser Anfrage verwendet werden. Mehr dazu in der{" "}
+                          <Link href="/datenschutz" className="font-semibold underline underline-offset-2">
+                            Datenschutzerklärung
+                          </Link>
+                          .
+                        </span>
+                      </label>
+                      <div className="mt-6 flex flex-wrap items-center gap-4">
+                        <WKnopf art="primaer" gross typ="submit" aus={!kontaktVoll}>
+                          Anfrage abschicken
+                        </WKnopf>
+                        <button type="button" onClick={() => setAnfrage(false)} className="text-[14px] text-kohle-3 hover:text-kohle-2">
+                          Doch nicht
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </Karte>
+              )}
 
               <dl className="mt-9 grid gap-x-8 gap-y-2.5 border-t border-linie-warm pt-6 sm:grid-cols-2 lg:grid-cols-3">
                 {[

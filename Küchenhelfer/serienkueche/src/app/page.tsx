@@ -411,7 +411,16 @@ export default function Start() {
           </span>
         </Link>
 
-        <p className="mt-10 max-w-[78ch] text-[13px] leading-relaxed text-kohle-3">
+        {/* Rechtsseiten gehoeren in die Fusszeile — ohne sie ist die Seite
+            nicht oeffentlich betreibbar, und es gab bisher keinen Ort, an dem
+            sie verlinkt waeren. */}
+        <nav aria-label="Rechtliches" className="mt-10 flex flex-wrap gap-x-5 gap-y-2 border-t border-linie-warm pt-6 text-[13.5px]">
+          <Link href="/impressum" className="text-kohle-2 underline underline-offset-2 hover:text-kohle">Impressum</Link>
+          <Link href="/datenschutz" className="text-kohle-2 underline underline-offset-2 hover:text-kohle">Datenschutz</Link>
+          <Link href="/dashboard" className="text-kohle-2 underline underline-offset-2 hover:text-kohle">Für Bauträger</Link>
+        </nav>
+
+        <p className="mt-6 max-w-[78ch] text-[13px] leading-relaxed text-kohle-3">
           Fotos: {FOTO_URHEBER} (Unsplash). Prototyp. Gerätepreise sind recherchierte Straßenpreise,
           alle anderen Preise sind gesetzt. Der Plan wird aus deinen Eingaben wirklich gerechnet;
           das Einlesen von Grundrissen und die Bestellung sind nachgestellt. Und so gut ein Plan

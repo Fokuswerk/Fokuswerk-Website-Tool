@@ -402,7 +402,11 @@ function pflichtmodule(a: Raumangaben): string[] {
  * möglichst an eine andere Wand, und die Hochschränke dorthin, wo noch Platz
  * ist.
  */
-function verteile(typ: Kuechentyp, a: Raumangaben, pflicht: string[]): Record<string, string[]> {
+function verteile(
+  typ: Kuechentyp,
+  a: Raumangaben,
+  pflicht: string[],
+): { zu: Record<string, string[]>; uebrig: string[] } {
   const zu: Record<string, string[]> = {};
   const frei: Record<string, number> = {};
   for (const z of typ.zeilen) {
@@ -457,7 +461,10 @@ function verteile(typ: Kuechentyp, a: Raumangaben, pflicht: string[]): Record<st
     const ziel = weiteste();
     if (ziel) lege(id, ziel);
   }
-  return zu;
+  // Was dann noch offen ist, passt in keine einzelne Zeile. Das stillschweigend
+  // liegen zu lassen hiess: der Nutzer waehlt einen Backofen auf Griffhoehe,
+  // bekommt keinen Hochschrank dafuer — und zahlt das Geraet trotzdem.
+  return { zu, uebrig: offen };
 }
 
 function breiteVon(ids: string[]): number {
@@ -615,7 +622,16 @@ export function planeKueche(a: Raumangaben, strategie: Strategie): Vorschlag {
   let fensterKonflikt = false;
   let kochfeldGerueckt = false;
 
-  const zuordnung = verteile(typ, a, pflicht);
+  const { zu: zuordnung, uebrig } = verteile(typ, a, pflicht);
+  if (uebrig.length > 0) {
+    const name = (id: string) =>
+      ROLLE_NAME[rolleVon(id)] || (id === "US600" ? "Unterbau-Kühlschrank" : id === "US450" ? "Spülmaschine 45 cm" : modul(id).bezeichnung);
+    const laengste = Math.max(...typ.zeilen.map((z) => z.laenge));
+    return {
+      ...leer,
+      grund: `${name(uebrig[0])} passt an keine einzelne Wand: die längste Küchenzeile ist ${Math.round(laengste / 10)} cm lang, und darauf müssen Spüle, Geräte und Schränke nebeneinander stehen. Zusammen reicht der Platz, aufgeteilt auf die Wände nicht.`,
+    };
+  }
   for (const z of typ.zeilen) {
     const nehmen = zuordnung[z.id] ?? [];
     const benutzt = breiteVon(nehmen);

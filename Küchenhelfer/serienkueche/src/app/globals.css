@@ -21,8 +21,8 @@
   --color-good: #2f6b4f;
   --color-good-soft: #e9f2ed;
 
-  --font-ui: "Archivo", ui-sans-serif, system-ui, sans-serif;
-  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-ui: var(--schrift-ui), ui-sans-serif, system-ui, sans-serif;
+  --font-data: var(--schrift-data), ui-monospace, "SFMono-Regular", monospace;
 
 
   /* Weg der Privatkunden. Ruhiges warmes Grau, fast keine Farbe in der
@@ -46,8 +46,8 @@
   --color-holz: #cbae87;
   --color-holz-soft: #e8dcc8;
 
-  --font-warm: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-gross: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-warm: var(--schrift-warm), ui-sans-serif, system-ui, sans-serif;
+  --font-gross: var(--schrift-gross), ui-sans-serif, system-ui, sans-serif;
 
   --radius-xs: 2px;
   --radius-sm: 3px;
@@ -264,6 +264,25 @@ body {
   border: 2px solid var(--color-paper);
   box-shadow: 0 1px 3px rgba(27, 30, 35, 0.3);
   cursor: grab;
+}
+
+/* Rechtstexte: Flattersatz, viel Luft, keine Gestaltungsabsicht. */
+.rechtstext { font-size: 15.5px; line-height: 1.72; color: var(--color-kohle-2); }
+.rechtstext h2 {
+  font-family: var(--font-gross);
+  font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
+  color: var(--color-kohle);
+  margin-top: 2rem; margin-bottom: 0.5rem;
+}
+.rechtstext h2:first-child { margin-top: 0; }
+.rechtstext p { margin-bottom: 0.9rem; }
+.rechtstext ul { margin: 0 0 0.9rem 1.1rem; list-style: disc; }
+.rechtstext li { margin-bottom: 0.35rem; }
+.rechtstext a { text-decoration: underline; text-underline-offset: 2px; color: var(--color-kohle); }
+.rechtstext .hinweis {
+  margin-top: 2.5rem; padding: 1rem 1.1rem;
+  border-radius: 14px; background: var(--color-butter-soft);
+  font-size: 14px; color: var(--color-kohle-2);
 }
 
 /* three.js setzt auf seinem eigenen Behaelter touch-action: none. Wo der
