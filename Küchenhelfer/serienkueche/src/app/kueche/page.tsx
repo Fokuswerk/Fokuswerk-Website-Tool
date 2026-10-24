@@ -521,6 +521,10 @@ export default function Kuechenplaner() {
   // wegrutschen. Der Balken oben zeigt den Fortschritt, hier steht, woran man
   // gerade arbeitet.
   const ABSCHNITT: Array<[string, (id: string) => boolean]> = [
+    // Der Auffangfall unten heisst "Dein Ergebnis". Ohne eigenen Eintrag fiel
+    // die Startseite hinein, und Vorlesesoftware sagte dort "Dein Ergebnis:
+    // Fangen wir mit deinem Raum an".
+    ["Küche planen", (id) => id === "start"],
     ["Dein Raum", (id) => ["quelle", "upload", "pruefen", "form", "drehung", "breite", "tiefe", "fensterJa", "fenster", "tuer", "wasser"].includes(id) || id.startsWith("zeile-")],
     ["Deine Geräte", (id) => id.startsWith("geraet-")],
     ["Ausstattung", (id) => id === "niveau"],
@@ -532,6 +536,18 @@ export default function Kuechenplaner() {
   const istErgebnis = schritt === "ergebnis";
   const istUnterlagen = schritt === "unterlagen";
   const istVorschlaege = schritt === "vorschlaege";
+
+  /* "Mit dem Tipp weiter" hat die Wahl bisher nicht festgeschrieben: gewaehlt
+     blieb null, und angezeigt wurde einfach die jeweilige Empfehlung. Das
+     geht gut, solange sich nichts aendert — aendert der Nutzer danach den
+     Raum und die Empfehlung kippt auf eine andere Strategie, steht ploetzlich
+     ein anderer Plan da, und eine Umstellung von Hand liegt unter einem
+     Schluessel, den die Seite nicht mehr liest. */
+  const weiterMitTipp = () => {
+    if (istVorschlaege && !gewaehlt && empfehlung) waehle(empfehlung.strategie);
+    weiter();
+  };
+
   const breit = istErgebnis || istVorschlaege || istUnterlagen;
 
   const zeileWand = schritt.startsWith("zeile-") ? (schritt.slice(6) as WandId) : null;
@@ -2339,7 +2355,7 @@ export default function Kuechenplaner() {
                   Zurück
                 </WKnopf>
                 {!istErgebnis && !istUnterlagen && (
-                  <WKnopf art="primaer" onClick={weiter} aus={istVorschlaege && moegliche.length === 0}>
+                  <WKnopf art="primaer" onClick={weiterMitTipp} aus={istVorschlaege && moegliche.length === 0}>
                     {istVorschlaege ? (gewaehlt ? "Weiter" : "Mit dem Tipp weiter") : "Weiter"}
                     <ArrowRight size={17} strokeWidth={2.2} />
                   </WKnopf>
@@ -2353,7 +2369,7 @@ export default function Kuechenplaner() {
                 Zurück
               </WKnopf>
               {!istErgebnis && !istUnterlagen && (
-                <WKnopf art="primaer" gross onClick={weiter} aus={istVorschlaege && moegliche.length === 0}>
+                <WKnopf art="primaer" gross onClick={weiterMitTipp} aus={istVorschlaege && moegliche.length === 0}>
                   {istVorschlaege ? (gewaehlt ? "Weiter" : "Mit dem Tipp weiter") : "Weiter"}
                   <ArrowRight size={18} strokeWidth={2.2} />
                 </WKnopf>
