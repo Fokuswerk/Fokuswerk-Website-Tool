@@ -261,7 +261,12 @@ export const WOHNUNGEN: Wohnung[] = (() => {
     for (let i = z.von; i <= z.bis; i++) {
       const name = nr(i);
       typ.wohnungen.push(name);
-      const abw = (i * 7) % 23;
+      // Zwei Raeume derselben Bauzeile sind nie auf den Millimeter gleich.
+      // Die Abweichung zum Nennmass des Typs bleibt im Toleranzband und
+      // wird spaeter von der Passblende aufgenommen — das ist der Kern der
+      // Typisierung und steht deshalb an der Einheit, nicht nur im Text.
+      const abw = (((i * 37) % 27) - 13) * 5;
+      const nische = typ.attribute.nischenlaenge.wert + abw;
       liste.push({
         nr: name,
         haus: i <= 20 ? "A" : "B",
@@ -269,8 +274,10 @@ export const WOHNUNGEN: Wohnung[] = (() => {
         wohnflaeche: WOHNFLAECHE[z.typId] + ((i * 3) % 7) * 10,
         typId: z.typId,
         gespiegelt: typ.gespiegelt.includes(name),
+        nischenlaenge: nische,
+        abweichung: abw,
         messpunkte: [
-          { id: "M1", bezeichnung: "Nischenlänge Hauptzeile", planmass: typ.attribute.nischenlaenge.wert, istmass: null },
+          { id: "M1", bezeichnung: "Nischenlänge Hauptzeile", planmass: nische, istmass: null },
           { id: "M2", bezeichnung: "Raumtiefe", planmass: typ.attribute.raumtiefe.wert, istmass: null },
           { id: "M3", bezeichnung: "Raumhöhe", planmass: typ.attribute.raumhoehe.wert, istmass: null },
           { id: "M4", bezeichnung: "Wandversatz linke Ecke", planmass: 0, istmass: null },
@@ -278,13 +285,29 @@ export const WOHNUNGEN: Wohnung[] = (() => {
             ? [{ id: "M5", bezeichnung: "Nischenlänge zweite Zeile", planmass: typ.attribute.nischenlaenge2.wert, istmass: null }]
             : []),
         ],
-        // Die Abweichung dient nur als vorbereiteter Demo-Wert für den Aufmaßlauf.
-        ...(abw === 0 ? {} : {}),
       });
     }
   }
   return liste;
 })();
+
+/**
+ * Wie weit die Nischenlänge einer Einheit vom Nennmaß ihres Typs abweichen
+ * darf, ohne dass sie einen eigenen Typ braucht. Alles darunter nimmt die
+ * Passblende auf.
+ */
+export const TOLERANZBAND = 80;
+
+/** Spanne der Nischenlängen innerhalb eines Typs. */
+export function nischenspanne(typId: string): { von: number; bis: number; groesste: number } {
+  const werte = WOHNUNGEN.filter((w) => w.typId === typId);
+  if (werte.length === 0) return { von: 0, bis: 0, groesste: 0 };
+  return {
+    von: Math.min(...werte.map((w) => w.nischenlaenge)),
+    bis: Math.max(...werte.map((w) => w.nischenlaenge)),
+    groesste: Math.max(...werte.map((w) => Math.abs(w.abweichung))),
+  };
+}
 
 export function typFuer(typId: string): Kuechentyp {
   const t = KUECHENTYPEN.find((x) => x.id === typId);

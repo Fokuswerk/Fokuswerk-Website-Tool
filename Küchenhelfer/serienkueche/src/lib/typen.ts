@@ -203,6 +203,10 @@ export interface Wohnung {
   wohnflaeche: number;
   typId: string;
   gespiegelt: boolean;
+  /** Nischenlänge der Hauptzeile nach Architektenplan, je Einheit. */
+  nischenlaenge: number;
+  /** Abstand zum Nennmaß des Typs. Diese Differenz nimmt die Passblende auf. */
+  abweichung: number;
   messpunkte: Messpunkt[];
 }
 

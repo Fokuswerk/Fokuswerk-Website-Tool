@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, FlipHorizontal2 } from "lucide-react";
-import { KUECHENTYPEN, WOHNUNGEN } from "@/data/projekt";
+import { KUECHENTYPEN, nischenspanne, TOLERANZBAND, WOHNUNGEN } from "@/data/projekt";
 import { eur, kennzahlen, variante, zahl } from "@/lib/berechnung";
 import { istFreigegeben, offeneFreigaben } from "@/lib/ableitung";
 import { useDemo } from "@/store/demo";
@@ -67,10 +67,47 @@ export default function Kuechentypen() {
                     </div>
                   </div>
                 </div>
+                {/* Ein Band statt einer Zahl: man sieht sofort, welche Typen
+                    das Projekt tragen und welche Randfälle sind. */}
+                <div className="mt-5 border-t border-line-2 pt-4">
+                  <div className="text-[10.5px] font-medium uppercase tracking-[0.06em] text-ink-3">
+                    Verteilung der {WOHNUNGEN.length} Einheiten
+                  </div>
+                  <div className="mt-2 flex h-7 w-full overflow-hidden rounded-xs">
+                    {KUECHENTYPEN.map((t, i) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setDetail(t.id)}
+                        title={`${t.id} · ${t.bezeichnung} · ${t.wohnungen.length} Einheiten`}
+                        style={{ width: `${(t.wohnungen.length / WOHNUNGEN.length) * 100}%` }}
+                        className={`num flex items-center justify-center text-[10.5px] text-paper transition-opacity hover:opacity-80 ${
+                          i % 2 === 0 ? "bg-accent" : "bg-accent-2"
+                        }`}
+                      >
+                        {t.wohnungen.length >= 4 ? t.id : ""}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="num mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-[11.5px] text-ink-3">
+                    {KUECHENTYPEN.map((t) => (
+                      <span key={t.id}>
+                        {t.id} · {t.wohnungen.length}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
                 <p className="mt-4 border-t border-line-2 pt-3 text-[12.5px] leading-relaxed text-ink-2">
                   Gruppiert wird nicht nach exakter Gleichheit, sondern nach Planungsäquivalenz: zwei
-                  Räume gehören zum selben Typ, wenn dieselbe Modulfolge in beiden zulässig ist. Der
-                  Unterschied geht in die Passblende. Gespiegelte Grundrisse werden über eine
+                  Räume gehören zum selben Typ, wenn dieselbe Modulfolge in beiden zulässig ist.
+                  Die Nischenlängen der {WOHNUNGEN.length} Einheiten liegen zwischen{" "}
+                  <span className="num">{zahl(Math.min(...WOHNUNGEN.map((w) => w.nischenlaenge)))}</span> und{" "}
+                  <span className="num">{zahl(Math.max(...WOHNUNGEN.map((w) => w.nischenlaenge)))}</span> mm;
+                  keine weicht um mehr als{" "}
+                  <span className="num">{Math.max(...WOHNUNGEN.map((w) => Math.abs(w.abweichung)))} mm</span>{" "}
+                  vom Nennmaß ihres Typs ab — erlaubt sind ± {TOLERANZBAND} mm. Diese Differenz nimmt die
+                  Passblende am Zeilenende auf. Gespiegelte Grundrisse werden über eine
                   Spiegelsignatur erkannt und erben die Planung ihres Typs.
                 </p>
               </Flaeche>
@@ -106,6 +143,10 @@ export default function Kuechentypen() {
                         </dd>
                         <dt className="text-ink-3">Nische</dt>
                         <dd className="num text-right text-ink-2">{t.zeilen.map((z) => zahl(z.laenge)).join(" / ")} mm</dd>
+                        <dt className="text-ink-3">im Bestand</dt>
+                        <dd className="num text-right text-ink-2">
+                          {zahl(nischenspanne(t.id).von)}–{zahl(nischenspanne(t.id).bis)} mm
+                        </dd>
                         <dt className="text-ink-3">Variante</dt>
                         <dd className="num text-right text-ink-2">{frei ? `${v.kurz} · ${v.bezeichnung}` : "—"}</dd>
                         <dt className="text-ink-3">je Küche</dt>
@@ -137,9 +178,11 @@ export default function Kuechentypen() {
                     <thead>
                       <tr>
                         <Th>Einheit</Th>
-                        <Th>Haus</Th>
-                        <Th>Geschoss</Th>
-                        <Th rechts>Wohnfläche</Th>
+                        <Th nebensache>Haus</Th>
+                        <Th nebensache>Geschoss</Th>
+                        <Th rechts nebensache>Wohnfläche</Th>
+                        <Th rechts>Nische laut Plan</Th>
+                        <Th rechts>gegen Typmaß</Th>
                         <Th>Ausführung</Th>
                       </tr>
                     </thead>
@@ -147,9 +190,13 @@ export default function Kuechentypen() {
                       {WOHNUNGEN.filter((w) => w.typId === typ.id).map((w) => (
                         <tr key={w.nr} className="hover:bg-ground">
                           <Td num>{w.nr}</Td>
-                          <Td stumm>Haus {w.haus}</Td>
-                          <Td stumm>{w.geschoss}</Td>
-                          <Td num rechts>{(w.wohnflaeche / 10).toFixed(1).replace(".", ",")} m²</Td>
+                          <Td stumm nebensache>Haus {w.haus}</Td>
+                          <Td stumm nebensache>{w.geschoss}</Td>
+                          <Td num rechts nebensache>{(w.wohnflaeche / 10).toFixed(1).replace(".", ",")} m²</Td>
+                          <Td num rechts>{zahl(w.nischenlaenge)} mm</Td>
+                          <Td num rechts stumm={w.abweichung === 0}>
+                            {w.abweichung === 0 ? "genau" : `${w.abweichung > 0 ? "+" : "−"}${Math.abs(w.abweichung)} mm`}
+                          </Td>
                           <Td>
                             {w.gespiegelt ? (
                               <span className="inline-flex items-center gap-1.5 text-[12px] text-accent">
@@ -163,8 +210,22 @@ export default function Kuechentypen() {
                         </tr>
                       ))}
                     </tbody>
+                    <tfoot>
+                      <tr>
+                        <Td stumm>Nennmaß des Typs</Td>
+                        <Td nebensache /><Td nebensache /><Td nebensache />
+                        <Td num rechts><strong>{zahl(typ.zeilen[0].laenge)} mm</strong></Td>
+                        <Td num rechts stumm>± {nischenspanne(typ.id).groesste} mm</Td>
+                        <Td />
+                      </tr>
+                    </tfoot>
                   </Tabelle>
                 </Flaeche>
+                <p className="border-t border-line-2 px-3.5 py-3 text-[12px] leading-relaxed text-ink-2">
+                  Geplant und bestellt wird das Nennmaß. Was eine Einheit davon abweicht, nimmt die
+                  Passblende am Zeilenende auf — deshalb braucht nicht jede Wohnung eine eigene
+                  Planung. Die Spalte „gegen Typmaß" zeigt, wie viel das jeweils ist.
+                </p>
               </Abschnitt>
             </div>
 
@@ -181,8 +242,14 @@ export default function Kuechentypen() {
                   <dd className="num text-right text-ink-2">{zahl(typ.raum.hoehe)} mm</dd>
                   <dt className="text-ink-3">Zeilen</dt>
                   <dd className="num text-right text-ink-2">{typ.zeilen.map((z) => zahl(z.laenge)).join(" / ")} mm</dd>
-                  <dt className="text-ink-3">Toleranzband</dt>
-                  <dd className="num text-right text-ink-2">± 80 mm</dd>
+                  <dt className="text-ink-3">Nischen im Typ</dt>
+                  <dd className="num text-right text-ink-2">
+                    {zahl(nischenspanne(typ.id).von)}–{zahl(nischenspanne(typ.id).bis)} mm
+                  </dd>
+                  <dt className="text-ink-3">Größte Abweichung</dt>
+                  <dd className="num text-right text-ink-2">
+                    ± {nischenspanne(typ.id).groesste} mm von ± {TOLERANZBAND}
+                  </dd>
                   <dt className="text-ink-3">Einheiten</dt>
                   <dd className="num text-right text-ink-2">{typ.wohnungen.length}</dd>
                   <dt className="text-ink-3">Gespiegelt</dt>
