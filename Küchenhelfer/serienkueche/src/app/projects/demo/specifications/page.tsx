@@ -31,7 +31,11 @@ export default function Spezifikationen() {
 
   const summe = useMemo(() => projektsumme(auswahl), [auswahl]);
   const alleFrei = KUECHENTYPEN.every((t) => istFreigegeben(t, freigaben));
-  const budget = Math.round((PROJEKT.budgetVon + PROJEKT.budgetBis) / 2) * PROJEKT.einheiten;
+  // Geprueft wird gegen die Obergrenze des Rahmens. Vorher stand hier der
+  // Mittelwert, waehrend zwei Zeilen tiefer "bis 260.000 EUR" als Rahmen
+  // genannt wurde — und der Zweig "ueber Rahmen" war mit keiner Auswahl
+  // erreichbar.
+  const budget = PROJEKT.budgetBis * PROJEKT.einheiten;
 
   const positionen = summe.positionen.filter((p) => {
     const g =
@@ -47,7 +51,14 @@ export default function Spezifikationen() {
   });
 
   const aktuell = snapshots[0];
-  const abweichend = aktuell && aktuell.gesamt !== summe.gesamt;
+  // Nicht nur die Endsumme vergleichen: zwei Varianten desselben Typs koennen
+  // gleich viel kosten und trotzdem andere Modulfolgen und Anschlusspositionen
+  // haben. Dann galt der festgeschriebene Stand faelschlich als aktuell.
+  const abweichend =
+    !!aktuell &&
+    (aktuell.gesamt !== summe.gesamt ||
+      aktuell.einheiten !== WOHNUNGEN.length ||
+      KUECHENTYPEN.some((t) => aktuell.auswahl[t.id] !== auswahl[t.id]));
 
   const festschreiben = () => {
     const nr = snapshots.length + 1;
@@ -136,7 +147,9 @@ export default function Spezifikationen() {
                   <Td num rechts stumm>{eur(Math.round(summe.gesamt / WOHNUNGEN.length))}</Td>
                   <Td num rechts><strong>{eur(summe.gesamt)}</strong></Td>
                   <Td num rechts stumm>
-                    {summe.gesamt <= budget ? "im Rahmen" : "über Rahmen"}
+                    {summe.gesamt <= budget
+                      ? `im Rahmen, ${eur(summe.gesamt)} von ${eur(budget)}`
+                      : `über dem Rahmen von ${eur(budget)}`}
                   </Td>
                 </tr>
               </tfoot>

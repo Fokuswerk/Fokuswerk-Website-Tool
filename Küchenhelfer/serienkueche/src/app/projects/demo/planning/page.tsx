@@ -38,11 +38,16 @@ export default function Planung() {
   const [lauf, setLauf] = useState<number | null>(null);
   const [modulWahl, setModulWahl] = useState<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const starteRef = useRef<(() => void) | null>(null);
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
   const typ = KUECHENTYPEN.find((t) => t.id === aktiv)!;
   const frei = istFreigegeben(typ, freigaben);
-  const gezeigt = generiert.includes(typ.id) || frei;
+  // Vorher war "generiert || frei" innerhalb des frei-Zweigs immer wahr —
+  // der Rechenlauf samt dem Satz "Demo-Simulation, es laeuft kein echter
+  // Solver" war unerreichbar. Jetzt zaehlt nur, ob er fuer diesen Typ schon
+  // gelaufen ist.
+  const gezeigt = generiert.includes(typ.id);
   const gewaehlt = variante(auswahl[typ.id]);
   const varianten = variantenFuer(typ.id);
   const [zeileWahl, setZeileWahl] = useState(typ.zeilen[0].id);
@@ -50,6 +55,13 @@ export default function Planung() {
     setZeileWahl(typ.zeilen[0].id);
     setModulWahl(null);
   }, [typ.id, typ.zeilen]);
+
+  // Beim ersten Oeffnen eines freigegebenen Typs einmal laufen lassen.
+  useEffect(() => {
+    if (!frei || generiert.includes(typ.id) || lauf !== null) return;
+    starteRef.current?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typ.id, frei]);
 
   const starte = () => {
     if (!frei) return;
@@ -68,6 +80,7 @@ export default function Planung() {
     };
     timer.current = setTimeout(weiter, 460);
   };
+  starteRef.current = starte;
 
   const modulInfo = (() => {
     if (!modulWahl) return null;
@@ -79,6 +92,10 @@ export default function Planung() {
     const zeile = typ.zeilen.find((z) => z.id === zeileId)!;
     return { p, m, zeile };
   })();
+
+  const blockierendeOffen = offeneFreigaben(typ, freigaben).filter((p) => p.blockierend);
+
+  const weitereOffen = offeneFreigaben(typ, freigaben).filter((p) => !p.blockierend);
 
   return (
     <>
@@ -185,10 +202,20 @@ export default function Planung() {
                 <Lock size={20} strokeWidth={1.5} className="mx-auto text-flag" />
                 <div className="mt-2.5 text-[14px] font-medium text-ink">Planung für {typ.id} gesperrt</div>
                 <p className="mx-auto mt-1.5 max-w-[60ch] text-[12.5px] leading-relaxed text-ink-2">
-                  Es fehlen {offeneFreigaben(typ, freigaben).length} Bestätigungen:{" "}
-                  {offeneFreigaben(typ, freigaben).map((p) => p.titel).join(", ")}. Ein Vorschlag auf
+                  {/* Gezaehlt werden nur die Punkte, die wirklich sperren —
+                      sonst stand hier "Es fehlen 3 Bestaetigungen", waehrend
+                      die Raumpruefung fuer denselben Typ "fehlen 2" sagte. */}
+                  Es fehlen {blockierendeOffen.length}{" "}
+                  {blockierendeOffen.length === 1 ? "Bestätigung" : "Bestätigungen"}:{" "}
+                  {blockierendeOffen.map((p) => p.titel).join(", ")}. Ein Vorschlag auf
                   unbestätigten Maßen sähe gültig aus, ohne es zu sein — deshalb erzeugt das Werkzeug
                   hier keinen.
+                  {weitereOffen.length > 0 && (
+                    <>
+                      {" "}Zusätzlich offen, sperrt aber nicht:{" "}
+                      {weitereOffen.map((p) => p.titel).join(", ")}.
+                    </>
+                  )}
                 </p>
                 <div className="mt-4">
                   <Knopf href="/projects/demo/rooms" art="primaer">Zur Raumprüfung<ArrowRight size={13} strokeWidth={1.8} /></Knopf>

@@ -26,6 +26,10 @@ export default function Dashboard() {
   const freigegeben = KUECHENTYPEN.filter((t) => istFreigegeben(t, freigaben));
   const offen = KUECHENTYPEN.filter((t) => !istFreigegeben(t, freigaben));
   const offenePunkte = KUECHENTYPEN.reduce((s, t) => s + offeneFreigaben(t, freigaben).length, 0);
+  // Die Spalte "Summe" zeigt fuer gesperrte Typen ein "—", die Fusszeile
+  // rechnete trotzdem alle mit: 55.744 EUR Unterschied ohne Erklaerung.
+  const bestaetigteSumme = KUECHENTYPEN.filter((t) => istFreigegeben(t, freigaben))
+    .reduce((s, t) => s + kennzahlen(variante(auswahl[t.id]), t).preis * t.wohnungen.length, 0);
   const summe = projektsumme(auswahl);
   const aufgemessen = WOHNUNGEN.filter(
     (w) => aufmassLage(w.messpunkte, aufmass[w.nr]) === "bestaetigt",
@@ -80,7 +84,7 @@ export default function Dashboard() {
             {
               label: "Spezifikation",
               wert: eur(summe.gesamt),
-              zusatz: `netto · Rahmen ${eur(PROJEKT.budgetVon * WOHNUNGEN.length)}–${eur(PROJEKT.budgetBis * WOHNUNGEN.length)}`,
+              zusatz: `netto · davon bestätigt ${eur(bestaetigteSumme)} · Rahmen ${eur(PROJEKT.budgetVon * WOHNUNGEN.length)}–${eur(PROJEKT.budgetBis * WOHNUNGEN.length)}`,
             },
             {
               label: "Typen bestätigt",
@@ -212,6 +216,11 @@ export default function Dashboard() {
                   <Td nebensache /><Td /><Td />
                   <Td num rechts>
                     <strong>{eur(summe.gesamt)}</strong>
+                    {bestaetigteSumme !== summe.gesamt && (
+                      <span className="block text-[11.5px] font-normal text-ink-3">
+                        bestätigt {eur(bestaetigteSumme)}
+                      </span>
+                    )}
                   </Td>
                   <Td />
                 </tr>
