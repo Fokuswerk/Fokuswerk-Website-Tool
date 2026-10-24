@@ -165,13 +165,34 @@ const KORPUSTIEFE = 600;
 export function zeilenBereich(a: Raumangaben, w: WandId): { start: number; laenge: number } {
   const L = wandlaenge(a, w);
   const waende = kuechenwaende(a);
-  const eckstart = w !== waende[0] && a.form !== "zwei-waende" ? KORPUSTIEFE : 0;
+
+  // An welchem Ende liegt die gemeinsame Ecke?
+  //
+  // Die Wände laufen im Uhrzeigersinn: das Ende der einen Wand ist der
+  // Anfang der nächsten. Bei "Über Eck" ist die Reihenfolge aber
+  // [haupt, links] — links kommt im Uhrzeigersinn VOR haupt. Der Abstand
+  // wurde trotzdem immer an den Zeilenanfang gelegt, also an das falsche
+  // Ende: beide Bänder lagen in derselben Ecke übereinander, und am
+  // anderen Ende blieb ein Streifen leer.
+  let vorn = 0;
+  let hinten = 0;
+  if (a.form !== "zwei-waende" && waende.length > 1) {
+    const i = waende.indexOf(w);
+    const z = ZYKLUS.indexOf(w);
+    const davorImKreis = ZYKLUS[(z + 3) % 4];
+    const danachImKreis = ZYKLUS[(z + 1) % 4];
+    // Nur eine der beiden Wände an einer Ecke weicht aus — die spätere.
+    if (waende.indexOf(davorImKreis) >= 0 && waende.indexOf(davorImKreis) < i) vorn = KORPUSTIEFE;
+    if (waende.indexOf(danachImKreis) >= 0 && waende.indexOf(danachImKreis) < i) hinten = KORPUSTIEFE;
+  }
+  const eckstart = vorn;
+  const eckende = L - hinten;
 
   let von = eckstart;
-  let bis = L;
+  let bis = eckende;
   if (a.tuer.wand === w) {
-    const davor = { von: eckstart, bis: Math.max(eckstart, a.tuer.von - TUERLUFT) };
-    const dahinter = { von: Math.max(eckstart, a.tuer.von + a.tuer.breite + TUERLUFT), bis: L };
+    const davor = { von: eckstart, bis: Math.max(eckstart, Math.min(eckende, a.tuer.von - TUERLUFT)) };
+    const dahinter = { von: Math.max(eckstart, a.tuer.von + a.tuer.breite + TUERLUFT), bis: eckende };
     const beste = dahinter.bis - dahinter.von > davor.bis - davor.von ? dahinter : davor;
     von = beste.von;
     bis = beste.bis;
@@ -294,6 +315,51 @@ export function platteLaenge(typ: Kuechentyp, belegung: Record<string, string[]>
       if (r === "kuehlschrank" || r === "backofen") continue;
       mm += modul(id).breite ?? 0;
     }
+  }
+  return mm;
+}
+
+/**
+ * Freie Arbeitsfläche zwischen Spüle und Kochfeld, über Zeilengrenzen hinweg.
+ *
+ * Gemessen wurde das vorher nur innerhalb der Hauptzeile. Die Verteilung legt
+ * das Kochfeld aber absichtlich an eine andere Wand — bei jeder Eck-, Zwei-
+ * Wand- und U-Form stand deshalb "Arbeitsfläche 0 cm", und die Vorschlagskarte
+ * behauptete "Spüle und Herd nebeneinander".
+ *
+ * Die Küche wird als ein durchlaufendes Band gelesen, in der Reihenfolge der
+ * Küchenwände. Hochschränke zählen nicht mit: über ihnen liegt keine Platte.
+ * Zwischen zwei Zeilen liegt die Ecke, die als Arbeitsfläche taugt.
+ */
+export function freieFlaeche(
+  a: Raumangaben,
+  typ: Kuechentyp,
+  belegung: Record<string, string[]>,
+): number {
+  const band: Array<{ id: string; breite: number }> = [];
+  const waende = kuechenwaende(a);
+  waende.forEach((w, i) => {
+    const ids = belegung[`Z-${w}`] ?? [];
+    if (i > 0 && ids.length > 0) {
+      // Zwei gegenüberliegende Wände stoßen nicht aneinander — dazwischen
+      // liegt der Raum, keine Arbeitsfläche.
+      const vorher = waende[i - 1];
+      const benachbart = Math.abs(ZYKLUS.indexOf(w) - ZYKLUS.indexOf(vorher)) % 2 === 1;
+      band.push({ id: benachbart ? "ECKE" : "LUECKE", breite: benachbart ? KORPUSTIEFE : 0 });
+    }
+    for (const id of ids) band.push({ id, breite: modul(id).breite ?? 0 });
+  });
+  const iSp = band.findIndex((x) => x.id === "SP600");
+  const iKf = band.findIndex((x) => x.id === "KF600");
+  if (iSp < 0 || iKf < 0) return 0;
+  let mm = 0;
+  for (let i = Math.min(iSp, iKf) + 1; i < Math.max(iSp, iKf); i++) {
+    if (band[i].id === "LUECKE") return 0;
+    if (band[i].id !== "ECKE") {
+      const r = rolleVon(band[i].id);
+      if (r === "kuehlschrank" || r === "backofen") continue;
+    }
+    mm += band[i].breite;
   }
   return mm;
 }
@@ -657,14 +723,7 @@ export function ausBelegung(
   };
   const preis = kosten.gesamt;
 
-  const hauptId = `Z-${kuechenwaende(a)[0]}`;
-  const z1 = belegung[hauptId] ?? [];
-  const iSp = z1.indexOf("SP600");
-  const iKf = z1.indexOf("KF600");
-  let arbeitsflaeche = 0;
-  if (iSp >= 0 && iKf >= 0) {
-    arbeitsflaeche = breiteVon(z1.slice(Math.min(iSp, iKf) + 1, Math.max(iSp, iKf)));
-  }
+  const arbeitsflaeche = freieFlaeche(a, typ, belegung);
   const wZeile = typ.zeilen.find((z) => z.id === wasserZeile);
   const spIdx = wZeile ? (belegung[wZeile.id] ?? []).indexOf("SP600") : -1;
   const wegZumWasser =
@@ -675,10 +734,17 @@ export function ausBelegung(
 
   const gut: string[] = [];
   const achtung: string[] = [];
+  const alleIds = Object.values(belegung).flat();
 
   if (arbeitsflaeche >= 900) gut.push(`${Math.round(arbeitsflaeche / 10)} cm freie Fläche zwischen Spüle und Herd — bequem zum Schneiden und Abstellen.`);
   else if (arbeitsflaeche >= 450) gut.push(`${Math.round(arbeitsflaeche / 10)} cm zwischen Spüle und Herd. Reicht, ist aber nicht üppig.`);
-  else if (iSp >= 0 && iKf >= 0) achtung.push("Spüle und Herd stehen direkt nebeneinander — unpraktisch beim Kochen, dafür kurze Leitungswege.");
+  else if (alleIds.includes("SP600") && alleIds.includes("KF600")) {
+    const zeileVon = (id: string) => typ.zeilen.find((z) => (belegung[z.id] ?? []).includes(id))?.id;
+    if (zeileVon("SP600") !== zeileVon("KF600"))
+      achtung.push("Spüle und Herd stehen sich auf gegenüberliegenden Wänden gegenüber — zwischen beiden liegt keine durchgehende Arbeitsfläche.");
+    else
+      achtung.push("Spüle und Herd stehen direkt nebeneinander — unpraktisch beim Kochen, dafür kurze Leitungswege.");
+  }
 
   if (wegZumWasser <= 600) gut.push("Die Spüle bleibt am vorhandenen Anschluss — kein Installateur nötig.");
   else achtung.push(`Die Spüle liegt etwa ${Math.round(wegZumWasser / 100) * 10} cm vom heutigen Anschluss entfernt. Das muss verlegt werden.`);
