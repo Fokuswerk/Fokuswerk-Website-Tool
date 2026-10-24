@@ -175,7 +175,14 @@ export function Planauflage({
     e.stopPropagation();
     const kasten = huelle.current?.getBoundingClientRect();
     if (!kasten) return;
-    const start = { ...rahmen };
+    /* Ab dem ersten Antippen führt der Rahmen, nicht mehr die gelesene
+       Raumtiefe. Vorher wurde diese Marke erst beim Loslassen gesetzt — die
+       Automatik rechnete also während des Ziehens weiter an der Höhe, und wer
+       an der oberen linken Ecke zog, sah die untere Kante mitwandern. Genau
+       das soll nicht passieren: es bewegen sich der angefasste Punkt und die
+       beiden Kanten daran, sonst nichts. */
+    const start = { ...rahmen, gezogen: true };
+    if (!rahmen.gezogen) setzeRahmen(start);
     const vonX = e.clientX;
     const vonY = e.clientY;
 
@@ -187,16 +194,18 @@ export function Planauflage({
       } else if (art === "ur") {
         setzeRahmen({ ...start, b: klemm(start.b + dx, MIN, 1 - start.x), h: klemm(start.h + dy, MIN, 1 - start.y) });
       } else {
+        // Oben links: x und y wandern, Breite und Höhe gleichen genau aus —
+        // damit die untere rechte Ecke liegen bleibt, wo sie liegt.
         const nx = klemm(start.x + dx, 0, start.x + start.b - MIN);
         const ny = klemm(start.y + dy, 0, start.y + start.h - MIN);
-        setzeRahmen({ x: nx, y: ny, b: start.b + (start.x - nx), h: start.h + (start.y - ny) });
+        setzeRahmen({ ...start, x: nx, y: ny, b: start.b + (start.x - nx), h: start.h + (start.y - ny) });
       }
     };
     const ende = () => {
       window.removeEventListener("pointermove", bewege);
       window.removeEventListener("pointerup", ende);
       // Die Tiefe folgt dem, was gerade aufgezogen wurde.
-      if (art !== "flaeche") { setzeRahmen({ ...rahmenRef.current, gezogen: true }); tiefeAusRahmen(); }
+      if (art !== "flaeche") tiefeAusRahmen();
     };
     window.addEventListener("pointermove", bewege);
     window.addEventListener("pointerup", ende);
