@@ -170,18 +170,29 @@ body {
 .warm-wahl { transition: border-color .16s ease, background-color .16s ease, color .16s ease; }
 .warm-wahl:active { transform: scale(.995); }
 
-.warm input[type="range"] { accent-color: var(--color-kohle); }
-
-/* Schieber einheitlich und schlank, in jedem Browser gleich. */
-.warm input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; }
+/* Schieber einheitlich und schlank, in jedem Browser gleich.
+   Das Element selbst ist 26 px hoch, damit der ganze Streifen getroffen
+   werden kann und nicht nur die 6 px der Schiene. Der zurueckgelegte Teil
+   ist eingefaerbt — ohne das sieht man dem Schieber nicht an, wo man steht.
+   (accent-color hat mit appearance: none keine Wirkung mehr.) */
+.warm input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  background: transparent;
+  height: 26px;
+  --fuell: 0%;
+}
 .warm input[type="range"]::-webkit-slider-runnable-track {
   height: 6px; border-radius: 999px;
-  background: linear-gradient(180deg, #dcd7cc 0%, #e8e4db 100%);
+  background:
+    linear-gradient(90deg, var(--color-kohle) 0 var(--fuell), transparent var(--fuell)),
+    linear-gradient(180deg, #dcd7cc 0%, #e8e4db 100%);
   box-shadow: inset 0 1px 2px rgba(21, 20, 15, 0.14);
 }
 .warm input[type="range"]::-moz-range-track {
   height: 6px; border-radius: 999px;
-  background: linear-gradient(180deg, #dcd7cc 0%, #e8e4db 100%);
+  background:
+    linear-gradient(90deg, var(--color-kohle) 0 var(--fuell), transparent var(--fuell)),
+    linear-gradient(180deg, #dcd7cc 0%, #e8e4db 100%);
   box-shadow: inset 0 1px 2px rgba(21, 20, 15, 0.14);
 }
 .warm input[type="range"]::-webkit-slider-thumb {
@@ -201,6 +212,44 @@ body {
   background: linear-gradient(180deg, #3a3730 0%, var(--color-kohle) 70%);
   border: 3px solid #ffffff;
   box-shadow: 0 2px 6px rgba(21, 20, 15, 0.34), 0 0 0 1px rgba(21, 20, 15, 0.08);
+  cursor: grab;
+}
+
+/* Dieselben Schieber im Profibereich: dort waren sie 4 px hoch und hatten
+   gar keinen sichtbaren Griff. */
+.pro-schieber {
+  -webkit-appearance: none; appearance: none;
+  background: transparent;
+  height: 22px;
+  --fuell: 0%;
+}
+.pro-schieber::-webkit-slider-runnable-track {
+  height: 4px; border-radius: 999px;
+  background:
+    linear-gradient(90deg, var(--color-accent) 0 var(--fuell), transparent var(--fuell)),
+    var(--color-line);
+}
+.pro-schieber::-moz-range-track {
+  height: 4px; border-radius: 999px;
+  background:
+    linear-gradient(90deg, var(--color-accent) 0 var(--fuell), transparent var(--fuell)),
+    var(--color-line);
+}
+.pro-schieber::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  height: 18px; width: 18px; margin-top: -7px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  border: 2px solid var(--color-paper);
+  box-shadow: 0 1px 3px rgba(27, 30, 35, 0.3);
+  cursor: grab;
+}
+.pro-schieber::-moz-range-thumb {
+  height: 18px; width: 18px;
+  border-radius: 999px;
+  background: var(--color-accent);
+  border: 2px solid var(--color-paper);
+  box-shadow: 0 1px 3px rgba(27, 30, 35, 0.3);
   cursor: grab;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Minus, Plus } from "lucide-react";
 
 /* Bausteine für den Weg der Privatkunden. Große Flächen, wenig Text,
@@ -114,6 +114,21 @@ export function GrosseZahl({
 }) {
   const cm = Math.round(wert / 10);
   const setzeCm = (c: number) => setze(Math.round(Math.min(max, Math.max(min, c)) * 10));
+  /**
+   * Beim Tippen darf nicht nach jeder Ziffer geklemmt werden.
+   *
+   * Vorher wurde aus der ersten getippten "3" sofort der Mindestwert 120,
+   * die naechste Ziffer haengte sich daran, und das Feld lief in den
+   * Hoechstwert. Deshalb ein eigener Entwurfszustand, der erst beim
+   * Verlassen oder mit der Eingabetaste geklemmt wird.
+   */
+  const [entwurf, setEntwurf] = useState<string | null>(null);
+  const uebernehmen = () => {
+    if (entwurf === null) return;
+    const v = Number(entwurf.replace(",", "."));
+    if (entwurf.trim() !== "" && Number.isFinite(v)) setzeCm(v);
+    setEntwurf(null);
+  };
   return (
     <div>
       <div className="flex items-center justify-center gap-4">
@@ -130,15 +145,18 @@ export function GrosseZahl({
           {/* Gegengewicht zur Einheit, damit die Zahl wirklich mittig steht. */}
           <span className="w-[30px] shrink-0" aria-hidden="true" />
           <input
-            type="number"
-            value={cm}
-            min={min}
-            max={max}
-            onChange={(e) => {
-              const v = Number(e.target.value);
-              if (Number.isFinite(v)) setzeCm(v);
+            type="text"
+            inputMode="numeric"
+            value={entwurf ?? String(cm)}
+            onChange={(e) => setEntwurf(e.target.value.replace(/[^0-9]/g, ""))}
+            onBlur={uebernehmen}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { uebernehmen(); (e.target as HTMLInputElement).blur(); }
+              if (e.key === "Escape") setEntwurf(null);
+              if (e.key === "ArrowUp") { e.preventDefault(); setEntwurf(null); setzeCm(cm + schritt); }
+              if (e.key === "ArrowDown") { e.preventDefault(); setEntwurf(null); setzeCm(cm - schritt); }
             }}
-            aria-label={`Maß in ${einheit}`}
+            aria-label={`Maß in ${einheit}, zwischen ${min} und ${max}`}
             className="gross ziffern w-[136px] bg-transparent text-center text-[54px] font-bold leading-none tracking-[-0.04em] text-kohle outline-none [appearance:textfield] focus:text-kohle [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
           <span className="w-[30px] shrink-0 text-left text-[17px] font-medium text-kohle-3">{einheit}</span>
@@ -162,8 +180,10 @@ export function GrosseZahl({
         max={max}
         step={5}
         value={cm}
-        onChange={(e) => setzeCm(Number(e.target.value))}
+        onChange={(e) => { setEntwurf(null); setzeCm(Number(e.target.value)); }}
         aria-label="Maß schieben"
+        aria-valuetext={`${cm} ${einheit}`}
+        style={{ ["--fuell" as string]: `${((cm - min) / Math.max(1, max - min)) * 100}%` }}
         className="mt-7 w-full cursor-pointer"
       />
     </div>
@@ -194,6 +214,8 @@ export function Schieber({
         value={Math.min(wert, max)}
         onChange={(e) => setze(Number(e.target.value))}
         aria-label="Stelle an der Wand"
+        aria-valuetext={`${Math.round(Math.min(wert, max) / 10)} cm ab Wandanfang`}
+        style={{ ["--fuell" as string]: `${(Math.min(wert, max) / Math.max(10, max)) * 100}%` }}
         className="w-full cursor-pointer"
       />
       <div className="mt-3 flex justify-between text-[13px] text-kohle-3">

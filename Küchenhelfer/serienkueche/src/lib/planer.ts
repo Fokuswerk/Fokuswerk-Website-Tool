@@ -128,7 +128,14 @@ export function angleichen(a: Raumangaben): Raumangaben {
     nutz[w] = Math.min(nutz[w], wandlaenge(a, w));
   }
   const fenster = a.fenster
-    ? { ...a.fenster, von: Math.min(a.fenster.von, Math.max(0, wandlaenge(a, a.fenster.wand) - a.fenster.breite)) }
+    ? (() => {
+        // Erst die Breite an die Wand klemmen, dann die Lage — sonst passt
+        // ein 3,20-m-Fenster in eine 2,40-m-Wand und die Warnung dazu
+        // erscheint erst zwei Schritte spaeter.
+        const l = wandlaenge(a, a.fenster.wand);
+        const breite = Math.max(400, Math.min(a.fenster.breite, l));
+        return { ...a.fenster, breite, von: Math.min(a.fenster.von, Math.max(0, l - breite)) };
+      })()
     : null;
   const tuer = { ...a.tuer, von: Math.min(a.tuer.von, Math.max(0, wandlaenge(a, a.tuer.wand) - a.tuer.breite)) };
   const wasser = { ...a.wasser, von: Math.min(a.wasser.von, wandlaenge(a, a.wasser.wand)) };

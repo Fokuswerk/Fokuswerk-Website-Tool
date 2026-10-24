@@ -1044,7 +1044,12 @@ export default function Kuechenplaner() {
               />
               <div className="mt-7 border-t border-linie-warm pt-6">
                 <div className="mb-3 text-center text-[15px] font-semibold text-kohle">Wie breit ist es?</div>
-                <GrosseZahl wert={raum.fenster.breite} setze={(mm) => setzeRaum({ fenster: { ...raum.fenster!, breite: mm } })} min={40} max={320} />
+                <GrosseZahl
+                  wert={raum.fenster.breite}
+                  setze={(mm) => setzeRaum({ fenster: { ...raum.fenster!, breite: mm } })}
+                  min={40}
+                  max={Math.min(320, Math.round(wandlaenge(raum, raum.fenster.wand) / 10))}
+                />
               </div>
             </Karte>
           </>

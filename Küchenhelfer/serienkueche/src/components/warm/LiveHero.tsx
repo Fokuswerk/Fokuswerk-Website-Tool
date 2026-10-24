@@ -99,6 +99,8 @@ export function LiveHero() {
           step={100}
           value={laenge}
           onChange={(e) => setLaenge(Number(e.target.value))}
+          aria-valuetext={`${(laenge / 1000).toFixed(2).replace(".", ",")} Meter Wandlänge`}
+          style={{ ["--fuell" as string]: `${((laenge - MIN) / (MAX - MIN)) * 100}%` }}
           className="mt-6 w-full cursor-pointer"
         />
         <div className="ziffern mt-2.5 flex items-center justify-between gap-4 text-[12.5px] text-kohle-3">

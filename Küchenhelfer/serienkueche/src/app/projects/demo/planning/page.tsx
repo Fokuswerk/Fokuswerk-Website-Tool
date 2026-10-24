@@ -169,7 +169,8 @@ export default function Planung() {
                       step={5}
                       value={gewichtung[z.id]}
                       onChange={(e) => setzeGewichtung({ [z.id]: Number(e.target.value) })}
-                      className="mt-1 h-1 w-full cursor-pointer appearance-none rounded-full bg-line-2 accent-accent"
+                      style={{ ["--fuell" as string]: `${(gewichtung[z.id] / 50) * 100}%` }}
+                      className="pro-schieber mt-1 w-full cursor-pointer"
                     />
                   </div>
                 ))}
