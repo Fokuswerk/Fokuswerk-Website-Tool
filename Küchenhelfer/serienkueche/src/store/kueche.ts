@@ -102,7 +102,8 @@ export const useKueche = create<KuecheState>()(
 
       setzeNutz: (wand, mm) =>
         set((s) => ({
-          raum: angleichen({ ...s.raum, nutz: { ...s.raum.nutz, [wand]: mm } }),
+          // Ab hier gilt die Handeingabe, nicht mehr die Ableitung aus der Tür.
+          raum: angleichen({ ...s.raum, nutzHand: true, nutz: { ...s.raum.nutz, [wand]: mm } }),
           eigeneBelegung: {},
         })),
 

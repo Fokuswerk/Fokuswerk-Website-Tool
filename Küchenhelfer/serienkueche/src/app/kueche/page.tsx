@@ -7,10 +7,11 @@ import { useRef } from "react";
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, FileUp, PencilLine, Printer, RotateCcw, RotateCw, ScanLine } from "lucide-react";
 import { modul } from "@/data/module";
 import { rolleVon, ROLLE_NAME } from "@/lib/masse";
-import { ARTEN, geraet, geraeteFuer, markenFuer, PREISSTAND_GERAETE, QUELLEN, type GeraeteArt } from "@/data/geraete";
+import { ARTEN, FOTO_QUELLE, geraet, geraeteFuer, markenFuer, PREISSTAND_GERAETE, QUELLEN, type GeraeteArt } from "@/data/geraete";
 import { eur } from "@/lib/berechnung";
 import {
   alleVorschlaege, alsKuechentyp, ausBelegung, befundeZeile, drehungen, drehungName, FORMEN, kuechenwaende,
+  planeKueche,
   austauschbar, befundeGesamt, ersetzePlan, istStauraum, tauschMoeglich, tauschPlan,
   pruefeAngaben, wandlaenge, WANDNAME, type Raumform, type Vorschlag, type WandId,
 } from "@/lib/planer";
@@ -20,12 +21,40 @@ import { Geraetebild, Schrankbild } from "@/components/warm/Geraetebild";
 
 import { Fortschritt, GrosseWahl, GrosseZahl, Karte, Notiz, Schieber, WKnopf } from "@/components/warm/Kit";
 import { baueUnterlagen } from "@/lib/unterlagen";
-import { FOTOS, GERAETEFOTOS, GERAETEFOTO_HINWEIS, fotoUrl } from "@/data/fotos";
+import { FOTOS, GERAETEFOTOS, fotoUrl } from "@/data/fotos";
 import NextImage from "next/image";
 import { BeispielPlan, Planauflage, RAHMEN_START, type Rahmen } from "@/components/warm/Planauflage";
 import { melde } from "@/components/ui/kit";
 
 const ALLE_WAENDE: WandId[] = ["haupt", "links", "rechts", "gegenueber"];
+
+/** Welche Rolle im Raum zu welcher Geräteart gehört — damit sich beim
+    Aussuchen genau das Gerät im räumlichen Bild hervorheben lässt. */
+const ART_ZU_ROLLE: Record<GeraeteArt, string> = {
+  kuehlschrank: "kuehlschrank",
+  kochfeld: "herd",
+  backofen: "backofen",
+  spuelmaschine: "spuelmaschine",
+  dunstabzug: "dunstabzug",
+};
+
+/** An welchem Schrank das Gerät hängt. Steht keiner davon im Plan, sagen wir
+    das auch, statt auf eine gelbe Markierung zu zeigen, die es nicht gibt. */
+const ART_ZU_MODUL: Record<GeraeteArt, string[]> = {
+  kuehlschrank: ["HK600"],
+  kochfeld: ["KF600"],
+  backofen: ["HB600", "KF600"],
+  spuelmaschine: ["GS600"],
+  dunstabzug: ["KF600"],
+};
+
+const ART_AKK: Record<GeraeteArt, string> = {
+  kuehlschrank: "der Kühlschrank",
+  kochfeld: "das Kochfeld",
+  backofen: "der Backofen",
+  spuelmaschine: "die Spülmaschine",
+  dunstabzug: "der Dunstabzug",
+};
 
 /** Kurzer Name eines Moduls für die Positionsliste. */
 function modulName(id: string): string {
@@ -268,6 +297,15 @@ export default function Kuechenplaner() {
     return ausBelegung(raum, typ, grundVorschlag.strategie, { ...grundVorschlag.belegung, ...eigen });
   }, [grundVorschlag, eigen, raum, typ]);
 
+  // Waehrend man Geraete aussucht, steht die Kueche daneben im Raum. Dafuer
+  // genuegt ein einziger Plan — die ganze Auswahl zu rechnen waere Verschwendung.
+  const geraeteArtJetzt = schritt.startsWith("geraet-") ? (schritt.slice(7) as GeraeteArt) : null;
+  const brauchtVorschau = geraeteArtJetzt !== null || schritt === "fenster" || schritt === "tuer" || schritt === "wasser";
+  const vorschau = useMemo(
+    () => (brauchtVorschau ? planeKueche(raum, "arbeiten") : null),
+    [brauchtVorschau, raum],
+  );
+
   const antippen = (zeileId: string, index: number) => {
     if (!gewaehlterVorschlag) return;
     const ziel = { zeile: zeileId, index };
@@ -330,7 +368,10 @@ export default function Kuechenplaner() {
   // Die Spalte bleibt auf allen Fragen stehen, damit die Breite nicht
   // springt — gezeichnet wird aber nur, wo der Raum etwas zu sagen hat.
   const zeigeBild = !istStart && !breit;
-  const geometrie = zeigeBild && !geraeteArt && schritt !== "niveau" && schritt !== "quelle" && schritt !== "upload";
+  // Auf diesen drei Schritten steht der Grundriss gross in der Hauptspalte —
+  // daneben nochmal derselbe kleine waere doppelt gemoppelt.
+  const planSchritt = schritt === "fenster" || schritt === "tuer" || schritt === "wasser";
+  const geometrie = zeigeBild && !geraeteArt && !planSchritt && schritt !== "niveau" && schritt !== "quelle" && schritt !== "upload";
   const stufen = drehungen(raum.form);
   const dreh = () => setzeRaum({ ausrichtung: (raum.ausrichtung + 1) % stufen });
 
@@ -410,6 +451,36 @@ export default function Kuechenplaner() {
     </Karte>
   );
 
+  // Das Geraet, das gerade gewaehlt wird, im Raum hervorgehoben: man sieht,
+  // wohin es kommt, und nicht nur eine Liste von Modellen.
+  // Neben dem Grundriss der Raum von innen: oben zieht man die Stelle hin,
+  // daneben sieht man, was daraus wird.
+  const raumTafel = planSchritt && vorschau ? (
+    <Karte className="overflow-hidden p-0">
+      <Kuechenraum typ={typ} variante={vorschau.variante} hoehe={300} unterzeile={false} />
+      <p className="border-t border-linie-warm px-4 py-3 text-center text-[13px] leading-snug text-kohle-3">
+        So sieht der Raum mit dieser Küche aus — die Zeichnung links bestimmt, wo was steht.
+      </p>
+    </Karte>
+  ) : null;
+
+  const geraetTafel = geraeteArt && vorschau ? (
+    <Karte className="overflow-hidden p-0">
+      <Kuechenraum
+        typ={typ}
+        variante={vorschau.variante}
+        hoehe={288}
+        unterzeile={false}
+        betont={ART_ZU_ROLLE[geraeteArt]}
+      />
+      <p className="border-t border-linie-warm px-4 py-3 text-center text-[13px] leading-snug text-kohle-3">
+        {Object.values(vorschau.belegung).flat().some((id) => ART_ZU_MODUL[geraeteArt].includes(id))
+          ? <>Gelb markiert ist der Platz, an dem <strong className="font-semibold text-kohle">{ART_AKK[geraeteArt]}</strong> steht.</>
+          : "Deine Küche im Raum — dieses Gerät ist darin noch nicht vorgesehen."}
+      </p>
+    </Karte>
+  ) : null;
+
   const bildStreifen = (
     <div className="sticky top-[57px] z-10 -mx-5 bg-creme/80 px-5 pb-3 pt-2.5 backdrop-blur-xl backdrop-saturate-150 sm:-mx-8 sm:px-8 lg:hidden">
       <div className="flaeche flex items-center gap-3 rounded-[16px] py-2 pl-2 pr-3">
@@ -424,6 +495,18 @@ export default function Kuechenplaner() {
         {geometrie && stufen > 1 && drehKnopf}
       </div>
     </div>
+  );
+
+  /** Der Grundriss gross und zum Anfassen: den Punkt an die Stelle ziehen,
+      an der das Fenster, die Tür oder der Anschluss wirklich sitzt. Der
+      Regler darunter bleibt für die letzten Zentimeter. */
+  const ziehKarte = (was: "fenster" | "tuer" | "wasser", setze: (mm: number) => void) => (
+    <Karte className="mt-4 overflow-hidden px-3 pb-3 pt-4">
+      <Raumbild raum={raum} hervorhebung={hervor} hoehe={320} ziehen={{ was, setze }} />
+      <p className="mt-2 border-t border-linie-warm pt-3 text-center text-[13px] leading-snug text-kohle-3">
+        Den Punkt an die Wand ziehen, wo es wirklich sitzt.
+      </p>
+    </Karte>
   );
 
   const wandWahl = (wert: WandId, setze: (w: WandId) => void) => (
@@ -843,8 +926,9 @@ export default function Kuechenplaner() {
 
         {schritt === "fenster" && raum.fenster && (
           <>
-            <Kopf vor={schrittText} titel="Wo ist das Fenster?" satz="Erst die Wand, dann die Stelle." />
-            <div className="mt-7">{wandWahl(raum.fenster.wand, (w) => setzeRaum({ fenster: { ...raum.fenster!, wand: w, von: 0 } }))}</div>
+            <Kopf vor={schrittText} titel="Wo ist das Fenster?" satz="Zieh den Punkt an die Stelle — oder wähl darunter eine andere Wand." />
+            <div className="mt-7">{ziehKarte("fenster", (mm) => setzeRaum({ fenster: { ...raum.fenster!, von: mm } }))}</div>
+            <div className="mt-4">{wandWahl(raum.fenster.wand, (w) => setzeRaum({ fenster: { ...raum.fenster!, wand: w, von: 0 } }))}</div>
             <Karte className="mt-4 px-5 py-6">
               <Schieber
                 wert={raum.fenster.von}
@@ -863,8 +947,9 @@ export default function Kuechenplaner() {
 
         {schritt === "tuer" && (
           <>
-            <Kopf vor={schrittText} titel="Wo ist die Tür?" satz="Eine Tür darf nicht gegen einen Schrank schlagen." />
-            <div className="mt-7">{wandWahl(raum.tuer.wand, (w) => setzeRaum({ tuer: { ...raum.tuer, wand: w, von: 0 } }))}</div>
+            <Kopf vor={schrittText} titel="Wo ist die Tür?" satz="Eine Tür darf nicht gegen einen Schrank schlagen — zieh den Punkt an die richtige Stelle." />
+            <div className="mt-7">{ziehKarte("tuer", (mm) => setzeRaum({ tuer: { ...raum.tuer, von: mm } }))}</div>
+            <div className="mt-4">{wandWahl(raum.tuer.wand, (w) => setzeRaum({ tuer: { ...raum.tuer, wand: w, von: 0 } }))}</div>
             <Karte className="mt-4 px-5 py-6">
               <Schieber
                 wert={raum.tuer.von}
@@ -884,7 +969,8 @@ export default function Kuechenplaner() {
               titel="Wo kommt das Wasser aus der Wand?"
               satz="Schau unter die alte Spüle oder in die Ecke mit den Leitungen. Dort bleibt die Spüle am besten — sonst muss ein Installateur verlegen."
             />
-            <div className="mt-7">{wandWahl(raum.wasser.wand, (w) => setzeRaum({ wasser: { wand: w, von: 0 } }))}</div>
+            <div className="mt-7">{ziehKarte("wasser", (mm) => setzeRaum({ wasser: { ...raum.wasser, von: mm } }))}</div>
+            <div className="mt-4">{wandWahl(raum.wasser.wand, (w) => setzeRaum({ wasser: { wand: w, von: 0 } }))}</div>
             <Karte className="mt-4 px-5 py-6">
               <Schieber
                 wert={raum.wasser.von}
@@ -916,7 +1002,7 @@ export default function Kuechenplaner() {
                   sizes="(max-width: 768px) 100vw, 60vw"
                 />
                 <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/70 to-transparent p-3 text-[11.5px] text-creme">
-                  {GERAETEFOTO_HINWEIS}
+                  Beispielbild. Die Modelle darunter zeigen das Foto des Herstellers.
                 </span>
               </div>
 
@@ -955,8 +1041,21 @@ export default function Kuechenplaner() {
                         }`}
                       >
                         <div className="flex gap-4">
-                          <div className="vertieft w-[104px] shrink-0 overflow-hidden rounded-[10px] bg-creme-2">
-                            <Geraetebild g={g} />
+                          {/* Das Herstellerfoto des Modells, wo es eines gibt —
+                              sonst die Zeichnung, die zeigt, was für ein Gerät es ist. */}
+                          <div className={`vertieft w-[104px] shrink-0 overflow-hidden rounded-[10px] ${g.foto ? "bg-papier" : "bg-creme-2"}`}>
+                            {g.foto ? (
+                              <NextImage
+                                src={g.foto}
+                                alt={`${g.marke} ${g.modell ?? g.name}`}
+                                width={400}
+                                height={320}
+                                className="h-[86px] w-full object-contain p-1.5"
+                                sizes="104px"
+                              />
+                            ) : (
+                              <Geraetebild g={g} />
+                            )}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="vorzeile">
@@ -1013,7 +1112,7 @@ export default function Kuechenplaner() {
                   Echte Geräte mit ihrer Modellbezeichnung. Die Preise sind recherchierte
                   Straßenpreise, Stand {PREISSTAND_GERAETE} ({QUELLEN}) — Momentaufnahmen, keine
                   Einkaufskonditionen. Für ein echtes Angebot tritt die Preisliste des
-                  Lieferanten an ihre Stelle.
+                  Lieferanten an ihre Stelle. {FOTO_QUELLE}.
                 </Notiz>
               </div>
             </>
@@ -1320,15 +1419,37 @@ export default function Kuechenplaner() {
                 {details && (
                   <div className="warm-rein mt-4 border-t border-linie-warm pt-4">
                     <div className="mb-3 text-[13px] font-semibold uppercase tracking-[0.06em] text-kohle-3">Geräte</div>
-                    <ul className="space-y-2 text-[14.5px]">
-                      {(Object.keys(raum.geraete) as GeraeteArt[]).map((art) => (
-                        <li key={art} className="flex items-baseline justify-between gap-4">
-                          <span className="text-kohle-2">{geraet(raum.geraete[art]).name}</span>
-                          <span className="shrink-0 text-kohle-3">
-                            {geraet(raum.geraete[art]).aufpreis === 0 ? "im Preis" : `${geraet(raum.geraete[art]).aufpreis > 0 ? "+" : ""}${eur(geraet(raum.geraete[art]).aufpreis)}`}
-                          </span>
-                        </li>
-                      ))}
+                    <ul className="space-y-2.5 text-[14.5px]">
+                      {(Object.keys(raum.geraete) as GeraeteArt[]).map((art) => {
+                        const g = geraet(raum.geraete[art]);
+                        return (
+                          <li key={art} className="flex items-center gap-3">
+                            {g.foto ? (
+                              <NextImage
+                                src={g.foto}
+                                alt=""
+                                width={200}
+                                height={200}
+                                className="vertieft h-11 w-11 shrink-0 rounded-[8px] bg-papier object-contain p-1"
+                                sizes="44px"
+                              />
+                            ) : (
+                              <span className="h-11 w-11 shrink-0 rounded-[8px] bg-creme-2" aria-hidden="true" />
+                            )}
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-kohle-2">{g.name}</span>
+                              {g.modell && (
+                                <span className="ziffern block truncate text-[12.5px] text-kohle-3">
+                                  {[g.marke, g.modell].filter(Boolean).join(" ")}
+                                </span>
+                              )}
+                            </span>
+                            <span className="shrink-0 text-kohle-3">
+                              {g.aufpreis === 0 ? "im Preis" : `${g.aufpreis > 0 ? "+" : ""}${eur(g.aufpreis)}`}
+                            </span>
+                          </li>
+                        );
+                      })}
                     </ul>
                     <div className="mb-3 mt-5 text-[13px] font-semibold uppercase tracking-[0.06em] text-kohle-3">Schränke</div>
                     <ul className="space-y-2 text-[14.5px]">
@@ -1577,7 +1698,7 @@ export default function Kuechenplaner() {
           </div>
         )}
         </div>
-        <aside className="hidden lg:sticky lg:top-[80px] lg:block">{geometrie ? bildTafel : null}</aside>
+        <aside className="hidden lg:sticky lg:top-[80px] lg:block">{geometrie ? bildTafel : (geraetTafel ?? raumTafel)}</aside>
         </div>
       </main>
     </div>

@@ -7,10 +7,9 @@ import type { GeraeteArt } from "@/data/geraete";
  * Namensnennung erlaubt). Wir nennen die Fotografinnen und Fotografen
  * trotzdem.
  *
- * Zwei Dinge stehen bewusst dabei: die Raumbilder sind Beispiele und keine
- * Küchen, die über dieses Werkzeug geplant wurden. Und die Gerätebilder
- * zeigen die Art des Geräts, nicht das einzelne Modell — die Bilder der
- * Hersteller kommen mit deren Katalog.
+ * Eines steht bewusst dabei: die Raumbilder sind Beispiele und keine Küchen,
+ * die über dieses Werkzeug geplant wurden. Die Bilder der einzelnen Modelle
+ * stehen nicht hier, sondern am Gerät selbst — siehe data/geraete.ts.
  */
 
 export interface Foto {
@@ -89,9 +88,6 @@ export function fotoUrl(f: Foto, breite: number): string {
 
 export const FOTO_HINWEIS =
   "Beispielbilder, keine über dieses Werkzeug geplanten Küchen — die gibt es noch nicht.";
-
-export const GERAETEFOTO_HINWEIS =
-  "Die Bilder zeigen die Art des Geräts, nicht das einzelne Modell. Herstellerbilder kommen mit dem Lieferantenkatalog.";
 
 export const FOTO_URHEBER = [
   ...Object.values(FOTOS).map((f) => f.urheber),

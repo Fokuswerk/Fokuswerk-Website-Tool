@@ -107,7 +107,9 @@ function Koerper({
 }
 
 /** Feiner Umriss um einen angefassten Schrank. */
-function Umriss({ kaesten, farbe }: { kaesten: Kasten[]; farbe: string }) {
+type Masse = { x: number; y: number; z: number; bx: number; by: number; bz: number };
+
+function Umriss({ kaesten, farbe }: { kaesten: Masse[]; farbe: string }) {
   if (kaesten.length === 0) return null;
   const x0 = Math.min(...kaesten.map((k) => k.x));
   const x1 = Math.max(...kaesten.map((k) => k.x + k.bx));
@@ -144,13 +146,13 @@ function useSichtbareWaende(breite: number, tiefe: number): Sicht {
 }
 
 /** Schild an einem Gerät: ein Punkt, ein feiner Umriss, der Name. */
-function Geraetemarke({ marke }: { marke: Marke }) {
+function Geraetemarke({ marke, stark = false }: { marke: Marke; stark?: boolean }) {
   const k = marke.kasten;
   return (
     <group>
       <lineSegments position={[(k.x + k.bx / 2) * M, (k.z + k.bz / 2) * M, (k.y + k.by / 2) * M]}>
         <edgesGeometry args={[new BoxGeometry(k.bx * M * 1.004, k.bz * M * 1.004, k.by * M * 1.004)]} />
-        <lineBasicMaterial color="#15140f" transparent opacity={0.38} />
+        <lineBasicMaterial color={stark ? "#8a6410" : "#15140f"} transparent opacity={stark ? 0.95 : 0.38} />
       </lineSegments>
       <Html
         position={[marke.pos[0] * M, marke.pos[2] * M, marke.pos[1] * M]}
@@ -158,7 +160,11 @@ function Geraetemarke({ marke }: { marke: Marke }) {
         zIndexRange={[30, 10]}
         style={{ pointerEvents: "none" }}
       >
-        <span className="whitespace-nowrap rounded-full bg-kohle/90 px-2.5 py-1 text-[11px] font-semibold text-creme shadow-[0_2px_8px_rgba(21,20,15,.35)] backdrop-blur-sm">
+        <span
+          className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-[0_2px_8px_rgba(21,20,15,.35)] backdrop-blur-sm ${
+            stark ? "bg-butter text-kohle" : "bg-kohle/90 text-creme"
+          }`}
+        >
           {marke.name}
         </span>
       </Html>
@@ -167,9 +173,10 @@ function Geraetemarke({ marke }: { marke: Marke }) {
 }
 
 function Raum({
-  typ, variante, zeigeGeraete, umstellen,
+  typ, variante, zeigeGeraete, umstellen, betont,
 }: {
   typ: Kuechentyp; variante: VarianteRoh; zeigeGeraete: boolean; umstellen?: Umstellen;
+  betont?: string;
 }) {
   const szene = useMemo(() => baueSzene(typ, variante), [typ, variante]);
   const { breite, tiefe } = typ.raum;
@@ -260,10 +267,16 @@ function Raum({
       {/* Geräte benennen: sonst sieht man weiße Fronten und weiß nicht,
           hinter welcher der Backofen steckt. Nur die Wände, auf die man
           gerade schaut — sonst schweben Schilder vor der Küche. */}
+      {/* Steht ein Gerät im Mittelpunkt — etwa weil man es gerade aussucht —,
+          dann zeigen wir nur dieses, dafür aber unabhängig vom Blickwinkel. */}
       {zeigeGeraete &&
         szene.marken
-          .filter((m) => sicht[m.wand])
-          .map((m) => <Geraetemarke key={m.id} marke={m} />)}
+          .filter((m) => (betont ? m.rolle === betont : sicht[m.wand]))
+          .map((m) => <Geraetemarke key={m.id} marke={m} stark={!!betont} />)}
+      {betont &&
+        szene.marken
+          .filter((m) => m.rolle === betont)
+          .map((m) => <Umriss key={`u-${m.id}`} kaesten={[m.kasten]} farbe="#8a6410" />)}
 
       <ContactShadows
         position={[bx / 2, 0.005, bz / 2]}
@@ -342,6 +355,7 @@ export function Kuechenraum({
   unterzeile = true,
   geraeteSchalter = false,
   umstellen,
+  betont,
 }: {
   typ: Kuechentyp;
   variante: VarianteRoh;
@@ -361,6 +375,9 @@ export function Kuechenraum({
     /** Tippen ins Leere löst die Auswahl wieder. */
     onLeer?: () => void;
   };
+  /** Ein Gerät hervorheben (Rolle, etwa "backofen"): nur dessen Schild steht
+      im Raum, mit Umriss, damit man sieht, wo das Gerät hinkommt. */
+  betont?: string;
 }) {
   const [angefasst, setAngefasst] = useState(false);
   const [zeigeGeraete, setZeigeGeraete] = useState(true);
@@ -434,7 +451,8 @@ export function Kuechenraum({
             <Raum
               typ={typ}
               variante={variante}
-              zeigeGeraete={geraeteSchalter && zeigeGeraete}
+              zeigeGeraete={(geraeteSchalter && zeigeGeraete) || !!betont}
+              betont={betont}
               umstellen={umstellen ? { ...umstellen, klickOk } : undefined}
             />
           </Suspense>

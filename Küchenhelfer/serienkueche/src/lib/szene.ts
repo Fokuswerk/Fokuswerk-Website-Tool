@@ -77,6 +77,8 @@ export interface Wandkoerper {
 export interface Marke {
   id: string;
   name: string;
+  /** Welches Gerät — damit sich eines gezielt hervorheben lässt. */
+  rolle: string;
   wand: Wandseite;
   /** Punkt, an dem das Schild hängt, in mm. */
   pos: [number, number, number];
@@ -230,6 +232,7 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
         marken.push({
           id: `${zeile.id}-${p.index}`,
           name: ROLLE_NAME[rolle],
+          rolle,
           wand: zeile.wand,
           pos: punkt(zeile.wand, m, dSchild, zSchild),
           kasten: quader(zeile.wand, s0, s1, d0, d1, z0, z1),
@@ -277,6 +280,7 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
           marken.push({
             id: `${zeile.id}-${p.index}-ofen`,
             name: "Backofen",
+            rolle: "backofen",
             wand: zeile.wand,
             pos: punkt(zeile.wand, m, TIEFE_UNTEN + 40, SOCKEL + 260),
             kasten: quader(zeile.wand, s0, s1, 0, TIEFE_UNTEN, SOCKEL, SOCKEL + KORPUS - 140),
@@ -292,6 +296,14 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
         // Dunstabzug darüber, wenn kein Fenster im Weg ist
         const stoert = fenster.some((f) => s0 < f.von + f.breite && s1 > f.von);
         if (!stoert) {
+          marken.push({
+            id: `${zeile.id}-${p.index}-haube`,
+            name: "Dunstabzug",
+            rolle: "dunstabzug",
+            wand: zeile.wand,
+            pos: punkt(zeile.wand, m, 300, 1760),
+            kasten: quader(zeile.wand, m - 300, m + 300, 0, 480, 1540, 1700),
+          });
           stelle(zeile.wand, m - 300, m + 300, 0, 480, 1540, 1620, MATERIAL.stahl);
           stelle(zeile.wand, m - 300, m + 300, 0, 480, 1620, 1700, MATERIAL.front);
           stelle(zeile.wand, m - 140, m + 140, 0, 300, 1700, OS_UK + OS_H, MATERIAL.front);

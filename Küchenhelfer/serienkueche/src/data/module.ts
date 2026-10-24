@@ -62,7 +62,7 @@ export function modul(id: string): NeutralesModul {
     const breite = Number(id.slice(4));
     return {
       id,
-      bezeichnung: "Passleiste, vor Ort zugeschnitten",
+      bezeichnung: breite < 60 ? "Ausgleichsleiste, vor Ort zugeschnitten" : "Passleiste, vor Ort zugeschnitten",
       kategorie: "blende",
       breite,
       hoehe: 720,

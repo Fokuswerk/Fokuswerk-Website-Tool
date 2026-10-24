@@ -16,10 +16,12 @@ const faelle: Array<{ name: string; raum: Raumangaben }> = [
   { name: "Ecke gedreht nach rechts", raum: r({ form: "ecke", ausrichtung: 1, nutz: { ...STANDARD_RAUM.nutz, rechts: 1800 } }) },
   { name: "U-Form offen nach links", raum: r({ form: "u-form", ausrichtung: 1, nutz: { haupt: 3400, links: 2400, rechts: 1800, gegenueber: 3400 } }) },
   { name: "Zwei Waende quer gedreht", raum: r({ form: "zwei-waende", ausrichtung: 1, tiefe: 3200, nutz: { haupt: 3400, links: 3200, rechts: 3200, gegenueber: 3400 }, fenster: null }) },
+  { name: "U-Form, Tuer auf der rechten Zeile", raum: r({ form: "u-form", breite: 3620, tiefe: 2740, nutz: { haupt: 3620, links: 2740, rechts: 2740, gegenueber: 3620 }, tuer: { wand: "rechts", von: 1600, breite: 885 } }) },
+  { name: "Ecke, Tuer mitten auf der Hauptwand", raum: r({ form: "ecke", breite: 4200, tiefe: 2800, nutz: { haupt: 4200, links: 2800, rechts: 2800, gegenueber: 4200 }, fenster: null, tuer: { wand: "haupt", von: 1500, breite: 885 } }) },
   { name: "Eine Wand an der rechten Seite", raum: r({ form: "eine-wand", ausrichtung: 1, tiefe: 3400, nutz: { ...STANDARD_RAUM.nutz, rechts: 3400 }, fenster: { wand: "rechts", von: 1800, breite: 1100 }, wasser: { wand: "rechts", von: 2600 } }) },
   { name: "U-Form, links 1,80 / rechts 2,40", raum: r({ form: "u-form", nutz: { haupt: 3400, links: 1800, rechts: 2400, gegenueber: 3400 } }) },
-  { name: "Schmale Spuelmaschine, kleiner Kuehlschrank", raum: r({ breite: 2400, nutz: { ...STANDARD_RAUM.nutz, haupt: 2400 }, fenster: null, geraete: { ...STANDARD_RAUM.geraete, spuelmaschine: "gs-45", kuehlschrank: "kuehl-klein" } }) },
-  { name: "Backofen hoch, Induktion", raum: r({ breite: 4200, nutz: { ...STANDARD_RAUM.nutz, haupt: 4200 }, geraete: { ...STANDARD_RAUM.geraete, backofen: "ofen-hoch", kochfeld: "kf-induktion" } }) },
+  { name: "Schmale Spuelmaschine, kleiner Kuehlschrank", raum: r({ breite: 2400, nutz: { ...STANDARD_RAUM.nutz, haupt: 2400 }, fenster: null, geraete: { ...STANDARD_RAUM.geraete, spuelmaschine: "gs-siemens-sr61", kuehlschrank: "ks-bosch-kur21" } }) },
+  { name: "Backofen hoch, Induktion", raum: r({ breite: 4200, nutz: { ...STANDARD_RAUM.nutz, haupt: 4200 }, geraete: { ...STANDARD_RAUM.geraete, backofen: "bo-siemens-hb774", kochfeld: "kf-bosch-pug611" } }) },
 ];
 
 let fehler = 0;
@@ -32,6 +34,17 @@ for (const f of faelle) {
     for (const z of typ.zeilen) {
       const b = belegungsbreite(v.belegung[z.id] ?? []);
       if (b !== z.laenge) { console.log(`  !! ${v.titel} ${z.id}: ${b} statt ${z.laenge}`); fehler++; }
+    }
+
+    // Regel: die Zeile darf nicht durch die Tuer laufen
+    for (const z of typ.zeilen) {
+      const t = typ.oeffnungen.find((o) => o.art === "tuer" && o.wand === z.wand);
+      if (!t) continue;
+      const bis = z.start + z.laenge;
+      if (z.start < t.von + t.breite && bis > t.von) {
+        console.log(`  !! ${v.titel} ${z.id}: Zeile ${z.start}-${bis} laeuft durch die Tuer ${t.von}-${t.von + t.breite}`);
+        fehler++;
+      }
     }
 
     // Regel: nichts Hohes vor dem Fenster, Kochfeld nicht an der Wandkante

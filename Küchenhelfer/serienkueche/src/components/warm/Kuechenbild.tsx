@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { modul } from "@/data/module";
 import { AP_OK, HOCH_H, KORPUS, OS_H, OS_UK, PLATTE, rolleVon, ROLLE_NAME, SOCKEL } from "@/lib/masse";
 import { platzierung } from "@/lib/berechnung";
@@ -339,42 +340,50 @@ export function Kuechenbild({
 
 /* ------------------------------------------------------------------ */
 
-import { kuechenwaende, wandlaenge, zeilenStart, WANDNAME, type Raumangaben, type WandId } from "@/lib/planer";
+import { kuechenwaende, wandlaenge, zeilenBereich, WANDNAME, type Raumangaben, type WandId } from "@/lib/planer";
 
-const ECKE: Record<WandId, { x: (b: number, t: number) => number; y: (b: number, t: number) => number }> = {
-  haupt: { x: (b) => b / 2, y: () => -300 },
-  gegenueber: { x: (b) => b / 2, y: (_b, t) => t + 400 },
-  links: { x: () => -330, y: (_b, t) => t / 2 },
-  rechts: { x: (b) => b + 330, y: (_b, t) => t / 2 },
+/** Wo der Name einer Wand steht, ausserhalb des Raums. */
+const NAMENSPLATZ: Record<WandId, (b: number, t: number) => { x: number; y: number; dreh: number }> = {
+  haupt: (b) => ({ x: b / 2, y: -340, dreh: 0 }),
+  gegenueber: (b, t) => ({ x: b / 2, y: t + 470, dreh: 0 }),
+  links: (_b, t) => ({ x: -390, y: t / 2, dreh: -90 }),
+  rechts: (b, t) => ({ x: b + 390, y: t / 2, dreh: 90 }),
 };
 
 /**
- * Der Raum von oben. Zeigt, welche Wand gerade gemeint ist — ohne das
- * weiss niemand, worauf sich eine Frage bezieht.
+ * Der Raum von oben, als kleiner Grundriss.
+ *
+ * Bewusst wie ein Plan gezeichnet und nicht wie ein Schaubild: weisse
+ * Flaeche, kraeftige Wandlinien, die Kueche als Band an der Wand, das
+ * Fenster als Unterbrechung in der Wand, die Tuer mit Aufschlag. Dieselben
+ * Farben wie auf dem hochgeladenen Grundriss, damit beide Bilder desselben
+ * Raums zusammenpassen.
  */
+/** Was sich im Grundriss an seine Wand schieben lässt. */
+export type Ziehbar = "fenster" | "tuer" | "wasser";
+
 export function Raumbild({
   raum,
   hervorhebung,
   hoehe = 210,
+  ziehen,
 }: {
   raum: Raumangaben;
   hervorhebung?: WandId | null;
   hoehe?: number;
+  /** Macht ein Element im Plan greifbar: anfassen und an der Wand
+      entlangschieben. Genauer als ein Regler, weil man sieht, wohin. */
+  ziehen?: { was: Ziehbar; setze: (von: number) => void };
 }) {
   const { breite, tiefe } = raum;
-  const rand = 560;
+  const rand = 760;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [zieht, setZieht] = useState(false);
   const waende = kuechenwaende(raum);
+  const WD = 110; // Wandstaerke in der Zeichnung
+  const KT = 600; // Korpustiefe
 
-  const zeilenRect = (w: WandId) => {
-    const t = 560;
-    const start = zeilenStart(raum, w);
-    const laenge = Math.max(0, Math.min(raum.nutz[w], wandlaenge(raum, w) - start));
-    if (w === "haupt") return { x: start, y: 0, w: laenge, h: t };
-    if (w === "gegenueber") return { x: start, y: tiefe - t, w: laenge, h: t };
-    if (w === "links") return { x: 0, y: start, w: t, h: laenge };
-    return { x: breite - t, y: start, w: t, h: laenge };
-  };
-
+  /** Ein Stueck Wand als Rechteck, mittig auf der Raumkante. */
   const aufWand = (w: WandId, von: number, lang: number, dicke: number) => {
     if (w === "haupt") return { x: von, y: -dicke / 2, w: lang, h: dicke };
     if (w === "gegenueber") return { x: von, y: tiefe - dicke / 2, w: lang, h: dicke };
@@ -382,81 +391,198 @@ export function Raumbild({
     return { x: breite - dicke / 2, y: von, w: dicke, h: lang };
   };
 
+  /** Das Band, auf dem die Kueche steht. */
+  const zeilenRect = (w: WandId) => {
+    const { start, laenge } = zeilenBereich(raum, w);
+    if (w === "haupt") return { x: start, y: 0, w: laenge, h: KT };
+    if (w === "gegenueber") return { x: start, y: tiefe - KT, w: laenge, h: KT };
+    if (w === "links") return { x: 0, y: start, w: KT, h: laenge };
+    return { x: breite - KT, y: start, w: KT, h: laenge };
+  };
+
+  const istAktiv = (w: WandId) => hervorhebung === w;
+
+  // --- Anfassen und schieben --------------------------------------------
+  const greifWand: WandId | null =
+    ziehen?.was === "fenster" ? raum.fenster?.wand ?? null
+    : ziehen?.was === "tuer" ? raum.tuer.wand
+    : ziehen?.was === "wasser" ? raum.wasser.wand
+    : null;
+  const greifBreite =
+    ziehen?.was === "fenster" ? raum.fenster?.breite ?? 0
+    : ziehen?.was === "tuer" ? raum.tuer.breite
+    : 0;
+
+  /** Zeigerposition in Millimeter entlang der Wand. Rechnet die Verzerrung
+      heraus, die entsteht, weil das Bild mittig eingepasst wird. */
+  const mmUnterZeiger = (e: React.PointerEvent): number | null => {
+    const el = svgRef.current;
+    if (!el || !greifWand) return null;
+    const r = el.getBoundingClientRect();
+    const vbW = breite + 2 * rand;
+    const vbH = tiefe + 2 * rand;
+    const faktor = Math.min(r.width / vbW, r.height / vbH);
+    const links = (r.width - vbW * faktor) / 2;
+    const oben = (r.height - vbH * faktor) / 2;
+    const ux = -rand + (e.clientX - r.left - links) / faktor;
+    const uy = -rand + (e.clientY - r.top - oben) / faktor;
+    const laengs = greifWand === "haupt" || greifWand === "gegenueber" ? ux : uy;
+    const max = Math.max(0, wandlaenge(raum, greifWand) - greifBreite);
+    return Math.round(Math.min(max, Math.max(0, laengs - greifBreite / 2)) / 10) * 10;
+  };
+
+  const schiebe = (e: React.PointerEvent) => {
+    const mm = mmUnterZeiger(e);
+    if (mm !== null) ziehen!.setze(mm);
+  };
+
   return (
     <svg
+      ref={svgRef}
       viewBox={`${-rand} ${-rand} ${breite + 2 * rand} ${tiefe + 2 * rand}`}
-      style={{ height: hoehe, width: "100%" }}
-      className="block max-w-full"
+      style={{ height: hoehe, width: "100%", touchAction: ziehen ? "none" : undefined }}
+      onPointerDown={ziehen ? (e) => {
+        (e.target as Element).setPointerCapture?.(e.pointerId);
+        setZieht(true);
+        schiebe(e);
+      } : undefined}
+      onPointerMove={ziehen && zieht ? schiebe : undefined}
+      onPointerUp={ziehen ? () => setZieht(false) : undefined}
+      onPointerCancel={ziehen ? () => setZieht(false) : undefined}
+      className={`block max-w-full ${ziehen ? "cursor-grab active:cursor-grabbing select-none" : ""}`}
       role="img"
-      aria-label={hervorhebung ? `Der Raum von oben, hervorgehoben ist die ${WANDNAME[hervorhebung]}` : "Der Raum von oben"}
+      aria-label={
+        hervorhebung
+          ? `Der Raum von oben, hervorgehoben ist die ${WANDNAME[hervorhebung]}`
+          : "Der Raum von oben"
+      }
     >
-      <rect x={0} y={0} width={breite} height={tiefe} rx={70} className="fill-papier" />
-      <rect x={0} y={0} width={breite} height={tiefe} rx={70} fill="none" strokeWidth={36} className="stroke-linie-warm" />
+      {/* Bodenflaeche */}
+      <rect x={0} y={0} width={breite} height={tiefe} className="fill-papier" />
 
-      {/* Küchenzeilen */}
+      {/* Kuechenbaender */}
       {waende.map((w) => {
         const r = zeilenRect(w);
         if (r.w <= 0 || r.h <= 0) return null;
         return (
+          <g key={w}>
+            <rect x={r.x} y={r.y} width={r.w} height={r.h} className="fill-holz-soft" />
+            <rect x={r.x} y={r.y} width={r.w} height={r.h} fill="none" strokeWidth={22} className="stroke-holz" />
+          </g>
+        );
+      })}
+
+      {/* Wandlinien. Die angefasste Wand wird kraeftig. */}
+      {(["haupt", "rechts", "gegenueber", "links"] as WandId[]).map((w) => {
+        const r = aufWand(w, 0, wandlaenge(raum, w), WD);
+        return (
           <rect
             key={w}
-            x={r.x} y={r.y} width={r.w} height={r.h} rx={46}
-            className={hervorhebung && hervorhebung !== w ? "fill-holz/45" : "fill-holz"}
+            x={r.x} y={r.y} width={r.w} height={r.h}
+            className={istAktiv(w) ? "fill-kohle" : "fill-kohle-3"}
           />
         );
       })}
 
-      {/* Hervorgehobene Wand kräftig markieren */}
-      {hervorhebung && (() => {
-        const r = aufWand(hervorhebung, 0, wandlaenge(raum, hervorhebung), 150);
-        const e = ECKE[hervorhebung];
+      {/* Fenster: Unterbrechung in der Wand mit duenner Scheibe */}
+      {raum.fenster && (() => {
+        const f = raum.fenster;
+        const leer = aufWand(f.wand, f.von, f.breite, WD + 8);
+        const glas = aufWand(f.wand, f.von, f.breite, 26);
         return (
           <g>
-            <rect x={r.x} y={r.y} width={r.w} height={r.h} rx={70} className="fill-kohle" />
-            <text
-              x={e.x(breite, tiefe)}
-              y={e.y(breite, tiefe)}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize={210}
-              fontWeight={700}
-              fontFamily="Plus Jakarta Sans, sans-serif"
-              className="fill-kohle"
-              transform={
-                hervorhebung === "links" || hervorhebung === "rechts"
-                  ? `rotate(${hervorhebung === "links" ? -90 : 90} ${e.x(breite, tiefe)} ${e.y(breite, tiefe)})`
-                  : undefined
-              }
-            >
-              {WANDNAME[hervorhebung]}
-            </text>
+            <rect x={leer.x} y={leer.y} width={leer.w} height={leer.h} className="fill-papier" />
+            <rect x={glas.x} y={glas.y} width={glas.w} height={glas.h} className="fill-salbei" />
           </g>
         );
       })()}
 
-      {/* Fenster und Tür */}
-      {raum.fenster && (() => {
-        const r = aufWand(raum.fenster.wand, raum.fenster.von, raum.fenster.breite, 170);
-        return <rect x={r.x} y={r.y} width={r.w} height={r.h} rx={70} className="fill-salbei" />;
-      })()}
+      {/* Tuer: Oeffnung in der Wand und der Aufschlag als Viertelkreis */}
       {(() => {
-        const r = aufWand(raum.tuer.wand, raum.tuer.von, raum.tuer.breite, 170);
-        return <rect x={r.x} y={r.y} width={r.w} height={r.h} rx={70} className="fill-kohle-3" />;
+        const t = raum.tuer;
+        const leer = aufWand(t.wand, t.von, t.breite, WD + 8);
+        const b = t.breite;
+        const ecke =
+          t.wand === "haupt" ? { x: t.von, y: 0, d: `a${b} ${b} 0 0 1 ${b} ${b}` }
+          : t.wand === "gegenueber" ? { x: t.von, y: tiefe, d: `a${b} ${b} 0 0 0 ${b} ${-b}` }
+          : t.wand === "links" ? { x: 0, y: t.von, d: `a${b} ${b} 0 0 0 ${b} ${b}` }
+          : { x: breite, y: t.von, d: `a${b} ${b} 0 0 1 ${-b} ${b}` };
+        return (
+          <g>
+            <rect x={leer.x} y={leer.y} width={leer.w} height={leer.h} className="fill-papier" />
+            <path
+              d={`M${ecke.x} ${ecke.y} ${ecke.d}`}
+              fill="none"
+              strokeWidth={24}
+              strokeDasharray="70 70"
+              className="stroke-kohle-3"
+            />
+          </g>
+        );
       })()}
 
-      {/* Wasseranschluss als Tropfen */}
+      {/* Wasseranschluss */}
       {(() => {
         const w = raum.wasser.wand;
         const p =
-          w === "haupt" ? { x: raum.wasser.von, y: 250 }
-          : w === "gegenueber" ? { x: raum.wasser.von, y: tiefe - 250 }
-          : w === "links" ? { x: 250, y: raum.wasser.von }
-          : { x: breite - 250, y: raum.wasser.von };
+          w === "haupt" ? { x: raum.wasser.von, y: 210 }
+          : w === "gegenueber" ? { x: raum.wasser.von, y: tiefe - 210 }
+          : w === "links" ? { x: 210, y: raum.wasser.von }
+          : { x: breite - 210, y: raum.wasser.von };
         return (
           <g>
-            <circle cx={p.x} cy={p.y} r={135} className="fill-papier" />
-            <circle cx={p.x} cy={p.y} r={135} fill="none" strokeWidth={28} className="stroke-salbei" />
-            <path d={`M${p.x} ${p.y - 58} q 52 66 52 106 a 52 52 0 0 1 -104 0 q 0 -40 52 -106 Z`} className="fill-salbei" />
+            <circle cx={p.x} cy={p.y} r={160} className="fill-papier" />
+            <circle cx={p.x} cy={p.y} r={160} fill="none" strokeWidth={26} className="stroke-kohle-2" />
+            <path
+              d={`M${p.x} ${p.y - 72} q 62 80 62 126 a 62 62 0 0 1 -124 0 q 0 -46 62 -126 Z`}
+              className="fill-kohle-2"
+            />
+          </g>
+        );
+      })()}
+
+      {/* Wandnamen rundherum */}
+      {(["haupt", "rechts", "gegenueber", "links"] as WandId[]).map((w) => {
+        const p = NAMENSPLATZ[w](breite, tiefe);
+        return (
+          <text
+            key={`n-${w}`}
+            x={p.x}
+            y={p.y}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={205}
+            fontWeight={istAktiv(w) ? 700 : 500}
+            fontFamily="Plus Jakarta Sans, sans-serif"
+            className={istAktiv(w) ? "fill-kohle" : "fill-kohle-3"}
+            transform={p.dreh ? `rotate(${p.dreh} ${p.x} ${p.y})` : undefined}
+          >
+            {WANDNAME[w]}
+          </text>
+        );
+      })}
+
+      {/* Der Griff: liegt über dem Element, das gerade geschoben wird. */}
+      {ziehen && greifWand && (() => {
+        const von =
+          ziehen.was === "fenster" ? raum.fenster?.von ?? 0
+          : ziehen.was === "tuer" ? raum.tuer.von
+          : raum.wasser.von;
+        const mitte = von + greifBreite / 2;
+        // Der Griff sitzt aussen vor der Wand: so verdeckt er nicht das
+        // Fenster oder die Tür, um die es gerade geht.
+        const AUS = 330;
+        const p =
+          greifWand === "haupt" ? { x: mitte, y: -AUS, ax: mitte, ay: 0 }
+          : greifWand === "gegenueber" ? { x: mitte, y: tiefe + AUS, ax: mitte, ay: tiefe }
+          : greifWand === "links" ? { x: -AUS, y: mitte, ax: 0, ay: mitte }
+          : { x: breite + AUS, y: mitte, ax: breite, ay: mitte };
+        return (
+          <g>
+            <path d={`M${p.x} ${p.y} L${p.ax} ${p.ay}`} strokeWidth={26} className="stroke-kohle-3" />
+            <circle cx={p.x} cy={p.y} r={zieht ? 250 : 215} className="fill-butter" opacity={0.32} />
+            <circle cx={p.x} cy={p.y} r={118} className="fill-kohle" />
+            <circle cx={p.x} cy={p.y} r={118} fill="none" strokeWidth={34} className="stroke-papier" />
           </g>
         );
       })()}

@@ -9,10 +9,17 @@
  *
  * Technische Daten stehen nur dort, wo sie belegt sind. Lieber eine Zeile
  * weniger als eine erfundene.
+ *
+ * Die Produktbilder sind die Herstellerfotos der jeweiligen Modelle, geholt
+ * vom Medienserver der BSH (Bosch, Siemens) und hier abgelegt. Für den Betrieb
+ * als Händler kommen sie aus dem Lieferantenkatalog — dann mit Freigabe.
+ * Deshalb stehen im Katalog nur Marken, deren Bilder wirklich zum Modell
+ * gehören: lieber zwei Hersteller mit echten Fotos als drei mit Platzhaltern.
  */
 
 export const PREISSTAND_GERAETE = "Oktober 2026";
 export const QUELLEN = "geizhals.de, testbericht.de, vergleich.org, otto.de, ebay.de";
+export const FOTO_QUELLE = "Produktfotos: Bosch und Siemens (BSH Hausgeräte)";
 
 export type GeraeteArt = "kuehlschrank" | "kochfeld" | "backofen" | "spuelmaschine" | "dunstabzug";
 
@@ -34,6 +41,8 @@ export interface Geraet {
   richtpreis: number;
   /** Breite des Korpus, den das Gerät belegt. 0 = belegt keinen eigenen Platz. */
   breite: number;
+  /** Herstellerfoto des Modells, unter /public/geraete. */
+  foto?: string;
   /** Nur Kühlschrank: wie er eingebaut wird. */
   bau?: "hoch" | "unterbau" | "keiner";
   /** Wird beim Laden aus dem Richtpreis gerechnet. */
@@ -51,50 +60,44 @@ const ROH: Array<Omit<Geraet, "aufpreis">> = [
     id: "ks-bosch-kur21", art: "kuehlschrank", marke: "Bosch", serie: "Serie 4", modell: "KUR21VFE0",
     name: "Unterbau-Kühlschrank", satz: "Passt unter die Arbeitsplatte, 82 cm Nische. Die Platte läuft durch.",
     daten: [["Nutzinhalt", "134 l"], ["Verbrauch", "93 kWh/Jahr"], ["Geräusch", "35 dB"], ["Energie", "E"]],
+    foto: "/geraete/ks-bosch-kur21.webp",
     richtpreis: 512, breite: 600, bau: "unterbau",
   },
   {
     id: "ks-siemens-ki81", art: "kuehlschrank", marke: "Siemens", serie: "iQ500", modell: "KI81RADD0",
     name: "Einbaukühlschrank, volle Höhe", satz: "Nimmt 60 cm Wand über die ganze Höhe — dort gibt es keine Arbeitsfläche.",
     daten: [["Nutzinhalt", "310 l"]],
+    foto: "/geraete/ks-siemens-ki81.webp",
     richtpreis: 989, breite: 600, bau: "hoch",
   },
   {
     id: "ks-bosch-kif82", art: "kuehlschrank", marke: "Bosch", serie: "Serie 8", modell: "KIF82PFE0",
     name: "Einbaukühlschrank, volle Höhe", satz: "Die gehobene Baureihe, ebenfalls über die ganze Höhe.",
     daten: [["Nutzinhalt", "269 l"]],
+    foto: "/geraete/ks-bosch-kif82.webp",
     richtpreis: 1149, breite: 600, bau: "hoch",
   },
 
   /* ---------------- Kochfeld ---------------- */
   {
-    id: "kf-aeg-tn64", art: "kochfeld", marke: "AEG", modell: "TN64RA06XB",
-    name: "Glaskeramik", satz: "Der günstige Einstieg, mit Edelstahlrahmen.",
-    daten: [["Breite", "60 cm"], ["Timer", "ja"], ["Abschaltautomatik", "ja"]],
-    richtpreis: 168, breite: 600,
-  },
-  {
-    id: "kf-bosch-pke611", art: "kochfeld", marke: "Bosch", serie: "Serie 4", modell: "PKE611BB2E",
+    id: "kf-bosch-pke645", art: "kochfeld", marke: "Bosch", serie: "Serie 4", modell: "PKE645BA2E",
     name: "Glaskeramik", satz: "Der Klassiker. Günstig und gut zu reinigen.",
     daten: [["Kochzonen", "4"], ["Anschlusswert", "6,6 kW"], ["Breite", "60 cm"]],
-    richtpreis: 229, breite: 600,
+    foto: "/geraete/kf-bosch-pke645.webp",
+    richtpreis: 291, breite: 600,
   },
   {
     id: "kf-bosch-pug611", art: "kochfeld", marke: "Bosch", serie: "Serie 6", modell: "PUG611AA5E",
     name: "Induktion", satz: "Schneller heiß, spart Strom, kühlt rasch ab.",
     daten: [["Breite", "60 cm"], ["Technik", "Induktion"]],
+    foto: "/geraete/kf-bosch-pug611.webp",
     richtpreis: 299, breite: 600,
-  },
-  {
-    id: "kf-aeg-iks6447", art: "kochfeld", marke: "AEG", modell: "IKS6447CXB",
-    name: "Induktion mit FlexiBridge", satz: "Zwei Zonen lassen sich zu einer großen verbinden — für Bräter und Grillplatte.",
-    daten: [["Breite", "60 cm"], ["FlexiBridge", "ja"], ["Rahmen", "Edelstahl"]],
-    richtpreis: 533, breite: 600,
   },
   {
     id: "kf-siemens-ex645", art: "kochfeld", marke: "Siemens", serie: "iQ700", modell: "EX645HXC1E",
     name: "Induktion", satz: "Die gehobene Baureihe, autark bedienbar.",
     daten: [["Breite", "60 cm"], ["Technik", "Induktion"]],
+    foto: "/geraete/kf-siemens-ex645.webp",
     richtpreis: 549, breite: 600,
   },
 
@@ -108,24 +111,21 @@ const ROH: Array<Omit<Geraet, "aufpreis">> = [
     id: "bo-bosch-hba571", art: "backofen", marke: "Bosch", serie: "Serie 2", modell: "HBA571BB4",
     name: "Einbaubackofen", satz: "Der günstige Einstieg.",
     daten: [["Breite", "60 cm"]],
+    foto: "/geraete/bo-bosch-hba571.webp",
     richtpreis: 369, breite: 600,
-  },
-  {
-    id: "bo-aeg-nbu5p40", art: "backofen", marke: "AEG", modell: "NBU5P40SM",
-    name: "Einbaubackofen, SurroundCook", satz: "Gleichmäßige Hitzeverteilung im Garraum.",
-    daten: [["Breite", "60 cm"], ["Beheizung", "SurroundCook"]],
-    richtpreis: 466, breite: 600,
   },
   {
     id: "bo-bosch-hbg578", art: "backofen", marke: "Bosch", serie: "Serie 6", modell: "HBG578BB3",
     name: "Einbaubackofen mit 3D-Heißluft", satz: "Mit Air Fry — frittieren ohne Fett.",
     daten: [["Garraum", "71 l"], ["Beheizung", "3D-Heißluft"], ["Air Fry", "ja"]],
+    foto: "/geraete/bo-bosch-hbg578.webp",
     richtpreis: 506, breite: 600,
   },
   {
     id: "bo-siemens-hb774", art: "backofen", marke: "Siemens", serie: "iQ700", modell: "HB774G1B1",
     name: "Einbaubackofen mit Pyrolyse", satz: "Reinigt sich selbst durch Ausbrennen.",
     daten: [["Breite", "60 cm"], ["Reinigung", "Pyrolyse"]],
+    foto: "/geraete/bo-siemens-hb774.webp",
     richtpreis: 697, breite: 600,
   },
 
@@ -139,24 +139,28 @@ const ROH: Array<Omit<Geraet, "aufpreis">> = [
     id: "gs-siemens-sr61", art: "spuelmaschine", marke: "Siemens", serie: "iQ100", modell: "SR61IX05KE",
     name: "Spülmaschine 45 cm", satz: "Spart 15 cm Wand. Für ein bis zwei Personen.",
     daten: [["Breite", "45 cm"], ["Energie", "F"], ["Einbau", "vollintegriert"]],
+    foto: "/geraete/gs-siemens-sr61.webp",
     richtpreis: 418, breite: 450,
   },
   {
-    id: "gs-aeg-fsk649", art: "spuelmaschine", marke: "AEG", modell: "FSK64907Z",
+    id: "gs-bosch-smv4", art: "spuelmaschine", marke: "Bosch", serie: "Serie 4", modell: "SMV4HCX48E",
     name: "Spülmaschine 60 cm", satz: "Die normale Größe für einen Haushalt.",
-    daten: [["Breite", "60 cm"], ["Geräusch", "44 dB"], ["Einbau", "vollintegriert"]],
-    richtpreis: 449, breite: 600,
+    daten: [["Breite", "60 cm"], ["Energie", "D"], ["Einbau", "vollintegriert"]],
+    foto: "/geraete/gs-bosch-smv4.webp",
+    richtpreis: 504, breite: 600,
   },
   {
     id: "gs-siemens-sx63", art: "spuelmaschine", marke: "Siemens", modell: "SX63EX04BE",
     name: "Spülmaschine 60 cm, hoch", satz: "Höhere Bauform, mehr Platz im Korb.",
     daten: [["Breite", "60 cm"], ["Einbau", "vollintegriert"]],
+    foto: "/geraete/gs-siemens-sx63.webp",
     richtpreis: 748, breite: 600,
   },
   {
     id: "gs-siemens-sn87", art: "spuelmaschine", marke: "Siemens", serie: "iQ700", modell: "SN87TX00CE",
     name: "Spülmaschine 60 cm, leise", satz: "Testsieger der Stiftung Warentest 4/2026. Leise genug für den offenen Wohnraum.",
     daten: [["Breite", "60 cm"], ["Geräusch", "43 dB"], ["Energie", "A"]],
+    foto: "/geraete/gs-siemens-sn87.webp",
     richtpreis: 879, breite: 600,
   },
 
@@ -170,24 +174,21 @@ const ROH: Array<Omit<Geraet, "aufpreis">> = [
     id: "da-bosch-dft63", art: "dunstabzug", marke: "Bosch", serie: "Serie 2", modell: "DFT63AC50",
     name: "Flachschirmhaube 60 cm", satz: "Verschwindet im Hängeschrank, zum Kochen wird sie herausgezogen.",
     daten: [["Breite", "60 cm"], ["Geräusch", "68 dB"]],
+    foto: "/geraete/da-bosch-dft63.webp",
     richtpreis: 165, breite: 0,
-  },
-  {
-    id: "da-aeg-dpk3632", art: "dunstabzug", marke: "AEG", modell: "DPK3632B",
-    name: "Flachschirmhaube 60 cm", satz: "Ab- oder Umluft, umschaltbar.",
-    daten: [["Breite", "60 cm"], ["Stufen", "3"], ["Fettfilter", "2, aus Metall"]],
-    richtpreis: 239, breite: 0,
   },
   {
     id: "da-bosch-dfl064", art: "dunstabzug", marke: "Bosch", serie: "Serie 4", modell: "DFL064A52",
     name: "Flachschirmhaube 60 cm", satz: "Die mittlere Baureihe.",
     daten: [["Breite", "60 cm"]],
+    foto: "/geraete/da-bosch-dfl064.webp",
     richtpreis: 303, breite: 0,
   },
   {
     id: "da-siemens-li67", art: "dunstabzug", marke: "Siemens", modell: "LI67RA561",
     name: "Flachschirmhaube 60 cm", satz: "Edelstahl, für den Einbau in den Hängeschrank.",
     daten: [["Breite", "59,8 cm"], ["Material", "Edelstahl"]],
+    foto: "/geraete/da-siemens-li67.webp",
     richtpreis: 401, breite: 0,
   },
 ];
@@ -252,10 +253,10 @@ export function markenFuer(art: GeraeteArt): string[] {
 
 export const STANDARD_GERAETE: Geraetewahl = {
   kuehlschrank: "ks-siemens-ki81",
-  kochfeld: "kf-bosch-pke611",
+  kochfeld: "kf-bosch-pke645",
   backofen: "bo-bosch-hbg578",
-  spuelmaschine: "gs-aeg-fsk649",
-  dunstabzug: "da-aeg-dpk3632",
+  spuelmaschine: "gs-bosch-smv4",
+  dunstabzug: "da-bosch-dfl064",
 };
 
 /** Eine gespeicherte Gerätewahl auf den heutigen Katalog ziehen. */

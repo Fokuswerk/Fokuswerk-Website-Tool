@@ -31,6 +31,9 @@ export interface Raumangaben {
   tiefe: number;
   /** Wie viel jeder Wand die Küche belegen darf. */
   nutz: Record<WandId, number>;
+  /** Hat der Nutzer die Zeilenlängen selbst gesetzt? Solange nicht, leiten
+      wir sie aus Wandlänge und Tür ab — eine Tür frisst Wand. */
+  nutzHand: boolean;
   fenster: { wand: WandId; von: number; breite: number } | null;
   tuer: { wand: WandId; von: number; breite: number };
   wasser: { wand: WandId; von: number };
@@ -110,9 +113,13 @@ export const STANDARD_RAUM: Raumangaben = {
   tuer: { wand: "gegenueber", von: 1800, breite: 885 },
   wasser: { wand: "haupt", von: 2500 },
   geraete: { ...STANDARD_GERAETE },
+  nutzHand: false,
   ofenHoch: false,
   niveau: "mittel",
 };
+
+/** Abstand, der neben einer Tür frei bleiben muss, damit sie aufgeht. */
+const TUERLUFT = 150;
 
 /** Nutzlängen an geänderte Wandlängen angleichen. */
 export function angleichen(a: Raumangaben): Raumangaben {
@@ -139,18 +146,41 @@ const SEITE: Record<WandId, Wandseite> = {
 
 const KORPUSTIEFE = 600;
 
-export function zeilenStart(a: Raumangaben, w: WandId): number {
-  // An einer Ecke beginnt die anschliessende Zeile hinter der Korpustiefe
-  // der ersten, sonst stossen die Schraenke zusammen.
+/**
+ * Wo die Küchenzeile an einer Wand anfängt und wie lang sie ist.
+ *
+ * An einer Ecke beginnt die anschließende Zeile hinter der Korpustiefe der
+ * ersten, sonst stoßen die Schränke zusammen. Und liegt die Tür auf dieser
+ * Wand, bleibt nur die längere der beiden freien Seiten übrig — mitsamt der
+ * Luft, die die Tür zum Aufschlagen braucht. Vorher wurde die Tür hier gar
+ * nicht beachtet, und die Zeile lief mitten durch sie hindurch.
+ */
+export function zeilenBereich(a: Raumangaben, w: WandId): { start: number; laenge: number } {
+  const L = wandlaenge(a, w);
   const waende = kuechenwaende(a);
-  return w !== waende[0] && a.form !== "zwei-waende" ? KORPUSTIEFE : 0;
+  const eckstart = w !== waende[0] && a.form !== "zwei-waende" ? KORPUSTIEFE : 0;
+
+  let von = eckstart;
+  let bis = L;
+  if (a.tuer.wand === w) {
+    const davor = { von: eckstart, bis: Math.max(eckstart, a.tuer.von - TUERLUFT) };
+    const dahinter = { von: Math.max(eckstart, a.tuer.von + a.tuer.breite + TUERLUFT), bis: L };
+    const beste = dahinter.bis - dahinter.von > davor.bis - davor.von ? dahinter : davor;
+    von = beste.von;
+    bis = beste.bis;
+  }
+  const frei = Math.max(0, bis - von);
+  return { start: von, laenge: a.nutzHand ? Math.min(frei, a.nutz[w]) : frei };
+}
+
+export function zeilenStart(a: Raumangaben, w: WandId): number {
+  return zeilenBereich(a, w).start;
 }
 
 export function alsKuechentyp(a: Raumangaben): Kuechentyp {
   const zeilen: Zeile[] = kuechenwaende(a).map((w) => {
-    const start = zeilenStart(a, w);
-    const platz = Math.max(0, Math.min(a.nutz[w], wandlaenge(a, w) - start));
-    return { id: `Z-${w}`, wand: SEITE[w], start, laenge: platz, bezeichnung: WANDNAME[w] };
+    const { start, laenge } = zeilenBereich(a, w);
+    return { id: `Z-${w}`, wand: SEITE[w], start, laenge, bezeichnung: WANDNAME[w] };
   });
 
   const oeffnungen: Oeffnung[] = [];
@@ -244,6 +274,74 @@ function pflichtmodule(a: Raumangaben): string[] {
   return liste;
 }
 
+/**
+ * Welche Pflichtmodule in welche Zeile kommen.
+ *
+ * Vorher wurde einfach die erste Zeile vollgepackt — dann standen Spüle,
+ * Geschirrspüler, Kühlschrank und Kochfeld alle an einer Wand, und die Spüle
+ * lag irgendwo, nur nicht am Wasseranschluss. Jetzt entscheidet die Sache
+ * selbst: die Spüle will ans Wasser, die Spülmaschine daneben, das Kochfeld
+ * möglichst an eine andere Wand, und die Hochschränke dorthin, wo noch Platz
+ * ist.
+ */
+function verteile(typ: Kuechentyp, a: Raumangaben, pflicht: string[]): Record<string, string[]> {
+  const zu: Record<string, string[]> = {};
+  const frei: Record<string, number> = {};
+  for (const z of typ.zeilen) {
+    zu[z.id] = [];
+    frei[z.id] = z.laenge;
+  }
+  const offen = [...pflicht];
+
+  const lege = (id: string, zeileId: string) => {
+    const b = modul(id).breite ?? 0;
+    if ((frei[zeileId] ?? -1) < b) return false;
+    zu[zeileId].push(id);
+    frei[zeileId] -= b;
+    const i = offen.indexOf(id);
+    if (i >= 0) offen.splice(i, 1);
+    return true;
+  };
+  /** Die Zeile mit dem meisten freien Platz, wahlweise ohne eine bestimmte. */
+  const weiteste = (ausser?: string) => {
+    const k = typ.zeilen.filter((z) => z.id !== ausser).sort((x, y) => frei[y.id] - frei[x.id])[0];
+    return k?.id;
+  };
+
+  // Spüle ans Wasser, sonst dorthin, wo am meisten Platz ist.
+  const wasserZeile = typ.zeilen.find((z) => z.wand === SEITE[a.wasser.wand])?.id;
+  const spuelZeile =
+    (wasserZeile && frei[wasserZeile] >= 600 ? wasserZeile : weiteste()) ?? typ.zeilen[0]?.id;
+  if (spuelZeile && offen.includes("SP600")) lege("SP600", spuelZeile);
+
+  // Spülmaschine direkt daneben — dann teilen sich beide den Anschluss.
+  for (const id of ["GS600", "US450"]) {
+    if (spuelZeile && offen.includes(id) && lege(id, spuelZeile)) break;
+  }
+
+  // Kochfeld lieber an eine andere Wand als die Spüle: das gibt Arbeitsfläche
+  // dazwischen, statt beides nebeneinander.
+  if (offen.includes("KF600")) {
+    const andere = weiteste(spuelZeile);
+    const ziel = andere && (frei[andere] ?? 0) >= 600 ? andere : spuelZeile;
+    if (ziel) lege("KF600", ziel);
+  }
+
+  // Hochschränke dorthin, wo noch am meisten frei ist.
+  for (const id of ["HK600", "HB600"]) {
+    if (!offen.includes(id)) continue;
+    const ziel = weiteste();
+    if (ziel) lege(id, ziel);
+  }
+
+  // Was übrig ist, kommt in die jeweils freieste Zeile.
+  for (const id of [...offen]) {
+    const ziel = weiteste();
+    if (ziel) lege(id, ziel);
+  }
+  return zu;
+}
+
 function breiteVon(ids: string[]): number {
   return ids.reduce((s, id) => s + (modul(id).breite ?? 0), 0);
 }
@@ -261,7 +359,9 @@ function fuellung(rest: number, strategie: Strategie): string[] {
   }
   const aus = [...Array<string>(besteA).fill(breit), ...Array<string>(besteB).fill("US450")];
   const uebrig = rest - bestBelegt;
-  if (uebrig >= 20) aus.push(`PBX:${uebrig}`);
+  // Auch wenige Millimeter bekommen eine Leiste. Sonst ginge die Zeile nicht
+  // auf, und genau das passiert, wenn eine Tür die Wandlänge krumm macht.
+  if (uebrig > 0) aus.push(`PBX:${uebrig}`);
   return aus;
 }
 
@@ -304,9 +404,14 @@ function anordnungen(module: string[], grenze = 20000): string[][] {
   return aus;
 }
 
+const HOCH = ["HK600", "HB600"];
+
 function zulaessig(ids: string[], laenge: number, zone: { von: number; bis: number } | null): boolean {
   for (let i = 0; i < ids.length; i++) {
     const id = ids[i];
+    // Neben dem Kochfeld darf kein Hochschrank stehen: Hitze neben dem
+    // Kuehlschrank, und auf der Seite bleibt keine Flaeche zum Abstellen.
+    if (id === "KF600" && (HOCH.includes(ids[i - 1]) || HOCH.includes(ids[i + 1]))) return false;
     if (!RESTRIKTIV.includes(id)) continue;
     const { von, bis } = lageIn(ids, i);
     if (zone && von < zone.bis && bis > zone.von) return false;
@@ -388,20 +493,14 @@ export function planeKueche(a: Raumangaben, strategie: Strategie): Vorschlag {
   }
 
   const belegung: Record<string, string[]> = {};
-  const offen = [...pflicht];
   const wasserZeile = `Z-${a.wasser.wand}`;
   let fensterKonflikt = false;
   let kochfeldGerueckt = false;
 
+  const zuordnung = verteile(typ, a, pflicht);
   for (const z of typ.zeilen) {
-    // Pflichtmodule auf die Zeilen verteilen, Hauptzeile zuerst
-    const nehmen: string[] = [];
-    let benutzt = 0;
-    for (let i = 0; i < offen.length; ) {
-      const b = modul(offen[i]).breite ?? 0;
-      if (benutzt + b <= z.laenge) { nehmen.push(offen[i]); benutzt += b; offen.splice(i, 1); }
-      else i += 1;
-    }
+    const nehmen = zuordnung[z.id] ?? [];
+    const benutzt = breiteVon(nehmen);
     const module = [...nehmen, ...fuellung(z.laenge - benutzt, strategie)];
 
     const f = typ.oeffnungen.find((o) => o.art === "fenster" && o.wand === z.wand);
