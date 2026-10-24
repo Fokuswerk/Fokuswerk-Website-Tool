@@ -145,8 +145,10 @@ function useSichtbareWaende(breite: number, tiefe: number): Sicht {
   return sicht;
 }
 
-/** Schild an einem Gerät: ein Punkt, ein feiner Umriss, der Name. */
-function Geraetemarke({ marke, stark = false }: { marke: Marke; stark?: boolean }) {
+/** Schild an einem Gerät: ein Punkt, ein feiner Umriss, der Name.
+    Auf einer schmalen Flaeche stattdessen eine Ziffer — sonst liegen die
+    Namen uebereinander und man liest keinen einzigen mehr. */
+function Geraetemarke({ marke, stark = false, ziffer }: { marke: Marke; stark?: boolean; ziffer?: number }) {
   const k = marke.kasten;
   return (
     <group>
@@ -161,11 +163,13 @@ function Geraetemarke({ marke, stark = false }: { marke: Marke; stark?: boolean 
         style={{ pointerEvents: "none" }}
       >
         <span
-          className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-[0_2px_8px_rgba(21,20,15,.35)] backdrop-blur-sm ${
-            stark ? "bg-butter text-kohle" : "bg-kohle/90 text-creme"
-          }`}
+          className={`flex items-center justify-center whitespace-nowrap font-semibold shadow-[0_2px_8px_rgba(21,20,15,.35)] backdrop-blur-sm ${
+            ziffer === undefined
+              ? "rounded-full px-2.5 py-1 text-[11px]"
+              : "h-[22px] w-[22px] rounded-full text-[11.5px]"
+          } ${stark ? "bg-butter text-kohle" : "bg-kohle/90 text-creme"}`}
         >
-          {marke.name}
+          {ziffer === undefined ? marke.name : ziffer}
         </span>
       </Html>
     </group>
@@ -173,10 +177,12 @@ function Geraetemarke({ marke, stark = false }: { marke: Marke; stark?: boolean 
 }
 
 function Raum({
-  typ, variante, zeigeGeraete, umstellen, betont,
+  typ, variante, zeigeGeraete, umstellen, betont, ziffern,
 }: {
   typ: Kuechentyp; variante: VarianteRoh; zeigeGeraete: boolean; umstellen?: Umstellen;
   betont?: string;
+  /** Namen durch Ziffern ersetzen; die Legende steht dann unter dem Bild. */
+  ziffern?: boolean;
 }) {
   const szene = useMemo(() => baueSzene(typ, variante), [typ, variante]);
   const { breite, tiefe } = typ.raum;
@@ -272,7 +278,14 @@ function Raum({
       {zeigeGeraete &&
         szene.marken
           .filter((m) => (betont ? m.rolle === betont : sicht[m.wand]))
-          .map((m) => <Geraetemarke key={m.id} marke={m} stark={!!betont} />)}
+          .map((m) => (
+            <Geraetemarke
+              key={m.id}
+              marke={m}
+              stark={!!betont}
+              ziffer={ziffern && !betont ? szene.marken.findIndex((x) => x.id === m.id) + 1 : undefined}
+            />
+          ))}
       {betont &&
         szene.marken
           .filter((m) => m.rolle === betont)
@@ -381,6 +394,23 @@ export function Kuechenraum({
 }) {
   const [angefasst, setAngefasst] = useState(false);
   const [zeigeGeraete, setZeigeGeraete] = useState(true);
+  // Auf schmalen Flaechen tragen die Namen nicht nebeneinander. Dann
+  // nummerieren wir die Geraete im Bild und schreiben die Legende darunter.
+  const buehne = useRef<HTMLDivElement>(null);
+  const [eng, setEng] = useState(false);
+  useEffect(() => {
+    const el = buehne.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const miss = () => setEng(el.getBoundingClientRect().width < 520);
+    miss();
+    const beobachter = new ResizeObserver(miss);
+    beobachter.observe(el);
+    return () => beobachter.disconnect();
+  }, []);
+  const legende = useMemo(
+    () => (eng ? baueSzene(typ, variante).marken : []),
+    [eng, typ, variante],
+  );
 
   // Drehen und Antippen am selben Ort: als Tippen zaehlt nur, was den Zeiger
   // kaum bewegt hat. Sonst waehlt jedes Drehen versehentlich einen Schrank.
@@ -425,6 +455,7 @@ export function Kuechenraum({
   return (
     <div>
       <div
+        ref={buehne}
         className="vertieft relative overflow-hidden rounded-[18px] bg-[#efebe3] ring-1 ring-black/[0.06]"
         style={{ height: hoehe, touchAction: "none" }}
         onPointerDown={(e) => { setAngefasst(true); merkeStart(e); }}
@@ -453,6 +484,7 @@ export function Kuechenraum({
               variante={variante}
               zeigeGeraete={(geraeteSchalter && zeigeGeraete) || !!betont}
               betont={betont}
+              ziffern={eng}
               umstellen={umstellen ? { ...umstellen, klickOk } : undefined}
             />
           </Suspense>
@@ -482,6 +514,21 @@ export function Kuechenraum({
           </span>
         )}
       </div>
+
+      {/* Legende zu den Ziffern im Bild — nur auf schmalen Flaechen, und nur
+          solange die Geraete ueberhaupt benannt werden. */}
+      {eng && legende.length > 0 && ((geraeteSchalter && zeigeGeraete) || !!betont) && !betont && (
+        <ul className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+          {legende.map((m, i) => (
+            <li key={m.id} className="flex items-center gap-1.5 text-[12.5px] text-kohle-2">
+              <span className="ziffern flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-kohle text-[10.5px] font-semibold text-creme">
+                {i + 1}
+              </span>
+              {m.name}
+            </li>
+          ))}
+        </ul>
+      )}
 
       {(unterzeile || geraeteSchalter) && (
         <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
