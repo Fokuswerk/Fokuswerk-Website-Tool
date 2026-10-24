@@ -25,9 +25,24 @@
   --font-data: var(--schrift-data), ui-monospace, "SFMono-Regular", monospace;
 
 
-  /* Weg der Privatkunden. Ruhiges warmes Grau, fast keine Farbe in der
-     Oberflaeche: die Farbe kommt aus der Kueche selbst — Eiche, Stein,
-     Graphit. Alles andere traegt nur und draengt sich nicht vor. */
+  /* Weg der Privatkunden.
+     Hier stand vorher: "fast keine Farbe in der Oberflaeche". Genau das war
+     das Problem — ohne Farbe hat eine Seite kein Gesicht, sie sieht aus wie
+     eine Vorlage, die noch niemand eingerichtet hat.
+     Jetzt gibt es eine Markenfarbe: ein tiefes, warmes Oliv. Es kommt aus der
+     Kueche selbst (Kraeuter, Stein, alter Anstrich), vertraegt sich mit Eiche
+     und Graphit und ist in diesem Markt selten — die meisten
+     Kuechenanbieter sind grau, weiss oder schwarz. Dazu Messing als kleiner,
+     warmer Akzent fuer Marken und Ziffern.
+     Die Markenfarbe traegt grosse Flaechen und den Verlauf ueber dem
+     Hero-Foto. Auf Pillen-Knoepfen hat sie nichts zu suchen. */
+  --color-marke: #2c3a2a;
+  --color-marke-2: #3d5238;
+  --color-marke-tief: #1b241a;
+  --color-marke-soft: #e8ece5;
+  --color-messing: #a97f45;
+  --color-messing-soft: #f3ecdf;
+
   --color-creme: #f5f3ef;
   --color-creme-2: #ebe8e1;
   --color-papier: #ffffff;
@@ -155,23 +170,47 @@ body {
 }
 .warm h1, .warm h2, .warm h3, .warm .gross {
   font-family: var(--font-gross);
-  letter-spacing: -0.03em;
+  /* Weich und leicht eigenwillig — das ist der Unterschied zwischen einer
+     Schrift, die gezeichnet wirkt, und einer, die eingestellt wirkt. */
+  font-variation-settings: "SOFT" 28, "WONK" 1;
+  letter-spacing: -0.018em;
 }
 /* Grosse Zeilen vertragen mehr Enge als kleine. */
-.warm .gross-xl { letter-spacing: -0.038em; line-height: 0.98; }
+.warm .gross-xl { letter-spacing: -0.024em; line-height: 1.0; }
 
 /* Kleine Vorzeile ueber einer Ueberschrift. */
+/* Kleine Vorzeile ueber einer Ueberschrift.
+   Vorher 12 px Versalien mit 0,13 em Sperrung — der Baustein, der eine Seite
+   am schnellsten nach Vorlage aussehen laesst. Jetzt gemischt gesetzt, in der
+   Markenfarbe, mit einem kurzen Strich davor. */
 .warm .vorzeile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
   font-family: var(--font-warm);
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 600;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--color-kohle-3);
+  letter-spacing: 0.01em;
+  color: var(--color-marke-2);
 }
+.warm .vorzeile::before {
+  content: "";
+  width: 1.6em;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.55;
+}
+.auf-dunkel .vorzeile { color: color-mix(in srgb, var(--color-creme) 76%, transparent); }
 
-/* Ziffern laufen in gleicher Breite, damit Preise beim Rechnen nicht wackeln. */
-.warm .ziffern { font-variant-numeric: tabular-nums; }
+/* Ziffern laufen in gleicher Breite, damit Preise beim Rechnen nicht wackeln.
+   Aber in der Textschrift, nicht in einer Monospace: eine Monospace neben
+   warmen Saetzen liest sich wie ein Terminalfenster. Masse und Artikelnummern
+   im Bautraegerbereich behalten ihre echte Monospace — dort ist sie richtig. */
+.warm .ziffern {
+  font-family: var(--font-warm);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "ss01";
+}
 
 @keyframes warmRein {
   from { opacity: 0; transform: translateY(10px); }

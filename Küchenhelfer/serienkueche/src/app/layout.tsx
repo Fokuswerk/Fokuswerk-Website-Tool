@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Archivo, IBM_Plex_Mono, Outfit, Plus_Jakarta_Sans } from "next/font/google";
+import { Archivo, Fraunces, IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { Rahmen } from "@/components/layout/Rahmen";
 
@@ -11,10 +11,30 @@ import { Rahmen } from "@/components/layout/Rahmen";
  * Google. next/font lädt sie beim Bauen herunter und liefert sie von der
  * eigenen Domain aus; es wird kein Netz zu Google mehr aufgebaut.
  */
+/* Der Bautraegerbereich bleibt sachlich: Archivo und eine echte Monospace
+   fuer Masse und Artikelnummern. Da gehoert das hin. */
 const archivo = Archivo({ subsets: ["latin"], weight: ["300", "400", "500", "600"], variable: "--schrift-ui", display: "swap" });
 const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--schrift-data", display: "swap" });
-const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--schrift-gross", display: "swap" });
-const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--schrift-warm", display: "swap" });
+
+/* Der Privatkundenbereich hatte Outfit und Plus Jakarta Sans — die zwei
+   Schriften, die auf jeder zweiten vorlagengebauten Seite stehen. Technisch
+   einwandfrei und genau deshalb ohne Gesicht.
+   Fraunces ist eine veraenderliche Serif mit Achsen fuer optische Groesse,
+   Weichheit und Eigenwilligkeit: sie wirkt gezeichnet, nicht generiert, und
+   passt zu Holz, Stein und Essen. Instrument Sans daneben traegt den Text,
+   schmal genug fuer lange deutsche Woerter. */
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  axes: ["SOFT", "WONK", "opsz"],
+  variable: "--schrift-gross",
+  display: "swap",
+});
+const instrument = Instrument_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--schrift-warm",
+  display: "swap",
+});
 
 /* Der Titel galt frueher ueberall — auch auf den Privatkundenseiten stand
    damit "Serienplanung fuer Wohnbauprojekte" im Browsertab und in jeder
@@ -28,7 +48,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="de" className={`${archivo.variable} ${plexMono.variable} ${outfit.variable} ${jakarta.variable}`}>
+    <html lang="de" className={`${archivo.variable} ${plexMono.variable} ${fraunces.variable} ${instrument.variable}`}>
       <body>
         <Rahmen>{children}</Rahmen>
       </body>

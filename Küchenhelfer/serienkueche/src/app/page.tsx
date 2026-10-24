@@ -150,14 +150,17 @@ export default function Start() {
       </a>
       {/* ---------- Auftakt: ein Bild, ein Satz ---------- */}
       <section className="auf-dunkel relative isolate flex min-h-[86vh] flex-col">
-        <div className="absolute inset-0 -z-10 overflow-hidden bg-kohle">
+        <div className="absolute inset-0 -z-10 overflow-hidden bg-marke-tief">
           <Bild f={FOTOS.hero} breite={2400} hoehe={1500} schleier={false} prioritaet masse="100vw" />
           <span
             aria-hidden="true"
             className="absolute inset-0"
+            /* Der Verlauf faerbt das Foto in der Markenfarbe ein, statt es nur
+               abzudunkeln. Mit Fast-Schwarz wirkt ein Tageslichtfoto einfach
+               dunkel; mit dem Oliv bekommt die ganze Seite ein Gesicht. */
             style={{
               background:
-                "linear-gradient(180deg, rgba(14,13,9,0.70) 0%, rgba(14,13,9,0.52) 40%, rgba(14,13,9,0.82) 100%)",
+                "linear-gradient(180deg, rgba(27,36,26,0.86) 0%, rgba(44,58,42,0.46) 38%, rgba(27,36,26,0.90) 100%), linear-gradient(90deg, rgba(27,36,26,0.68) 0%, rgba(27,36,26,0.10) 62%)",
             }}
           />
         </div>
