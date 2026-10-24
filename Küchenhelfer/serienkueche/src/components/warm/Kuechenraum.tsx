@@ -177,14 +177,16 @@ function Geraetemarke({ marke, stark = false, ziffer }: { marke: Marke; stark?: 
 }
 
 function Raum({
-  typ, variante, zeigeGeraete, umstellen, betont, ziffern,
+  typ, variante, zeigeGeraete, umstellen, betont, ziffern, ofenGewaehlt = true,
 }: {
   typ: Kuechentyp; variante: VarianteRoh; zeigeGeraete: boolean; umstellen?: Umstellen;
   betont?: string;
+  /** Ohne gewaehlten Backofen keine Ofentuer unter dem Kochfeld. */
+  ofenGewaehlt?: boolean;
   /** Namen durch Ziffern ersetzen; die Legende steht dann unter dem Bild. */
   ziffern?: boolean;
 }) {
-  const szene = useMemo(() => baueSzene(typ, variante), [typ, variante]);
+  const szene = useMemo(() => baueSzene(typ, variante, ofenGewaehlt), [typ, variante, ofenGewaehlt]);
   const { breite, tiefe } = typ.raum;
   const sicht = useSichtbareWaende(breite, tiefe);
   const [ueber, setzeUeber] = useState<{ zeile: string; index: number } | null>(null);
@@ -369,6 +371,7 @@ export function Kuechenraum({
   geraeteSchalter = false,
   umstellen,
   betont,
+  ofenGewaehlt = true,
 }: {
   typ: Kuechentyp;
   variante: VarianteRoh;
@@ -391,6 +394,8 @@ export function Kuechenraum({
   /** Ein Gerät hervorheben (Rolle, etwa "backofen"): nur dessen Schild steht
       im Raum, mit Umriss, damit man sieht, wo das Gerät hinkommt. */
   betont?: string;
+  /** Ist überhaupt ein Backofen gewählt? Ohne ihn zeichnen wir auch keinen. */
+  ofenGewaehlt?: boolean;
 }) {
   const [angefasst, setAngefasst] = useState(false);
   const [zeigeGeraete, setZeigeGeraete] = useState(true);
@@ -408,8 +413,8 @@ export function Kuechenraum({
     return () => beobachter.disconnect();
   }, []);
   const legende = useMemo(
-    () => (eng ? baueSzene(typ, variante).marken : []),
-    [eng, typ, variante],
+    () => (eng ? baueSzene(typ, variante, ofenGewaehlt).marken : []),
+    [eng, typ, variante, ofenGewaehlt],
   );
 
   // Drehen und Antippen am selben Ort: als Tippen zaehlt nur, was den Zeiger
@@ -485,6 +490,7 @@ export function Kuechenraum({
               zeigeGeraete={(geraeteSchalter && zeigeGeraete) || !!betont}
               betont={betont}
               ziffern={eng}
+              ofenGewaehlt={ofenGewaehlt}
               umstellen={umstellen ? { ...umstellen, klickOk } : undefined}
             />
           </Suspense>

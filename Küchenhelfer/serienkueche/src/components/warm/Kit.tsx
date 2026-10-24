@@ -71,7 +71,9 @@ export function GrosseWahl<T extends string | number>({
           <button
             key={o.id}
             type="button"
-            onClick={() => setze(o.id)}
+            // Nochmal auf dieselbe Antwort tippen darf nichts ausloesen —
+            // sonst springt eine sorgfaeltig gezogene Stelle auf Null zurueck.
+            onClick={() => { if (!aktiv) setze(o.id); }}
             aria-pressed={aktiv}
             className={`warm-wahl flaeche rounded-[14px] p-4 text-left ${
               aktiv

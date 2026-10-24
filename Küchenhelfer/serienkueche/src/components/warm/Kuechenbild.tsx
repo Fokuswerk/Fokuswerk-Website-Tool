@@ -476,15 +476,56 @@ export function Raumbild({
     if (mm !== null) ziehen!.setze(mm);
   };
 
+  /** Zeigerposition in Planmassen — fuer die Frage, ob der Griff getroffen ist. */
+  const planUnterZeiger = (e: React.PointerEvent): { x: number; y: number } | null => {
+    const el = svgRef.current;
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    const vbW = breite + 2 * rand;
+    const vbH = tiefe + 2 * rand;
+    const faktor = Math.min(r.width / vbW, r.height / vbH);
+    return {
+      x: -rand + (e.clientX - r.left - (r.width - vbW * faktor) / 2) / faktor,
+      y: -rand + (e.clientY - r.top - (r.height - vbH * faktor) / 2) / faktor,
+    };
+  };
+
+  /** Trifft der Zeiger den Griff oder das Element selbst?
+      Vorher reagierte die ganze Flaeche: ein Tipp irgendwo in den Plan hat
+      Fenster, Tuer oder Anschluss verschoben. */
+  const aufGriff = (e: React.PointerEvent): boolean => {
+    if (!greifWand) return false;
+    const z = planUnterZeiger(e);
+    if (!z) return false;
+    const von =
+      ziehen!.was === "fenster" ? raum.fenster?.von ?? 0
+      : ziehen!.was === "tuer" ? raum.tuer.von
+      : raum.wasser.von;
+    const mitte = von + greifBreite / 2;
+    const g = punktAufWand(greifWand, mitte, -330);
+    if (Math.hypot(z.x - g.x, z.y - g.y) <= 560) return true;
+    // Oder auf dem Element selbst, mit etwas Luft quer zur Wand.
+    const a = punktAufWand(greifWand, von, 0);
+    const b = punktAufWand(greifWand, von + greifBreite, 0);
+    const quer = 260;
+    return (
+      z.x >= Math.min(a.x, b.x) - quer && z.x <= Math.max(a.x, b.x) + quer &&
+      z.y >= Math.min(a.y, b.y) - quer && z.y <= Math.max(a.y, b.y) + quer
+    );
+  };
+
   return (
     <svg
       ref={svgRef}
       viewBox={`${-rand} ${-rand} ${breite + 2 * rand} ${tiefe + 2 * rand}`}
       style={{
         ...(volleBreite ? { width: "100%", height: "auto" } : { height: hoehe, width: "100%" }),
-        touchAction: ziehen ? "none" : undefined,
+        // Senkrecht scrollen muss moeglich bleiben; erst waehrend des Ziehens
+        // gehoert die Geste ganz dem Griff.
+        touchAction: ziehen ? (zieht ? "none" : "pan-y") : undefined,
       }}
       onPointerDown={ziehen ? (e) => {
+        if (!aufGriff(e)) return;
         (e.target as Element).setPointerCapture?.(e.pointerId);
         setZieht(true);
         schiebe(e);

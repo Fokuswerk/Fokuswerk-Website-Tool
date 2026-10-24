@@ -256,7 +256,7 @@ function Tabelle({
 }
 
 export default function Kuechenplaner() {
-  const { raum, quelle, erkannt, schritt, gewaehlt, eigeneBelegung, setzeRaum, setzeGeraet, setzeNutz, setzeQuelle, uebernehmeErkennung, geheZu, weiter, zurueck, waehle, setzeBelegung, neu } = useKueche();
+  const { raum, quelle, erkannt, schritt, gewaehlt, eigeneBelegung, setzeRaum, setzeGeraet, setzeNutz, setzeQuelle, uebernehmeErkennung, geheZu, weiter, zurueck, waehle, setzeBelegung, umstellungVerworfen, quittiereVerworfen, neu } = useKueche();
   const [details, setDetails] = useState(false);
   const [lauf, setLauf] = useState<number | null>(null);
   const [ansicht, setAnsicht] = useState<"raum" | "vorn" | "umstellen">("raum");
@@ -264,13 +264,28 @@ export default function Kuechenplaner() {
   const [angefasst, setAngefasst] = useState<{ zeile: string; index: number } | null>(null);
   /** Warum der letzte Tausch nicht ging. */
   const [tauschGrund, setTauschGrund] = useState<string | null>(null);
-  /** Markenfilter im Geräteschritt. null = alle. */
-  const [marke, setMarke] = useState<string | null>(null);
+  /** Markenfilter, je Geräteart gemerkt. null = alle.
+      Ein Filter vom Kühlschrank darf nicht stillschweigend die Auswahl beim
+      Kochfeld verengen — eine durchgehende Markenvorliebe soll man aber auch
+      nicht fünfmal neu klicken müssen, deshalb je Art. */
+  const [marken, setMarken] = useState<Partial<Record<GeraeteArt, string | null>>>({});
   /** Im Prüfschritt geöffneter Einzelwert. null heißt Übersicht. */
   const [offen, setOffen] = useState<string | null>(null);
   const [planBild, setPlanBild] = useState<string | null>(null);
   /** Laufende Uhr des nachgestellten Erkennungslaufs. */
   const laufUhr = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Laufnummer: nur der juengste Lauf darf den Stand noch anfassen. */
+  const laufNr = useRef(0);
+  /** Zuletzt erzeugte Objekt-Adresse, damit sie freigegeben werden kann. */
+  const bildUrl = useRef<string | null>(null);
+
+  // Verlaesst jemand die Seite mitten im Lauf, darf er nicht nachtraeglich
+  // den Schritt umstellen — und die Objekt-Adresse muss zurueck.
+  useEffect(() => () => {
+    laufNr.current += 1;
+    if (laufUhr.current) clearTimeout(laufUhr.current);
+    if (bildUrl.current) URL.revokeObjectURL(bildUrl.current);
+  }, []);
   const [rahmen, setRahmen] = useState<Rahmen>(RAHMEN_START);
   const feld = useRef<HTMLInputElement>(null);
 
@@ -307,6 +322,39 @@ export default function Kuechenplaner() {
     () => (brauchtVorschau ? planeKueche(raum, "arbeiten") : null),
     [brauchtVorschau, raum],
   );
+
+  // "Neu" wirft fuenf Minuten Arbeit weg. Das darf kein einzelner Tipp auf
+  // ein 13-Pixel-Symbol sein — der erste Tipp fragt, der zweite loescht.
+  const [neuGefragt, setNeuGefragt] = useState(false);
+  useEffect(() => {
+    if (!neuGefragt) return;
+    const uhr = setTimeout(() => setNeuGefragt(false), 4000);
+    return () => clearTimeout(uhr);
+  }, [neuGefragt]);
+  const neuStarten = () => {
+    if (!neuGefragt) { setNeuGefragt(true); return; }
+    laufNr.current += 1;
+    if (laufUhr.current) clearTimeout(laufUhr.current);
+    if (bildUrl.current) URL.revokeObjectURL(bildUrl.current);
+    bildUrl.current = null;
+    setLauf(null);
+    setPlanBild(null);
+    setRahmen(RAHMEN_START);
+    setOffen(null);
+    setAngefasst(null);
+    setNeuGefragt(false);
+    neu();
+  };
+
+  // Im Grundrissweg gibt es keinen Schritt "breite" — dort fuehrt der Weg
+  // zurueck auf die Pruefseite, mit der Breite schon aufgeklappt.
+  /** Ist ueberhaupt ein Backofen gewaehlt? */
+  const ofenDa = geraet(raum.geraete.backofen).breite > 0;
+
+  const masseAendern = () => {
+    if (quelle === "plan") { geheZu("pruefen"); setOffen("breite"); }
+    else geheZu("breite");
+  };
 
   const antippen = (zeileId: string, index: number) => {
     if (!gewaehlterVorschlag) return;
@@ -468,7 +516,7 @@ export default function Kuechenplaner() {
   // daneben sieht man, was daraus wird.
   const raumTafel = planSchritt && vorschau ? (
     <Karte className="overflow-hidden p-0">
-      <Kuechenraum typ={typ} variante={vorschau.variante} hoehe={300} unterzeile={false} />
+      <Kuechenraum typ={typ} variante={vorschau.variante} hoehe={300} unterzeile={false} ofenGewaehlt={ofenDa} />
       <p className="border-t border-linie-warm px-4 py-3 text-center text-[13px] leading-snug text-kohle-3">
         So sieht der Raum mit dieser Küche aus — die Zeichnung links bestimmt, wo was steht.
       </p>
@@ -482,6 +530,7 @@ export default function Kuechenplaner() {
         variante={vorschau.variante}
         hoehe={288}
         unterzeile={false}
+        ofenGewaehlt={ofenDa}
         betont={ART_ZU_ROLLE[geraeteArt]}
       />
       <p className="border-t border-linie-warm px-4 py-3 text-center text-[13px] leading-snug text-kohle-3">
@@ -547,9 +596,15 @@ export default function Kuechenplaner() {
           <div className="min-w-0 flex-1">
             <Fortschritt wert={(pos + 1) / folge.length} />
           </div>
-          <button onClick={neu} className="flex shrink-0 items-center gap-1.5 text-[13px] text-kohle-3 hover:text-kohle-2">
-            <RotateCcw size={13} strokeWidth={2} />
-            <span className="hidden sm:inline">Neu</span>
+          <button
+            onClick={neuStarten}
+            aria-label={neuGefragt ? "Wirklich alles zurücksetzen" : "Alles zurücksetzen und neu beginnen"}
+            className={`-mr-2 flex h-11 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[13px] transition-colors ${
+              neuGefragt ? "bg-kohle text-creme" : "text-kohle-3 hover:text-kohle-2"
+            }`}
+          >
+            <RotateCcw size={14} strokeWidth={2} />
+            <span className={neuGefragt ? "" : "hidden sm:inline"}>{neuGefragt ? "Wirklich?" : "Neu"}</span>
           </button>
         </div>
       </header>
@@ -634,13 +689,17 @@ export default function Kuechenplaner() {
                     const datei = e.target.files?.[0];
                     // Nur Bilder lassen sich hier anzeigen; fuer PDF zeigen wir
                     // einen gezeichneten Beispielplan und sagen es dazu.
-                    setPlanBild(datei && datei.type.startsWith("image/") ? URL.createObjectURL(datei) : null);
+                    if (bildUrl.current) URL.revokeObjectURL(bildUrl.current);
+                    bildUrl.current = datei && datei.type.startsWith("image/") ? URL.createObjectURL(datei) : null;
+                    setPlanBild(bildUrl.current);
                     // Ein zweiter Upload darf den ersten Lauf nicht
                     // weiterlaufen lassen — sonst zaehlen zwei Laeufe hoch.
                     if (laufUhr.current) clearTimeout(laufUhr.current);
+                    const meiner = ++laufNr.current;
                     setLauf(0);
                     let i = 0;
                     const weiterLauf = () => {
+                      if (meiner !== laufNr.current) return;
                       i += 1;
                       if (i < 4) { setLauf(i); laufUhr.current = setTimeout(weiterLauf, 620); }
                       else {
@@ -951,7 +1010,14 @@ export default function Kuechenplaner() {
                 wert={raum.fenster ? "ja" : "nein"}
                 setze={(v) =>
                   setzeRaum({
-                    fenster: v === "ja" ? { wand: "haupt", von: Math.max(0, Math.round(raum.breite / 2 - 600)), breite: 1200 } : null,
+                    // Das Fenster gehoert an eine Wand mit Kueche — bei
+                    // gedrehter Ecke ist das nicht die Hauptwand.
+                    fenster: v === "ja"
+                      ? (() => {
+                          const w = kuechenwaende(raum)[0];
+                          return { wand: w, von: Math.max(0, Math.round(wandlaenge(raum, w) / 2 - 600)), breite: 1200 };
+                        })()
+                      : null,
                   })
                 }
                 optionen={[
@@ -1052,10 +1118,10 @@ export default function Kuechenplaner() {
                     <button
                       key={m ?? "alle"}
                       type="button"
-                      onClick={() => setMarke(m)}
-                      aria-pressed={marke === m}
+                      onClick={() => setMarken((v) => ({ ...v, [geraeteArt]: m }))}
+                      aria-pressed={(marken[geraeteArt] ?? null) === m}
                       className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
-                        marke === m ? "bg-kohle text-creme" : "flaeche text-kohle-2 hover:!border-kohle-3"
+                        (marken[geraeteArt] ?? null) === m ? "bg-kohle text-creme" : "flaeche text-kohle-2 hover:!border-kohle-3"
                       }`}
                     >
                       {m ?? "Alle"}
@@ -1066,7 +1132,12 @@ export default function Kuechenplaner() {
 
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {geraeteFuer(geraeteArt)
-                  .filter((g) => !marke || g.marke === marke || g.marke === "—")
+                  // Das schon gewaehlte Geraet bleibt immer sichtbar, sonst
+                  // verschwindet die eigene Wahl hinter dem Filter.
+                  .filter((g) => {
+                    const f = marken[geraeteArt] ?? null;
+                    return !f || g.marke === f || g.marke === "—" || raum.geraete[geraeteArt] === g.id;
+                  })
                   .map((g) => {
                     const aktiv = raum.geraete[geraeteArt] === g.id;
                     return (
@@ -1194,7 +1265,7 @@ export default function Kuechenplaner() {
                 <Notiz ton="achtung">{vorschlaege[0]?.grund}</Notiz>
                 <div className="mt-5 flex justify-center gap-3">
                   <WKnopf onClick={() => geheZu("geraet-spuelmaschine")}>Geräte ändern</WKnopf>
-                  <WKnopf onClick={() => geheZu("breite")}>Maße ändern</WKnopf>
+                  <WKnopf onClick={masseAendern}>Maße ändern</WKnopf>
                 </div>
               </div>
             ) : (
@@ -1246,7 +1317,7 @@ export default function Kuechenplaner() {
                 </div>
 
                 {ansicht === "raum" && (
-                  <Kuechenraum typ={typ} variante={gewaehlterVorschlag.variante} hoehe={420} geraeteSchalter />
+                  <Kuechenraum typ={typ} variante={gewaehlterVorschlag.variante} hoehe={420} geraeteSchalter ofenGewaehlt={ofenDa} />
                 )}
 
                 {ansicht === "vorn" && (
@@ -1295,6 +1366,7 @@ export default function Kuechenplaner() {
                       variante={gewaehlterVorschlag.variante}
                       hoehe={400}
                       unterzeile={false}
+                      ofenGewaehlt={ofenDa}
                       umstellen={{
                         gewaehlt: angefasst,
                         onWaehle: (zeileId, index) => antippen(zeileId, index),
@@ -1426,7 +1498,19 @@ export default function Kuechenplaner() {
               </div>
               <div className="grid gap-6 p-6 sm:grid-cols-[1fr_auto] sm:items-end sm:p-8">
                 <div>
-                  <div className="vorzeile">Komplett, mit Geräten und Montage, inkl. MwSt.</div>
+                  {umstellungVerworfen && (
+                  <div className="mb-4">
+                    <Notiz ton="achtung">
+                      Deine Umstellung von Hand ist weg: der Raum oder ein Gerät hat sich geändert,
+                      und damit stimmt die alte Reihenfolge nicht mehr. Du kannst gleich wieder
+                      umstellen.{" "}
+                      <button type="button" onClick={quittiereVerworfen} className="font-semibold underline underline-offset-2">
+                        Verstanden
+                      </button>
+                    </Notiz>
+                  </div>
+                )}
+                <div className="vorzeile">Komplett, mit Geräten und Montage, inkl. MwSt.</div>
                   <div className="gross ziffern mt-2 text-[44px] font-bold leading-none tracking-[-0.04em] text-kohle">{eur(brutto(gewaehlterVorschlag.preis))}</div>
                 </div>
                 <div className="flex flex-wrap gap-3">
@@ -1533,7 +1617,7 @@ export default function Kuechenplaner() {
 
             <div className="mt-7 flex flex-wrap justify-center gap-3">
               <WKnopf onClick={() => geheZu("vorschlaege")}>Andere Variante</WKnopf>
-              <WKnopf art="klar" onClick={() => geheZu("breite")}>Maße ändern</WKnopf>
+              <WKnopf art="klar" onClick={masseAendern}>Maße ändern</WKnopf>
             </div>
           </div>
         )}
@@ -1836,7 +1920,7 @@ export default function Kuechenplaner() {
               <ArrowLeft size={16} strokeWidth={2.2} />
               Zurück
             </WKnopf>
-            {!istErgebnis && (
+            {!istErgebnis && !istUnterlagen && (
               <WKnopf art="primaer" gross onClick={weiter} aus={istVorschlaege && moegliche.length === 0}>
                 {istVorschlaege ? (gewaehlt ? "Weiter" : "Mit dem Tipp weiter") : "Weiter"}
                 <ArrowRight size={18} strokeWidth={2.2} />

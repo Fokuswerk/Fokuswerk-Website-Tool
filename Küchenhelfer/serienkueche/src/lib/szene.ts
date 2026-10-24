@@ -104,7 +104,7 @@ function achsen(wand: Wandseite, breite: number, tiefe: number) {
   return { o: [0, tiefe], e: [0, -1], n: [1, 0] };
 }
 
-export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
+export function baueSzene(typ: Kuechentyp, variante: VarianteRoh, ofenGewaehlt = true): Szene {
   const { breite, tiefe } = typ.raum;
   const kaesten: Kasten[] = [];
   const marken: Marke[] = [];
@@ -200,9 +200,13 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
 
   // Steht der Backofen nicht als Hochschrank in der Zeile, sitzt er unter
   // dem Kochfeld. Dann sieht man ihn sonst gar nicht.
+  // Ohne gewaehlten Backofen gehoert auch keine Ofentuer unter das Kochfeld.
+  // Aus der Belegung allein ist "kein Ofen" von "Ofen unten" nicht zu
+  // unterscheiden — beide Faelle haben kein HB600.
   const ofenHoch = typ.zeilen.some((z) =>
     platzierung(variante, z.id).some((p) => p.modulId === "HB600"),
   );
+  const ofenUnten = ofenGewaehlt && !ofenHoch;
 
   // --- Die Küchenzeilen ---
   for (const zeile of typ.zeilen) {
@@ -273,7 +277,7 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh): Szene {
       }
 
       if (rolle === "herd") {
-        if (!ofenHoch) {
+        if (ofenUnten) {
           // Backofentür in der Front darunter, mit Griffleiste.
           stelle(zeile.wand, s0 + 32, s1 - 32, TIEFE_UNTEN, TIEFE_UNTEN + 16, SOCKEL + 30, SOCKEL + KORPUS - 150, MATERIAL.glas);
           stelle(zeile.wand, s0 + 70, s1 - 70, TIEFE_UNTEN + 16, TIEFE_UNTEN + 34, SOCKEL + KORPUS - 205, SOCKEL + KORPUS - 165, MATERIAL.stahl);

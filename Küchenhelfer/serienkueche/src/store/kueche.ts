@@ -43,6 +43,39 @@ export function schrittFolge(raum: Raumangaben, quelle: Quelle): SchrittId[] {
 
 export type Quelle = "fragen" | "plan";
 
+/**
+ * Alle Schritte in ihrer natürlichen Ordnung — unabhängig davon, welche in
+ * der aktuellen Folge vorkommen.
+ *
+ * Die Folge baut sich nach jeder Antwort neu. Wer den Raum dreht, dessen
+ * Schritt `zeile-links` kann daraus verschwinden; `indexOf` gab dann −1, und
+ * aus −1 wurde stillschweigend Schritt 0 — die Startseite. Mit dieser Ordnung
+ * findet sich stattdessen der nächstgelegene Schritt, den es noch gibt.
+ */
+const ORDNUNG: SchrittId[] = [
+  "start", "quelle", "upload", "pruefen", "form", "drehung", "breite", "tiefe",
+  "zeile-haupt", "zeile-links", "zeile-rechts", "zeile-gegenueber",
+  "fensterJa", "fenster", "tuer", "wasser",
+  "geraet-kuehlschrank", "geraet-kochfeld", "geraet-backofen",
+  "geraet-spuelmaschine", "geraet-dunstabzug",
+  "niveau", "vorschlaege", "ergebnis", "unterlagen",
+];
+
+/** Wo der Schritt in der aktuellen Folge steht — oder wo er stünde. */
+function stelleIn(folge: SchrittId[], schritt: SchrittId, richtung: 1 | -1): number {
+  const i = folge.indexOf(schritt);
+  if (i >= 0) return i;
+  const rang = ORDNUNG.indexOf(schritt);
+  if (rang < 0) return richtung === 1 ? 0 : folge.length - 1;
+  if (richtung === 1) {
+    const naechster = folge.findIndex((x) => ORDNUNG.indexOf(x) >= rang);
+    return naechster >= 0 ? naechster - 1 : folge.length - 1;
+  }
+  let vorher = -1;
+  folge.forEach((x, j) => { if (ORDNUNG.indexOf(x) <= rang) vorher = j; });
+  return vorher >= 0 ? vorher + 1 : 0;
+}
+
 export interface KuecheState {
   raum: Raumangaben;
   quelle: Quelle;
@@ -52,6 +85,8 @@ export interface KuecheState {
   gewaehlt: Strategie | null;
   /** Vom Nutzer von Hand umgestellte Belegung, je Vorschlag. */
   eigeneBelegung: Record<string, Record<string, string[]>>;
+  /** Wurde die Umstellung gerade verworfen, weil sich der Raum geändert hat? */
+  umstellungVerworfen: boolean;
 
   setzeQuelle: (q: Quelle) => void;
   uebernehmeErkennung: () => void;
@@ -63,6 +98,8 @@ export interface KuecheState {
   zurueck: () => void;
   waehle: (s: Strategie) => void;
   setzeBelegung: (schluessel: string, belegung: Record<string, string[]>) => void;
+  /** Die Meldung über die verworfene Umstellung wegnehmen. */
+  quittiereVerworfen: () => void;
   neu: () => void;
 }
 
@@ -84,7 +121,19 @@ const ANFANG = {
   schritt: "start" as SchrittId,
   gewaehlt: null as Strategie | null,
   eigeneBelegung: {} as Record<string, Record<string, string[]>>,
+  /** Wurde eine Umstellung von Hand gerade verworfen? Dann sagen wir es.
+      Still zu verwerfen ist das Aergerlichste: man stellt seine Schraenke
+      um, verschiebt die Tuer, und der eigene Plan ist spurlos weg. */
+  umstellungVerworfen: false,
 };
+
+/** Verwirft eigene Umstellungen und merkt sich, ob es etwas zu verwerfen gab. */
+function ohneUmstellung(s: { eigeneBelegung: Record<string, Record<string, string[]>> }) {
+  return {
+    eigeneBelegung: {},
+    umstellungVerworfen: Object.keys(s.eigeneBelegung).length > 0,
+  };
+}
 
 export const useKueche = create<KuecheState>()(
   persist(
@@ -92,19 +141,19 @@ export const useKueche = create<KuecheState>()(
       ...ANFANG,
 
       setzeRaum: (teil) =>
-        set((s) => ({ raum: angleichen({ ...s.raum, ...teil }), eigeneBelegung: {} })),
+        set((s) => ({ raum: angleichen({ ...s.raum, ...teil }), ...ohneUmstellung(s) })),
 
       setzeGeraet: (art, id) =>
         set((s) => ({
           raum: { ...s.raum, geraete: { ...s.raum.geraete, [art]: id } as Geraetewahl },
-          eigeneBelegung: {},
+          ...ohneUmstellung(s),
         })),
 
       setzeNutz: (wand, mm) =>
         set((s) => ({
           // Ab hier gilt die Handeingabe, nicht mehr die Ableitung aus der Tür.
           raum: angleichen({ ...s.raum, nutzHand: true, nutz: { ...s.raum.nutz, [wand]: mm } }),
-          eigeneBelegung: {},
+          ...ohneUmstellung(s),
         })),
 
       setzeQuelle: (q) => set({ quelle: q }),
@@ -117,19 +166,21 @@ export const useKueche = create<KuecheState>()(
       weiter: () =>
         set((s) => {
           const f = schrittFolge(s.raum, s.quelle);
-          return { schritt: f[Math.min(f.length - 1, f.indexOf(s.schritt) + 1)] };
+          return { schritt: f[Math.min(f.length - 1, stelleIn(f, s.schritt, 1) + 1)] };
         }),
 
       zurueck: () =>
         set((s) => {
           const f = schrittFolge(s.raum, s.quelle);
-          return { schritt: f[Math.max(0, f.indexOf(s.schritt) - 1)] };
+          return { schritt: f[Math.max(0, stelleIn(f, s.schritt, -1) - 1)] };
         }),
 
       waehle: (g) => set({ gewaehlt: g }),
 
       setzeBelegung: (schluessel, belegung) =>
-        set((s) => ({ eigeneBelegung: { ...s.eigeneBelegung, [schluessel]: belegung } })),
+        set((s) => ({ eigeneBelegung: { ...s.eigeneBelegung, [schluessel]: belegung }, umstellungVerworfen: false })),
+
+      quittiereVerworfen: () => set({ umstellungVerworfen: false }),
 
       neu: () =>
         set({
