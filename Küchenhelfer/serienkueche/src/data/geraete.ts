@@ -244,6 +244,21 @@ export function geraeteFuer(art: GeraeteArt): Geraet[] {
   return GERAETE.filter((g) => g.art === art);
 }
 
+/** Ein Gerät je Art, mit Foto, für die Schau auf der Startseite: nicht das
+    billigste und nicht das teuerste, sondern das in der Mitte. So entsteht
+    weder der Eindruck von Billigware noch von Luxus. */
+export function schaustueck(art: GeraeteArt): Geraet | null {
+  const echte = geraeteFuer(art).filter((g) => g.richtpreis > 0 && g.foto);
+  if (echte.length === 0) return null;
+  const sortiert = [...echte].sort((x, y) => x.richtpreis - y.richtpreis);
+  return sortiert[Math.floor((sortiert.length - 1) / 2)];
+}
+
+/** Wie viele echte Modelle es in dieser Art gibt. */
+export function anzahlModelle(art: GeraeteArt): number {
+  return geraeteFuer(art).filter((g) => g.richtpreis > 0).length;
+}
+
 /** Die Marken, die es in dieser Art gibt — für den Filter. */
 export function markenFuer(art: GeraeteArt): string[] {
   const aus: string[] = [];

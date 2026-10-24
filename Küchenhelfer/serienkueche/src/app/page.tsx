@@ -9,6 +9,7 @@ import { alsKuechentyp, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/l
 import { Kuechenbild } from "@/components/warm/Kuechenbild";
 import { LiveHero } from "@/components/warm/LiveHero";
 import { FOTOS, FOTO_HINWEIS, FOTO_URHEBER, fotoUrl, type Foto } from "@/data/fotos";
+import { anzahlModelle, ARTEN, FOTO_QUELLE, PREISSTAND_GERAETE, schaustueck } from "@/data/geraete";
 
 /**
  * Die Startseite.
@@ -57,6 +58,14 @@ const BEISPIELE: Array<{ titel: string; satz: string; raum: Partial<Raumangaben>
     },
   },
 ];
+
+const ARTNAME: Record<string, string> = {
+  kuehlschrank: "Kühlschrank",
+  kochfeld: "Kochfeld",
+  backofen: "Backofen",
+  spuelmaschine: "Spülmaschine",
+  dunstabzug: "Dunstabzug",
+};
 
 const SCHRITTE = [
   ["01", "Raum beschreiben", "Wandlängen, Fenster, Tür, Wasseranschluss. Mit dem Zollstock in fünf Minuten erledigt."],
@@ -191,14 +200,72 @@ export default function Start() {
         <h2 className="gross max-w-[20ch] text-[32px] font-bold leading-[1.08] text-kohle sm:text-[46px]">
           Drei Schritte, keine Vorkenntnisse.
         </h2>
-        <div className="mt-12 grid gap-x-10 gap-y-10 sm:grid-cols-3">
+        <ol className="mt-12 grid gap-4 sm:grid-cols-3">
           {SCHRITTE.map(([nr, titel, satz]) => (
-            <div key={nr} className="border-t border-linie-warm pt-6">
-              <div className="vorzeile ziffern">{nr}</div>
-              <h3 className="gross mt-3 text-[20px] font-bold text-kohle">{titel}</h3>
+            <li key={nr} className="flaeche relative rounded-[20px] px-6 pb-7 pt-7 sm:px-7">
+              {/* Die Zahl liegt vertieft im Papier statt als Zeile darüber:
+                  man sieht die Reihenfolge, ohne sie zu lesen. */}
+              <span className="vertieft ziffern gross flex h-11 w-11 items-center justify-center rounded-full text-[15px] font-bold text-kohle-2">
+                {nr}
+              </span>
+              <h3 className="gross mt-5 text-[20px] font-bold leading-tight text-kohle">{titel}</h3>
               <p className="mt-2.5 text-[15.5px] leading-relaxed text-kohle-2">{satz}</p>
-            </div>
+            </li>
           ))}
+        </ol>
+      </section>
+
+      {/* ---------- Die Geräte, die wirklich drinstehen ---------- */}
+      <section className="border-y border-linie-warm bg-creme-2/70">
+        <div className="mx-auto max-w-[1240px] px-5 py-24 sm:px-8 sm:py-32">
+          <div className="lg:flex lg:items-end lg:justify-between lg:gap-12">
+            <h2 className="gross max-w-[20ch] text-[32px] font-bold leading-[1.08] text-kohle sm:text-[46px]">
+              Keine Markengeräte nach Wahl. Diese hier.
+            </h2>
+            <p className="mt-6 max-w-[42ch] text-[16.5px] leading-[1.65] text-kohle-2 lg:mt-0 lg:shrink-0">
+              Bosch und Siemens, jedes mit Modellnummer und Preis. Du suchst sie einzeln aus und
+              siehst sofort, was die Küche dadurch kostet.
+            </p>
+          </div>
+
+          {/* Auf dem Handy zwei nebeneinander: fünf volle Karten untereinander
+              waeren ein halber Bildschirmkilometer bis zum naechsten Knopf. */}
+          <ul className="mt-10 grid grid-cols-2 gap-3 sm:mt-12 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+            {ARTEN.map(({ art }) => {
+              const g = schaustueck(art);
+              if (!g?.foto) return null;
+              return (
+                <li key={art} className="flaeche flex flex-col overflow-hidden rounded-[18px]">
+                  <div className="vertieft flex h-[118px] items-center justify-center bg-papier sm:h-[158px]">
+                    <Image
+                      src={g.foto}
+                      alt={`${g.marke} ${g.modell ?? g.name}`}
+                      width={400}
+                      height={400}
+                      className="h-full w-full object-contain p-4"
+                      sizes="(max-width: 640px) 100vw, 240px"
+                    />
+                  </div>
+                  <div className="flex flex-1 flex-col px-3.5 pb-3.5 pt-3.5 sm:px-4 sm:pb-4 sm:pt-4">
+                    <div className="vorzeile">{ARTNAME[art]}</div>
+                    <div className="gross mt-1.5 text-[15px] font-bold leading-tight text-kohle sm:text-[16px]">
+                      {[g.marke, g.serie].filter(Boolean).join(" ")}
+                    </div>
+                    <div className="ziffern mt-0.5 text-[12.5px] text-kohle-3">{g.modell}</div>
+                    <div className="ziffern mt-auto flex flex-wrap items-baseline justify-between gap-x-2 border-t border-linie-warm pt-3 text-[12.5px] text-kohle-3 sm:text-[13px]">
+                      <span>{anzahlModelle(art)} Modelle</span>
+                      <span className="font-semibold text-kohle">{eur(g.richtpreis)}</span>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          <p className="mt-6 text-[12.5px] leading-relaxed text-kohle-3">
+            {FOTO_QUELLE}. Preise sind recherchierte Straßenpreise, Stand {PREISSTAND_GERAETE} —
+            Momentaufnahmen, keine Einkaufskonditionen.
+          </p>
         </div>
       </section>
 
@@ -290,14 +357,20 @@ export default function Start() {
           Küche rechnet.
         </p>
 
-        <div className="mt-12 grid gap-x-10 gap-y-12 sm:grid-cols-3">
+        <div className="mt-12 grid gap-4 sm:grid-cols-3">
           {beispiele.map((b) => (
-            <div key={b.titel} className="border-t border-linie-warm pt-6">
-              <Kuechenbild typ={b.typ} variante={b.plan.variante} zeileId={b.typ.zeilen[0].id} hoehe={140} />
-              <div className="gross mt-5 text-[19px] font-bold text-kohle">{b.titel}</div>
-              <div className="mt-1.5 text-[14.5px] leading-snug text-kohle-2">{b.satz}</div>
-              <div className="gross ziffern mt-4 text-[28px] font-bold leading-none text-kohle">
-                {eur(b.plan.preis)}
+            <div key={b.titel} className="flaeche flex flex-col overflow-hidden rounded-[20px]">
+              {/* Die Zeichnung steht auf Creme statt auf Weiss: die Schraenke
+                  sind hell, auf weissem Grund verschwinden sie. */}
+              <div className="vertieft flex items-center bg-creme px-4 py-5">
+                <Kuechenbild typ={b.typ} variante={b.plan.variante} zeileId={b.typ.zeilen[0].id} hoehe={146} />
+              </div>
+              <div className="flex flex-1 flex-col px-6 pb-6 pt-5">
+                <div className="gross text-[19px] font-bold text-kohle">{b.titel}</div>
+                <div className="mt-1.5 text-[14.5px] leading-snug text-kohle-2">{b.satz}</div>
+                <div className="gross ziffern mt-5 border-t border-linie-warm pt-4 text-[28px] font-bold leading-none text-kohle">
+                  {eur(b.plan.preis)}
+                </div>
               </div>
             </div>
           ))}
