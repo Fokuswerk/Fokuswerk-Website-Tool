@@ -294,7 +294,7 @@ function Tabelle({
 }
 
 export default function Kuechenplaner() {
-  const { raum, quelle, erkannt, schritt, gewaehlt, eigeneBelegung, setzeRaum, setzeGeraet, setzeNutz, setzeQuelle, uebernehmeErkennung, geheZu, weiter, zurueck, waehle, setzeBelegung, umstellungVerworfen, quittiereVerworfen, beruehrt, planArt, merkePlanArt, stand, quittiereStand, neu } = useKueche();
+  const { raum, quelle, erkannt, schritt, gewaehlt, eigeneBelegung, setzeRaum, setzeGeraet, setzeNutz, setzeQuelle, uebernehmeErkennung, geheZu, weiter, zurueck, waehle, setzeBelegung, umstellungVerworfen, quittiereVerworfen, beruehrt, planArt, merkePlanArt, stand, standGesehen, quittiereStand, fremdstand, quittiereFremdstand, neu } = useKueche();
   const [details, setDetails] = useState(false);
   const [lauf, setLauf] = useState<number | null>(null);
   const [ansicht, setAnsicht] = useState<"raum" | "vorn" | "umstellen">("raum");
@@ -439,7 +439,7 @@ export default function Kuechenplaner() {
     ueberschrift.current?.focus({ preventScroll: true });
   }, [schritt]);
   const standText = (() => {
-    if (!montiert || !stand || schritt === "start") return null;
+    if (!montiert || !stand || stand <= standGesehen || schritt === "start") return null;
     const alter = Date.now() - stand;
     if (alter < 1000 * 60 * 30) return null;
     const d = new Date(stand);
@@ -806,6 +806,34 @@ export default function Kuechenplaner() {
       </p>
 
       <main className={`mx-auto px-5 pb-20 sm:px-8 ${breit ? "max-w-[1180px] pt-6" : istStart ? "max-w-[1180px] pt-6 sm:pt-10" : zeigeBild ? "max-w-[1180px] pt-0 lg:pt-7" : "max-w-[720px] pt-6"}`}>
+        {/* Zwei Tabs auf derselben Planung: wer zuletzt tippt, gewinnt. Das
+            laesst sich ohne Server nicht verhindern — aber es muss gesagt
+            werden, bevor eine halbe Stunde Arbeit weg ist. */}
+        {montiert && fremdstand && (
+          <div className="nicht-drucken mb-5 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-butter-2 bg-butter-soft px-4 py-3">
+            <span className="text-[13.5px] leading-snug text-kohle-2">
+              In einem anderen Tab wird an derselben Küche geplant. Was du hier änderst, überschreibt
+              den dortigen Stand.
+            </span>
+            <div className="flex shrink-0 items-center gap-3">
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="text-[13px] font-semibold text-kohle underline underline-offset-2"
+              >
+                Den anderen Stand laden
+              </button>
+              <button
+                type="button"
+                onClick={quittiereFremdstand}
+                className="text-[13px] text-kohle-2 underline underline-offset-2 hover:text-kohle"
+              >
+                Hier weitermachen
+              </button>
+            </div>
+          </div>
+        )}
+
         {standText && (
           <div className="nicht-drucken mb-5 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-butter-2 bg-butter-soft px-4 py-3">
             <span className="text-[13.5px] leading-snug text-kohle-2">
@@ -815,8 +843,15 @@ export default function Kuechenplaner() {
               <button type="button" onClick={quittiereStand} className="text-[13px] font-semibold text-kohle underline underline-offset-2">
                 Weiterplanen
               </button>
-              <button type="button" onClick={neuStarten} className="text-[13px] text-kohle-2 underline underline-offset-2 hover:text-kohle">
-                Neu anfangen
+              {/* Derselbe Zwischenschritt wie oben — vorher sah es aus, als
+                  tue der Knopf nichts: die Rueckfrage erschien am kleinen
+                  Knopf in der Kopfzeile, nicht hier. */}
+              <button
+                type="button"
+                onClick={neuStarten}
+                className={`text-[13px] underline underline-offset-2 ${neuGefragt ? "font-semibold text-kohle" : "text-kohle-2 hover:text-kohle"}`}
+              >
+                {neuGefragt ? "Wirklich alles löschen?" : "Neu anfangen"}
               </button>
             </div>
           </div>

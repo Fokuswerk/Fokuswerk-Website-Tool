@@ -97,6 +97,10 @@ export interface KuecheState {
   planArt: Planart;
   /** Zeitpunkt der letzten Änderung, als Millisekunden. */
   stand: number;
+  /** Bis wann der Nutzer den wiederhergestellten Stand zur Kenntnis genommen hat. */
+  standGesehen: number;
+  /** Hat ein anderer Tab denselben Stand weitergeschrieben? */
+  fremdstand: boolean;
 
   setzeQuelle: (q: Quelle) => void;
   uebernehmeErkennung: () => void;
@@ -115,6 +119,8 @@ export interface KuecheState {
   merkePlanArt: (art: Planart) => void;
   /** Den Hinweis auf den wiederhergestellten Stand wegnehmen. */
   quittiereStand: () => void;
+  /** Den Hinweis auf den anderen Tab wegnehmen. */
+  quittiereFremdstand: () => void;
   neu: () => void;
 }
 
@@ -174,6 +180,9 @@ const ANFANG = {
   planArt: null as Planart,
   /** Wann zuletzt etwas geändert wurde — für "Dein Stand von …". */
   stand: 0,
+  standGesehen: 0,
+  /** Ein zweiter Tab hat denselben Speicher beschrieben. */
+  fremdstand: false,
   /** Je Strategie der Grund, warum ihre Umstellung verworfen wurde.
       Still zu verwerfen ist das Aergerlichste: man stellt seine Schraenke
       um, verschiebt die Tuer, und der eigene Plan ist spurlos weg. */
@@ -240,8 +249,18 @@ function vervollstaendige(
     if (!plan.moeglich) continue;
     aus[k] = { ...plan.belegung, ...fragment };
   }
-  return aus;
+  /* Und dann durch dieselbe Pruefung wie jeder andere Weg. Dies war der
+     einzige Schreibweg in die eigene Belegung, der daran vorbeiging: was
+     aus einer aelteren Fassung kam, wurde ungeprueft uebernommen. */
+  const geprueft: Record<string, Record<string, string[]>> = {};
+  for (const [k, b] of Object.entries(aus)) {
+    const r = uebernimmUmstellung(raum, b);
+    if (!("grund" in r)) geprueft[k] = r.belegung;
+  }
+  return geprueft;
 }
+
+const SPEICHERNAME = "serienkueche-einzel-v6";
 
 export const useKueche = create<KuecheState>()(
   persist(
@@ -268,24 +287,40 @@ export const useKueche = create<KuecheState>()(
       setzeGeraet: (art, id) =>
         set((s) => {
           const raum = { ...s.raum, geraete: { ...s.raum.geraete, [art]: id } as Geraetewahl };
-          return { raum, ...rette(s, raum) };
+          return { raum, stand: Date.now(), ...rette(s, raum) };
         }),
 
       setzeNutz: (wand, mm) =>
         set((s) => {
           // Ab hier gilt die Handeingabe, nicht mehr die Ableitung aus der Tür.
           const raum = angleichen({ ...s.raum, nutzHand: true, nutz: { ...s.raum.nutz, [wand]: mm } });
-          return { raum, ...rette(s, raum) };
+          return { raum, stand: Date.now(), ...rette(s, raum) };
         }),
 
-      setzeQuelle: (q) => set({ quelle: q }),
+      setzeQuelle: (q) => set({ quelle: q, stand: Date.now() }),
 
       uebernehmeErkennung: () =>
         // Auch dieser Weg schreibt den Raum — und loeschte die Umstellung
         // bisher ohne ein Wort. Er geht durch dieselbe Rettung wie alle
         // anderen.
         set((s) => {
-          const raum = angleichen({ ...ERKANNT, geraete: { ...STANDARD_GERAETE } });
+          /* Ein Grundriss sagt etwas ueber Waende, Fenster, Tuer und
+             Anschluss — nicht darueber, welchen Kuehlschrank jemand will.
+             Vorher setzte dieser Weg auch Geraete und Ausstattungsstufe
+             zurueck: wer die Fragen schon beantwortet hatte und dann doch
+             den Plan hochlud, fand fuenf Geraetewahlen geloescht. */
+          const raum = angleichen({
+            ...s.raum,
+            breite: ERKANNT.breite,
+            tiefe: ERKANNT.tiefe,
+            nutz: { ...ERKANNT.nutz },
+            nutzHand: false,
+            form: ERKANNT.form,
+            ausrichtung: ERKANNT.ausrichtung,
+            fenster: ERKANNT.fenster,
+            tuer: { ...ERKANNT.tuer },
+            wasser: { ...ERKANNT.wasser },
+          });
           return {
             raum,
             erkannt: true,
@@ -296,21 +331,21 @@ export const useKueche = create<KuecheState>()(
           };
         }),
 
-      geheZu: (id) => set({ schritt: id }),
+      geheZu: (id) => set({ schritt: id, stand: Date.now() }),
 
       weiter: () =>
         set((s) => {
           const f = schrittFolge(s.raum, s.quelle);
-          return { schritt: f[Math.min(f.length - 1, stelleIn(f, s.schritt, 1) + 1)] };
+          return { schritt: f[Math.min(f.length - 1, stelleIn(f, s.schritt, 1) + 1)], stand: Date.now() };
         }),
 
       zurueck: () =>
         set((s) => {
           const f = schrittFolge(s.raum, s.quelle);
-          return { schritt: f[Math.max(0, stelleIn(f, s.schritt, -1) - 1)] };
+          return { schritt: f[Math.max(0, stelleIn(f, s.schritt, -1) - 1)], stand: Date.now() };
         }),
 
-      waehle: (g) => set({ gewaehlt: g }),
+      waehle: (g) => set({ gewaehlt: g, stand: Date.now() }),
 
       setzeBelegung: (schluessel, belegung) =>
         set((s) => {
@@ -321,7 +356,7 @@ export const useKueche = create<KuecheState>()(
           const eigene = { ...s.eigeneBelegung };
           if (Object.keys(belegung).length === 0) delete eigene[schluessel];
           else eigene[schluessel] = belegung;
-          return { eigeneBelegung: eigene, umstellungVerworfen: verworfen };
+          return { eigeneBelegung: eigene, umstellungVerworfen: verworfen, stand: Date.now() };
         }),
 
       quittiereVerworfen: (strategie) =>
@@ -334,7 +369,13 @@ export const useKueche = create<KuecheState>()(
 
       merkePlanArt: (art) => set({ planArt: art, stand: Date.now() }),
 
-      quittiereStand: () => set({ stand: 0 }),
+      // Nicht den Stand loeschen, sondern merken, bis wann er gesehen ist.
+      // Vorher war die Uhrzeit im Band die des letzten Maszes statt die der
+      // letzten Aenderung, und ein Wegklicken schaltete das Band fuer immer
+      // ab — auch nach Wochen und ganz anderer Arbeit.
+      quittiereStand: () => set((s) => ({ standGesehen: s.stand })),
+
+      quittiereFremdstand: () => set({ fremdstand: false }),
 
       neu: () =>
         set({
@@ -344,17 +385,26 @@ export const useKueche = create<KuecheState>()(
         }),
     }),
     {
-      name: "serienkueche-einzel-v6",
+      name: SPEICHERNAME,
       // Ein Plan aus einer älteren Sitzung kann Geräte nennen, die es nicht
       // mehr gibt. Beim Laden einmal geradeziehen, statt daran zu scheitern.
       merge: (gespeichert, jetzt) => {
         const alt = gespeichert as Partial<KuecheState> | undefined;
         if (!alt?.raum) return { ...jetzt, ...alt } as KuecheState;
         const raum = angleichen({ ...STANDARD_RAUM, ...alt.raum, geraete: bereinigeGeraete(alt.raum.geraete) });
+        /* Ein gespeicherter Schritt kann in der jetzigen Folge fehlen — etwa
+           "zeile-links", wenn die Form inzwischen auf eine Wand steht. Die
+           Seite fragte dann nach einer Wand, an der keine Kueche steht, und
+           der eingetragene Wert blieb ohne Wirkung. */
+        const folge = schrittFolge(raum, alt.quelle ?? "fragen");
+        const schritt = alt.schritt && folge.includes(alt.schritt)
+          ? alt.schritt
+          : folge[Math.max(0, Math.min(folge.length - 1, stelleIn(folge, alt.schritt ?? "start", -1)))];
         return {
           ...jetzt,
           ...alt,
           raum,
+          schritt,
           eigeneBelegung: vervollstaendige(raum, alt.eigeneBelegung),
           // Die Meldung war einmal ein Ja-Nein-Wert.
           umstellungVerworfen:
@@ -366,3 +416,20 @@ export const useKueche = create<KuecheState>()(
     },
   ),
 );
+
+/**
+ * Zwei Tabs auf derselben Planung.
+ *
+ * Beide schreiben in denselben Speicher, und wer zuletzt tippt, gewinnt —
+ * der aeltere Tab kannte den neueren Stand nicht und hat ihn beim ersten
+ * "Weiter" ueberschrieben. Eine halbe Stunde Arbeit, weg, ohne ein Wort.
+ *
+ * Verhindern laesst sich das nicht ohne einen Server. Sagen schon.
+ */
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key !== SPEICHERNAME || !e.newValue) return;
+    if (useKueche.getState().schritt === "start") return;
+    useKueche.setState({ fremdstand: true });
+  });
+}

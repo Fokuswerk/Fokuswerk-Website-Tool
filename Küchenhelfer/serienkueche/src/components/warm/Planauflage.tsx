@@ -24,6 +24,16 @@ import { kuechenwaende, wandlaenge, WANDNAME, type Raumangaben, type WandId } fr
  */
 
 export interface Rahmen {
+  /**
+   * Hat der Nutzer den Rahmen selbst gezogen?
+   *
+   * Solange nicht, gleicht die Auflage die Höhe an die Raumtiefe an. Diese
+   * Marke lag in einem Ref im Bauteil — und ein Ref stirbt mit dem Bauteil.
+   * Wer den Rahmen zog, dann auf "Raumbreite" tippte und zurückkam, fand
+   * ihn überschrieben: die Auflage war ausgehängt worden und hielt sich
+   * wieder für frisch geöffnet.
+   */
+  gezogen?: boolean;
   x: number;
   y: number;
   b: number;
@@ -127,7 +137,6 @@ export function Planauflage({
   const rahmenRef = useRef(rahmen);
   rahmenRef.current = rahmen;
   /** Hat der Nutzer den Rahmen schon selbst aufgezogen? */
-  const schonGezogen = useRef(false);
 
   // Nur messen, nicht mehr eingreifen: die Bildgroesse entscheidet, wo
   // Schilder hinpassen und wie flach der Rahmen wirklich ist.
@@ -142,7 +151,7 @@ export function Planauflage({
     };
     // Solange niemand gezogen hat, fuehren die gelesenen Masse: der Rahmen
     // startet im Verhaeltnis des Raums. Danach fuehrt der Rahmen.
-    if (!schonGezogen.current && setzeTiefe) {
+    if (!rahmen.gezogen && setzeTiefe) {
       const kasten = huelle.current?.getBoundingClientRect();
       if (kasten && kasten.width > 1 && kasten.height > 1 && raum.tiefe > 0) {
         const sollH = (rahmen.b * kasten.width * raum.tiefe) / (raum.breite * kasten.height);
@@ -187,7 +196,7 @@ export function Planauflage({
       window.removeEventListener("pointermove", bewege);
       window.removeEventListener("pointerup", ende);
       // Die Tiefe folgt dem, was gerade aufgezogen wurde.
-      if (art !== "flaeche") { schonGezogen.current = true; tiefeAusRahmen(); }
+      if (art !== "flaeche") { setzeRahmen({ ...rahmenRef.current, gezogen: true }); tiefeAusRahmen(); }
     };
     window.addEventListener("pointermove", bewege);
     window.addEventListener("pointerup", ende);

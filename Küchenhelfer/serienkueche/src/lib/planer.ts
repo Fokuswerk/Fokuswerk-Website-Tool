@@ -1380,6 +1380,24 @@ export function uebernimmUmstellung(
     fehlt.splice(fehlt.indexOf(f), 1);
   }
 
+  /* Fehlt noch ein Geräteschrank, darf er den Platz eines gleich breiten
+     Stauraumschranks nehmen. Das rettet Anordnungen aus einer Sitzung vor
+     den eigenen Kennungen: dort stand der Unterbau-Kühlschrank noch als
+     US600 und die 45er Spülmaschine als US450. Die Breite stimmt, der Platz
+     stimmt — nur die Kennung war eine andere. */
+  for (const f of [...fehlt]) {
+    const breite = modul(f).breite ?? 0;
+    let getauscht = false;
+    for (const z of typ.zeilen) {
+      const k = aus[z.id].findIndex((x) => istStauraum(x) && (modul(x).breite ?? 0) === breite);
+      if (k < 0) continue;
+      aus[z.id] = aus[z.id].map((x, j) => (j === k ? f : x));
+      getauscht = true;
+      break;
+    }
+    if (getauscht) fehlt.splice(fehlt.indexOf(f), 1);
+  }
+
   // Was übrig bleibt, fällt weg — das Gerät wurde abgewählt.
   for (const z of zuviel) {
     for (const zeile of typ.zeilen) {
