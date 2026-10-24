@@ -123,6 +123,10 @@ const TUERLUFT = 150;
 
 /** Nutzlängen an geänderte Wandlängen angleichen. */
 export function angleichen(a: Raumangaben): Raumangaben {
+  /* Eine gespeicherte Raumform, die es nicht mehr gibt, liess
+     `alsKuechentyp` auf `FORMEN.find(...).titel` auflaufen — und damit die
+     ganze Fragestrecke weiss werden. Hier einmal geradeziehen. */
+  if (!FORMEN.some((f) => f.id === a.form)) a = { ...a, form: STANDARD_RAUM.form };
   const nutz = { ...a.nutz };
   for (const w of ["haupt", "links", "rechts", "gegenueber"] as WandId[]) {
     nutz[w] = Math.min(nutz[w], wandlaenge(a, w));
@@ -284,6 +288,28 @@ export interface Vorschlag {
  * Hochschrank ist und nicht vor dem Fenster steht. Die Unterlagen brauchen
  * die einzelnen Plätze, der Preis nur ihre Zahl — darum eine Quelle.
  */
+/**
+ * Hängeschränke nach Breite.
+ *
+ * Es gab drei Regeln für eine Sache: die Geometrie gab jeden Platz ab 450 mm
+ * frei, der Preis rechnete jeden davon als 600er, und die Bestellung nannte
+ * ihn auch so. Über einem 450er Unterschrank hängt aber ein 450er Schrank —
+ * er kostet 29 EUR weniger und hat eine eigene Artikelnummer.
+ */
+export function haengemodule(
+  typ: Kuechentyp,
+  belegung: Record<string, string[]>,
+): Array<{ id: string; anzahl: number }> {
+  const zahl = new Map<string, number>();
+  for (const h of haengeplaetze(typ, belegung)) {
+    const id = h.bis - h.von >= 600 ? "HS600" : "HS450";
+    zahl.set(id, (zahl.get(id) ?? 0) + 1);
+  }
+  return [...zahl]
+    .sort((a, b) => (modul(b[0]).breite ?? 0) - (modul(a[0]).breite ?? 0))
+    .map(([id, anzahl]) => ({ id, anzahl }));
+}
+
 export function haengeplaetze(
   typ: Kuechentyp,
   belegung: Record<string, string[]>,
@@ -486,24 +512,37 @@ function breiteVon(ids: string[]): number {
  * günstigste pro Meter, der Apothekerauszug fasst am meisten, Auszüge sind
  * der Mittelweg.
  */
-const FUELLER: Record<Strategie, { breit: string; schmal: string }> = {
-  guenstig: { breit: "UT600", schmal: "UT450" },
-  stauraum: { breit: "AZ600", schmal: "US450" },
-  arbeiten: { breit: "US600", schmal: "US450" },
+const FUELLER: Record<Strategie, { breit: string; schmal: string; schmaler: string }> = {
+  guenstig: { breit: "UT600", schmal: "UT450", schmaler: "US300" },
+  stauraum: { breit: "AZ600", schmal: "US450", schmaler: "AZ300" },
+  arbeiten: { breit: "US600", schmal: "US450", schmaler: "US300" },
 };
 
 function fuellung(rest: number, strategie: Strategie): string[] {
-  const { breit, schmal } = FUELLER[strategie];
-  let besteA = 0, besteB = 0, bestBelegt = -1;
+  const { breit, schmal, schmaler } = FUELLER[strategie];
+  /* Die 300er Schränke fehlten in der Füllung.
+     Blieben 300 mm übrig, wurden sie zur Passleiste — und der Plan warnte
+     im selben Atemzug, 300 mm Passleiste seien zu viel und ein Betrieb
+     würde "einen Schrank breiter wählen". Den Schrank gab es im Katalog
+     (US300, AZ300), die Füllung griff nur nicht danach. */
+  const stufen: Array<[number, string]> = [[600, breit], [450, schmal], [300, schmaler]];
+  let beste: number[] = [0, 0, 0];
+  let bestBelegt = -1;
+  let besteTeile = Infinity;
   for (let a = 0; a * 600 <= rest; a++) {
     for (let b = 0; a * 600 + b * 450 <= rest; b++) {
-      const belegt = a * 600 + b * 450;
-      if (belegt > bestBelegt || (belegt === bestBelegt && a > besteA)) {
-        bestBelegt = belegt; besteA = a; besteB = b;
+      for (let c = 0; a * 600 + b * 450 + c * 300 <= rest; c++) {
+        const belegt = a * 600 + b * 450 + c * 300;
+        const teile = a + b + c;
+        // Erst so viel Wand nutzen wie möglich, dann mit so wenig Schränken
+        // wie möglich — zwei schmale sind teurer und unruhiger als ein breiter.
+        if (belegt > bestBelegt || (belegt === bestBelegt && teile < besteTeile)) {
+          bestBelegt = belegt; besteTeile = teile; beste = [a, b, c];
+        }
       }
     }
   }
-  const aus = [...Array<string>(besteA).fill(breit), ...Array<string>(besteB).fill(schmal)];
+  const aus = stufen.flatMap(([, id], i) => Array<string>(beste[i]).fill(id));
   const uebrig = rest - bestBelegt;
   // Auch wenige Millimeter bekommen eine Leiste. Sonst ginge die Zeile nicht
   // auf, und genau das passiert, wenn eine Tür die Wandlänge krumm macht.
@@ -771,7 +810,7 @@ export function ausBelegung(
 
   let korpusse = 0;
   for (const z of typ.zeilen) for (const id of belegung[z.id]) korpusse += modul(id).preis;
-  const haenge = haengeschraenke * modul("HS600").preis;
+  const haenge = haengemodule(typ, belegung).reduce((s, h) => s + modul(h.id).preis * h.anzahl, 0);
   const platte = Math.round((modul("AP").preis * platteLaenge(typ, belegung)) / 1000);
   const sockel = Math.round(modul("SO").preis * lfm);
   const spuele = modul("SPA").preis;
@@ -786,10 +825,14 @@ export function ausBelegung(
     geraete += geraet(a.geraete[art]).netto;
   }
 
+  /* Hier stand ein Mindestpreis von 600 EUR. Er griff nie — eine Zeile mit
+     Spüle und Platte kostet mehr — konnte aber jederzeit dafür sorgen, dass
+     die Summe nicht mehr der Summe ihrer Posten entspricht. Genau das ist
+     der Fehler, den niemand findet. */
   const kosten = {
     korpusse, haenge, platte, sockel, spuele, montage,
     moebel, zuschlag, geraete,
-    gesamt: Math.max(600, moebel + zuschlag + geraete),
+    gesamt: moebel + zuschlag + geraete,
   };
   const preis = kosten.gesamt;
 

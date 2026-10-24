@@ -9,7 +9,7 @@ import { alsKuechentyp, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/l
 import { Kuechenbild } from "@/components/warm/Kuechenbild";
 import { LiveHero } from "@/components/warm/LiveHero";
 import { FOTOS, FOTO_HINWEIS, FOTO_URHEBER, fotoUrl, type Foto } from "@/data/fotos";
-import { anzahlModelle, ARTEN, FOTO_QUELLE, PREISSTAND_GERAETE, schaustueck } from "@/data/geraete";
+import { anzahlModelle, ARTEN, FOTO_QUELLE, FOTOS_LIZENZIERT, GERAETEFOTO_HINWEIS, PREISSTAND_GERAETE, schaustueck } from "@/data/geraete";
 
 /**
  * Die Startseite.
@@ -275,6 +275,7 @@ export default function Start() {
           <p className="mt-6 text-[12.5px] leading-relaxed text-kohle-3">
             {FOTO_QUELLE}. Preise sind recherchierte Straßenpreise, Stand {PREISSTAND_GERAETE} —
             Momentaufnahmen, keine Einkaufskonditionen.
+            {!FOTOS_LIZENZIERT && <> {GERAETEFOTO_HINWEIS}</>}
           </p>
         </div>
       </section>

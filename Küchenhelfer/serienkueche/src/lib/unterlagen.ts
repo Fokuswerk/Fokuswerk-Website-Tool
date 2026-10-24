@@ -2,7 +2,7 @@ import { belegungsbreite, modul, PREISSTAND, PREIS_GUELTIG_BIS, LIEFERANT } from
 import { ARTEN, geraet, MWST, PREISSTAND_GERAETE, type Geraetewahl } from "@/data/geraete";
 import { platzierung } from "@/lib/berechnung";
 import { AP_OK, HOCH_H, istHoch, OS_UK, PLATTE, rolleVon, ROLLE_NAME, SOCKEL, TIEFE_UNTEN } from "@/lib/masse";
-import { haengeplaetze, lageIn, platteLaenge, WANDNAME, type Raumangaben, type Vorschlag } from "@/lib/planer";
+import { haengemodule, haengeplaetze, lageIn, platteLaenge, WANDNAME, type Raumangaben, type Vorschlag } from "@/lib/planer";
 import type { Kuechentyp } from "@/lib/typen";
 
 /**
@@ -228,9 +228,19 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
   const platteLfm = platteLaenge(typ, v.belegung) / 1000;
   const runden = (x: number) => Math.round(x * 100) / 100;
 
-  if (v.haengeschraenke > 0) {
-    const m = modul("HS600");
-    liste.push({ pos: "—", bezeichnung: m.bezeichnung, artikel: m.artikel, menge: v.haengeschraenke, einheit: "Stk", einzel: m.preis, summe: v.kosten.haenge });
+  // Je Breite eine Zeile: ein 450er Hängeschrank ist ein anderer Artikel als
+  // ein 600er und darf nicht als einer bestellt werden.
+  for (const h of haengemodule(typ, v.belegung)) {
+    const m = modul(h.id);
+    liste.push({
+      pos: "—",
+      bezeichnung: `${m.bezeichnung}, ${m.breite} mm`,
+      artikel: m.artikel,
+      menge: h.anzahl,
+      einheit: "Stk",
+      einzel: m.preis,
+      summe: m.preis * h.anzahl,
+    });
   }
   for (const [id, menge, summe] of [
     ["AP", runden(platteLfm), v.kosten.platte],
@@ -243,6 +253,23 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
   {
     const m = modul("SPA");
     liste.push({ pos: "—", bezeichnung: m.bezeichnung, artikel: m.artikel, menge: 1, einheit: "Stk", einzel: m.preis, summe: v.kosten.spuele });
+  }
+
+  /* Der Ausstattungszuschlag stand nur im Summenblock, nicht in der Liste.
+     Wer die Posten zusammenzählte, kam deshalb auf eine andere Zahl als die
+     ausgewiesene Nettosumme — bei einer Stückliste der schlimmste Befund. */
+  if (v.kosten.zuschlag !== 0) {
+    liste.push({
+      pos: "—",
+      bezeichnung:
+        `Ausstattung ${NIVEAU_NAME[a.niveau]} — ` +
+        `${v.kosten.zuschlag > 0 ? "Zuschlag" : "Abschlag"} auf Möbel, Platte, Sockel und Montage`,
+      artikel: `AUS-${a.niveau.toUpperCase()}`,
+      menge: 1,
+      einheit: "Stk",
+      einzel: v.kosten.zuschlag,
+      summe: v.kosten.zuschlag,
+    });
   }
 
   for (const art of Object.keys(a.geraete) as Array<keyof Geraetewahl>) {

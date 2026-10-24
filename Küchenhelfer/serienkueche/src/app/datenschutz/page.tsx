@@ -45,7 +45,9 @@ export default function Datenschutz() {
         Die Schriften liegen auf demselben Server wie die Seite; es wird keine Verbindung zu Google
         Fonts aufgebaut. Die Beispielfotos der Räume werden von Unsplash geladen
         (Unsplash Inc., USA) — dabei überträgt dein Browser seine IP-Adresse dorthin. Die
-        Produktfotos der Geräte liegen auf unserem Server.
+        Produktfotos der Geräte liegen auf unserem Server; es sind Herstellerdarstellungen
+        von Bosch und Siemens, für die in diesem Prototyp keine Lizenz vorliegt — sie werden
+        vor einem öffentlichen Betrieb durch eigene Aufnahmen ersetzt.
       </p>
 
       <h2>Keine Verfolgung</h2>

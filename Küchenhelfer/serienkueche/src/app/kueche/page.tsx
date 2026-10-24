@@ -7,13 +7,14 @@ import { useRef } from "react";
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, FileUp, PencilLine, Printer, RotateCcw, RotateCw, ScanLine } from "lucide-react";
 import { modul } from "@/data/module";
 import { HOCH_H, OS_UK, rolleVon, ROLLE_NAME } from "@/lib/masse";
-import { ARTEN, FOTO_QUELLE, geraet, geraeteFuer, markenFuer, MWST, PREISSTAND_GERAETE, QUELLEN, type GeraeteArt } from "@/data/geraete";
+import { ARTEN, FOTO_QUELLE, FOTOS_LIZENZIERT, GERAETEFOTO_HINWEIS, geraet, geraeteFuer, markenFuer, MWST, PREISSTAND_GERAETE, QUELLEN, type GeraeteArt } from "@/data/geraete";
 import { brutto, eur } from "@/lib/berechnung";
 import {
-  alleVorschlaege, alsKuechentyp, ausBelegung, befundeZeile, drehungen, drehungName, FORMEN, kuechenwaende,
+  alleVorschlaege, alsKuechentyp, angleichen, ausBelegung, befundeZeile, drehungen, drehungName, FORMEN, kuechenwaende,
   planeKueche,
   austauschbar, befundeGesamt, ersetzePlan, istStauraum, tauschMoeglich, tauschPlan,
-  pruefeAngaben, wandlaenge, WANDNAME, WANDNAME_DAT, type Raumform, type Vorschlag, type WandId,
+  pruefeAngaben, wandlaenge, WANDNAME, WANDNAME_DAT,
+  type Raumform, type Strategie, type Vorschlag, type WandId,
 } from "@/lib/planer";
 import { herkunftVon, HERKUNFT_TEXT, schrittFolge, useKueche, type Feld, type Herkunft } from "@/store/kueche";
 import { Kuechenbild, Raumbild } from "@/components/warm/Kuechenbild";
@@ -518,6 +519,36 @@ export default function Kuechenplaner() {
 
   const zeileWand = schritt.startsWith("zeile-") ? (schritt.slice(6) as WandId) : null;
   const geraeteArt = schritt.startsWith("geraet-") ? (schritt.slice(7) as GeraeteArt) : null;
+  /**
+   * Was ein Gerät am Preis der ganzen Küche ändert.
+   *
+   * Vorher stand dort der Aufpreis des Geräts gegenüber dem billigsten
+   * derselben Art — und der hat mit dem Küchenpreis wenig zu tun. Ein
+   * Kühlschrank in voller Höhe braucht einen Hochschrank für 428 EUR statt
+   * eines Unterschranks für 238, nimmt dafür Arbeitsplatte weg und lässt
+   * einen Hängeschrank entfallen. Das sind Hunderter, die unter einem Schild
+   * mit "+96 EUR" verschwanden. Jetzt wird jede Möglichkeit einmal
+   * durchgeplant und die Differenz zur jetzigen Wahl angezeigt.
+   */
+  const geraeteWirkung = useMemo(() => {
+    if (!geraeteArt) return null;
+    const strategie: Strategie = gewaehlt ?? "arbeiten";
+    const jetzt = planeKueche(raum, strategie);
+    const aus = new Map<string, number | null>();
+    for (const g of geraeteFuer(geraeteArt)) {
+      if (g.id === raum.geraete[geraeteArt]) { aus.set(g.id, 0); continue; }
+      const probe = planeKueche(
+        angleichen({ ...raum, geraete: { ...raum.geraete, [geraeteArt]: g.id } }),
+        strategie,
+      );
+      aus.set(
+        g.id,
+        probe.moeglich && jetzt.moeglich ? brutto(probe.preis) - brutto(jetzt.preis) : null,
+      );
+    }
+    return aus;
+  }, [geraeteArt, raum, gewaehlt]);
+
   const wandVon = (was: string | null): WandId | null =>
     was === "fenster" ? raum.fenster?.wand ?? null
     : was === "tuer" ? raum.tuer.wand
@@ -1358,9 +1389,19 @@ export default function Kuechenplaner() {
                           <span className="text-kohle-3">
                             {g.richtpreis > 0 ? `Gerät ca. ${eur(g.richtpreis)}` : "kein Gerät"}
                           </span>
-                          <span className="font-semibold text-kohle">
-                            {g.aufpreis === 0 ? "im Preis" : `${g.aufpreis > 0 ? "+" : "−"}${eur(Math.abs(g.aufpreis))}`}
-                          </span>
+                          {(() => {
+                            const d = geraeteWirkung?.get(g.id);
+                            if (d === undefined) return null;
+                            if (d === null) {
+                              return <span className="font-semibold text-kohle-3">passt nicht in den Raum</span>;
+                            }
+                            if (aktiv) return <span className="font-semibold text-kohle">gewählt</span>;
+                            return (
+                              <span className="font-semibold text-kohle">
+                                {d === 0 ? "gleicher Preis" : `${d > 0 ? "+" : "−"}${eur(Math.abs(d))}`}
+                              </span>
+                            );
+                          })()}
                         </div>
                       </button>
                     );
@@ -1389,6 +1430,7 @@ export default function Kuechenplaner() {
                   Straßenpreise, Stand {PREISSTAND_GERAETE} ({QUELLEN}) — Momentaufnahmen, keine
                   Einkaufskonditionen. Für ein echtes Angebot tritt die Preisliste des
                   Lieferanten an ihre Stelle. {FOTO_QUELLE}.
+                  {!FOTOS_LIZENZIERT && <> {GERAETEFOTO_HINWEIS}</>}
                 </Notiz>
               </div>
             </>
@@ -1775,8 +1817,10 @@ export default function Kuechenplaner() {
                                 </span>
                               )}
                             </span>
-                            <span className="shrink-0 text-kohle-3">
-                              {g.aufpreis === 0 ? "im Preis" : `${g.aufpreis > 0 ? "+" : ""}${eur(g.aufpreis)}`}
+                            {/* In einer Aufstellung gehoert der Preis des Geraets, nicht
+                                sein Abstand zum billigsten Modell derselben Art. */}
+                            <span className="ziffern shrink-0 text-kohle-3">
+                              {g.richtpreis > 0 ? eur(g.richtpreis) : "—"}
                             </span>
                           </li>
                         );

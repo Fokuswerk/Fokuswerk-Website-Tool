@@ -98,6 +98,51 @@ export function istFreigegeben(
     .every((p) => p.freigabe === "bestaetigt");
 }
 
+/**
+ * Attribute und Zwangspunkte mit den Bestätigungen des Nutzers überlagert.
+ *
+ * Vorher stand nach dem Bestätigen auf einem Bildschirm beides: oben "Alle
+ * Pflichtattribute sind bestätigt. Die Planung ist freigegeben", daneben
+ * dieselben Attribute weiter rot als "geschätzt" und "gerechnet". Zwei
+ * Aussagen, die sich widersprechen — und der Nutzer hat keine Möglichkeit
+ * herauszufinden, welche gilt.
+ *
+ * Die Prüfpunkte sind genau die Fragen zu diesen Werten. Sind alle beantwortet,
+ * sind die Werte bestätigt. Bleibt einer offen — auch ein nicht blockierender,
+ * etwa "Gangbreite gegen die Örtlichkeit bestätigen" — bleiben sie offen.
+ */
+export function alleBestaetigt(
+  typ: Kuechentyp,
+  freigaben: Record<string, Record<string, boolean>>,
+): boolean {
+  return offeneFreigaben(typ, freigaben).length === 0;
+}
+
+export function attributeMitFreigabe(
+  typ: Kuechentyp,
+  freigaben: Record<string, Record<string, boolean>>,
+): Kuechentyp["attribute"] {
+  if (!alleBestaetigt(typ, freigaben)) return typ.attribute;
+  const aus: Kuechentyp["attribute"] = {};
+  for (const [k, a] of Object.entries(typ.attribute)) {
+    /* Der Hinweis ist laut seiner eigenen Beschreibung der Grund, warum ein
+       Wert geprüft werden muss, "falls offen". Nach der Bestätigung daneben
+       weiter "gegen die Örtlichkeit zu bestätigen" zu lesen, ist genau der
+       Widerspruch, den wir hier abstellen — die Quelle bleibt stehen. */
+    aus[k] =
+      a.freigabe === "offen" ? { ...a, freigabe: "bestaetigt", hinweis: undefined } : a;
+  }
+  return aus;
+}
+
+export function zwangspunkteMitFreigabe(
+  typ: Kuechentyp,
+  freigaben: Record<string, Record<string, boolean>>,
+): Kuechentyp["zwangspunkte"] {
+  if (!alleBestaetigt(typ, freigaben)) return typ.zwangspunkte;
+  return typ.zwangspunkte.map((z) => (z.freigabe === "offen" ? { ...z, freigabe: "bestaetigt" } : z));
+}
+
 export function offeneFreigaben(
   typ: Kuechentyp,
   freigaben: Record<string, Record<string, boolean>>,

@@ -27,6 +27,20 @@ export const PREISSTAND_GERAETE = "Oktober 2026";
 export const MWST = 0.19;
 export const QUELLEN = "geizhals.de, testbericht.de, vergleich.org, otto.de, ebay.de";
 export const FOTO_QUELLE = "Produktfotos: Bosch und Siemens (BSH Hausgeräte)";
+/**
+ * Liegt für die Produktfotos eine Lizenz vor?
+ *
+ * Nein — sie sind aus Handelsdarstellungen zusammengetragen. Für einen
+ * Prototyp, den man einem Interessenten zeigt, ist das vertretbar; für den
+ * öffentlichen Betrieb und erst recht für einen Verkauf des Werkzeugs nicht.
+ * Solange dieser Schalter auf false steht, sagt die Anwendung das an jeder
+ * Stelle, an der Produktfotos vorkommen, statt es im Ordner zu verstecken.
+ *
+ * Die Wege aus dem offenen Stand stehen in Dokumente/Bildrechte.md.
+ */
+export const FOTOS_LIZENZIERT = false;
+export const GERAETEFOTO_HINWEIS =
+  "Herstellerfotos ohne Lizenz, nur zur Ansicht im Prototyp — für den Betrieb werden sie durch eigene Aufnahmen oder Zeichnungen ersetzt.";
 
 export type GeraeteArt = "kuehlschrank" | "kochfeld" | "backofen" | "spuelmaschine" | "dunstabzug";
 

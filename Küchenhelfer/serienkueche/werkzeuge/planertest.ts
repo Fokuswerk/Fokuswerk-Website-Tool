@@ -1,4 +1,5 @@
-import { alleVorschlaege, alsKuechentyp, kuechenwaende, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/lib/planer";
+import { alleVorschlaege, alsKuechentyp, angleichen, kuechenwaende, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/lib/planer";
+import { baueUnterlagen } from "@/lib/unterlagen";
 import { belegungsbreite, modul } from "@/data/module";
 import { platzierung } from "@/lib/berechnung";
 import { eur } from "@/lib/berechnung";
@@ -69,3 +70,28 @@ for (const f of faelle) {
   }
 }
 console.log(fehler === 0 ? "\nAlle Regeln eingehalten, alle Zeilen gehen auf." : `\n${fehler} FEHLER`);
+
+/* Die Stueckliste muss die ausgewiesene Nettosumme ergeben. Vorher fehlte
+   der Ausstattungszuschlag als Posten, und wer nachrechnete, kam auf eine
+   andere Zahl. */
+{
+  console.log("\n--- Stueckliste gegen Nettosumme ---");
+  let schief = 0;
+  for (const niveau of ["einfach", "mittel", "gehoben"] as const) {
+    for (const f of ["eine-wand", "ecke", "u-form", "zwei-waende"] as const) {
+      const raum = angleichen({ ...STANDARD_RAUM, form: f, niveau });
+      for (const s of ["guenstig", "stauraum", "arbeiten"] as const) {
+        const v = planeKueche(raum, s);
+        if (!v.moeglich) continue;
+        const u = baueUnterlagen(raum, alsKuechentyp(raum), v);
+        const summe = u.liste.reduce((x, p) => x + p.summe, 0);
+        if (summe !== u.netto) {
+          schief++;
+          console.log(`  FEHLER ${f}/${niveau}/${s}: Posten ${summe} gegen Netto ${u.netto}`);
+        }
+      }
+    }
+  }
+  console.log(schief === 0 ? "  ok     alle 36 Stuecklisten gehen auf" : `  ${schief} Stuecklisten gehen nicht auf`);
+  if (schief > 0) process.exit(1);
+}

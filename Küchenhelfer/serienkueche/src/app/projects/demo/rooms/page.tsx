@@ -4,7 +4,10 @@ import { useState } from "react";
 import { ArrowRight, Check } from "lucide-react";
 import { KUECHENTYPEN } from "@/data/projekt";
 import { zahl } from "@/lib/berechnung";
-import { istFreigegeben, offeneFreigaben, pruefpunkte } from "@/lib/ableitung";
+import {
+  alleBestaetigt, attributeMitFreigabe, istFreigegeben, offeneFreigaben, pruefpunkte,
+  zwangspunkteMitFreigabe,
+} from "@/lib/ableitung";
 import { useDemo } from "@/store/demo";
 import { Grundriss } from "@/components/plan/Grundriss";
 import {
@@ -42,6 +45,11 @@ export default function Raumpruefung() {
   const punkte = pruefpunkte(typ, freigaben);
   const frei = istFreigegeben(typ, freigaben);
   const offeneBlocker = punkte.filter((p) => p.blockierend && p.freigabe === "offen");
+  // Attribute und Zwangspunkte folgen den Bestaetigungen, statt daneben rot
+  // zu bleiben und das Gegenteil zu behaupten.
+  const attribute = attributeMitFreigabe(typ, freigaben);
+  const zwangspunkte = zwangspunkteMitFreigabe(typ, freigaben);
+  const restOffen = punkte.filter((p) => p.freigabe === "offen").length;
 
   const bestaetigeAlle = () => {
     for (const p of punkte) setzeFreigabe(typ.id, p.id, true);
@@ -159,7 +167,11 @@ export default function Raumpruefung() {
               <div className="mt-4">
                 <Hinweisband art="ruhig" titel="Bereit zur Planung">
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span>Alle Pflichtattribute von {typ.id} sind bestätigt. Die Planung ist freigegeben.</span>
+                    <span>
+                      {restOffen === 0
+                        ? `Alle Prüfpunkte von ${typ.id} sind bestätigt. Werte und Zwangspunkte gelten damit als fest, die Planung ist freigegeben.`
+                        : `Die blockierenden Prüfpunkte von ${typ.id} sind bestätigt, die Planung ist freigegeben. ${restOffen === 1 ? "Ein Punkt ist" : `${restOffen} Punkte sind`} noch offen — die betroffenen Werte bleiben deshalb als ungeprüft markiert.`}
+                    </span>
                     <Knopf href="/projects/demo/planning">Zur Küchenplanung<ArrowRight size={13} strokeWidth={1.8} /></Knopf>
                   </div>
                 </Hinweisband>
@@ -182,7 +194,7 @@ export default function Raumpruefung() {
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(typ.attribute).map(([schluessel, a]) => (
+                  {Object.entries(attribute).map(([schluessel, a]) => (
                     <tr key={schluessel} className="align-top">
                       <Td>
                         <div className="text-ink-2">{LABEL[schluessel] ?? schluessel}</div>
@@ -223,7 +235,7 @@ export default function Raumpruefung() {
                       </Td>
                     </tr>
                   ))}
-                  {typ.zwangspunkte.map((z) => (
+                  {zwangspunkte.map((z) => (
                     <tr key={z.id}>
                       <Td stumm>{z.bezeichnung}</Td>
                       <Td rechts>
