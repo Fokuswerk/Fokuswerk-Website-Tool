@@ -78,7 +78,7 @@ export default function Installationsplanung() {
                     variante={v}
                     zeileId={z.id}
                     anschluesse={liste.filter((a) => a.zeileId === z.id)}
-                    hoehe={270}
+                    volleBreite
                   />
                 </Flaeche>
               ))}

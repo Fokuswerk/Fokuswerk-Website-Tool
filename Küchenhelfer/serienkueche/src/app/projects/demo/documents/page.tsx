@@ -153,7 +153,7 @@ export default function Unterlagen() {
                 <tr>
                   <Th>Datei</Th>
                   <Th>Format</Th>
-                  <Th>Urheber</Th>
+                  <Th nebensache>Urheber</Th>
                   <Th>Datum</Th>
                   <Th>Zuordnung</Th>
                   <Th>Status</Th>
@@ -169,7 +169,7 @@ export default function Unterlagen() {
                         {d.hinweis && <div className="mt-0.5 max-w-[48ch] text-[11.5px] text-ink-3">{d.hinweis}</div>}
                       </Td>
                       <Td num stumm>{d.format}</Td>
-                      <Td stumm>{d.urheber}</Td>
+                      <Td stumm nebensache>{d.urheber}</Td>
                       <Td num stumm>{d.datum}</Td>
                       <Td stumm>{d.zuordnung}</Td>
                       <Td><Marke ton={m.ton}>{m.text}</Marke></Td>

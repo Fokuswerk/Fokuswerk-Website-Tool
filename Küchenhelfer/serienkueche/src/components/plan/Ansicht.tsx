@@ -37,6 +37,7 @@ export function Ansicht({
   gewaehltesModul,
   aufModul,
   hoehe = 300,
+  volleBreite = false,
 }: {
   typ: Kuechentyp;
   variante: VarianteRoh;
@@ -45,6 +46,9 @@ export function Ansicht({
   gewaehltesModul?: string | null;
   aufModul?: (schluessel: string | null) => void;
   hoehe?: number;
+  /** Volle Breite statt fester Hoehe: eine Werkzeichnung soll das Blatt
+      ausnutzen, nicht in der Mitte schweben. */
+  volleBreite?: boolean;
 }) {
   const zeile = typ.zeilen.find((z) => z.id === zeileId);
   if (!zeile) return null;
@@ -57,13 +61,16 @@ export function Ansicht({
     (o) => o.art === "fenster" && o.wand === zeile.wand,
   );
 
-  const rand = 420;
-  const vb = `${-rand} ${-rand} ${zeile.laenge + 2 * rand} ${RH + 2 * rand + 300}`;
+  // Rechts steht die Hoehenangabe der Arbeitsplatte neben der Zeile — dafuer
+  // braucht diese Seite mehr Platz, sonst wird "910 OFF" abgeschnitten.
+  const randL = 420;
+  const randR = 820;
+  const vb = `${-randL} ${-randL} ${zeile.laenge + randL + randR} ${RH + 2 * randL + 300}`;
 
   return (
     <svg
       viewBox={vb}
-      style={{ height: hoehe, width: "100%" }}
+      style={volleBreite ? { width: "100%", height: "auto" } : { height: hoehe, width: "100%" }}
       className="block max-w-full"
       role="img"
       aria-label={`Wandansicht ${zeile.bezeichnung}, Länge ${zeile.laenge} Millimeter`}
@@ -154,6 +161,12 @@ export function Ansicht({
         const schluessel = `${zeileId}:${p.index}`;
         const aktiv = gewaehltesModul === schluessel;
         const oben = hoch ? SOCKEL + HOCH_H : SOCKEL + KORPUS;
+        // Im Spuelenschrank sitzen Kalt-, Warm- und Abwasser dicht
+        // beieinander. Wo zwei oder mehr Kuerzel stehen, bleibt der
+        // Schranktyp weg — er steht in der Stueckliste. Die Anschluesse
+        // sind hier das, was gebraucht wird.
+        const dicht =
+          anschluesse.filter((a) => a.x >= p.von && a.x <= p.bis && a.hoehe < AP_OK).length >= 2;
         return (
           <g
             key={schluessel}
@@ -179,10 +192,12 @@ export function Ansicht({
               }
               strokeWidth={aktiv ? 26 : 16}
             />
-            {p.breite >= 450 && (
+            {p.breite >= 450 && !dicht && (
               <text
                 x={p.von + p.breite / 2}
-                y={y(SOCKEL + (hoch ? HOCH_H : KORPUS) / 2)}
+                // Im Unterschrank sitzt der Name knapp unter der Platte: in
+                // der Mitte lag er genau auf den Anschlusszeichen.
+                y={hoch ? y(SOCKEL + HOCH_H / 2) : y(AP_OK - 190)}
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={94}
@@ -216,13 +231,19 @@ export function Ansicht({
       {anschluesse.map((a) => {
         const s = SYMBOL[a.art] ?? { zeichen: "?", farbe: "text-accent" };
         const offen = a.freigabe === "offen";
+        // Wasser, Warmwasser und Abwasser sitzen im Spuelenschrank dicht
+        // beieinander. Steht ein anderer Anschluss direkt darueber, haengt
+        // das Kuerzel unter den Punkt statt darueber.
+        const darueber = anschluesse.some(
+          (b) => b.id !== a.id && Math.abs(b.x - a.x) < 190 && b.hoehe > a.hoehe && b.hoehe - a.hoehe < 320,
+        );
         return (
           <g key={a.id} className={offen ? "text-flag" : "text-accent"}>
             <circle cx={a.x} cy={y(a.hoehe)} r={62} fill="currentColor" opacity={offen ? 0.25 : 0.18} />
             <circle cx={a.x} cy={y(a.hoehe)} r={62} fill="none" stroke="currentColor" strokeWidth={18} strokeDasharray={offen ? "40 30" : undefined} />
             <text
               x={a.x}
-              y={y(a.hoehe) - 110}
+              y={darueber ? y(a.hoehe) + 180 : y(a.hoehe) - 110}
               textAnchor="middle"
               fontSize={82}
               fontFamily="IBM Plex Mono, monospace"

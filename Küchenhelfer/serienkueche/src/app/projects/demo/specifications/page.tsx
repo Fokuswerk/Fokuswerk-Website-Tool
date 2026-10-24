@@ -69,7 +69,7 @@ export default function Spezifikationen() {
     <>
       <Seitenkopf
         titel="Spezifikationen und Kosten"
-        kontext={`${WOHNUNGEN.length} Einheiten · ${KUECHENTYPEN.length} Typen · Preisstand ${PREISSTAND}, gültig bis ${PREIS_GUELTIG_BIS} · ${LIEFERANT}`}
+        kontext={`${WOHNUNGEN.length} Einheiten · ${KUECHENTYPEN.length} Typen · alle Beträge netto · Preisstand ${PREISSTAND}, gültig bis ${PREIS_GUELTIG_BIS} · ${LIEFERANT}`}
         aktionen={
           <>
             <Knopf onClick={() => window.print()}><Printer size={14} strokeWidth={1.7} />Druckansicht</Knopf>
@@ -173,8 +173,8 @@ export default function Spezifikationen() {
               <thead>
                 <tr>
                   <Th>Artikeltyp</Th>
-                  <Th rechts>Modulbreite</Th>
-                  <Th>Typen</Th>
+                  <Th rechts nebensache>Modulbreite</Th>
+                  <Th nebensache>Typen</Th>
                   <Th>Artikel Partner</Th>
                   <Th rechts>Menge gesamt</Th>
                   <Th rechts>Einzelpreis</Th>
@@ -185,8 +185,8 @@ export default function Spezifikationen() {
                 {positionen.map((p) => (
                   <tr key={p.modulId} className="hover:bg-ground">
                     <Td>{p.bezeichnung}</Td>
-                    <Td num rechts stumm>{p.breite ? `${p.breite} mm` : "—"}</Td>
-                    <Td num stumm>{p.typen.join(" ")}</Td>
+                    <Td num rechts stumm nebensache>{p.breite ? `${p.breite} mm` : "—"}</Td>
+                    <Td num stumm nebensache>{p.typen.join(" ")}</Td>
                     <Td num stumm>{p.artikel}</Td>
                     <Td num rechts>
                       {p.einheit === "lfm" ? `${zahl(p.menge, 1)} lfm` : p.einheit === "psch" ? `${zahl(p.menge)} ×` : `${zahl(p.menge)} Stk`}
@@ -196,13 +196,13 @@ export default function Spezifikationen() {
                   </tr>
                 ))}
                 {positionen.length === 0 && (
-                  <tr><Td stumm>Keine Position zu diesem Filter.</Td><Td /><Td /><Td /><Td /><Td /><Td /></tr>
+                  <tr><Td stumm>Keine Position zu diesem Filter.</Td><Td nebensache /><Td nebensache /><Td /><Td /><Td /><Td /></tr>
                 )}
               </tbody>
               <tfoot>
                 <tr>
                   <Td stumm>{positionen.length} von {summe.positionen.length} Positionen</Td>
-                  <Td /><Td /><Td /><Td /><Td />
+                  <Td nebensache /><Td nebensache /><Td /><Td /><Td />
                   <Td num rechts><strong>{eur(positionen.reduce((s, p) => s + p.gesamt, 0))}</strong></Td>
                 </tr>
               </tfoot>

@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 /* Kleines eigenes Baukastenset statt einer Komponentenbibliothek:
    der Standardlook verbreiteter Kits ist genau die Anmutung, die hier
@@ -125,9 +125,12 @@ export function Zahlenreihe({
   return (
     <div className="grid grid-cols-2 border-y border-line sm:grid-cols-3 xl:grid-cols-5">
       {werte.map((w, i) => (
-        <div key={w.label} className={`px-5 py-5 ${i === 0 ? "" : "border-l border-line-2"} ${i >= 2 ? "border-t border-line-2 sm:border-t-0" : ""}`}>
+        <div key={w.label} className={`px-4 py-5 sm:px-5 ${i === 0 ? "" : "border-l border-line-2"} ${i >= 2 ? "border-t border-line-2 sm:border-t-0" : ""}`}>
           <div className="text-[10.5px] font-semibold uppercase tracking-[0.11em] text-ink-3">{w.label}</div>
-          <div className={`num mt-2 text-[29px] leading-none tracking-[-0.03em] ${w.ton === "flag" ? "text-flag" : "text-ink"}`}>
+          {/* Auf dem Handy stehen zwei Zahlen nebeneinander; eine Summe wie
+              203.038 € braucht dort weniger Schriftgrad, sonst laeuft das
+              Eurozeichen aus der Spalte. */}
+          <div className={`num mt-2 text-[24px] leading-none tracking-[-0.03em] sm:text-[29px] ${w.ton === "flag" ? "text-flag" : "text-ink"}`}>
             {w.wert}
           </div>
           {w.zusatz && <div className="mt-2 text-[11.5px] leading-snug text-ink-3">{w.zusatz}</div>}
@@ -137,19 +140,71 @@ export function Zahlenreihe({
   );
 }
 
+/**
+ * Tabelle mit Hinweis, wenn rechts noch etwas steht.
+ *
+ * Breite Tabellen schieben sich in einem schmalen Fenster seitlich weg —
+ * ohne Zeichen dafuer sieht niemand, dass eine Spalte fehlt. Ein weicher
+ * Verlauf an der Kante zeigt, dass es weitergeht, und verschwindet, sobald
+ * man am Ende ist.
+ */
 export function Tabelle({ children, dicht }: { children: ReactNode; dicht?: boolean }) {
+  const feld = useRef<HTMLDivElement>(null);
+  const [kante, setKante] = useState({ links: false, rechts: false });
+
+  useEffect(() => {
+    const el = feld.current;
+    if (!el) return;
+    const pruefe = () => {
+      const rest = el.scrollWidth - el.clientWidth - el.scrollLeft;
+      setKante({ links: el.scrollLeft > 4, rechts: rest > 4 });
+    };
+    pruefe();
+    el.addEventListener("scroll", pruefe, { passive: true });
+    if (typeof ResizeObserver === "undefined") return () => el.removeEventListener("scroll", pruefe);
+    const beobachter = new ResizeObserver(pruefe);
+    beobachter.observe(el);
+    return () => {
+      el.removeEventListener("scroll", pruefe);
+      beobachter.disconnect();
+    };
+  }, []);
+
   return (
-    <div className="overflow-x-auto">
-      <table className={`w-full border-collapse ${dicht ? "text-[12.5px]" : "text-[13px]"}`}>{children}</table>
+    <div className="relative">
+      <div ref={feld} className="overflow-x-auto">
+        <table className={`w-full border-collapse ${dicht ? "text-[12.5px]" : "text-[13px]"}`}>{children}</table>
+      </div>
+      {kante.links && (
+        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-paper to-transparent" />
+      )}
+      {kante.rechts && (
+        <>
+          <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-paper via-paper/85 to-transparent" />
+          {/* Ein Zeichen am Rand statt einer Zeile ueber der Tabelle: dort
+              stehen schon Ueberschrift und Link. */}
+          <span
+            className="pointer-events-none absolute right-1 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-paper text-[12px] text-ink-3 shadow-[0_1px_3px_rgba(27,30,35,0.1)]"
+            title="Seitlich scrollen — rechts stehen weitere Spalten"
+          >
+            →
+          </span>
+        </>
+      )}
     </div>
   );
 }
 
-export function Th({ children, rechts, breite }: { children?: ReactNode; rechts?: boolean; breite?: string }) {
+export function Th({ children, rechts, breite, nebensache }: {
+  children?: ReactNode; rechts?: boolean; breite?: string;
+  /** Zweitrangige Spalte: faellt im schmalen Fenster weg, damit die
+      wichtigen Spalten ohne seitliches Schieben lesbar bleiben. */
+  nebensache?: boolean;
+}) {
   return (
     <th
       style={breite ? { width: breite } : undefined}
-      className={`whitespace-nowrap border-b border-line px-3.5 py-3 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-ink-3 ${rechts ? "text-right" : "text-left"}`}
+      className={`whitespace-nowrap border-b border-line px-3 py-3 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-ink-3 ${rechts ? "text-right" : "text-left"} ${nebensache ? "hidden xl:table-cell" : ""}`}
     >
       {children}
     </th>
@@ -161,15 +216,18 @@ export function Td({
   rechts,
   num,
   stumm,
+  nebensache,
 }: {
   children?: ReactNode;
   rechts?: boolean;
   num?: boolean;
   stumm?: boolean;
+  /** Gehoert zu einer Spalte, die im schmalen Fenster wegfaellt. */
+  nebensache?: boolean;
 }) {
   return (
     <td
-      className={`border-b border-line-2 px-3.5 py-3 align-baseline ${rechts ? "text-right" : ""} ${num ? "num whitespace-nowrap" : ""} ${stumm ? "text-ink-3" : ""}`}
+      className={`border-b border-line-2 px-3 py-3 align-baseline ${rechts ? "text-right" : ""} ${num ? "num whitespace-nowrap" : ""} ${stumm ? "text-ink-3" : ""} ${nebensache ? "hidden xl:table-cell" : ""}`}
     >
       {children}
     </td>

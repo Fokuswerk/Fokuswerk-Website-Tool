@@ -27,7 +27,6 @@ export default function Dashboard() {
   const offen = KUECHENTYPEN.filter((t) => !istFreigegeben(t, freigaben));
   const offenePunkte = KUECHENTYPEN.reduce((s, t) => s + offeneFreigaben(t, freigaben).length, 0);
   const summe = projektsumme(auswahl);
-  const budgetMitte = Math.round((PROJEKT.budgetVon + PROJEKT.budgetBis) / 2) * PROJEKT.einheiten;
   const aufgemessen = WOHNUNGEN.filter(
     (w) => aufmassLage(w.messpunkte, aufmass[w.nr]) === "bestaetigt",
   ).length;
@@ -80,11 +79,18 @@ export default function Dashboard() {
           werte={[
             { label: "Wohneinheiten", wert: WOHNUNGEN.length, zusatz: `${PROJEKT.gebaeude} Gebäude, alle mit Küche` },
             { label: "Küchentypen", wert: KUECHENTYPEN.length, zusatz: `aus ${WOHNUNGEN.length} Grundrissen gebildet` },
-            { label: "Spezifikation", wert: eur(summe.gesamt), zusatz: `Budgetrahmen ${eur(budgetMitte)}` },
+            {
+              label: "Spezifikation",
+              wert: eur(summe.gesamt),
+              zusatz: `netto · Rahmen ${eur(PROJEKT.budgetVon * WOHNUNGEN.length)}–${eur(PROJEKT.budgetBis * WOHNUNGEN.length)}`,
+            },
             {
               label: "Typen bestätigt",
               wert: `${freigegeben.length} / ${KUECHENTYPEN.length}`,
-              zusatz: offenePunkte > 0 ? `${offenePunkte} offene Prüfungen` : "keine offenen Prüfungen",
+              zusatz:
+                offen.length > 0
+                  ? `${offen.length} ${offen.length === 1 ? "Typ" : "Typen"} offen · ${offenePunkte} Prüfpunkte`
+                  : "alle Typen bestätigt",
               ton: offen.length > 0 ? "flag" : undefined,
             },
             {
@@ -152,7 +158,7 @@ export default function Dashboard() {
                   <Th breite="74px">Typ</Th>
                   <Th>Grundform</Th>
                   <Th rechts>Einheiten</Th>
-                  <Th rechts>Nische</Th>
+                  <Th rechts nebensache>Nische</Th>
                   <Th>Gewählte Variante</Th>
                   <Th rechts>je Küche</Th>
                   <Th rechts>Summe</Th>
@@ -174,7 +180,7 @@ export default function Dashboard() {
                       </Td>
                       <Td>{t.bezeichnung}</Td>
                       <Td num rechts>{t.wohnungen.length}</Td>
-                      <Td num rechts stumm>
+                      <Td num rechts stumm nebensache>
                         {t.zeilen.map((z) => zahl(z.laenge)).join(" / ")}
                       </Td>
                       <Td>
@@ -205,7 +211,7 @@ export default function Dashboard() {
                   <Td />
                   <Td stumm>Summe über alle Einheiten</Td>
                   <Td num rechts>{WOHNUNGEN.length}</Td>
-                  <Td /><Td /><Td />
+                  <Td nebensache /><Td /><Td />
                   <Td num rechts>
                     <strong>{eur(summe.gesamt)}</strong>
                   </Td>
