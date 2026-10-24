@@ -3,3 +3,7 @@ node_modules
 .vercel
 *.tsbuildinfo
 next-env.d.ts
+.DS_Store
+.env*
+# Die Pruefbundles entstehen beim Laufenlassen und gehoeren nicht in den Baum.
+werkzeuge/*.mjs

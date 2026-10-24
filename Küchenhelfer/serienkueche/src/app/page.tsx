@@ -400,7 +400,7 @@ export default function Start() {
           className="group flex flex-wrap items-center justify-between gap-5 border-t border-linie-warm pt-8"
         >
           <div>
-            <div className="gross text-[17px] font-bold text-kohle">Sie planen ein ganzes Haus?</div>
+            <div className="gross text-[17px] font-bold text-kohle">Ein ganzes Haus planen?</div>
             <div className="mt-2 max-w-[68ch] text-[14.5px] leading-relaxed text-kohle-2">
               Für Bauträger und Wohnungsunternehmen: Grundrisse aller Wohnungen einlesen, ähnliche
               Küchen zu wenigen Typen zusammenfassen und einmal planen statt vierzigmal.

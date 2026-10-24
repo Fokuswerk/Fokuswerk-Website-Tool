@@ -201,8 +201,9 @@ function VorschlagKarte({
             </div>
             {v.auchAls && (
               <div className="mt-1 text-[13px] text-kohle-3">
-                In diesem Raum kommt {v.auchAls.length > 1 ? "auch" : ""} „{v.auchAls.join("“ und „")}“ auf
-                denselben Plan — der Platz lässt keine andere Aufteilung zu.
+                In diesem Raum {v.auchAls.length > 1 ? "kommen auch" : "kommt auch"} „
+                {v.auchAls.join("“ und „")}“ auf denselben Plan — der Platz lässt keine andere
+                Aufteilung zu.
               </div>
             )}
           </div>
@@ -718,7 +719,7 @@ export default function Kuechenplaner() {
       <p className="mt-3 border-t border-linie-warm pt-3 text-center text-[13px] leading-snug text-kohle-3">
         {hervor
           ? <>Schwarz markiert ist die <strong className="font-semibold text-kohle">{WANDNAME[hervor]}</strong>.</>
-          : "Gelb sind die Wände mit Küche, der Tropfen zeigt den Wasseranschluss."}
+          : "Die hellen Bänder sind die Wände mit Küche, der Tropfen zeigt den Wasseranschluss."}
       </p>
       {geometrie && stufen > 1 && (
         <div className="mt-3 flex items-center justify-between gap-3 border-t border-linie-warm pt-3">
@@ -848,7 +849,10 @@ export default function Kuechenplaner() {
       {/* Still fuer das Auge, hoerbar fuer Vorlesesoftware: was gerade
           gewechselt hat. */}
       <p aria-live="polite" className="sr-only">
-        {schrittText}: {TITEL_FUER[schritt] ?? ""}
+        {schrittText}:{" "}
+        {schritt === "vorschlaege" && karten.length === 0
+          ? "Das passt hier so nicht"
+          : TITEL_FUER[schritt] ?? ""}
       </p>
 
       <main className={`mx-auto px-5 pb-20 sm:px-8 ${breit ? "max-w-[1180px] pt-6" : istStart ? "max-w-[1180px] pt-6 sm:pt-10" : zeigeBild ? "max-w-[1180px] pt-0 lg:pt-7" : "max-w-[720px] pt-6"}`}>
@@ -1151,10 +1155,19 @@ export default function Kuechenplaner() {
                     <div className="mt-4">
                       {wandWahl(raum.fenster.wand, (w) => setzeRaum({ fenster: { ...raum.fenster!, wand: w, von: 0 } }))}
                     </div>
+                    {/* Die Breite stand nur als Zahl da — "Tipp auf einen
+                        Wert, um ihn zu aendern" galt fuer sie also nicht. */}
+                    <Karte className="mt-4 px-5 py-7">
+                      <div className="mb-4 text-center text-[14px] text-kohle-2">Wie breit ist es?</div>
+                      <GrosseZahl
+                        wert={raum.fenster.breite}
+                        setze={(mm) => setzeRaum({ fenster: { ...raum.fenster!, breite: mm } })}
+                        min={40}
+                        max={Math.round(wandlaenge(raum, raum.fenster.wand) / 10)}
+                      />
+                    </Karte>
                     <Karte className="mt-4 px-5 py-6">
-                      <div className="ziffern mb-4 text-center text-[15px] text-kohle-2">
-                        {Math.round(raum.fenster.breite / 10)} cm breit
-                      </div>
+                      <div className="mb-4 text-center text-[14px] text-kohle-2">Und wo an der Wand?</div>
                       <Schieber
                         wert={raum.fenster.von}
                         max={Math.max(0, wandlaenge(raum, raum.fenster.wand) - raum.fenster.breite)}
@@ -1613,7 +1626,9 @@ export default function Kuechenplaner() {
         {istVorschlaege && (
           <>
             <div className="text-center">
-              <h1 className="gross text-[29px] font-bold leading-[1.12] text-kohle sm:text-[36px]">Das passt in deinen Raum.</h1>
+              <h1 className="gross text-[29px] font-bold leading-[1.12] text-kohle sm:text-[36px]">
+                {karten.length === 0 ? "Das passt hier so nicht." : "Das passt in deinen Raum."}
+              </h1>
               <p className="mx-auto mt-3 max-w-[52ch] text-[16px] leading-relaxed text-kohle-2">
                 {karten.length === 1
                   ? "In diesem Raum geht genau eine Aufteilung auf — der Platz lässt keine zweite zu. Auf den Zentimeter gerechnet und nach denselben Regeln geprüft."
@@ -2016,7 +2031,9 @@ export default function Kuechenplaner() {
                                 </span>
                               )}
                             </span>
-                            <span className="shrink-0 text-kohle-3">{modul(id).breite} mm</span>
+                            {/* Millimeter gehoeren auf das Unterlagenblatt;
+                                hier daneben stehen ueberall Zentimeter. */}
+                            <span className="shrink-0 text-kohle-3">{Math.round((modul(id).breite ?? 0) / 10)} cm</span>
                           </li>
                         )),
                       )}
@@ -2120,7 +2137,7 @@ export default function Kuechenplaner() {
                       <div className="gross text-[20px] font-bold text-kohle">Wohin dürfen wir antworten?</div>
                       <p className="mt-2 max-w-[62ch] text-[14.5px] leading-relaxed text-kohle-2">
                         Mit der Anfrage gehen diese Unterlagen mit — Zeichnungen, Maße, Stückliste,
-                        Anschlüsse und Zuschnitt. Du gehst damit nichts ein.
+                        Anschlüsse und Zuschnitt. Du bindest dich damit nicht.
                       </p>
                       <div className="mt-5 grid gap-4 sm:grid-cols-2">
                         {([
@@ -2278,7 +2295,15 @@ export default function Kuechenplaner() {
                 <Abschnitt
                   titel="Hängeschränke"
                   nr="4"
-                  satz={`${u.haenge.length} Stück, je 600 mm breit. Unterkante ${mm(OS_UK)} mm, Oberkante ${mm(HOCH_H)} mm über Fertigfußboden.`}
+                  satz={(() => {
+                    // "je 600 mm breit" stand auch ueber einer Tabelle mit
+                    // 600 und 450 — die Breiten stehen eine Zeile tiefer.
+                    const breiten = [...new Set(u.haenge.map((h) => h.breite))].sort((a, b) => b - a);
+                    const wie = breiten.length === 1
+                      ? `je ${mm(breiten[0])} mm breit`
+                      : breiten.map((b) => `${u.haenge.filter((h) => h.breite === b).length} × ${mm(b)} mm`).join(", ");
+                    return `${u.haenge.length} Stück, ${wie}. Unterkante ${mm(OS_UK)} mm, Oberkante ${mm(HOCH_H)} mm über Fertigfußboden.`;
+                  })()}
                 >
                   <Tabelle
                     kopf={["Nr", "Wand", "von", "bis", "Breite"]}

@@ -6,6 +6,7 @@ import { KUECHENTYPEN, PROJEKT } from "@/data/projekt";
 import { variante, zahl } from "@/lib/berechnung";
 import { anschluesse, istFreigegeben } from "@/lib/ableitung";
 import { arbeitshoeheVon } from "@/lib/masse";
+import { SEITENNAME } from "@/lib/typen";
 import { useDemo } from "@/store/demo";
 import { Ansicht } from "@/components/plan/Ansicht";
 import {
@@ -166,7 +167,10 @@ export default function Installationsplanung() {
                   <dd className="num text-right text-ink-2">{typ.wohnungen.length}</dd>
                   <dt className="text-ink-3">Fallstrang</dt>
                   <dd className="num text-right text-ink-2">
-                    {typ.zwangspunkte.find((z) => z.art === "fallstrang")?.wand ?? "—"}
+                    {(() => {
+                      const w = typ.zwangspunkte.find((z) => z.art === "fallstrang")?.wand;
+                      return w ? SEITENNAME[w] : "—";
+                    })()}
                   </dd>
                 </dl>
               </Flaeche>

@@ -7,6 +7,7 @@ import { zahl } from "@/lib/berechnung";
 import {
   attributeMitFreigabe, istFreigegeben, offeneFreigaben, pruefpunkte, typMitFreigabe,
 } from "@/lib/ableitung";
+import { SEITENNAME } from "@/lib/typen";
 import { useDemo } from "@/store/demo";
 import { Grundriss } from "@/components/plan/Grundriss";
 import {
@@ -136,7 +137,7 @@ export default function Raumpruefung() {
                       </div>
                       <div className="shrink-0">
                         {p.freigabe === "offen" ? (
-                          <Knopf onClick={() => { setzeFreigabe(typ.id, p.id, true); melde(`„${p.titel}" bestätigt.`); }}>
+                          <Knopf onClick={() => { setzeFreigabe(typ.id, p.id, true); melde(`Prüffall bestätigt: ${p.titel}`); }}>
                             Bestätigen
                           </Knopf>
                         ) : (
@@ -156,7 +157,7 @@ export default function Raumpruefung() {
                 <Hinweisband titel="Planung gesperrt">
                   Für {typ.id} fehlen {offeneBlocker.length} Bestätigungen:{" "}
                   {offeneBlocker.map((p) => p.titel).join(", ")}. Solange ein Pflichtattribut den Stand
-                  „angenommen" trägt, erzeugt das Werkzeug keinen Küchenvorschlag für diesen Typ —
+                  „angenommen“ trägt, erzeugt das Werkzeug keinen Küchenvorschlag für diesen Typ —
                   ein Vorschlag auf unbestätigten Maßen sähe gültig aus, ohne es zu sein.
                 </Hinweisband>
               </div>
@@ -226,11 +227,11 @@ export default function Raumpruefung() {
                 <tbody>
                   {typ.oeffnungen.map((o) => (
                     <tr key={o.id}>
-                      <Td stumm>{o.art === "tuer" ? "Tür" : "Fenster"}, {o.wand}</Td>
+                      <Td stumm>{o.art === "tuer" ? "Tür" : "Fenster"}, {SEITENNAME[o.wand]}</Td>
                       <Td num rechts>
                         {zahl(o.breite)} mm
                         {o.anschlag && <span className="ml-1 text-ink-3">{o.anschlag}</span>}
-                        {o.bruestung !== undefined && <span className="ml-1 text-ink-3">BRH {zahl(o.bruestung)}</span>}
+                        {o.bruestung !== undefined && <span className="ml-1 text-ink-3">Brüstung {zahl(o.bruestung)} mm</span>}
                       </Td>
                     </tr>
                   ))}
@@ -239,7 +240,7 @@ export default function Raumpruefung() {
                       <Td stumm>{z.bezeichnung}</Td>
                       <Td rechts>
                         <Marke ton={z.freigabe === "bestaetigt" ? "mute" : "flag"}>
-                          {z.wand}, {zahl(z.von)} mm
+                          {SEITENNAME[z.wand]}, {zahl(z.von)} mm
                         </Marke>
                       </Td>
                     </tr>

@@ -35,6 +35,9 @@ export function sockelZu(apOk: number): number {
   return apOk - KORPUS - PLATTE;
 }
 
+/** Unterkante Dunstesse über dem Kochfeld. Stand zweimal als 1540 im Code
+    und einmal als 1460 in den Unterlagen — auf demselben Blatt. */
+export const HAUBE_UK = 1540;
 /** Unterkante Hängeschrank. */
 export const OS_UK = 1460;
 export const OS_H = 700;

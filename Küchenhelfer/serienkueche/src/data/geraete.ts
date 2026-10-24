@@ -181,7 +181,7 @@ const ROH: Array<Omit<Geraet, "aufpreis" | "netto">> = [
   },
   {
     id: "gs-siemens-sn87", art: "spuelmaschine", marke: "Siemens", serie: "iQ700", modell: "SN87TX00CE",
-    name: "Spülmaschine 60 cm, leise", satz: "Testsieger der Stiftung Warentest 4/2026. Leise genug für den offenen Wohnraum.",
+    name: "Spülmaschine 60 cm, leise", satz: "43 dB — leise genug für den offenen Wohnraum. Die leiseste im Katalog.",
     daten: [["Breite", "60 cm"], ["Geräusch", "43 dB"], ["Energie", "A"]],
     foto: "/geraete/gs-siemens-sn87.webp",
     richtpreis: 879, breite: 600,

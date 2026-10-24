@@ -223,7 +223,7 @@ export default function Kuechentypen() {
                 <p className="border-t border-line-2 px-3.5 py-3 text-[12px] leading-relaxed text-ink-2">
                   Geplant und bestellt wird das Nennmaß. Was eine Einheit davon abweicht, nimmt die
                   Passblende am Zeilenende auf — deshalb braucht nicht jede Wohnung eine eigene
-                  Planung. Die Spalte „gegen Typmaß" zeigt, wie viel das jeweils ist.
+                  Planung. Die Spalte „gegen Typmaß“ zeigt, wie viel das jeweils ist.
                 </p>
               </Abschnitt>
             </div>
@@ -247,7 +247,7 @@ export default function Kuechentypen() {
                   </dd>
                   <dt className="text-ink-3">Größte Abweichung</dt>
                   <dd className="num text-right text-ink-2">
-                    ± {nischenspanne(typ.id).groesste} mm von ± {TOLERANZBAND}
+                    ± {nischenspanne(typ.id).groesste} mm von ± {TOLERANZBAND} mm
                   </dd>
                   <dt className="text-ink-3">Einheiten</dt>
                   <dd className="num text-right text-ink-2">{typ.wohnungen.length}</dd>

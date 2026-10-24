@@ -2,7 +2,7 @@ import { modul } from "@/data/module";
 import { platzierung } from "@/lib/berechnung";
 import {
   AP_OK, HOCH_H, KORPUS, OS_H, OS_UK, PLATTE, RAUMHOEHE,
-  istHoch, rolleVon, ROLLE_NAME, SOCKEL, TIEFE_OBEN, TIEFE_UNTEN,
+  HAUBE_UK, istHoch, rolleVon, ROLLE_NAME, SOCKEL, TIEFE_OBEN, TIEFE_UNTEN,
 } from "@/lib/masse";
 import type { Kuechentyp, Wandseite } from "@/lib/typen";
 import type { VarianteRoh } from "@/data/varianten";
@@ -324,9 +324,9 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh, ofenGewaehlt =
             rolle: "dunstabzug",
             wand: zeile.wand,
             pos: punkt(zeile.wand, m, 300, 1760),
-            kasten: quader(zeile.wand, m - 300, m + 300, 0, 480, 1540, 1700),
+            kasten: quader(zeile.wand, m - 300, m + 300, 0, 480, HAUBE_UK, 1700),
           });
-          stelle(zeile.wand, m - 300, m + 300, 0, 480, 1540, 1620, MATERIAL.stahl);
+          stelle(zeile.wand, m - 300, m + 300, 0, 480, HAUBE_UK, 1620, MATERIAL.stahl);
           stelle(zeile.wand, m - 300, m + 300, 0, 480, 1620, 1700, MATERIAL.front);
           stelle(zeile.wand, m - 140, m + 140, 0, 300, 1700, OS_UK + OS_H, MATERIAL.front);
         }

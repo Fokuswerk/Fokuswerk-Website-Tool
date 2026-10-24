@@ -835,7 +835,7 @@ function rechnePlan(a: Raumangaben, strategie: Strategie): Vorschlag {
   const gesamt = typ.zeilen.reduce((s, z) => s + z.laenge, 0);
   if (breiteVon(pflicht) > gesamt) {
     const fehlt = Math.ceil((breiteVon(pflicht) - gesamt) / 10) * 10;
-    return { ...leer, grund: `Es fehlen etwa ${fehlt} mm Wand. Mit einer schmalen Spülmaschine, einem Kühlschrank unter der Platte oder dem Backofen unter dem Kochfeld würde es passen.` };
+    return { ...leer, grund: `Es fehlen etwa ${cm(fehlt)} Wand. Mit einer schmalen Spülmaschine, einem Kühlschrank unter der Platte oder dem Backofen unter dem Kochfeld würde es passen.` };
   }
 
   const belegung: Record<string, string[]> = {};
@@ -1034,8 +1034,10 @@ export function ausBelegung(
   // Anschluss" durchgeht. Zweimal dieselbe Zahl, zwei Urteile.
   else achtung.push(`Die Spüle liegt etwa ${Math.ceil(wegZumWasser / 100) * 10} cm vom heutigen Anschluss entfernt. Das muss verlegt werden.`);
 
-  if (passblende > 0 && passblende <= 150) gut.push(`${passblende} mm Rest schließt eine Passleiste — das ist normal und wird vor Ort zugeschnitten.`);
-  else if (passblende > 150) achtung.push(`${passblende} mm bleiben als Passleiste übrig. Das ist viel — ein Küchenbetrieb würde eher einen Schrank breiter wählen.`);
+  // Zentimeter, wie ueberall sonst im Privatkundenteil. Hier standen
+  // Millimeter direkt unter Saetzen, die Zentimeter nannten.
+  if (passblende > 0 && passblende <= 150) gut.push(`${cm(passblende)} Rest schließt eine Passleiste — das ist normal und wird vor Ort zugeschnitten.`);
+  else if (passblende > 150) achtung.push(`${cm(passblende)} bleiben als Passleiste übrig. Das ist viel — ein Küchenbetrieb würde eher einen Schrank breiter wählen.`);
   if (kochfeldGerueckt) gut.push("Der Herd steht nicht direkt an der Wand, damit daneben Platz zum Abstellen bleibt.");
 
   /* Die Befunde der einzelnen Zeilen gehoeren auch hierher. In der
@@ -1059,7 +1061,7 @@ export function ausBelegung(
   }
   if (haengeschraenke === 0) achtung.push("Hängeschränke gehen hier nicht — Fenster oder Hochschränke belegen die Wand.");
   if (a.form === "zwei-waende" && a.tiefe - 1200 < 1200) {
-    achtung.push(`Zwischen den Zeilen bleiben nur ${a.tiefe - 1200} mm Gang. Empfohlen sind 1.200 mm.`);
+    achtung.push(`Zwischen den Zeilen bleiben nur ${cm(a.tiefe - 1200)} Gang. Empfohlen sind ${cm(1200)}.`);
   }
 
 

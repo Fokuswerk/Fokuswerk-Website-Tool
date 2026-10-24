@@ -49,7 +49,9 @@ export default function Unterlagen() {
           fuegeDokumentHinzu({
             id: `U${Date.now()}`,
             name,
-            format: lesbar ? (endung === "dxf" ? "DXF" : endung.toUpperCase()) : "Rasterbild",
+            // Vorher hiess alles Unbekannte "Rasterbild" — auch eine
+            // Tabelle oder ein Textdokument.
+            format: lesbar ? endung.toUpperCase() : endung ? endung.toUpperCase() : "ohne Endung",
             groesse: "—",
             datum: new Date().toLocaleDateString("de-DE"),
             urheber: "Demo-Upload",
@@ -138,7 +140,7 @@ export default function Unterlagen() {
                   </button>
                 </div>
                 <p className="mx-auto mt-1.5 max-w-[56ch] text-[12px] text-ink-3">
-                  Vektor-PDF, DXF und IFC werden gelesen. Rasterbilder und Scans sind nicht Teil des
+                  Vektor-PDF, DXF, DWG und IFC werden gelesen. Rasterbilder und Scans sind nicht Teil des
                   Funktionsumfangs — die Erkennung gezeichneter Symbole ist zu unzuverlässig.
                 </p>
               </>

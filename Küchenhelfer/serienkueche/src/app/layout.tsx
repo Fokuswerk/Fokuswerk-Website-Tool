@@ -16,10 +16,14 @@ const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], var
 const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--schrift-gross", display: "swap" });
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--schrift-warm", display: "swap" });
 
+/* Der Titel galt frueher ueberall — auch auf den Privatkundenseiten stand
+   damit "Serienplanung fuer Wohnbauprojekte" im Browsertab und in jeder
+   geteilten Vorschau. Die beiden Bereiche bekommen eigene Titel ueber ihre
+   eigenen `metadata`; hier steht nur noch, was fuer beide gilt. */
 export const metadata: Metadata = {
-  title: "Serienküche",
+  title: { default: "Serienküche", template: "%s — Serienküche" },
   description:
-    "Prototyp: Serienplanung von Einbauküchen für Wohnbauprojekte. Grundrisse einlesen, typisieren, planen, spezifizieren.",
+    "Prototyp: Küchen planen, von der einzelnen Küche bis zur Serie im Wohnbauprojekt.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

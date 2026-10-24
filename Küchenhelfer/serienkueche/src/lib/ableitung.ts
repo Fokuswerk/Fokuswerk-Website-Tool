@@ -61,7 +61,7 @@ export function anschluesse(v: VarianteRoh, typ: Kuechentyp): Anschluss[] {
     });
   }
 
-  // Arbeitsplattensteckdosen: gleichmäßig verteilt, ausserhalb des Spülbereichs
+  // Arbeitsplattensteckdosen: gleichmäßig verteilt, außerhalb des Spülbereichs
   const hauptzeile = typ.zeilen[0];
   const apOk = arbeitshoeheVon(typ);
   const schritt = Math.round(hauptzeile.laenge / 4);
@@ -71,7 +71,7 @@ export function anschluesse(v: VarianteRoh, typ: Kuechentyp): Anschluss[] {
     if (imSpuelbereich) continue;
     liste.push({
       id: `A-SD${i}`, art: "steckdose", bezeichnung: `Steckdose Arbeitsplatte ${i}`, x, hoehe: apOk + 240,
-      zeileId: hauptzeile.id, ausfuehrung: "Schuko, ausserhalb des Schutzbereichs der Spüle", freigabe: "bestaetigt",
+      zeileId: hauptzeile.id, ausfuehrung: "Schuko, außerhalb des Schutzbereichs der Spüle", freigabe: "bestaetigt",
     });
   }
 

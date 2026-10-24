@@ -27,6 +27,15 @@ export interface Attribut {
 
 export type Wandseite = "nord" | "ost" | "sued" | "west";
 
+/** Wie die Himmelsrichtungen in der Oberfläche heißen. Vorher standen dort
+    die rohen Kennungen, darunter „sued“. */
+export const SEITENNAME: Record<Wandseite, string> = {
+  nord: "Nordwand",
+  ost: "Ostwand",
+  sued: "Südwand",
+  west: "Westwand",
+};
+
 export interface Oeffnung {
   id: string;
   art: "tuer" | "fenster";

@@ -4,14 +4,22 @@ Klickbarer Produktprototyp für die Serienplanung von Einbauküchen in Wohnbaupr
 Ein Projektentwickler lädt Grundrisse hoch, das Werkzeug typisiert sie, plant je Typ und
 liefert Mengengerüst, Installationsplan und Bestellvorbereitung.
 
-**Dies ist eine Demo.** Erkennung, Planung und Bestellung sind simuliert. Es gibt keinen
-Parser, keinen Solver und keine Herstelleranbindung.
+**Dies ist eine Demo.** Grundrisserkennung und Bestellung sind simuliert: es gibt keinen
+Parser und keine Herstelleranbindung. Die Planung ist es nicht — der Planer in
+`lib/planer.ts` sucht die Anordnung jeder Zeile erschöpfend ab, prüft sie gegen harte
+Regeln und rechnet den Preis aus dem Modulkatalog. Was er ausgibt, ist gerechnet.
 
 ## Starten
 
 ```bash
 npm install
 npm run build && npx next start -p 3000
+```
+
+Prüfen:
+
+```bash
+npm run verify   # tsc --noEmit, dann die drei Rechenprüfungen
 ```
 
 `next dev` bindet auf dem Entwicklungsrechner keinen Port — der Produktionsserver läuft.
@@ -51,14 +59,18 @@ src/
     planer.ts      Rechnet freie Räume: Modulfolge, Regeln, Begründungen
     typen.ts       Datenmodell
     berechnung.ts  Preise, Kennzahlen, Aggregation, Invariantenprüfung
-    ableitung.ts   Anschlüsse und Freigabestand aus der Variante abgeleitet
+    ableitung.ts   Anschlüsse, Freigabestand und Fertigungsmaße aus dem Aufmaß
+    planer.ts      Der Planer: Pflichtmodule, Verteilung, Anordnungssuche, Preis
+    masse.ts       Höhen und Tiefen — eine Quelle für Zeichnung und Raumbild
+    szene.ts       Dieselbe Küche als räumliches Bild
+    unterlagen.ts  Stückliste, Maßketten, Anschlüsse, Zuschnitt
   store/
     demo.ts      Zustand des Profi-Wegs
     kueche.ts    Zustand der Schritt-für-Schritt-Strecke
   components/
     plan/        Grundriss und Wandansicht als SVG aus Geometriedaten
     layout/      Seitenleiste und Rahmen
-    kueche/      Eingabefelder für Leute ohne Vorkenntnisse
+    warm/        Der Privatkunden-Weg: Zeichnungen, Raumbild, Eingabefelder
     ui/          Eigenes Baukastenset
 ```
 
@@ -90,9 +102,13 @@ Mengengerüst, niemals eine Fertigungsfreigabe. Die Oberfläche benennt das ausd
 Geprüft mit `pruefeBelegungen()` und im Prüfskript.
 
 ```bash
-npx esbuild werkzeuge/pruefe.ts --bundle --platform=node --format=esm \
-  --outfile=werkzeuge/pruefe.mjs --alias:@=./src && node werkzeuge/pruefe.mjs
+npm run planertest       # harte Regeln, Zeilenbreiten, Stückliste gegen Nettosumme
+npm run datentest        # jedes als „gerechnet" ausgewiesene Maß folgt seiner Regel
+npm run umstellungtest   # eine umgestellte Küche über zwölf Änderungen
+npm run zeitmessung      # wie lange der Planer je Raumgröße braucht
 ```
+
+`npm run verify` fährt Typprüfung und die drei Rechenprüfungen hintereinander.
 
 ## Bewusst simuliert
 
@@ -102,6 +118,9 @@ Druckansicht über den Browserdialog. Im Profi-Weg sind auch die Varianten vorbe
 
 ## Bewusst nicht enthalten
 
-Raster- und Skizzenerkennung · 3D-Ansicht · fotorealistische Visualisierung · echter
-Beschnittplan für die Säge · Lieferterminplanung, Monteurdisposition und Mängelmanagement
-· Mandantenfähigkeit · Benutzerverwaltung.
+Raster- und Skizzenerkennung · fotorealistische Visualisierung · echter Beschnittplan für
+die Säge · Lieferterminplanung, Monteurdisposition und Mängelmanagement ·
+Mandantenfähigkeit · Benutzerverwaltung.
+
+Eine räumliche Ansicht **ist** enthalten (`lib/szene.ts`, `components/warm/Kuechenraum`) —
+gebaut aus denselben Maßen wie die Zeichnungen, nicht gerendert.

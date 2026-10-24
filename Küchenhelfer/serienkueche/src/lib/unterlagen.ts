@@ -1,7 +1,7 @@
 import { belegungsbreite, modul, PREISSTAND, PREIS_GUELTIG_BIS, LIEFERANT } from "@/data/module";
 import { ARTEN, geraet, MWST, PREISSTAND_GERAETE, type Geraetewahl } from "@/data/geraete";
 import { platzierung } from "@/lib/berechnung";
-import { AP_OK, HOCH_H, istHoch, OS_UK, PLATTE, rolleVon, ROLLE_NAME, SOCKEL, TIEFE_UNTEN } from "@/lib/masse";
+import { AP_OK, HAUBE_UK, HOCH_H, istHoch, OS_UK, PLATTE, rolleVon, ROLLE_NAME, SOCKEL, TIEFE_UNTEN } from "@/lib/masse";
 import { haengemodule, haengeplaetze, lageIn, platteLaenge, WANDNAME, type Raumangaben, type Vorschlag } from "@/lib/planer";
 import type { Kuechentyp } from "@/lib/typen";
 
@@ -288,7 +288,11 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
 
   const summen: Array<[string, number]> = [
     ["Möbel, Platte, Sockel, Montage", v.kosten.moebel],
-    [`Ausstattung ${NIVEAU_NAME[a.niveau]}`, v.kosten.zuschlag],
+    // Bei "mittel" ist der Zuschlag null — "Ausstattung mittel — 0 EUR"
+    // sieht aus wie ein vergessener Posten. In der Liste faellt er schon weg.
+    ...(v.kosten.zuschlag !== 0
+      ? ([[`Ausstattung ${NIVEAU_NAME[a.niveau]}`, v.kosten.zuschlag]] as Array<[string, number]>)
+      : []),
     ["Geräte", v.kosten.geraete],
   ];
   const netto = v.kosten.gesamt;
@@ -318,7 +322,7 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
     if (art === "kochfeld") return `Ausschnitt ${KOCHFELD_AUSSCHNITT.breite} × ${KOCHFELD_AUSSCHNITT.tiefe} mm`;
     if (art === "backofen") return "595 × 560 × 550 mm (H × B × T)";
     if (art === "spuelmaschine") return `${g.breite === 450 ? "450" : "600"} mm Nischenbreite`;
-    return "600 mm Hängeschrank, Unterkante 1540 mm";
+    return `600 mm Hängeschrank, Unterkante ${HAUBE_UK} mm`;
   };
 
   /* --- Anschlüsse --- */
