@@ -8,7 +8,7 @@ import { eur, projektsumme, stueckliste, variante, zahl } from "@/lib/berechnung
 import { istFreigegeben } from "@/lib/ableitung";
 import { useDemo } from "@/store/demo";
 import {
-  Abschnitt, Bestaetigung, Flaeche, Hinweisband, Inhalt, Knopf, Marke,
+  Abschnitt, Bestaetigung, Druckbogen, Flaeche, Hinweisband, Inhalt, Knopf, Marke,
   Seitenkopf, Tabelle, Td, Th, melde,
 } from "@/components/ui/kit";
 
@@ -66,7 +66,13 @@ export default function Spezifikationen() {
   };
 
   return (
-    <>
+    <div className="drucksache">
+      <Druckbogen
+        titel="Spezifikation und Kosten"
+        projekt={PROJEKT.name}
+        zeile={`${WOHNUNGEN.length} Einheiten · ${KUECHENTYPEN.length} Küchentypen · alle Beträge netto`}
+        stand={`Preisstand ${PREISSTAND}, gültig bis ${PREIS_GUELTIG_BIS} · ${LIEFERANT}`}
+      />
       <Seitenkopf
         titel="Spezifikationen und Kosten"
         kontext={`${WOHNUNGEN.length} Einheiten · ${KUECHENTYPEN.length} Typen · alle Beträge netto · Preisstand ${PREISSTAND}, gültig bis ${PREIS_GUELTIG_BIS} · ${LIEFERANT}`}
@@ -78,18 +84,18 @@ export default function Spezifikationen() {
             </Knopf>
           </>
         }
-        hinweis={
-          !alleFrei ? (
+      />
+
+      <Inhalt breit>
+        {!alleFrei && (
+          <div className="mb-5">
             <Hinweisband titel="Noch nicht festschreibbar">
               {KUECHENTYPEN.filter((t) => !istFreigegeben(t, freigaben)).map((t) => t.id).join(", ")} sind
               nicht bestätigt. Die Mengen unten rechnen mit der hinterlegten Standardwahl, sind aber
               noch nicht freigabefähig.
             </Hinweisband>
-          ) : undefined
-        }
-      />
-
-      <Inhalt breit>
+          </div>
+        )}
         <Abschnitt titel="Projektsumme">
           <Flaeche>
             <Tabelle>
@@ -145,7 +151,7 @@ export default function Spezifikationen() {
         <Abschnitt
           titel="Aggregierte Mengen über das Projekt"
           aktion={
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="nicht-drucken flex flex-wrap items-center gap-1.5">
               {GRUPPEN.map((g) => (
                 <button
                   key={g.id}
@@ -211,13 +217,13 @@ export default function Spezifikationen() {
         </Abschnitt>
 
         <Abschnitt
-          titel="Stückliste je Typ"
+          titel={`Stückliste je Typ · ${detailTyp}`}
           aktion={
             <select
               value={detailTyp}
               onChange={(e) => setDetailTyp(e.target.value)}
               aria-label="Typ wählen"
-              className="rounded-sm border border-line bg-paper px-2 py-[3px] text-[11.5px] text-ink"
+              className="nicht-drucken rounded-sm border border-line bg-paper px-2 py-[3px] text-[11.5px] text-ink"
             >
               {KUECHENTYPEN.map((t) => (
                 <option key={t.id} value={t.id}>{t.id} · {t.bezeichnung}</option>
@@ -340,6 +346,6 @@ export default function Spezifikationen() {
           </>
         }
       />
-    </>
+    </div>
   );
 }

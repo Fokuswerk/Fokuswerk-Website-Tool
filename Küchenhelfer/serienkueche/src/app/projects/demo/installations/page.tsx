@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { Printer } from "lucide-react";
-import { KUECHENTYPEN } from "@/data/projekt";
+import { KUECHENTYPEN, PROJEKT } from "@/data/projekt";
 import { variante, zahl } from "@/lib/berechnung";
 import { anschluesse, istFreigegeben } from "@/lib/ableitung";
 import { useDemo } from "@/store/demo";
 import { Ansicht } from "@/components/plan/Ansicht";
 import {
-  Abschnitt, Flaeche, Hinweisband, Inhalt, Knopf, Marke,
+  Abschnitt, Druckbogen, Flaeche, Hinweisband, Inhalt, Knopf, Marke,
   Seitenkopf, Tabelle, Td, Th,
 } from "@/components/ui/kit";
 
@@ -34,7 +34,13 @@ export default function Installationsplanung() {
   const liste = frei ? anschluesse(v, typ) : [];
 
   return (
-    <>
+    <div className="drucksache">
+      <Druckbogen
+        titel={`Installationsplanung ${typ.id}`}
+        projekt={PROJEKT.name}
+        zeile={`${typ.bezeichnung} · ${typ.wohnungen.length} Einheiten erhalten dieselben Anschlusspositionen`}
+        stand="Maße ab Zeilenanfang, Höhen über Oberkante Fertigfußboden"
+      />
       <Seitenkopf
         titel="Installationsplanung"
         kontext={`${typ.id} · ${typ.wohnungen.length} Einheiten erhalten dieselben Anschlusspositionen · Maße ab Zeilenanfang und über Oberkante Fertigfußboden`}
@@ -167,6 +173,6 @@ export default function Installationsplanung() {
           </div>
         )}
       </Inhalt>
-    </>
+    </div>
   );
 }

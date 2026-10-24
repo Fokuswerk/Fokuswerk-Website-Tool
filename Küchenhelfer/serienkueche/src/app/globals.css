@@ -255,17 +255,66 @@ body {
   }
   .drucken-kopf-zeile.drucken-fein { margin-top: 3pt; font-size: 8.5pt; color: #555; }
 
-  /* Chrome druckt fest positionierte Elemente auf jeder Seite. */
+  /* Chrome druckt fest positionierte Elemente auf jeder Seite. Sie liegen
+     dabei ueber dem Satzspiegel, nicht im Rand — deshalb deckt die Zeile mit
+     Weiss ab, und der Inhalt bekommt unten Luft, damit die letzte Seite
+     nicht gegen sie laeuft. */
   .drucken-fuss {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
+    background: #ffffff;
     border-top: 0.6pt solid #bbb;
     padding-top: 4pt;
+    padding-bottom: 2pt;
     font-size: 7.5pt;
     color: #666;
   }
+  .unterlagen, .drucksache { padding-bottom: 12mm; }
 
   @page { margin: 16mm 16mm 20mm 16mm; }
+
+  /* ------- Profibereich auf Papier -------
+     Dieselben Regeln wie fuer die Unterlagen: am Bildschirm traegt die
+     Navigation den Zusammenhang, auf Papier muss das Blatt allein stehen. */
+  .drucksache,
+  .drucksache * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .drucksache { color: #000; font-size: 10.5pt; }
+  .drucksache table { font-size: 9pt; }
+
+  /* Der Rahmen um jede Flaeche darf bleiben, der Schatten nicht. */
+  .drucksache [class*="rounded-md"],
+  .drucksache [class*="rounded-sm"] { box-shadow: none !important; }
+
+  /* Navigation ist Bildschirmsache. Auf Papier nimmt sie nur Platz weg,
+     und ohne sie braucht es auch die zweispaltige Aufteilung nicht mehr. */
+  .nur-bildschirm { display: none !important; }
+  .druckraster { display: block !important; }
+
+  /* Die Innenabstaende des Bildschirms verschwenden auf A4 eine Spalte. */
+  .drucksache > div { padding-left: 0 !important; padding-right: 0 !important; }
+
+  /* Tabellen in voller Breite statt seitlich abgeschnitten, und die
+     zweitrangigen Spalten kommen auf Papier wieder dazu. */
+  .drucksache .overflow-x-auto { overflow: visible !important; }
+  .drucksache table { min-width: 0 !important; width: 100% !important; }
+  .drucksache td, .drucksache th { word-break: break-word; }
+  .drucksache [class*="xl:table-cell"] { display: table-cell !important; }
+
+  .drucksache thead { display: table-header-group; }
+  .drucksache tr { break-inside: avoid; }
+  .drucksache section { break-inside: auto; }
+  .drucksache h2 { break-after: avoid; }
+
+  /* Helle Grautoene sind fuer Bildschirme gemacht. */
+  .drucksache [class*="text-ink-3"] { color: #555 !important; }
+  .drucksache [class*="text-ink-2"] { color: #222 !important; }
+
+  /* Zeichnungen und Karten nicht ueber den Seitenrand brechen. */
+  .drucksache svg { break-inside: avoid; }
+
+  /* Aus zwei Spalten wird auf Papier eine: 380 mm Nebenspalte gibt es nicht. */
+  .drucksache .grid[class*="xl:grid-cols-"] { display: block !important; }
+  .drucksache .grid[class*="xl:grid-cols-"] > * + * { margin-top: 10pt; }
 }

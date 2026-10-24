@@ -22,14 +22,14 @@ export function Rahmen({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-full lg:grid lg:grid-cols-[246px_minmax(0,1fr)]">
+    <div className="druckraster min-h-full lg:grid lg:grid-cols-[246px_minmax(0,1fr)]">
       {/* Leiste auf grossen Schirmen */}
-      <div className="sticky top-0 hidden h-screen lg:block">
+      <div className="nur-bildschirm sticky top-0 hidden h-screen lg:block">
         <Seitenleiste />
       </div>
 
       {/* Leiste als Schublade auf Tablet und Handy */}
-      <div className="lg:hidden">
+      <div className="nur-bildschirm lg:hidden">
         <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-paper/85 px-4 py-3 backdrop-blur-xl backdrop-saturate-150">
           <button
             onClick={() => setOffen(true)}

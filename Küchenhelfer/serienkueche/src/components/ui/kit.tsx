@@ -33,6 +33,47 @@ export function Seitenkopf({
   );
 }
 
+/**
+ * Briefkopf und Fusszeile, die nur auf Papier erscheinen.
+ *
+ * Am Bildschirm traegt die Navigation den Zusammenhang: man sieht links,
+ * in welchem Projekt man ist. Ein ausgedrucktes Blatt hat das nicht und
+ * muss fuer sich stehen — mit Projekt, Gegenstand, Stand und einer
+ * Fusszeile, die Chrome auf jeder Seite wiederholt.
+ */
+export function Druckbogen({
+  titel,
+  projekt,
+  zeile,
+  stand,
+}: {
+  titel: string;
+  projekt: string;
+  zeile?: string;
+  stand?: string;
+}) {
+  const heute = new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" });
+  return (
+    <>
+      <div className="nur-drucken drucken-kopf">
+        <div className="drucken-kopf-zeile">
+          <strong>{projekt} — {titel}</strong>
+          <span>Gedruckt {heute}</span>
+        </div>
+        {(zeile || stand) && (
+          <div className="drucken-kopf-zeile drucken-fein">
+            <span>{zeile}</span>
+            <span>{stand}</span>
+          </div>
+        )}
+      </div>
+      <div className="nur-drucken drucken-fuss">
+        {projekt} · {titel} · {heute} · Prototyp, kein verbindliches Angebot
+      </div>
+    </>
+  );
+}
+
 export function Inhalt({ children, breit }: { children: ReactNode; breit?: boolean }) {
   return (
     <div className={`px-6 py-8 lg:px-9 lg:py-10 ${breit ? "" : "max-w-[1400px]"}`}>{children}</div>
