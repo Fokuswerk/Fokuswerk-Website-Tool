@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 import { brutto, eur } from "@/lib/berechnung";
 import { alsKuechentyp, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/lib/planer";
 import { Kuechenbild } from "@/components/warm/Kuechenbild";
-import { Wandband } from "@/components/warm/Wandband";
+import { Raumfrage } from "@/components/warm/Raumfrage";
 import { FOTOS, FOTO_HINWEIS, FOTO_URHEBER, fotoUrl, type Foto } from "@/data/fotos";
 import { anzahlModelle, ARTEN, FOTO_QUELLE, FOTOS_LIZENZIERT, GERAETEFOTO_HINWEIS, PREISSTAND_GERAETE, schaustueck } from "@/data/geraete";
 
@@ -226,7 +226,7 @@ export default function Start() {
            laeuft links und rechts am Band vorbei weiter und wird dadurch zum
            Motiv, statt weichgezeichnet zu werden. */}
       <div className="relative z-10 -mt-[96px] sm:-mt-[150px]">
-        <Wandband />
+        <Raumfrage />
       </div>
 
       {/* ---------- So laeuft das sonst: Wiedererkennung ----------
