@@ -515,3 +515,110 @@ body {
   .drucksache .grid[class*="xl:grid-cols-"] { display: block !important; }
   .drucksache .grid[class*="xl:grid-cols-"] > * + * { margin-top: 10pt; }
 }
+
+/* === Farbwelten zur Auswahl ===
+   Fuenf wirklich verschiedene Welten, nicht fuenf Abstufungen desselben
+   Gruens. Die Helligkeiten sind in allen gleich — nur Farbton und Buntheit
+   aendern sich, deshalb bleiben saemtliche Kontraste rechnerisch dieselben.
+   Umschalten auf der Seite mit ?farben=1. Ist eine gewaehlt, fliegt der
+   Rest hier raus und die Werte wandern nach oben in :root. */
+  [data-farbwelt="oliv"] {
+    --color-creme: #f5f4ec;
+    --color-creme-2: #ebe8dd;
+    --color-linie-warm: #d7d5c9;
+    --color-linie-stark: #cdcbbf;
+    --color-kohle: #17140a;
+    --color-kohle-2: #565347;
+    --color-kohle-3: #6c695c;
+    --color-marke-tief: #1c240b;
+    --color-marke: #313b1a;
+    --color-marke-2: #46532a;
+    --color-marke-soft: #e7ecda;
+    --color-messing: #aa813c;
+    --color-messing-soft: #f7ebd7;
+    --color-salbei: #5d7145;
+    --color-salbei-soft: #e7eedf;
+    --color-butter: #bc9a40;
+    --color-butter-2: #e3d09d;
+    --color-butter-soft: #f6eed8;
+  }
+  [data-farbwelt="lehm"] {
+    --color-creme: #f9f2eb;
+    --color-creme-2: #f2e6db;
+    --color-linie-warm: #ded2c7;
+    --color-linie-stark: #d4c8bd;
+    --color-kohle: #1c1208;
+    --color-kohle-2: #5d5145;
+    --color-kohle-3: #736659;
+    --color-marke-tief: #3b1102;
+    --color-marke: #5c220d;
+    --color-marke-2: #7c351a;
+    --color-marke-soft: #fde3dc;
+    --color-messing: #789272;
+    --color-messing-soft: #e6f0e6;
+    --color-salbei: #4a7731;
+    --color-salbei-soft: #e5efe0;
+    --color-butter: #66b278;
+    --color-butter-2: #afdfbb;
+    --color-butter-soft: #e0f5e5;
+  }
+  [data-farbwelt="tinte"] {
+    --color-creme: #f6f3ed;
+    --color-creme-2: #ede8de;
+    --color-linie-warm: #d9d4ca;
+    --color-linie-stark: #cfcac0;
+    --color-kohle: #18130b;
+    --color-kohle-2: #585248;
+    --color-kohle-3: #6d685d;
+    --color-marke-tief: #0d203c;
+    --color-marke: #1d365d;
+    --color-marke-2: #2d4d7d;
+    --color-marke-soft: #dcebfe;
+    --color-messing: #ac8137;
+    --color-messing-soft: #f8ebd6;
+    --color-salbei: #4b689f;
+    --color-salbei-soft: #e3ecfa;
+    --color-butter: #bc9a40;
+    --color-butter-2: #e3d09d;
+    --color-butter-soft: #f6eed8;
+  }
+  [data-farbwelt="kohle"] {
+    --color-creme: #f6f3ee;
+    --color-creme-2: #ece8df;
+    --color-linie-warm: #d8d4cb;
+    --color-linie-stark: #cecac1;
+    --color-kohle: #17140c;
+    --color-kohle-2: #575349;
+    --color-kohle-3: #6c685e;
+    --color-marke-tief: #22201d;
+    --color-marke: #383731;
+    --color-marke-2: #4f4d47;
+    --color-marke-soft: #ebe9e6;
+    --color-messing: #af7f32;
+    --color-messing-soft: #f8ebd5;
+    --color-salbei: #6b6962;
+    --color-salbei-soft: #efebdb;
+    --color-butter: #be9940;
+    --color-butter-2: #e4cf9d;
+    --color-butter-soft: #f6eed8;
+  }
+  [data-farbwelt="rost"] {
+    --color-creme: #f8f2eb;
+    --color-creme-2: #f0e7db;
+    --color-linie-warm: #dcd3c7;
+    --color-linie-stark: #d2c9bd;
+    --color-kohle: #1a1208;
+    --color-kohle-2: #5b5145;
+    --color-kohle-3: #71675a;
+    --color-marke-tief: #400c00;
+    --color-marke: #611e00;
+    --color-marke-2: #832f00;
+    --color-marke-soft: #fce4d9;
+    --color-messing: #609399;
+    --color-messing-soft: #e1f0f3;
+    --color-salbei: #007f89;
+    --color-salbei-soft: #dbf0f1;
+    --color-butter: #29b0cb;
+    --color-butter-2: #9cddef;
+    --color-butter-soft: #d9f4fc;
+  }

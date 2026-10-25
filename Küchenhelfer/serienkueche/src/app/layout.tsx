@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Rahmen } from "@/components/layout/Rahmen";
+import { Farbwaehler } from "@/components/warm/Farbwaehler";
 import "./globals.css";
 
 /*
@@ -55,6 +56,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="de" className={`${plein.variable} ${geistMono.variable}`}>
       <body>
         <Rahmen>{children}</Rahmen>
+        {/* Nur mit ?farben=1 sichtbar. Fliegt raus, sobald eine Welt steht. */}
+        <Farbwaehler />
       </body>
     </html>
   );
