@@ -282,7 +282,7 @@ export default function Start() {
       </section>
 
       {/* ---------- Die Geräte, die wirklich drinstehen ---------- */}
-      <section className="border-y border-linie-warm bg-creme-2/70">
+      <section className="border-y border-linie-warm bg-creme">
         <div className="mx-auto max-w-[1240px] px-5 py-24 sm:px-8 sm:py-32">
           <div className="lg:flex lg:items-end lg:justify-between lg:gap-12">
             <h2 className="gross max-w-[20ch] text-[32px] font-bold leading-[1.08] text-kohle sm:text-[46px]">
@@ -360,7 +360,7 @@ export default function Start() {
       </section>
 
       {/* ---------- Dunkles Band, Bild bis an die Kante ---------- */}
-      <section className="auf-dunkel relative isolate overflow-hidden bg-kohle text-creme">
+      <section className="auf-dunkel relative isolate overflow-hidden bg-marke text-creme">
         <div className="lg:grid lg:grid-cols-[1fr_minmax(0,36%)]">
           {/* "ml-auto" schob die 760er Spalte an den rechten Rand ihrer Zelle —
                 auf 2560 px blieben links 904 px schwarzes Nichts, 35 % der
@@ -405,20 +405,20 @@ export default function Start() {
         <div className="mt-12 grid gap-5 lg:grid-cols-[1.35fr_1fr]">
           <figure className="relative h-[clamp(260px,42vw,480px)] overflow-hidden rounded-[3px]">
             <Bild f={FOTOS.insel} breite={1200} hoehe={1800} masse="(max-width: 1023px) 100vw, 664px" />
-            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/85 via-kohle/80 via-70% to-transparent p-5 text-[13.5px] font-medium text-creme">
+            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-marke-tief/85 via-marke-tief/80 via-70% to-transparent p-5 text-[13.5px] font-medium text-creme">
               Dunkle Fronten, heller Stein — dieselbe Technik, andere Oberfläche.
             </figcaption>
           </figure>
           <div className="grid gap-5">
             <figure className="relative h-[clamp(180px,20vw,230px)] overflow-hidden rounded-[3px]">
               <Bild f={FOTOS.licht} breite={1200} hoehe={1600} masse="(max-width: 1023px) 100vw, 492px" />
-              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/85 via-kohle/80 via-70% to-transparent p-4 text-[13px] font-medium text-creme">
+              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-marke-tief/85 via-marke-tief/80 via-70% to-transparent p-4 text-[13px] font-medium text-creme">
                 Kochfeld in der Platte, nichts hängt darüber.
               </figcaption>
             </figure>
             <figure className="relative h-[clamp(180px,20vw,230px)] overflow-hidden rounded-[3px]">
               <Bild f={FOTOS.marmor} breite={1200} hoehe={784} masse="(max-width: 1023px) 100vw, 492px" />
-              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/85 via-kohle/80 via-70% to-transparent p-4 text-[13px] font-medium text-creme">
+              <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-marke-tief/85 via-marke-tief/80 via-70% to-transparent p-4 text-[13px] font-medium text-creme">
                 Wandlänge gibt den Takt vor, nicht der Geschmack.
               </figcaption>
             </figure>

@@ -39,25 +39,25 @@
      warmer Akzent fuer Marken und Ziffern.
      Die Markenfarbe traegt grosse Flaechen und den Verlauf ueber dem
      Hero-Foto. Auf Pillen-Knoepfen hat sie nichts zu suchen. */
-  --color-marke: #313b1a;
-  --color-marke-2: #455329;
-  --color-marke-tief: #1c240b;
-  --color-marke-soft: #e7ecda;
-  --color-messing: #aa813c;
-  --color-messing-soft: #f6ebd8;
+  --color-marke: #292a2c;
+  --color-marke-2: #3e4041;
+  --color-marke-tief: #181a1b;
+  --color-marke-soft: #eaebed;
+  --color-messing: #8a8c8e;
+  --color-messing-soft: #edeff0;
 
-  --color-creme: #f5f3ed;
-  --color-creme-2: #ebe8de;
+  --color-creme: #f3f4f6;
+  --color-creme-2: #e8eaeb;
   --color-papier: #ffffff;
-  --color-kohle: #15140d;
-  --color-kohle-2: #555348;
-  --color-kohle-3: #6b695e;
+  --color-kohle: #141517;
+  --color-kohle-2: #535557;
+  --color-kohle-3: #696a6d;
   /* Nur noch im Produkt selbst, nicht in der Oberflaeche. */
-  --color-butter: #bc9a40;
-  --color-butter-2: #e3d09d;
-  --color-butter-soft: #f6eed8;
-  --color-salbei: #5d7144;
-  --color-salbei-soft: #e8eede;
+  --color-butter: #9f9173;
+  --color-butter-2: #dad0bb;
+  --color-butter-soft: #f4f0e7;
+  --color-salbei: #5d6e60;
+  --color-salbei-soft: #e8efe9;
   /* EIN Radius, nicht zehn. Gemessen an den eigenen Referenzseiten:
      kaemper 2px, andre-henken 2px, karosseriebau genau ein --radius,
      glanzwerk 12px. Auf dieser Seite lagen zehn Werte zwischen 3 und 22 px
@@ -65,8 +65,8 @@
      aussah. Eine Kueche ist ein rechtwinkliges Ding; 3 px ist die Kante
      eines gefrästen Blechs, 22 px ist eine Seifenblase. */
   --radius: 3px;
-  --color-linie-warm: #d8d5c7;
-  --color-linie-stark: #cecbbb;
+  --color-linie-warm: #d6d8d9;
+  --color-linie-stark: #cacccf;
   /* Holz aus dem 3D-Bild — die einzige Farbe, die in Zeichnungen auftaucht. */
   --color-holz: #cbae87;
   --color-holz-soft: #e8dcc8;
@@ -238,25 +238,25 @@ body {
        also sind genau diese Stufen angehoben. Ueber 82 Prozent bleibt es fast
        klar: das ist die helle Decke am Fenster, und die soll man sehen. */
     linear-gradient(0deg,
-      rgba(20,27,19,0.92) 0%,
-      rgba(20,27,19,0.88) 30%,
-      rgba(20,27,19,0.74) 50%,
-      rgba(22,30,21,0.40) 68%,
-      rgba(24,33,23,0.10) 82%,
+      rgba(16,17,19,0.92) 0%,
+      rgba(16,17,19,0.88) 30%,
+      rgba(16,17,19,0.74) 50%,
+      rgba(18,19,21,0.40) 68%,
+      rgba(20,21,23,0.10) 82%,
       transparent 92%),
-    linear-gradient(180deg, rgba(20,27,19,0.50) 0%, transparent 112px);
+    linear-gradient(180deg, rgba(16,17,19,0.50) 0%, transparent 112px);
 }
 @media (min-width: 640px) {
   .hero-schleier {
     background:
       linear-gradient(0deg,
-        rgba(20,27,19,0.88) 0%,
-        rgba(20,27,19,0.76) 30%,
-        rgba(22,30,21,0.44) 52%,
-        rgba(24,33,23,0.12) 70%,
+        rgba(16,17,19,0.88) 0%,
+        rgba(16,17,19,0.76) 30%,
+        rgba(18,19,21,0.44) 52%,
+        rgba(20,21,23,0.12) 70%,
         transparent 84%),
-      linear-gradient(90deg, rgba(20,27,19,0.46) 0%, rgba(20,27,19,0.10) 46%, transparent 68%),
-      linear-gradient(180deg, rgba(20,27,19,0.52) 0%, transparent 120px);
+      linear-gradient(90deg, rgba(16,17,19,0.46) 0%, rgba(16,17,19,0.10) 46%, transparent 68%),
+      linear-gradient(180deg, rgba(16,17,19,0.52) 0%, transparent 120px);
   }
 }
 
@@ -515,113 +515,3 @@ body {
   .drucksache .grid[class*="xl:grid-cols-"] { display: block !important; }
   .drucksache .grid[class*="xl:grid-cols-"] > * + * { margin-top: 10pt; }
 }
-
-/* === Farbwelten zur Auswahl ===
-   Die Regel, die vorher fehlte: GROSSE FLAECHEN muessen in die Naehe der
-   Fotos, der kleine AKZENT darf weit weg sein. Nachgemessen liegen fuenf
-   der sechs Fotos bei 55-106 Grad (das Hero-Foto bei 71, in seinem unteren
-   Drittel sogar 61-65, und dort stoesst es an die Flaeche). Jeder bisherige
-   Grundton lag 53 bis 194 Grad davon weg — deshalb hat nie etwas gematcht,
-   und deshalb war das Messing bei 78 Grad das Einzige, was immer passte.
-   Alle Gruende hier liegen zwischen 46 und 88 Grad. Helligkeiten wie immer
-   in allen Welten gleich, damit die Kontraste dieselben bleiben. */
-  [data-farbwelt="asche"] {
-    --color-creme: #f6f3ee;
-    --color-creme-2: #ede8df;
-    --color-linie-warm: #d9d4cb;
-    --color-linie-stark: #cfcac1;
-    --color-kohle: #18130c;
-    --color-kohle-2: #585249;
-    --color-kohle-3: #6d685e;
-    --color-marke-tief: #24201a;
-    --color-marke: #3c362e;
-    --color-marke-2: #534c42;
-    --color-marke-soft: #ece9e5;
-    --color-messing: #ad8031;
-    --color-messing-soft: #f7ebd6;
-    --color-salbei: #44764f;
-    --color-salbei-soft: #e1f0e4;
-    --color-butter: #bf9844;
-    --color-butter-2: #e5cf9e;
-    --color-butter-soft: #f7eed8;
-  }
-  [data-farbwelt="bronze"] {
-    --color-creme: #f7f3ec;
-    --color-creme-2: #eee7dd;
-    --color-linie-warm: #dad4c9;
-    --color-linie-stark: #d0cabf;
-    --color-kohle: #19130a;
-    --color-kohle-2: #595247;
-    --color-kohle-3: #6e675c;
-    --color-marke-tief: #2c1d09;
-    --color-marke: #453319;
-    --color-marke-2: #604828;
-    --color-marke-soft: #f1e8dc;
-    --color-messing: #ab822c;
-    --color-messing-soft: #f6ecd6;
-    --color-salbei: #43774f;
-    --color-salbei-soft: #e1f0e4;
-    --color-butter: #bf9844;
-    --color-butter-2: #e5cf9e;
-    --color-butter-soft: #f7eed8;
-  }
-  [data-farbwelt="terra"] {
-    --color-creme: #f9f2eb;
-    --color-creme-2: #f2e6da;
-    --color-linie-warm: #ded2c7;
-    --color-linie-stark: #d4c8bd;
-    --color-kohle: #1b1208;
-    --color-kohle-2: #5d5144;
-    --color-kohle-3: #726659;
-    --color-marke-tief: #3f0d00;
-    --color-marke: #601f00;
-    --color-marke-2: #813100;
-    --color-marke-soft: #fbe4d8;
-    --color-messing: #759272;
-    --color-messing-soft: #e6f0e6;
-    --color-salbei: #59705a;
-    --color-salbei-soft: #e2efe3;
-    --color-butter: #bf9844;
-    --color-butter-2: #e5cf9e;
-    --color-butter-soft: #f7eed8;
-  }
-  [data-farbwelt="ocker"] {
-    --color-creme: #f7f3eb;
-    --color-creme-2: #ede8db;
-    --color-linie-warm: #dad4c8;
-    --color-linie-stark: #d0cabe;
-    --color-kohle: #181308;
-    --color-kohle-2: #595245;
-    --color-kohle-3: #6e685a;
-    --color-marke-tief: #2d1d00;
-    --color-marke: #483300;
-    --color-marke-2: #624900;
-    --color-marke-soft: #f1e9d3;
-    --color-messing: #5b93a1;
-    --color-messing-soft: #e1f0f5;
-    --color-salbei: #487178;
-    --color-salbei-soft: #dbf0f3;
-    --color-butter: #bf9844;
-    --color-butter-2: #e5cf9e;
-    --color-butter-soft: #f7eed8;
-  }
-  [data-farbwelt="tabak"] {
-    --color-creme: #f8f2eb;
-    --color-creme-2: #f0e6db;
-    --color-linie-warm: #ddd3c7;
-    --color-linie-stark: #d2c9bd;
-    --color-kohle: #1b1208;
-    --color-kohle-2: #5b5145;
-    --color-kohle-3: #71665a;
-    --color-marke-tief: #351800;
-    --color-marke: #522c09;
-    --color-marke-2: #6f4017;
-    --color-marke-soft: #f8e6d6;
-    --color-messing: #a88331;
-    --color-messing-soft: #f5ecd6;
-    --color-salbei: #457650;
-    --color-salbei-soft: #e1f0e4;
-    --color-butter: #bf9844;
-    --color-butter-2: #e5cf9e;
-    --color-butter-soft: #f7eed8;
-  }
