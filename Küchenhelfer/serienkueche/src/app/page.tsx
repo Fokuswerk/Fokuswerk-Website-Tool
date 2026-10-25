@@ -7,7 +7,6 @@ import { ArrowRight } from "lucide-react";
 import { brutto, eur } from "@/lib/berechnung";
 import { alsKuechentyp, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/lib/planer";
 import { Kuechenbild } from "@/components/warm/Kuechenbild";
-import { Beweisblatt } from "@/components/warm/Beweisblatt";
 import { FOTOS, FOTO_HINWEIS, FOTO_URHEBER, fotoUrl, type Foto } from "@/data/fotos";
 import { anzahlModelle, ARTEN, FOTO_QUELLE, FOTOS_LIZENZIERT, GERAETEFOTO_HINWEIS, PREISSTAND_GERAETE, schaustueck } from "@/data/geraete";
 
@@ -128,6 +127,25 @@ function Knopf({ href, children, hell = false }: { href: string; children: React
   );
 }
 
+/** Was jeder kennt, der schon mal eine Kueche gekauft hat. */
+const SAMSTAGE: Array<[string, string, string]> = [
+  [
+    "01",
+    "Samstag eins. Zwei Stunden Beratung, am Ende kein Preis.",
+    "Gemessen hat der Verkäufer, gezeichnet hat er auch. Mitnehmen darfst du den Plan nicht.",
+  ],
+  [
+    "02",
+    "Samstag zwei. Ein Angebot über eine runde Summe.",
+    "Vier Zeilen, ein Gesamtbetrag. Was die Spüle kostet und was die Montage, steht nicht drin.",
+  ],
+  [
+    "03",
+    "Samstag drei. Der Kühlschrank steht vor dem Fenster.",
+    "Im Plan sah es nach genug Platz aus. Auffallen wird es am Liefertag.",
+  ],
+];
+
 export default function Start() {
   const beispiele = useMemo(
     () =>
@@ -200,17 +218,43 @@ export default function Start() {
         </main>
       </section>
 
-      {/* ---------- Der Beweis, halb ins Bild geschoben ---------- */}
-      <section className="relative z-10 -mt-24 sm:-mt-28">
-        <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
-          <div className="flaeche flaeche-hoch rounded-[26px] px-5 pb-8 pt-7 sm:px-10 sm:pb-10 sm:pt-9">
-            <div className="flex flex-wrap items-baseline justify-between gap-3">
-              <div className="vorzeile">Das kommt dabei heraus</div>
-              <div className="text-[13.5px] text-kohle-3">Gerechnet, nicht gezeichnet.</div>
-            </div>
-            <div className="mt-6">
-              <Beweisblatt />
-            </div>
+      {/* ---------- So laeuft das sonst: Wiedererkennung ----------
+           Hier standen nacheinander drei Versuche, das Rechnen vorzufuehren:
+           ein Regler mit Preis, einer mit den Saetzen des Planers, dann das
+           Stuecklistenblatt. Alle drei waren richtig und alle drei falsch an
+           dieser Stelle — direkt nach dem Auftakt will niemand verstehen, wie
+           wir arbeiten. Er will sich wiedererkennen.
+           Deshalb steht hier jetzt kein Beweis, keine Tabelle und keine Zahl,
+           sondern das, was jeder kennt, der schon mal eine Kueche gekauft
+           hat. Nichts daran muss man lesen lernen. */}
+      <section className="auf-dunkel relative isolate bg-marke text-creme">
+        <div className="mx-auto max-w-[1240px] px-5 py-20 sm:px-8 sm:py-28">
+          <h2 className="gross max-w-[14ch] text-[34px] font-bold leading-[1.04] sm:text-[52px]">
+            So läuft das sonst.
+          </h2>
+
+          <ol className="mt-12 sm:mt-16">
+            {SAMSTAGE.map(([nr, satz, dazu]) => (
+              <li
+                key={nr}
+                className="grid gap-x-8 gap-y-2 border-t border-creme/15 py-7 sm:grid-cols-[64px_minmax(0,1fr)] sm:py-9"
+              >
+                <span className="gross ziffern text-[15px] leading-none text-messing sm:pt-2">{nr}</span>
+                <div className="min-w-0">
+                  <p className="gross max-w-[26ch] text-[23px] font-semibold leading-[1.18] text-creme sm:text-[31px]">
+                    {satz}
+                  </p>
+                  <p className="mt-2.5 max-w-[52ch] text-[15.5px] leading-relaxed text-creme/60">{dazu}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <p className="gross mt-12 text-[26px] font-semibold leading-tight text-creme sm:mt-14 sm:text-[36px]">
+            Kann man so machen. Muss man nicht.
+          </p>
+          <div className="mt-8">
+            <Knopf href="/kueche" hell>Küche planen</Knopf>
           </div>
         </div>
       </section>
