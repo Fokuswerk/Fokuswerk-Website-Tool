@@ -166,7 +166,10 @@ export default function Start() {
         Zum Inhalt springen
       </a>
       {/* ---------- Auftakt: ein Bild, ein Satz ---------- */}
-      <section className="auf-dunkel relative isolate flex min-h-[86vh] flex-col">
+      {/* 86vh hiess: unten lugt immer der naechste Abschnitt rein, und genau das
+          ist "es ist nicht Fullscreen". svh statt vh, damit auf dem Handy die
+          ein- und ausfahrende Browserleiste das Bild nicht springen laesst. */}
+      <section className="auf-dunkel relative isolate flex min-h-svh flex-col">
         <div className="absolute inset-0 -z-10 overflow-hidden bg-marke-tief">
           <Bild f={FOTOS.hero} breite={2400} hoehe={1500} schleier={false} prioritaet masse="100vw" />
           <span
@@ -314,7 +317,10 @@ export default function Start() {
       </section>
 
       {/* ---------- Bild, das über den Rand läuft ---------- */}
-      <section className="mx-auto grid max-w-[1240px] items-center gap-10 px-5 pb-24 sm:px-8 sm:pb-32 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
+      {/* Gemessen: 0 px Abstand zur Oberkante des vorherigen Abschnitts — das
+          Bild stiess ohne Luft direkt an den Farbwechsel. Jetzt steht es mit
+          Luft oben und unten mittig im hellen Abschnitt. */}
+      <section className="mx-auto grid max-w-[1240px] items-center gap-10 px-5 py-24 sm:px-8 sm:py-32 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
         <div className="relative h-[clamp(280px,46vw,540px)] overflow-hidden rounded-[3px] lg:-ml-[max(2rem,calc((100vw-1240px)/2+2rem))] lg:rounded-l-none">
           <Bild f={FOTOS.gruen} breite={1800} hoehe={1200} masse="(max-width: 1023px) 100vw, calc(50vw + 8px)" />
         </div>
@@ -336,7 +342,11 @@ export default function Start() {
       {/* ---------- Dunkles Band, Bild bis an die Kante ---------- */}
       <section className="auf-dunkel relative isolate overflow-hidden bg-kohle text-creme">
         <div className="lg:grid lg:grid-cols-[1fr_minmax(0,36%)]">
-          <div className="mx-auto w-full max-w-[1240px] px-5 py-24 sm:px-8 sm:py-32 lg:ml-auto lg:mr-0 lg:max-w-[760px] lg:pr-16">
+          {/* "ml-auto" schob die 760er Spalte an den rechten Rand ihrer Zelle —
+                auf 2560 px blieben links 904 px schwarzes Nichts, 35 % der
+                Breite. Jetzt beginnt der Text genau am Seitenrand wie jeder
+                andere Abschnitt auch. */}
+          <div className="w-full px-5 py-24 sm:px-8 sm:py-32 lg:py-36 lg:pl-[max(2rem,calc((100vw-1240px)/2))] lg:pr-16">
             <h2 className="gross text-[32px] font-bold leading-[1.08] sm:text-[46px]">
               Und wenn es am Ende nicht passt?
             </h2>
@@ -421,7 +431,12 @@ export default function Start() {
           {beispiele.map((b) => (
             <div key={b.titel} className="flex flex-col px-0 py-9 sm:px-7 sm:py-10 sm:first:pl-0 sm:last:pr-0">
               <div className="vorzeile">{b.titel}</div>
-              <div className="ziffern mt-5 text-[42px] font-medium leading-none tracking-[-0.03em] text-kohle sm:text-[46px]">
+              {/* Die Mono traegt kleine Messwerte gut — Modellnummern, Masse,
+                  Etiketten. Als 46-px-Zahl liest sie sich technisch statt
+                  wertig: "wieder sehr KI-lastig". Grosse Zahlen stehen deshalb
+                  in Plein. Zappeln koennen sie hier nicht, die drei Beispiele
+                  sind gerechnet und stehen fest. */}
+              <div className="gross mt-5 text-[46px] font-bold leading-none tracking-[-0.03em] text-kohle [font-variant-numeric:lining-nums] sm:text-[52px]">
                 {eur(brutto(b.plan.preis))}
               </div>
               <div className="mt-3.5 max-w-[34ch] text-[14.5px] leading-snug text-kohle-2">{b.satz}</div>
