@@ -6,7 +6,9 @@ import { useEffect, useState } from "react";
  * Der Farbwähler — ein Werkzeug, keine Funktion der Seite.
  *
  * Fünf Farbwelten zum Durchklicken an der echten Seite, weil ein Farbblatt
- * lügt: dieselben Töne wirken in realistischen Flächenanteilen völlig anders
+ * lügt — und alle fünf sind diesmal an den FOTOS verankert: nachgemessen
+ * liegen fünf der sechs Bilder bei 55 bis 106 Grad Farbton, das Hero-Foto bei
+ * 71. Jeder frühere Grundton lag 53 bis 194 Grad davon weg. Deshalb: dieselben Töne wirken in realistischen Flächenanteilen völlig anders
  * als nebeneinander in Streifen. Erscheint nur mit ?farben=1 in der Adresse
  * und merkt sich die Wahl, damit sie beim Weiterklicken in den Planer bleibt.
  *
@@ -15,16 +17,16 @@ import { useEffect, useState } from "react";
  */
 
 const WELTEN: Array<{ id: string; titel: string; satz: string; punkt: string }> = [
-  { id: "oliv", titel: "Oliv", satz: "warmes Grün, Messing", punkt: "#313b1a" },
-  { id: "lehm", titel: "Lehm", satz: "Terrakotta, Salbei", punkt: "#5c220d" },
-  { id: "tinte", titel: "Tinte", satz: "Tiefblau, Messing", punkt: "#1d365d" },
-  { id: "kohle", titel: "Kohle", satz: "ohne Farbe, nur Messing", punkt: "#383731" },
-  { id: "rost", titel: "Rost", satz: "gebranntes Orange, Petrol", punkt: "#611e00" },
+  { id: "asche", titel: "Asche", satz: "warmes Fast-Schwarz, Messing", punkt: "#3c362e" },
+  { id: "bronze", titel: "Bronze", satz: "tiefe Bronze, Messing", punkt: "#453319" },
+  { id: "terra", titel: "Terrakotta", satz: "gebrannter Ton, Salbei", punkt: "#601f00" },
+  { id: "ocker", titel: "Ocker", satz: "dunkles Gold, Petrol", punkt: "#483300" },
+  { id: "tabak", titel: "Tabak", satz: "Leder und Tabak, Messing", punkt: "#522c09" },
 ];
 
 export function Farbwaehler() {
   const [zeigen, setzeZeigen] = useState(false);
-  const [welt, setzeWelt] = useState("oliv");
+  const [welt, setzeWelt] = useState("asche");
 
   useEffect(() => {
     const an = new URLSearchParams(window.location.search).has("farben")
@@ -32,7 +34,7 @@ export function Farbwaehler() {
     if (!an) return;
     localStorage.setItem("farbwaehler", "an");
     setzeZeigen(true);
-    const gemerkt = localStorage.getItem("farbwelt") ?? "oliv";
+    const gemerkt = localStorage.getItem("farbwelt") ?? "asche";
     setzeWelt(gemerkt);
     document.documentElement.dataset.farbwelt = gemerkt;
   }, []);
