@@ -55,7 +55,11 @@ export function Kuechenbild({
   const fenster = typ.oeffnungen.filter((o) => o.art === "fenster" && o.wand === zeile.wand);
 
   const randX = 180;
-  const randUnten = nummernAb !== undefined ? 360 : 150;
+  /* Schmale Plaetze bekommen ihre Nummer eine Reihe tiefer; dafuer braucht
+     die Zeichnung unten mehr Luft — aber nur dann, sonst waere unter jedem
+     Plan ein leerer Streifen. */
+  const schmaleDa = plaetze.some((p) => p.breite < 200);
+  const randUnten = nummernAb === undefined ? 150 : schmaleDa ? 620 : 360;
   const randOben = waehlbar ? 300 : 140;
   const vb = `${-randX} ${-randOben} ${zeile.laenge + 2 * randX} ${RH + randOben + randUnten}`;
 
@@ -72,7 +76,15 @@ export function Kuechenbild({
 
       {/* Fenster */}
       {fenster.map((f) => {
+        /* Zuschneiden, nicht klemmen. Math.max(0, ...) machte aus einem
+           Fenster, das links NEBEN diesem Wandstueck liegt, ein Fenster am
+           linken Rand der Zeichnung — mitten ueber dem Kuehlschrank. Jetzt
+           wird der sichtbare Ausschnitt gerechnet, und wo nichts davon in
+           diese Zeile faellt, wird nichts gezeichnet. */
         const von = Math.max(0, f.von - zeile.start);
+        const bis = Math.min(zeile.laenge, f.von + f.breite - zeile.start);
+        if (bis <= von) return null;
+        const fb = bis - von;
         const br = f.bruestung ?? 900;
         const h = f.hoehe ?? 1400;
         return (
@@ -80,17 +92,17 @@ export function Kuechenbild({
             {/* Als Fenster erkennbar machen: heller Ausschnitt, kraeftiger
                 Rahmen, Sprossen und eine Bank darunter. Ohne das liest es
                 sich wie ein hoher Schrank. */}
-            <rect x={von} y={y(br + h)} width={f.breite} height={h} rx={20} className="fill-papier" />
+            <rect x={von} y={y(br + h)} width={fb} height={h} rx={20} className="fill-papier" />
             <rect
-              x={von} y={y(br + h)} width={f.breite} height={h} rx={20}
+              x={von} y={y(br + h)} width={fb} height={h} rx={20}
               fill="none" strokeWidth={30} className="stroke-kohle-3"
             />
             <path
-              d={`M${von + f.breite / 2} ${y(br + h)} V${y(br)} M${von} ${y(br + h / 2)} H${von + f.breite}`}
+              d={`M${von + fb / 2} ${y(br + h)} V${y(br)} M${von} ${y(br + h / 2)} H${von + fb}`}
               strokeWidth={20}
               className="stroke-kohle-3"
             />
-            <rect x={von - 70} y={y(br)} width={f.breite + 140} height={46} rx={16} className="fill-kohle-3" />
+            <rect x={von - 70} y={y(br)} width={fb + 140} height={46} rx={16} className="fill-kohle-3" />
           </g>
         );
       })}
@@ -99,36 +111,58 @@ export function Kuechenbild({
       {plaetze.map((p) => {
         const r = rolleVon(p.modulId);
         if (istHoch(p.modulId) || r === "leiste") return null;
+        /* Dieselbe Schwelle wie haengeplaetze() im Planer. Ohne sie zeichnete
+           der Aufriss auch ueber einem 30er Unterschrank einen vollwertigen
+           Haengeschrank — einen, den Kennzahl, Stueckliste und Preis nicht
+           kennen. */
+        if (p.breite < 450) return null;
         const stoert = fenster.some((f) => {
           const v = f.von - zeile.start;
           return p.von < v + f.breite && p.bis > v;
         });
         if (stoert) return null;
         const herd = r === "herd";
+        /* Ueber dem Kochfeld stand hier ein dunkler Kasten auf 60 Prozent
+           Hoehe — eine Esse. Stueckliste, Kennzahl und Preis rechnen an
+           derselben Stelle aber einen vollwertigen Haengeschrank (HS600).
+           Beides zugleich ging nicht auf: die Zeichnung zeigte etwas, das
+           niemand bestellt, und verschwieg etwas, das jeder bezahlt.
+           Jetzt steht dort derselbe Schrank wie ueberall, und die
+           Flachschirmhaube sitzt als flaches Band an seiner Unterkante —
+           genau so, wie die Unterlagen sie beschreiben ("Flachschirm, im
+           Haengeschrank, Unterkante 1540 mm"). */
+        const HAUBE_H = 80;
         return (
           <g key={`os-${p.index}`}>
             <rect
               x={p.von + 16}
               y={y(OS_UK + OS_H)}
               width={p.breite - 32}
-              height={herd ? OS_H * 0.6 : OS_H}
+              height={OS_H}
               rx={R}
-              className={herd ? "fill-kohle" : "fill-papier"}
+              className="fill-papier"
             />
-            {!herd && (
-              <path
-                d={`M${p.von + p.breite / 2} ${y(OS_UK + OS_H - 90)} V${y(OS_UK + 90)}`}
-                strokeWidth={10}
-                className="stroke-linie-warm"
-              />
-            )}
+            <path
+              d={`M${p.von + p.breite / 2} ${y(OS_UK + OS_H - 90)} V${y(OS_UK + (herd ? HAUBE_H + 60 : 90))}`}
+              strokeWidth={10}
+              className="stroke-linie-warm"
+            />
             {herd && (
-              <path
-                d={`M${p.von + 150} ${y(OS_UK + OS_H * 0.6 - 150)} H${p.von + p.breite - 150}`}
-                strokeWidth={22}
-                strokeLinecap="round"
-                className="stroke-kohle-2"
-              />
+              <>
+                <rect
+                  x={p.von + 16}
+                  y={y(OS_UK + HAUBE_H)}
+                  width={p.breite - 32}
+                  height={HAUBE_H}
+                  className="fill-kohle"
+                />
+                <path
+                  d={`M${p.von + 120} ${y(OS_UK + HAUBE_H / 2)} H${p.von + p.breite - 120}`}
+                  strokeWidth={16}
+                  strokeLinecap="round"
+                  className="stroke-kohle-3"
+                />
+              </>
             )}
           </g>
         );
@@ -280,14 +314,26 @@ export function Kuechenbild({
           Küchenplan steht deshalb die Nummer, und daneben die Liste. */}
       {nummernAb !== undefined &&
         plaetze.map((p) => {
-          if (p.breite < 200) return null;
+          /* Schmale Plaetze bekommen ihre Nummer versetzt, statt gar keine.
+             Vorher fielen alle unter 200 mm aus der Zeichnung — in der Liste
+             und auf dem Angebot standen sie trotzdem, und wer nachsehen
+             wollte, wo Position 7 sitzt, fand nichts. */
+          const schmal = p.breite < 200;
           const cx = p.von + p.breite / 2;
+          const cy = RH + 190 + (schmal ? 260 : 0);
           return (
             <g key={`nr-${p.index}`}>
-              <circle cx={cx} cy={RH + 190} r={118} className="fill-papier stroke-linie-stark" strokeWidth={14} />
+              {schmal && (
+                <path
+                  d={`M${cx} ${RH + 72} V${cy - 118}`}
+                  strokeWidth={10}
+                  className="stroke-linie-stark"
+                />
+              )}
+              <circle cx={cx} cy={cy} r={118} className="fill-papier stroke-linie-stark" strokeWidth={14} />
               <text
                 x={cx}
-                y={RH + 190}
+                y={cy}
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={140}
@@ -540,9 +586,17 @@ export function Raumbild({
       viewBox={`${-rand} ${-rand} ${breite + 2 * rand} ${tiefe + 2 * rand}`}
       style={{
         ...(volleBreite ? { width: "100%", height: "auto" } : { height: hoehe, width: "100%" }),
-        // Senkrecht scrollen muss moeglich bleiben; erst waehrend des Ziehens
-        // gehoert die Geste ganz dem Griff.
-        touchAction: ziehen ? (zieht ? "none" : "pan-y") : undefined,
+        /* Die erlaubte Geste legt der Browser beim AUFSETZEN des Fingers
+           fest und aendert sie waehrend der Geste nicht mehr. "none" erst zu
+           setzen, nachdem setZieht(true) neu gerendert hat, kommt also zu
+           spaet: an der linken und rechten Wand laeuft der Griff senkrecht,
+           und die Geste gehoerte immer dem Scrollen — dort liess sich der
+           Punkt am Handy gar nicht ziehen. Jetzt richtungsabhaengig und von
+           Anfang an: senkrechter Griff gibt die Waagerechte frei, waagerechter
+           die Senkrechte. */
+        touchAction: ziehen
+          ? (greifWand === "links" || greifWand === "rechts" ? "pan-x" : "pan-y")
+          : undefined,
       }}
       /* Kein schiebe() beim Aufsetzen. Vorher reichte ein einzelnes Antippen
          im Fangbereich — ohne jede Bewegung —, um Tuer, Fenster oder
@@ -649,13 +703,27 @@ export function Raumbild({
         const t = raum.tuer;
         const leer = aufWand(t.wand, t.von, t.breite, WD + 8);
         const b = t.breite;
-        // Das Band haengt am Anfang der Oeffnung und schlaegt in den Raum.
+        /* Das Band haengt am Anfang der Oeffnung und schlaegt in den Raum.
+           Der Viertelkreis muss das BAND als Mittelpunkt haben — der Bogen
+           laeuft vom Blattende in geschlossener Stellung (an der Wand
+           entlang) zum Blattende in offener Stellung (in den Raum hinein).
+           Vorher begann er am Band selbst; dadurch lag der Mittelpunkt
+           daneben, und der Bogen beschrieb keine Tuer, sondern eine
+           beliebige Rundung. */
         const anf = punktAufWand(t.wand, t.von, 0);
-        const ecke =
-          t.wand === "haupt" ? { x: anf.x, y: anf.y, d: `a${b} ${b} 0 0 1 ${b} ${b}` }
-          : t.wand === "rechts" ? { x: anf.x, y: anf.y, d: `a${b} ${b} 0 0 1 ${-b} ${b}` }
-          : t.wand === "gegenueber" ? { x: anf.x, y: anf.y, d: `a${b} ${b} 0 0 1 ${-b} ${-b}` }
-          : { x: anf.x, y: anf.y, d: `a${b} ${b} 0 0 1 ${b} ${-b}` };
+        // je Wand: Richtung entlang der Wand und Richtung in den Raum
+        const richtung: Record<string, [number, number, number, number]> = {
+          haupt: [1, 0, 0, 1],
+          rechts: [0, 1, -1, 0],
+          gegenueber: [-1, 0, 0, -1],
+          links: [0, -1, 1, 0],
+        };
+        const [lx, ly, nx, ny] = richtung[t.wand] ?? richtung.haupt;
+        const ecke = {
+          x: anf.x + lx * b,
+          y: anf.y + ly * b,
+          d: `a${b} ${b} 0 0 1 ${(nx - lx) * b} ${(ny - ly) * b}`,
+        };
         return (
           <g>
             <rect x={leer.x} y={leer.y} width={leer.w} height={leer.h} className="fill-papier" />

@@ -204,11 +204,15 @@ export function Planauflage({
     const ende = () => {
       window.removeEventListener("pointermove", bewege);
       window.removeEventListener("pointerup", ende);
+      // Ohne pointercancel klebte der Rahmen weiter am Finger, sobald der
+      // Browser die Geste abbricht — etwa wenn ein Anruf hereinkommt.
+      window.removeEventListener("pointercancel", ende);
       // Die Tiefe folgt dem, was gerade aufgezogen wurde.
       if (art !== "flaeche") tiefeAusRahmen();
     };
     window.addEventListener("pointermove", bewege);
     window.addEventListener("pointerup", ende);
+    window.addEventListener("pointercancel", ende);
   };
 
   /**
@@ -282,10 +286,30 @@ export function Planauflage({
         }}
       />
 
-      {/* Der Rahmen selbst — anfassbar und verschiebbar */}
+      {/* Der Rahmen selbst — anfassbar, verschiebbar, und seit der Pruefung
+          auch mit der Tastatur zu bedienen. Vorher ging hier ohne Zeiger
+          nichts: wer nicht ziehen kann, kam ueber diesen Schritt nicht
+          hinaus. Pfeiltasten verschieben um ein Prozent, mit Umschalt um
+          fuenf. */}
       <div
+        role="application"
+        tabIndex={0}
+        aria-label="Bildausschnitt: Rahmen über den Küchenraum legen. Pfeiltasten verschieben, mit Umschalt größere Schritte."
+        onKeyDown={(e) => {
+          const schritt = (e.shiftKey ? 0.05 : 0.01);
+          const dx = e.key === "ArrowRight" ? schritt : e.key === "ArrowLeft" ? -schritt : 0;
+          const dy = e.key === "ArrowDown" ? schritt : e.key === "ArrowUp" ? -schritt : 0;
+          if (!dx && !dy) return;
+          e.preventDefault();
+          setzeRahmen({
+            ...rahmen,
+            gezogen: true,
+            x: Math.max(0, Math.min(1 - rahmen.b, rahmen.x + dx)),
+            y: Math.max(0, Math.min(1 - rahmen.h, rahmen.y + dy)),
+          });
+        }}
         onPointerDown={zieh("flaeche")}
-        className="absolute cursor-move rounded-[3px] border-2 border-dashed border-papier ring-2 ring-kohle/70"
+        className="absolute cursor-move rounded-[3px] border-2 border-dashed border-papier ring-2 ring-kohle/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-papier"
         style={{ left: `${r.x * 100}%`, top: `${r.y * 100}%`, width: `${r.b * 100}%`, height: `${r.h * 100}%`, touchAction: "none" }}
       />
 
@@ -350,8 +374,30 @@ export function Planauflage({
       />
 
       {/* Griffe zum Aufziehen */}
+      {/* Die beiden Griffe ziehen den Rahmen auf. Mit der Tastatur macht das
+          die untere rechte Ecke: Pfeiltasten aendern Breite und Hoehe. */}
       <span className={`${griff} cursor-nwse-resize`} style={{ left: `${r.x * 100}%`, top: `${r.y * 100}%`, touchAction: "none" }} onPointerDown={zieh("ol")} />
-      <span className={`${griff} cursor-nwse-resize`} style={{ left: `${(r.x + r.b) * 100}%`, top: `${(r.y + r.h) * 100}%`, touchAction: "none" }} onPointerDown={zieh("ur")} />
+      <span
+        role="button"
+        tabIndex={0}
+        aria-label="Ausschnitt aufziehen: Pfeiltasten ändern Breite und Höhe"
+        className={`${griff} cursor-nwse-resize focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-papier`}
+        style={{ left: `${(r.x + r.b) * 100}%`, top: `${(r.y + r.h) * 100}%`, touchAction: "none" }}
+        onPointerDown={zieh("ur")}
+        onKeyDown={(e) => {
+          const schritt = (e.shiftKey ? 0.05 : 0.01);
+          const db = e.key === "ArrowRight" ? schritt : e.key === "ArrowLeft" ? -schritt : 0;
+          const dh = e.key === "ArrowDown" ? schritt : e.key === "ArrowUp" ? -schritt : 0;
+          if (!db && !dh) return;
+          e.preventDefault();
+          setzeRahmen({
+            ...rahmen,
+            gezogen: true,
+            b: Math.max(0.08, Math.min(1 - rahmen.x, rahmen.b + db)),
+            h: Math.max(0.08, Math.min(1 - rahmen.y, rahmen.h + dh)),
+          });
+        }}
+      />
 
       <div className="pointer-events-none absolute right-3 top-3 hidden rounded-[3px] bg-papier/95 px-3 py-1.5 text-[11.5px] font-semibold text-kohle shadow-sm sm:block">
         Zieh den Rahmen auf deinen Küchenraum

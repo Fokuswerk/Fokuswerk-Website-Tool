@@ -177,16 +177,18 @@ function Geraetemarke({ marke, stark = false, ziffer }: { marke: Marke; stark?: 
 }
 
 function Raum({
-  typ, variante, zeigeGeraete, umstellen, betont, ziffern, ofenGewaehlt = true,
+  typ, variante, zeigeGeraete, umstellen, betont, ziffern, ofenGewaehlt = true, haubeGewaehlt = true,
 }: {
   typ: Kuechentyp; variante: VarianteRoh; zeigeGeraete: boolean; umstellen?: Umstellen;
   betont?: string;
   /** Ohne gewaehlten Backofen keine Ofentuer unter dem Kochfeld. */
   ofenGewaehlt?: boolean;
+  /** Ohne Dunstabzug wird keine Esse gezeichnet und keine Marke gesetzt. */
+  haubeGewaehlt?: boolean;
   /** Namen durch Ziffern ersetzen; die Legende steht dann unter dem Bild. */
   ziffern?: boolean;
 }) {
-  const szene = useMemo(() => baueSzene(typ, variante, ofenGewaehlt), [typ, variante, ofenGewaehlt]);
+  const szene = useMemo(() => baueSzene(typ, variante, ofenGewaehlt, haubeGewaehlt), [typ, variante, ofenGewaehlt, haubeGewaehlt]);
   const { breite, tiefe } = typ.raum;
   const sicht = useSichtbareWaende(breite, tiefe);
   const [ueber, setzeUeber] = useState<{ zeile: string; index: number } | null>(null);
@@ -372,6 +374,7 @@ export function Kuechenraum({
   umstellen,
   betont,
   ofenGewaehlt = true,
+  haubeGewaehlt = true,
   scrollen = false,
 }: {
   typ: Kuechentyp;
@@ -397,6 +400,8 @@ export function Kuechenraum({
   betont?: string;
   /** Ist überhaupt ein Backofen gewählt? Ohne ihn zeichnen wir auch keinen. */
   ofenGewaehlt?: boolean;
+  /** Ohne Dunstabzug wird keine Esse gezeichnet und keine Marke gesetzt. */
+  haubeGewaehlt?: boolean;
   /** Senkrecht wischen scrollt die Seite, seitwärts dreht den Raum.
       Ohne das bleibt die Seite auf dem Handy stehen, sobald der Daumen im
       Bild landet — und das liest sich wie eine hängende Seite. */
@@ -418,7 +423,7 @@ export function Kuechenraum({
     return () => beobachter.disconnect();
   }, []);
   const legende = useMemo(
-    () => (eng ? baueSzene(typ, variante, ofenGewaehlt).marken : []),
+    () => (eng ? baueSzene(typ, variante, ofenGewaehlt, haubeGewaehlt).marken : []),
     [eng, typ, variante, ofenGewaehlt],
   );
 
@@ -496,6 +501,7 @@ export function Kuechenraum({
               betont={betont}
               ziffern={eng}
               ofenGewaehlt={ofenGewaehlt}
+              haubeGewaehlt={haubeGewaehlt}
               umstellen={umstellen ? { ...umstellen, klickOk } : undefined}
             />
           </Suspense>

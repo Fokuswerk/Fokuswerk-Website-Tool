@@ -422,7 +422,7 @@ export default function Kuechenplaner() {
    * sonst weicht der Server-Stand vom Browser-Stand ab.
    */
   const [montiert, setMontiert] = useState(false);
-  useEffect(() => { setMontiert(true); }, []);
+  useEffect(() => { useKueche.persist.rehydrate(); setMontiert(true); }, []);
 
   /**
    * Nach jedem Schrittwechsel an den Anfang und auf die neue Frage.
@@ -469,6 +469,8 @@ export default function Kuechenplaner() {
 
   /** Ist ueberhaupt ein Backofen gewaehlt? */
   const ofenDa = geraet(raum.geraete.backofen).breite > 0;
+  /** Und ein Dunstabzug? Ohne ihn darf im Raumbild keine Esse stehen. */
+  const haubeDa = raum.geraete.dunstabzug !== "da-keiner";
 
   const masseAendern = () => {
     if (quelle === "plan") { geheZu("pruefen"); setOffen("breite"); }
@@ -561,7 +563,10 @@ export default function Kuechenplaner() {
         name,
         kurz: KURZ[nr] ?? name,
         gesamt: meine.length,
-        erledigt: jetzt ? erledigt : erledigt + (meine.length && zaehlbar.indexOf(meine[meine.length - 1]) < bisHier ? 1 : 0),
+        /* Der Zuschlag zaehlte an jeder Stationsgrenze eine Frage doppelt:
+           am Ende stand "22 von 20". Der Wert steht schon richtig in
+           erledigt. */
+        erledigt,
         jetzt,
         // Zurueckspringen ja, vorspringen nein: was noch nicht beantwortet
         // ist, laesst sich nicht ueberspringen.
@@ -685,7 +690,18 @@ export default function Kuechenplaner() {
   const planSchritt = schritt === "fenster" || schritt === "tuer" || schritt === "wasser";
   const geometrie = zeigeBild && !geraeteArt && !planSchritt && schritt !== "niveau" && schritt !== "quelle" && schritt !== "upload";
   const stufen = drehungen(raum.form);
-  const dreh = () => setzeRaum({ ausrichtung: (raum.ausrichtung + 1) % stufen });
+  /* Beim Drehen muss der Zeilen-Schritt mitwandern. Vorher blieb die Frage
+     auf ihrer Wand stehen — nach dem Drehen stand dort aber keine Kueche mehr,
+     und die Antwort hatte auf Plan und Preis keine Wirkung. */
+  const dreh = () => {
+    const n = (raum.ausrichtung + 1) % stufen;
+    if (zeileWand) {
+      const i = kuechenwaende(raum).indexOf(zeileWand);
+      const neu = kuechenwaende({ form: raum.form, ausrichtung: n });
+      if (i >= 0 && neu[i]) geheZu(`zeile-${neu[i]}` as SchrittId);
+    }
+    setzeRaum({ ausrichtung: n });
+  };
 
   // Die Uebersicht im Pruefschritt: ein Punkt je Angabe, mit Herkunft.
   const pruefpunkte = [
@@ -786,7 +802,7 @@ export default function Kuechenplaner() {
 
   const raumTafel = planSchritt && vorschauLeer ? vorschauLeer : planSchritt && vorschau ? (
     <Karte className="overflow-hidden p-0">
-      <Kuechenraum typ={typ} variante={vorschau.variante} hoehe={300} unterzeile={false} ofenGewaehlt={ofenDa} />
+      <Kuechenraum typ={typ} variante={vorschau.variante} hoehe={300} unterzeile={false} ofenGewaehlt={ofenDa} haubeGewaehlt={haubeDa} scrollen />
       <p className="border-t border-linie-warm px-4 py-3 text-center text-[13px] leading-snug text-kohle-3">
         So sieht der Raum mit dieser Küche aus — die Zeichnung links bestimmt, wo was steht.
       </p>
@@ -800,8 +816,9 @@ export default function Kuechenplaner() {
         variante={vorschau.variante}
         hoehe={288}
         unterzeile={false}
-        ofenGewaehlt={ofenDa}
+        ofenGewaehlt={ofenDa} haubeGewaehlt={haubeDa}
         betont={ART_ZU_ROLLE[geraeteArt]}
+        scrollen
       />
       <p className="border-t border-linie-warm px-4 py-3 text-center text-[13px] leading-snug text-kohle-3">
         {Object.values(vorschau.belegung).flat().some((id) => ART_ZU_MODUL[geraeteArt].includes(id))
@@ -858,7 +875,10 @@ export default function Kuechenplaner() {
     <div className="warm min-h-full">
       <header className="sticky top-0 z-20 border-b border-black/[0.055] bg-creme/80 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto flex h-[56px] max-w-[1180px] items-center gap-4 px-5 sm:px-8">
-          <Link href="/" className="flex shrink-0 items-center gap-2">
+          {/* Unter 640 px ist der Schriftzug ausgeblendet, das svg ist
+              aria-hidden — damit blieb kein Name uebrig und die Trefferflaeche
+              war 18 x 18 px. */}
+          <Link href="/" aria-label="Serienküche, zur Startseite" className="-ml-2 flex shrink-0 items-center gap-2 p-2">
             <svg width="18" height="18" viewBox="0 0 17 17" aria-hidden="true">
               <rect x="0.75" y="0.75" width="15.5" height="15.5" rx="3" fill="none" strokeWidth="1.4" className="stroke-kohle" />
               <path d="M0.75 5.6 H16.25" strokeWidth="1.4" className="stroke-kohle-3" />
@@ -1273,7 +1293,13 @@ export default function Kuechenplaner() {
             <div className="mt-7">
               <GrosseWahl<Raumform>
                 wert={raum.form}
-                setze={(f) => setzeRaum({ form: f })}
+                /* Die Ausrichtung muss zur neuen Form passen. Vorher blieb
+                   eine Drehung aus der vorherigen Form stehen: wer "Eine Wand"
+                   antippte, sah auf der Kachel die Kueche oben und bekam sie
+                   an der Tuerwand — der Raum war danach nicht mehr planbar
+                   ("Es fehlen etwa 75 cm Wand"), und fuer "eine-wand" gibt es
+                   keinen Drehschritt, in dem man das haette merken koennen. */
+                setze={(f) => setzeRaum({ form: f, ausrichtung: f === "eine-wand" ? 0 : raum.ausrichtung % drehungen(f) })}
                 optionen={FORMEN.map((f) => ({ id: f.id, titel: f.titel, satz: f.erklaerung, bild: <RaumSkizze form={f.id} ausrichtung={0} /> }))}
               />
             </div>
@@ -1663,11 +1689,20 @@ export default function Kuechenplaner() {
         {istVorschlaege && (
           <>
             <div className="text-center">
-              <h1 className="gross text-[29px] font-bold leading-[1.12] text-kohle sm:text-[36px]">
+              {/* Diese drei Schritte bringen eine eigene h1 mit, statt sie ueber Kopf zu
+                  rendern. Ohne ref lief der Fokus nach dem Schrittwechsel ins Leere,
+                  und der Fokus fiel auf <body> — ausgerechnet auf den letzten drei
+                  Schritten, wo es am meisten weh tut. */}
+              <h1 ref={ueberschrift} tabIndex={-1} className="gross text-[29px] font-bold leading-[1.12] text-kohle outline-none sm:text-[36px]">
                 {karten.length === 0 ? "Das passt hier so nicht." : "Das passt in deinen Raum."}
               </h1>
               <p className="mx-auto mt-3 max-w-[52ch] text-[16px] leading-relaxed text-kohle-2">
-                {karten.length === 1
+                {/* Bei null Karten stand hier "Drei Moeglichkeiten, alle auf
+                    den Zentimeter gerechnet" — unter der Ueberschrift "Das
+                    passt hier so nicht." Der Grund steht ohnehin darunter. */}
+                {karten.length === 0
+                  ? null
+                  : karten.length === 1
                   ? "In diesem Raum geht genau eine Aufteilung auf — der Platz lässt keine zweite zu. Auf den Zentimeter gerechnet und nach denselben Regeln geprüft."
                   : karten.length === 2
                     ? "Zwei Möglichkeiten, beide auf den Zentimeter gerechnet und nach denselben Regeln geprüft."
@@ -1720,7 +1755,7 @@ export default function Kuechenplaner() {
         {istErgebnis && gewaehlterVorschlag && (
           <div className="warm-rein">
             <div className="text-center">
-              <h1 className="gross gross-xl text-[36px] font-bold text-kohle sm:text-[52px]">Das ist deine Küche.</h1>
+              <h1 ref={ueberschrift} tabIndex={-1} className="gross gross-xl text-[36px] font-bold text-kohle outline-none sm:text-[52px]">Das ist deine Küche.</h1>
               <p className="mx-auto mt-4 max-w-[48ch] text-[16.5px] text-kohle-2">
                 {gewaehlterVorschlag.titel} · {FORMEN.find((f) => f.id === raum.form)!.titel}
               </p>
@@ -1749,7 +1784,7 @@ export default function Kuechenplaner() {
                 </div>
 
                 {ansicht === "raum" && (
-                  <Kuechenraum typ={typ} variante={gewaehlterVorschlag.variante} hoehe={420} geraeteSchalter ofenGewaehlt={ofenDa} scrollen />
+                  <Kuechenraum typ={typ} variante={gewaehlterVorschlag.variante} hoehe={420} geraeteSchalter ofenGewaehlt={ofenDa} haubeGewaehlt={haubeDa} scrollen />
                 )}
 
                 {ansicht === "vorn" && (
@@ -1798,7 +1833,12 @@ export default function Kuechenplaner() {
                       variante={gewaehlterVorschlag.variante}
                       hoehe={400}
                       unterzeile={false}
-                      ofenGewaehlt={ofenDa}
+                      ofenGewaehlt={ofenDa} haubeGewaehlt={haubeDa}
+                      /* Ohne "scrollen" steht die Buehne auf touch-action:
+                         none und schluckt am Handy jede Wischgeste. Bei 400 px
+                         Hoehe heisst das: die Seite bleibt stehen, und unter
+                         dem Raumbild kommt man nicht weiter. */
+                      scrollen
                       umstellen={{
                         gewaehlt: angefasst,
                         onWaehle: (zeileId, index) => antippen(zeileId, index),
@@ -2132,7 +2172,7 @@ export default function Kuechenplaner() {
               <div className="flex flex-wrap items-end justify-between gap-5">
                 <div className="nicht-drucken">
                   <div className="vorzeile">Unterlagen zur Anfrage</div>
-                  <h1 className="gross gross-xl mt-3 text-[34px] font-bold text-kohle sm:text-[46px]">
+                  <h1 ref={ueberschrift} tabIndex={-1} className="gross gross-xl mt-3 text-[34px] font-bold text-kohle outline-none sm:text-[46px]">
                     Das geht mit raus.
                   </h1>
                   <p className="mt-4 max-w-[62ch] text-[16px] leading-relaxed text-kohle-2">
@@ -2180,12 +2220,15 @@ export default function Kuechenplaner() {
                         Anschlüsse und Zuschnitt. Du bindest dich damit nicht.
                       </p>
                       <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                        {/* Mit autoComplete fuellt der Browser Name, Mail und
+                            Telefon selbst aus. Ohne das tippt man am Handy
+                            drei Felder ab, die das Geraet laengst kennt. */}
                         {([
-                          ["name", "Name", "text", "Vor- und Nachname", true],
-                          ["mail", "E-Mail", "email", "name@beispiel.de", true],
-                          ["telefon", "Telefon (freiwillig)", "tel", "für Rückfragen", false],
-                          ["wann", "Wann soll sie stehen? (freiwillig)", "text", "z. B. im Frühjahr", false],
-                        ] as Array<[keyof typeof kontakt, string, string, string, boolean]>).map(([feld, label, typ, platz, pflicht], i) => (
+                          ["name", "Name", "text", "Vor- und Nachname", true, "name"],
+                          ["mail", "E-Mail", "email", "name@beispiel.de", true, "email"],
+                          ["telefon", "Telefon (freiwillig)", "tel", "für Rückfragen", false, "tel"],
+                          ["wann", "Wann soll sie stehen? (freiwillig)", "text", "z. B. im Frühjahr", false, "off"],
+                        ] as Array<[keyof typeof kontakt, string, string, string, boolean, string]>).map(([feld, label, typ, platz, pflicht, fuelle], i) => (
                           <label key={feld} className="block">
                             <span className="mb-1.5 block text-[13px] font-semibold text-kohle-2">
                               {label}
@@ -2193,6 +2236,8 @@ export default function Kuechenplaner() {
                             <input
                               ref={i === 0 ? anfrageFeld : undefined}
                               type={typ}
+                              autoComplete={fuelle}
+                              inputMode={typ === "email" ? "email" : typ === "tel" ? "tel" : undefined}
                               required={pflicht}
                               value={String(kontakt[feld])}
                               onChange={(e) => setKontakt((k) => ({ ...k, [feld]: e.target.value }))}

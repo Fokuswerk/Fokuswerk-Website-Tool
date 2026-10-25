@@ -381,6 +381,12 @@ export const useKueche = create<KuecheState>()(
     }),
     {
       name: SPEICHERNAME,
+      /* Erst im Browser laden, nicht schon beim ersten Rendern. Sonst rendert
+         der Server den Anfangszustand und der Browser sofort den
+         gespeicherten — React meldet einen Unterschied, und je nach Stand
+         blitzt kurz der falsche Schritt auf. Die Seite ruft rehydrate() in
+         ihrem montiert-Effekt. */
+      skipHydration: true,
       // Ein Plan aus einer älteren Sitzung kann Geräte nennen, die es nicht
       // mehr gibt. Beim Laden einmal geradeziehen, statt daran zu scheitern.
       merge: (gespeichert, jetzt) => {

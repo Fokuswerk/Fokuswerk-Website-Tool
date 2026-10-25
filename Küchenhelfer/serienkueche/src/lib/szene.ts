@@ -104,7 +104,16 @@ function achsen(wand: Wandseite, breite: number, tiefe: number) {
   return { o: [0, tiefe], e: [0, -1], n: [1, 0] };
 }
 
-export function baueSzene(typ: Kuechentyp, variante: VarianteRoh, ofenGewaehlt = true): Szene {
+export function baueSzene(
+  typ: Kuechentyp,
+  variante: VarianteRoh,
+  ofenGewaehlt = true,
+  /* Ohne diesen Schalter zeichnete das Raumbild die Esse allein daran, dass
+     ein Kochfeld in der Zeile steht — auch bei "Dunstabzug: keiner". Im
+     Schritt der Dunstabzug-Auswahl lief es sogar hervorgehoben mit, und die
+     Marke "Dunstabzug" stand in der Liste der Plaetze. */
+  haubeGewaehlt = true,
+): Szene {
   const { breite, tiefe } = typ.raum;
   const kaesten: Kasten[] = [];
   const marken: Marke[] = [];
@@ -316,21 +325,26 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh, ofenGewaehlt =
           }
         }
         // Dunstabzug darüber, wenn kein Fenster im Weg ist
+        /* Hier stand ein kompletter Essenkamin von 1540 bis 2160 mm — an
+           derselben Stelle, an der Stueckliste und Preis einen Haengeschrank
+           fuehren. Die Flachschirmhaube sitzt laut Unterlagen IM Schrank, mit
+           Unterkante 1540. Also: kein eigener Koerper mehr fuer den Kamin,
+           sondern ein flaches Band unter dem Schrank — und der Schrank selbst
+           wird weiter unten gezeichnet wie ueber jedem anderen Platz. Deshalb
+           faellt auch das "continue" weg. */
         const stoert = fenster.some((f) => s0 < f.von + f.breite && s1 > f.von);
-        if (!stoert) {
+        if (!stoert && haubeGewaehlt) {
           marken.push({
             id: `${zeile.id}-${p.index}-haube`,
             name: "Dunstabzug",
             rolle: "dunstabzug",
             wand: zeile.wand,
-            pos: punkt(zeile.wand, m, 300, 1760),
-            kasten: quader(zeile.wand, m - 300, m + 300, 0, 480, HAUBE_UK, 1700),
+            pos: punkt(zeile.wand, m, 300, HAUBE_UK + 40),
+            kasten: quader(zeile.wand, s0, s1, 0, 480, HAUBE_UK, HAUBE_UK + 80),
           });
-          stelle(zeile.wand, m - 300, m + 300, 0, 480, HAUBE_UK, 1620, MATERIAL.stahl);
-          stelle(zeile.wand, m - 300, m + 300, 0, 480, 1620, 1700, MATERIAL.front);
-          stelle(zeile.wand, m - 140, m + 140, 0, 300, 1700, OS_UK + OS_H, MATERIAL.front);
+          stelle(zeile.wand, s0 + 16, s1 - 16, 0, 480, HAUBE_UK, HAUBE_UK + 60, MATERIAL.stahl);
+          stelle(zeile.wand, s0 + 16, s1 - 16, 0, 480, HAUBE_UK + 60, HAUBE_UK + 80, MATERIAL.front);
         }
-        continue;
       }
 
       if (rolle === "spuele") {
@@ -343,7 +357,8 @@ export function baueSzene(typ: Kuechentyp, variante: VarianteRoh, ofenGewaehlt =
 
       // Hängeschrank, wo er darf
       const vorFenster = fenster.some((f) => s0 < f.von + f.breite && s1 > f.von);
-      if (!vorFenster) {
+      // Schwelle wie in haengeplaetze(): unter 450 mm gibt es keinen.
+      if (!vorFenster && s1 - s0 >= 450) {
         schrank(zeile.wand, s0, s1, TIEFE_OBEN, OS_UK, OS_UK + OS_H);
         // Schlagschatten unter dem Hängeschrank auf die Rückwand
         stelle(

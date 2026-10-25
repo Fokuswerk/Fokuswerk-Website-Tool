@@ -35,12 +35,18 @@ export const MODULE: NeutralesModul[] = [
   { id: "KF600", bezeichnung: "Kochfeld-Unterschrank", kategorie: "unterschrank", breite: 600, hoehe: 720, einheit: "stk", preis: 286, artikel: "US60-KF-M" },
 
   // Hochschränke
-  { id: "HK600", bezeichnung: "Hochschrank Kühlschrank", kategorie: "hochschrank", breite: 600, hoehe: 2060, einheit: "stk", preis: 428, artikel: "HS60-KS178-M" },
-  { id: "HB600", bezeichnung: "Hochschrank Backofen", kategorie: "hochschrank", breite: 600, hoehe: 2060, einheit: "stk", preis: 472, artikel: "HS60-BO-M" },
+  { id: "HK600", bezeichnung: "Hochschrank Kühlschrank", kategorie: "hochschrank", breite: 600, hoehe: 2010, einheit: "stk", preis: 428, artikel: "HS60-KS178-M" },
+  { id: "HB600", bezeichnung: "Hochschrank Backofen", kategorie: "hochschrank", breite: 600, hoehe: 2010, einheit: "stk", preis: 472, artikel: "HS60-BO-M" },
 
+  /* 700 statt 720, und die Hochschraenke 2010 statt 2060: die Unterlagen
+     drucken "Oberkante Hoch- und Haengeschraenke 2160 mm" (HOCH_H aus
+     masse.ts). Mit den alten Werten schloss der bestellte Haengeschrank bei
+     2180 ab und der Hochschrank auf seinem 150er Sockel bei 2210 — die
+     gedruckte Zahl passte zu keinem Artikel der eigenen Stueckliste. Das
+     Feld wird nirgends zum Zeichnen benutzt, nur gedruckt. */
   // Hängeschränke
-  { id: "HS600", bezeichnung: "Hängeschrank", kategorie: "haengeschrank", breite: 600, hoehe: 720, einheit: "stk", preis: 168, artikel: "OS60-M" },
-  { id: "HS450", bezeichnung: "Hängeschrank", kategorie: "haengeschrank", breite: 450, hoehe: 720, einheit: "stk", preis: 139, artikel: "OS45-M" },
+  { id: "HS600", bezeichnung: "Hängeschrank", kategorie: "haengeschrank", breite: 600, hoehe: 700, einheit: "stk", preis: 168, artikel: "OS60-M" },
+  { id: "HS450", bezeichnung: "Hängeschrank", kategorie: "haengeschrank", breite: 450, hoehe: 700, einheit: "stk", preis: 139, artikel: "OS45-M" },
 
   // Blenden und Flächen
   { id: "PB150", bezeichnung: "Passblende, Zuschnitt vor Ort", kategorie: "blende", breite: 150, hoehe: 720, einheit: "stk", preis: 46, artikel: "PB-150-M" },

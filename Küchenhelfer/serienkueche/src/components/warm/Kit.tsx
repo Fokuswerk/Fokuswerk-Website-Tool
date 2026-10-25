@@ -155,7 +155,8 @@ export function GrosseZahl({
           <Minus size={20} strokeWidth={2} />
         </button>
 
-        <div className="flex min-w-[196px] items-baseline justify-center gap-2">
+        {/* Feste 196 px liessen den Minusknopf bei 320 px Schirmbreite aus dem Bild ragen. */}
+        <div className="flex min-w-[min(196px,100%)] items-baseline justify-center gap-2">
           {/* Gegengewicht zur Einheit, damit die Zahl wirklich mittig steht. */}
           <span className="w-[30px] shrink-0" aria-hidden="true" />
           <input

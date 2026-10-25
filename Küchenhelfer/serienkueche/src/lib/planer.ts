@@ -682,8 +682,20 @@ function bewerte(ids: string[], strategie: Strategie, wasserZiel: number | null)
  * liegt, steht fest, sobald alles davor steht. Ein Hochschrank im Fenster
  * schneidet damit seinen ganzen Teilbaum ab statt ihn auszuzählen.
  *
- * Die Grenze ist eine Reißleine gegen Räume, die es nicht geben sollte, kein
- * Teil der Rechnung: bis 6,40 m Wand wird sie nicht erreicht.
+ * Die Grenze ist eine Reißleine, kein Teil der Rechnung. Nachgemessen über
+ * alleVorschlaege() an einer geraden Wand:
+ *
+ *   3,40 m     4 ms       5,20 m    67 ms
+ *   4,60 m    24 ms       6,40 m   466 ms
+ *   7,60 m   771 ms       9,00 m    31 ms
+ *
+ * Der Sprung nach unten bei 9 m ist kein Fortschritt, sondern die Reißleine:
+ * dort bricht die Suche ab und liefert die beste Anordnung, die sie BIS DAHIN
+ * gefunden hat. Die harten Regeln gelten weiter — die Zeile geht auf, nichts
+ * Hohes steht vor dem Fenster —, nur ist sie ab etwa 8 m nicht mehr
+ * nachweislich die beste. Der frühere Kommentar behauptete, bis 6,40 m werde
+ * die Grenze nicht erreicht; gemessen stimmt das, aber er verschwieg, was
+ * darüber passiert.
  */
 const ARBEITSGRENZE = 300_000;
 
@@ -885,7 +897,13 @@ function rechnePlan(a: Raumangaben, strategie: Strategie): Vorschlag {
 }
 
 export function alleVorschlaege(a: Raumangaben): Vorschlag[] {
-  const alle = STRATEGIEN.map((s) => planeKueche(a, s.id));
+  /* Kopien, nicht die Objekte aus dem PLANSPEICHER. Unten wird auchAls
+     beschrieben; auf dem zwischengespeicherten Objekt wuchs die Liste mit
+     jedem Aufruf. Gemessen nach fuenf Aufrufen: ["Zum Kochen", "Zum Kochen",
+     "Zum Kochen", "Zum Kochen", "Zum Kochen"], und die Karte las dann
+     "kommen auch Zum Kochen und Zum Kochen und Zum Kochen auf denselben
+     Plan". */
+  const alle = STRATEGIEN.map((s) => ({ ...planeKueche(a, s.id) }));
   /* In einem knappen Raum gibt es nichts zu variieren: die Pflichtmodule
      stehen fest, für einen Füllschrank bleibt kein Platz. Dann kommen zwei
      Wege beim selben Plan heraus. Das als zwei getrennte Karten mit
@@ -975,8 +993,16 @@ export function ausBelegung(
         if (l.von < bis && l.bis > von) fensterKonflikt = true;
       }
     }
+    /* "Der Herd steht nicht direkt an der Wand, damit daneben Platz zum
+       Abstellen bleibt" — das galt bisher schon, wenn links und rechts
+       IRGENDETWAS stand. Steht dort ein Hochschrank, meldet befundeZeile
+       gleichzeitig "Direkt neben dem Herd steht ein hoher Schrank, zum
+       Abstellen bleibt keine Flaeche". Beide Saetze standen untereinander auf
+       derselben Karte und behaupteten das Gegenteil voneinander. */
     const iKf = ids.indexOf("KF600");
-    if (iKf > 0 && iKf < ids.length - 1) kochfeldGerueckt = true;
+    if (iKf > 0 && iKf < ids.length - 1 && !istHoch(ids[iKf - 1]) && !istHoch(ids[iKf + 1])) {
+      kochfeldGerueckt = true;
+    }
   }
 
   const variante: VarianteRoh = {
@@ -1032,10 +1058,23 @@ export function ausBelegung(
   else if (arbeitsflaeche >= 450) gut.push(`${Math.round(arbeitsflaeche / 10)} cm zwischen Spüle und Herd. Reicht, ist aber nicht üppig.`);
   else if (alleIds.includes("SP600") && alleIds.includes("KF600")) {
     const zeileVon = (id: string) => typ.zeilen.find((z) => (belegung[z.id] ?? []).includes(id))?.id;
-    if (zeileVon("SP600") !== zeileVon("KF600"))
+    const zeileSp = zeileVon("SP600");
+    if (zeileSp !== zeileVon("KF600")) {
       achtung.push("Spüle und Herd stehen sich auf gegenüberliegenden Wänden gegenüber — zwischen beiden liegt keine durchgehende Arbeitsfläche.");
-    else
-      achtung.push("Spüle und Herd stehen direkt nebeneinander — unpraktisch beim Kochen, dafür kurze Leitungswege.");
+    } else {
+      /* "Direkt nebeneinander" stand hier auch dann, wenn zwischen beiden ein
+         Hochschrank steht: freieFlaeche() ueberspringt Hochschraenke und kommt
+         deshalb auf null Arbeitsflaeche, obwohl die Geraete 60 cm und mehr
+         auseinander sind. Jetzt entscheidet der Platz in der Zeile. */
+      const ids = belegung[zeileSp!] ?? [];
+      const iSp = ids.indexOf("SP600");
+      const iKf = ids.indexOf("KF600");
+      if (Math.abs(iSp - iKf) === 1) {
+        achtung.push("Spüle und Herd stehen direkt nebeneinander — unpraktisch beim Kochen, dafür kurze Leitungswege.");
+      } else {
+        achtung.push("Zwischen Spüle und Herd steht ein hoher Schrank — zum Schneiden gibt es dort keine durchgehende Fläche.");
+      }
+    }
   }
 
   if (wegZumWasser <= 600) gut.push("Die Spüle bleibt am vorhandenen Anschluss — kein Installateur nötig.");
@@ -1445,7 +1484,7 @@ export function uebernimmUmstellung(
   // Zeilen, die es nicht mehr gibt, und Zeilen, für die es noch nichts gibt.
   for (const z of typ.zeilen) {
     if (!belegung[z.id]) {
-      return { grund: `Die ${WANDNAME_DAT[z.id.slice(2) as WandId]} ist neu dazugekommen — dafür gab es in deiner Anordnung noch nichts.` };
+      return { grund: `Die ${WANDNAME[z.id.slice(2) as WandId]} ist neu dazugekommen — dafür gab es in deiner Anordnung noch nichts.` };
     }
   }
   const aus: Record<string, string[]> = {};

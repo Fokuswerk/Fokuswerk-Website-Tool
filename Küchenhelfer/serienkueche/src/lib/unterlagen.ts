@@ -306,12 +306,18 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
     spuelmaschine: "Spülmaschine",
     dunstabzug: "Dunstabzug",
   };
+  /* Ob dieser Plan ueberhaupt Haengeschraenke hat. Ohne sie standen in den
+     Unterlagen drei Saetze, die einen 600er Haengeschrank voraussetzen —
+     "Flachschirm, im Haengeschrank", "600 mm Haengeschrank, Unterkante
+     1540 mm" und eine Steckdose "im Haengeschrank" —, waehrend die
+     Stueckliste auf demselben Blatt keinen einzigen enthielt. */
+  const haengeDa = haengeplaetze(typ, v.belegung).length > 0;
   const EINBAU: Record<string, string> = {
     kuehlschrank: "Einbau, Schlepptür",
     kochfeld: "Autark, in die Platte eingelassen",
     backofen: "Einbau, 60er Nische",
     spuelmaschine: "Vollintegriert, mit Möbelfront",
-    dunstabzug: "Flachschirm, im Hängeschrank",
+    dunstabzug: haengeDa ? "Flachschirm, im Hängeschrank" : "Flachschirm — braucht einen 600-mm-Hängeschrank, in diesem Plan ist keiner vorgesehen",
   };
   const nischeVon = (art: string, g: ReturnType<typeof geraet>): string => {
     if (art === "kuehlschrank") {
@@ -322,7 +328,7 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
     if (art === "kochfeld") return `Ausschnitt ${KOCHFELD_AUSSCHNITT.breite} × ${KOCHFELD_AUSSCHNITT.tiefe} mm`;
     if (art === "backofen") return "595 × 560 × 550 mm (H × B × T)";
     if (art === "spuelmaschine") return `${g.breite === 450 ? "450" : "600"} mm Nischenbreite`;
-    return `600 mm Hängeschrank, Unterkante ${HAUBE_UK} mm`;
+    return haengeDa ? `600 mm Hängeschrank, Unterkante ${HAUBE_UK} mm` : "kein Hängeschrank im Plan — Montageart vor der Bestellung klären";
   };
 
   /* --- Anschlüsse --- */
@@ -370,7 +376,7 @@ export function baueUnterlagen(a: Raumangaben, typ: Kuechentyp, v: Vorschlag): U
     anschluesse.push({ art: "Steckdose Kühlschrank", wand: ksUnten.kette.wand, abZeilenanfang: mitte(ksUnten.pos), hoehe: H_UNTEN, hinweis: "im Unterschrank, hinter dem Gerät" });
   }
   if (kf && geraet(a.geraete.dunstabzug).richtpreis > 0) {
-    anschluesse.push({ art: "Steckdose Dunstabzug", wand: kf.kette.wand, abZeilenanfang: mitte(kf.pos), hoehe: H_HAUBE, hinweis: "über dem Kochfeld, im Hängeschrank" });
+    anschluesse.push({ art: "Steckdose Dunstabzug", wand: kf.kette.wand, abZeilenanfang: mitte(kf.pos), hoehe: H_HAUBE, hinweis: haengeDa ? "über dem Kochfeld, im Hängeschrank" : "über dem Kochfeld — Hängeschrank fehlt im Plan" });
   }
   const laengste = [...massketten].sort((x, y) => y.laenge - x.laenge)[0];
   if (laengste) {
