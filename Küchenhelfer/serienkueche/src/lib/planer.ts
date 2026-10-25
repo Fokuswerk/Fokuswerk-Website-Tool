@@ -1216,8 +1216,12 @@ export function zieheAn(ids: string[], delta: number): string[] | null {
   // Zu viel Platz fuer eine Passleiste: hinten Schraenke anhaengen. Gewaehlt
   // wird die groesste Breite, bei der der Rest wieder eine gueltige Blende
   // ergibt — sonst bliebe bei 610 mm ein 10-mm-Streifen uebrig.
+  /* Nicht bis PBX_MAX auffuellen, sondern bis hierher: eine Passleiste von
+     60 cm ist keine Leiste mehr, sondern ein fehlender Schrank. Ab 40 cm Rest
+     kommt lieber ein echter Schrank dazu. */
+  const BLENDE_GUT = 400;
   let wache = 0;
-  while (rest > PBX_MAX) {
+  while (rest > BLENDE_GUT) {
     if (++wache > 40) return null;
     const passend = ZIEHBAR.map((id) => ({ id, b: modul(id).breite ?? 0 }))
       .filter(({ b }) => {

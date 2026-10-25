@@ -7,6 +7,7 @@ import { ArrowRight } from "lucide-react";
 import { brutto, eur } from "@/lib/berechnung";
 import { alsKuechentyp, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/lib/planer";
 import { Kuechenbild } from "@/components/warm/Kuechenbild";
+import { Wandband } from "@/components/warm/Wandband";
 import { FOTOS, FOTO_HINWEIS, FOTO_URHEBER, fotoUrl, type Foto } from "@/data/fotos";
 import { anzahlModelle, ARTEN, FOTO_QUELLE, FOTOS_LIZENZIERT, GERAETEFOTO_HINWEIS, PREISSTAND_GERAETE, schaustueck } from "@/data/geraete";
 
@@ -202,7 +203,7 @@ export default function Start() {
             der Schleier das ganze Bild zudecken, und uebrig blieb eine gruene
             Flaeche. Jetzt steht er unten, wo die Insel und der Boden ohnehin
             dunkel sind: die obere Haelfte bleibt das Foto. */}
-        <main id="inhalt" className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col justify-end px-5 pb-20 pt-10 sm:px-8 sm:pb-24">
+        <main id="inhalt" className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col justify-end px-5 pb-32 pt-10 sm:px-8 sm:pb-44">
           <h1 className="gross gross-xl max-w-[18ch] text-[44px] font-bold text-creme sm:text-[68px] lg:text-[86px]">
             Deine neue Küche. Ohne Termin im Küchenstudio.
           </h1>
@@ -219,6 +220,15 @@ export default function Start() {
         </main>
       </section>
 
+      {/* ---------- Das Band auf der Kante ----------
+           Es liegt auf der Farbgrenze und ragt in beide Abschnitte hinein:
+           oben ins Foto, unten ins Gruen. Die harte Kante bleibt hart — sie
+           laeuft links und rechts am Band vorbei weiter und wird dadurch zum
+           Motiv, statt weichgezeichnet zu werden. */}
+      <div className="relative z-10 -mt-[96px] sm:-mt-[150px]">
+        <Wandband />
+      </div>
+
       {/* ---------- So laeuft das sonst: Wiedererkennung ----------
            Hier standen nacheinander drei Versuche, das Rechnen vorzufuehren:
            ein Regler mit Preis, einer mit den Saetzen des Planers, dann das
@@ -228,8 +238,8 @@ export default function Start() {
            Deshalb steht hier jetzt kein Beweis, keine Tabelle und keine Zahl,
            sondern das, was jeder kennt, der schon mal eine Kueche gekauft
            hat. Nichts daran muss man lesen lernen. */}
-      <section className="auf-dunkel relative isolate bg-marke text-creme">
-        <div className="mx-auto max-w-[1240px] px-5 py-20 sm:px-8 sm:py-28">
+      <section className="auf-dunkel relative -mt-[112px] bg-marke pt-[136px] text-creme sm:-mt-[168px] sm:pt-[200px]">
+        <div className="mx-auto max-w-[1240px] px-5 pb-20 pt-4 sm:px-8 sm:pb-28 sm:pt-6">
           <h2 className="gross max-w-[14ch] text-[34px] font-bold leading-[1.04] sm:text-[52px]">
             So läuft das sonst.
           </h2>
