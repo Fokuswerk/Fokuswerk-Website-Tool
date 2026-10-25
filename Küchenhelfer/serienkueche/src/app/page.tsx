@@ -203,7 +203,7 @@ export default function Start() {
             der Schleier das ganze Bild zudecken, und uebrig blieb eine gruene
             Flaeche. Jetzt steht er unten, wo die Insel und der Boden ohnehin
             dunkel sind: die obere Haelfte bleibt das Foto. */}
-        <main id="inhalt" className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col justify-end px-5 pb-[268px] pt-10 sm:px-8 sm:pb-[436px]">
+        <main id="inhalt" className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col justify-end px-5 pb-24 pt-10 sm:px-8 sm:pb-28">
           <h1 className="gross gross-xl max-w-[18ch] text-[44px] font-bold text-creme sm:text-[68px] lg:text-[86px]">
             Deine neue Küche. Ohne Termin im Küchenstudio.
           </h1>
@@ -229,18 +229,28 @@ export default function Start() {
            Deshalb steht hier jetzt kein Beweis, keine Tabelle und keine Zahl,
            sondern das, was jeder kennt, der schon mal eine Kueche gekauft
            hat. Nichts daran muss man lesen lernen. */}
-      <section className="auf-dunkel relative bg-marke text-creme">
-        {/* Tiefe kommt hier aus Schichtung, nicht aus einem Kasten.
-            Der Abschnitt selbst bleibt, wo er ist — die Kante zwischen Foto
-            und Gruen ist eine harte Kante. Nach oben ragen nur die vier
-            Karten: einzelne Dinge, die ueber einen Rand hinausstehen, lesen
-            sich als Ebene darueber. Ein ganzes Brett, das ueber derselben
-            Kante schwebt, liest sich als aufgeklebt. Das ist der Unterschied
-            zwischen den drei abgelehnten Fassungen und dieser. */}
-        <div className="pb-16 pt-24 sm:pb-24 sm:pt-32">
+      {/* Nachgemessen lagen hier 3,3 Bildschirme am Stueck bei Helligkeit 2 von
+          100 — der Auftakt und dieser Abschnitt waren beide dunkel, und der
+          Schnitt dazwischen trennte Dunkel von Dunkel. Eine Kante, die man
+          sieht, die aber nichts trennt, liest sich als Fehler. Dazu sassen die
+          vier Karten als einziges Helles mitten in dieser Strecke.
+          Jetzt ist der Abschnitt mit der Frage HELL. Damit trennt der Schnitt
+          wirklich etwas, die Karten stehen nicht mehr als Insel im Dunkeln,
+          und die Seite wechselt sich ab: dunkel, hell, dunkel, hell. */}
+      {/* KEIN z-index auf diesem Abschnitt. Mit "relative z-10" macht er einen
+          eigenen Stapelkontext auf, und dann koennen die Karten darin nicht
+          mehr ueber den dunklen Abschnitt steigen — der helle Grund malt die
+          Ueberlappung wieder zu. Gemessen: der dunkle Abschnitt beginnt 140 px
+          vor dem Kartenende, zu sehen war davon nichts. Der Stapelkontext
+          gehoert an das Kartenraster, nicht an den Abschnitt. */}
+      <section className="bg-creme">
+        <div className="pt-24 sm:pt-32">
           <Raumfrage />
         </div>
-        <div className="mx-auto max-w-[1240px] px-5 pb-20 sm:px-8 sm:pb-28">
+      </section>
+
+      <section className="auf-dunkel relative bg-marke text-creme">
+        <div className="mx-auto max-w-[1240px] px-5 pb-20 pt-[150px] sm:px-8 sm:pb-28 sm:pt-[200px]">
           <h2 className="gross max-w-[14ch] text-[34px] font-bold leading-[1.04] sm:text-[52px]">
             So läuft das sonst.
           </h2>

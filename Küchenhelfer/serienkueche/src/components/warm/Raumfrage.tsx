@@ -243,20 +243,24 @@ export function Raumfrage() {
     <div className="nicht-drucken">
       <div className="mx-auto w-full max-w-[1240px] px-5 sm:px-8">
         <div>
-          <div className="-mt-[316px] mb-7 sm:-mt-[392px] sm:mb-10 sm:flex sm:items-end sm:justify-between sm:gap-10">
-            <h2 className="gross max-w-[16ch] text-[30px] font-bold leading-[1.06] text-creme sm:text-[42px]">
+          <div className="mb-8 sm:mb-11 sm:flex sm:items-end sm:justify-between sm:gap-10">
+            <h2 className="gross max-w-[16ch] text-[30px] font-bold leading-[1.06] text-kohle sm:text-[42px]">
               Fangen wir mit deinem Raum an.
             </h2>
-            <p className="mt-3 max-w-[34ch] text-[15.5px] leading-snug text-creme/65 sm:mt-0 sm:shrink-0">
+            <p className="mt-3 max-w-[34ch] text-[15.5px] leading-snug text-kohle-2 sm:mt-0 sm:shrink-0">
               Tipp an, wie deine Küche steht. Den Rest rechnen wir.
             </p>
           </div>
 
-          {/* Die Karten ziehen nach oben ueber die Abschnittskante hinaus.
-              Gemessen ragen sie 84 px (Handy) bzw. 128 px ins Foto. Weil sie
-              einzeln stehen und Luft zwischen sich haben, sieht man das Foto
-              zwischen ihnen durchlaufen — daher die Tiefe. */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-5">
+          {/* Die Ueberlappung geht nach UNTEN, nicht nach oben.
+              Vorher zogen Ueberschrift und Karten nach oben ins Foto — dadurch
+              blieb vom hellen Abschnitt ein Streifen von 0,29 Bildschirmen, der
+              das Dunkel nicht unterbrach, sondern wie eine Luecke aussah.
+              Jetzt steht die Frage vollstaendig auf hellem Grund und die Karten
+              ragen unten in den dunklen Abschnitt hinein. Dasselbe Spiel mit
+              der Tiefe, nur andersherum: weisse Karten auf Dunkel traegt sogar
+              besser als auf einem Foto. */}
+          <div className="relative z-10 -mb-[104px] grid grid-cols-2 gap-3 sm:-mb-[140px] sm:grid-cols-4 sm:gap-5">
             {FORMEN.map((f) => (
               <button
                 key={f.id}
@@ -267,7 +271,7 @@ export function Raumfrage() {
                 onPointerDown={() => setzeWach(f.id)}
                 onFocus={() => setzeWach(f.id)}
                 onBlur={() => setzeWach((v) => (v === f.id ? null : v))}
-                className="group flex flex-col overflow-hidden rounded-[3px] bg-papier text-left shadow-[0_2px_4px_rgba(10,14,9,.22),0_18px_40px_-16px_rgba(10,14,9,.55)] transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_3px_6px_rgba(10,14,9,.26),0_30px_60px_-18px_rgba(10,14,9,.7)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-creme active:-translate-y-0.5"
+                className="group flex flex-col overflow-hidden rounded-[3px] border border-linie-warm bg-papier text-left shadow-[0_1px_2px_rgba(10,14,9,.16),0_14px_30px_-14px_rgba(10,14,9,.45)] transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_2px_4px_rgba(10,14,9,.2),0_24px_48px_-16px_rgba(10,14,9,.55)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kohle active:-translate-y-0.5"
               >
                 {/* Die Zeichnung auf eigenem Grund, darunter die Beschriftung
                     auf Weiss: zwei Lagen statt einer Flaeche. */}
