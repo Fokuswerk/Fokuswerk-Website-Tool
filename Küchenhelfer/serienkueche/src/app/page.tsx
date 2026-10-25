@@ -203,7 +203,7 @@ export default function Start() {
             der Schleier das ganze Bild zudecken, und uebrig blieb eine gruene
             Flaeche. Jetzt steht er unten, wo die Insel und der Boden ohnehin
             dunkel sind: die obere Haelfte bleibt das Foto. */}
-        <main id="inhalt" className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col justify-end px-5 pb-24 pt-10 sm:px-8 sm:pb-28">
+        <main id="inhalt" className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col justify-end px-5 pb-[268px] pt-10 sm:px-8 sm:pb-[436px]">
           <h1 className="gross gross-xl max-w-[18ch] text-[44px] font-bold text-creme sm:text-[68px] lg:text-[86px]">
             Deine neue Küche. Ohne Termin im Küchenstudio.
           </h1>
@@ -230,11 +230,14 @@ export default function Start() {
            sondern das, was jeder kennt, der schon mal eine Kueche gekauft
            hat. Nichts daran muss man lesen lernen. */}
       <section className="auf-dunkel relative bg-marke text-creme">
-        {/* Erst die Frage, dann die Wiedererkennung. Beides steht auf
-            demselben Grund — es gibt hier kein aufgesetztes Band mehr, das
-            ueber der Kante schwebt. Die Kante zwischen Foto und Gruen ist eine
-            Kante und sonst nichts. */}
-        <div className="pb-16 pt-20 sm:pb-24 sm:pt-28">
+        {/* Tiefe kommt hier aus Schichtung, nicht aus einem Kasten.
+            Der Abschnitt selbst bleibt, wo er ist — die Kante zwischen Foto
+            und Gruen ist eine harte Kante. Nach oben ragen nur die vier
+            Karten: einzelne Dinge, die ueber einen Rand hinausstehen, lesen
+            sich als Ebene darueber. Ein ganzes Brett, das ueber derselben
+            Kante schwebt, liest sich als aufgeklebt. Das ist der Unterschied
+            zwischen den drei abgelehnten Fassungen und dieser. */}
+        <div className="pb-16 pt-24 sm:pb-24 sm:pt-32">
           <Raumfrage />
         </div>
         <div className="mx-auto max-w-[1240px] px-5 pb-20 sm:px-8 sm:pb-28">

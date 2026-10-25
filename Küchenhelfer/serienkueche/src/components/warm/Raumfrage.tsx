@@ -243,7 +243,7 @@ export function Raumfrage() {
     <div className="nicht-drucken">
       <div className="mx-auto w-full max-w-[1240px] px-5 sm:px-8">
         <div>
-          <div className="sm:flex sm:items-end sm:justify-between sm:gap-10">
+          <div className="-mt-[316px] mb-7 sm:-mt-[392px] sm:mb-10 sm:flex sm:items-end sm:justify-between sm:gap-10">
             <h2 className="gross max-w-[16ch] text-[30px] font-bold leading-[1.06] text-creme sm:text-[42px]">
               Fangen wir mit deinem Raum an.
             </h2>
@@ -252,7 +252,11 @@ export function Raumfrage() {
             </p>
           </div>
 
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:mt-11 sm:grid-cols-4 sm:gap-5">
+          {/* Die Karten ziehen nach oben ueber die Abschnittskante hinaus.
+              Gemessen ragen sie 84 px (Handy) bzw. 128 px ins Foto. Weil sie
+              einzeln stehen und Luft zwischen sich haben, sieht man das Foto
+              zwischen ihnen durchlaufen — daher die Tiefe. */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-5">
             {FORMEN.map((f) => (
               <button
                 key={f.id}
@@ -263,13 +267,19 @@ export function Raumfrage() {
                 onPointerDown={() => setzeWach(f.id)}
                 onFocus={() => setzeWach(f.id)}
                 onBlur={() => setzeWach((v) => (v === f.id ? null : v))}
-                className="group flex flex-col rounded-[3px] bg-creme p-2.5 text-left transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-creme active:translate-y-0 sm:p-3.5"
+                className="group flex flex-col overflow-hidden rounded-[3px] bg-papier text-left shadow-[0_2px_4px_rgba(10,14,9,.22),0_18px_40px_-16px_rgba(10,14,9,.55)] transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_3px_6px_rgba(10,14,9,.26),0_30px_60px_-18px_rgba(10,14,9,.7)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-creme active:-translate-y-0.5"
               >
-                <Raum form={f.id} wach={wach === f.id} />
-                <div className="gross mt-2.5 text-[15px] font-bold leading-tight text-kohle sm:text-[17px]">
-                  {f.titel}
+                {/* Die Zeichnung auf eigenem Grund, darunter die Beschriftung
+                    auf Weiss: zwei Lagen statt einer Flaeche. */}
+                <div className="bg-creme-2/80 px-2 pb-0.5 pt-2 sm:px-3 sm:pb-1 sm:pt-3">
+                  <Raum form={f.id} wach={wach === f.id} />
                 </div>
-                <div className="mt-1 text-[12.5px] leading-snug text-kohle-2 sm:text-[13.5px]">{f.erklaerung}</div>
+                <div className="border-t border-linie-warm px-2.5 pb-3 pt-2.5 sm:px-4 sm:pb-4 sm:pt-3">
+                  <div className="gross text-[15px] font-bold leading-tight text-kohle sm:text-[17.5px]">
+                    {f.titel}
+                  </div>
+                  <div className="mt-1 text-[12.5px] leading-snug text-kohle-2 sm:text-[13.5px]">{f.erklaerung}</div>
+                </div>
               </button>
             ))}
           </div>
