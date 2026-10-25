@@ -102,7 +102,7 @@ function Schild({
     : (raus ? `translate(${abstand}px, -50%)` : `translate(calc(-100% - ${abstand}px), -50%)`);
   return (
     <span
-      className={`pointer-events-none absolute whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-semibold shadow-sm sm:px-2.5 sm:py-1 sm:text-[11.5px] ${
+      className={`pointer-events-none absolute whitespace-nowrap rounded-[3px] px-2 py-0.5 text-[10.5px] font-semibold shadow-sm sm:px-2.5 sm:py-1 sm:text-[11.5px] ${
         nurGross ? "hidden sm:inline-block" : ""
       } ${ton === "dunkel" ? "bg-kohle text-creme" : "bg-papier text-kohle"}`}
       style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%`, transform: nachInnen }}
@@ -258,7 +258,7 @@ export function Planauflage({
     <div>
       <div
         ref={huelle}
-        className="vertieft relative mx-auto w-fit max-w-full select-none overflow-hidden rounded-[18px] bg-papier ring-1 ring-black/[0.06]"
+        className="vertieft relative mx-auto w-fit max-w-full select-none overflow-hidden rounded-[3px] bg-papier ring-1 ring-black/[0.06]"
       >
       {bild ? (
         // Beliebiger Upload, deshalb kein next/image.
@@ -285,7 +285,7 @@ export function Planauflage({
       {/* Der Rahmen selbst — anfassbar und verschiebbar */}
       <div
         onPointerDown={zieh("flaeche")}
-        className="absolute cursor-move rounded-[4px] border-2 border-dashed border-papier ring-2 ring-kohle/70"
+        className="absolute cursor-move rounded-[3px] border-2 border-dashed border-papier ring-2 ring-kohle/70"
         style={{ left: `${r.x * 100}%`, top: `${r.y * 100}%`, width: `${r.b * 100}%`, height: `${r.h * 100}%`, touchAction: "none" }}
       />
 
@@ -353,7 +353,7 @@ export function Planauflage({
       <span className={`${griff} cursor-nwse-resize`} style={{ left: `${r.x * 100}%`, top: `${r.y * 100}%`, touchAction: "none" }} onPointerDown={zieh("ol")} />
       <span className={`${griff} cursor-nwse-resize`} style={{ left: `${(r.x + r.b) * 100}%`, top: `${(r.y + r.h) * 100}%`, touchAction: "none" }} onPointerDown={zieh("ur")} />
 
-      <div className="pointer-events-none absolute right-3 top-3 hidden rounded-full bg-papier/95 px-3 py-1.5 text-[11.5px] font-semibold text-kohle shadow-sm sm:block">
+      <div className="pointer-events-none absolute right-3 top-3 hidden rounded-[3px] bg-papier/95 px-3 py-1.5 text-[11.5px] font-semibold text-kohle shadow-sm sm:block">
         Zieh den Rahmen auf deinen Küchenraum
       </div>
       </div>

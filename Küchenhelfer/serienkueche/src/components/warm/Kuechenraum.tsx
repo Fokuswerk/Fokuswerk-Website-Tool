@@ -165,7 +165,7 @@ function Geraetemarke({ marke, stark = false, ziffer }: { marke: Marke; stark?: 
         <span
           className={`flex items-center justify-center whitespace-nowrap font-semibold shadow-[0_2px_8px_rgba(21,20,15,.35)] backdrop-blur-sm ${
             ziffer === undefined
-              ? "rounded-full px-2.5 py-1 text-[11px]"
+              ? "rounded-[3px] px-2.5 py-1 text-[11px]"
               : "h-[22px] w-[22px] rounded-full text-[11.5px]"
           } ${stark ? "bg-butter text-kohle" : "bg-kohle/90 text-creme"}`}
         >
@@ -214,7 +214,7 @@ function Raum({
     return (
       <Html position={[x * M, z * M + 0.12, y * M]} center zIndexRange={[40, 20]} style={{ pointerEvents: "none" }}>
         <span
-          className={`whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-semibold shadow-[0_2px_8px_rgba(21,20,15,.35)] backdrop-blur-sm ${
+          className={`whitespace-nowrap rounded-[3px] px-2.5 py-1 text-[11.5px] font-semibold shadow-[0_2px_8px_rgba(21,20,15,.35)] backdrop-blur-sm ${
             stark ? "bg-kohle text-creme" : "bg-kohle/70 text-creme"
           }`}
         >
@@ -466,7 +466,7 @@ export function Kuechenraum({
     <div>
       <div
         ref={buehne}
-        className={`vertieft relative overflow-hidden rounded-[18px] bg-[#efebe3] ring-1 ring-black/[0.06] ${scrollen ? "raum-scrollbar" : ""}`}
+        className={`vertieft relative overflow-hidden rounded-[3px] bg-[#efebe3] ring-1 ring-black/[0.06] ${scrollen ? "raum-scrollbar" : ""}`}
         style={{ height: hoehe, touchAction: scrollen ? "pan-y" : "none" }}
         onPointerDown={(e) => { setAngefasst(true); merkeStart(e); }}
         onPointerMove={merkeWeg}
@@ -520,7 +520,7 @@ export function Kuechenraum({
         />
 
         {!angefasst && (
-          <span className="pointer-events-none absolute bottom-3.5 right-4 rounded-full bg-kohle/55 px-3 py-1 text-[11.5px] font-medium text-creme backdrop-blur-sm">
+          <span className="pointer-events-none absolute bottom-3.5 right-4 rounded-[3px] bg-kohle/55 px-3 py-1 text-[11.5px] font-medium text-creme backdrop-blur-sm">
             {scrollen ? "Seitwärts ziehen zum Drehen" : "Ziehen zum Drehen"}
           </span>
         )}
@@ -548,7 +548,7 @@ export function Kuechenraum({
               type="button"
               onClick={() => setZeigeGeraete((v) => !v)}
               aria-pressed={zeigeGeraete}
-              className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+              className={`flex items-center gap-2 rounded-[3px] px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
                 zeigeGeraete
                   ? "bg-kohle text-creme"
                   : "flaeche text-kohle-2 hover:!border-kohle-3"

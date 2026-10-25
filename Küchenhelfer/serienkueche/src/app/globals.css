@@ -25,7 +25,7 @@
      fuer Masse und Artikelnummern in der Monospace, die das Geraet schon hat.
      Eine eigene Schrift dafuer zu laden, war 100 KB fuer Zahlen in Tabellen. */
   --font-ui: var(--schrift-warm), ui-sans-serif, system-ui, sans-serif;
-  --font-data: ui-monospace, "SF Mono", "SFMono-Regular", "Menlo", monospace;
+  --font-data: var(--schrift-mono), ui-monospace, "SF Mono", "Menlo", monospace;
 
 
   /* Weg der Privatkunden.
@@ -58,7 +58,14 @@
   --color-butter-soft: #f4efe2;
   --color-salbei: #4a6f50;
   --color-salbei-soft: #e9efe9;
-  --color-linie-warm: #e4e0d7;
+  /* EIN Radius, nicht zehn. Gemessen an den eigenen Referenzseiten:
+     kaemper 2px, andre-henken 2px, karosseriebau genau ein --radius,
+     glanzwerk 12px. Auf dieser Seite lagen zehn Werte zwischen 3 und 22 px
+     plus dreissig Pillen — das ist der messbare Grund, warum sie beliebig
+     aussah. Eine Kueche ist ein rechtwinkliges Ding; 3 px ist die Kante
+     eines gefrästen Blechs, 22 px ist eine Seifenblase. */
+  --radius: 3px;
+  --color-linie-warm: #d9d4c8;
   --color-linie-stark: #cfcabe;
   /* Holz aus dem 3D-Bild — die einzige Farbe, die in Zeichnungen auftaucht. */
   --color-holz: #cbae87;
@@ -133,38 +140,30 @@ body {
 }
 
 /* ------- Weg fuer Privatkunden ------- */
-/* Tiefe entsteht aus Licht, nicht aus Rahmen: der Grund ist oben heller,
-   Flaechen tragen eine feine Oberkante und werfen einen weiten, weichen
-   Schatten. Vertiefte Stellen bekommen den Schatten nach innen. */
+/* Tiefe kam hier aus Licht und Schatten: heller Grund oben, feine Oberkante,
+   weiter weicher Schlagschatten. Nachgemessen war davon nichts uebrig — die
+   Oberkante stand auf #ffffff ueber #ffffff (Helligkeitsunterschied 0,00), der
+   Rand lag bei 0,37. Drei von vier Tiefenmitteln rechneten zu null, und genau
+   so sah es aus: flach.
+   Die eigenen Referenzseiten machen es anders. Aus ihrem echten CSS gezaehlt:
+   karosseriebau 43 Linien zu 1 px, glanzwerk 5, andre-henken 3 — Haarlinien,
+   keine Schatten. Eine Linie, die man sieht, traegt mehr als ein Schatten,
+   den man nur ahnt. */
 .warm .flaeche {
-  background: linear-gradient(180deg, #ffffff 0%, #fcfbf9 100%);
-  border: 1px solid rgba(21, 20, 15, 0.055);
-  box-shadow:
-    0 1px 2px rgba(21, 20, 15, 0.04),
-    0 14px 34px -20px rgba(21, 20, 15, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background: #ffffff;
+  border: 1px solid var(--color-linie-stark);
 }
 .warm .flaeche-hoch {
-  box-shadow:
-    0 2px 5px rgba(21, 20, 15, 0.055),
-    0 30px 60px -26px rgba(21, 20, 15, 0.32),
-    inset 0 1px 0 #ffffff;
+  border-color: var(--color-kohle);
 }
 .warm .vertieft {
-  box-shadow:
-    inset 0 2px 5px rgba(21, 20, 15, 0.09),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(21, 20, 15, 0.05);
 }
 
 .warm {
-  /* Kein background-attachment: fixed — damit klebt das Licht von oben am
-     Fensterrand statt am Seitenanfang, und beim Scrollen wandert es mit. */
-  background:
-    radial-gradient(130% 62% at 50% -8%, #fffefc 0%, rgba(255, 254, 252, 0) 58%),
-    linear-gradient(180deg, #f8f7f4 0%, var(--color-creme) 34%);
-  background-repeat: no-repeat, no-repeat;
-  background-position: top center, top center;
-  background-size: 100% 900px, 100% 1400px;
+  /* Hier lag ein Lichtverlauf von oben, der die Schatten-Tiefe stuetzen
+     sollte. Die ist weg, also ist auch er weg: ein Verlauf, der nichts mehr
+     traegt, macht den Grund nur trueb. Abschnitte stossen hart aneinander. */
   background-color: var(--color-creme);
   color: var(--color-kohle);
   font-family: var(--font-warm);
@@ -188,12 +187,13 @@ body {
 .warm .vorzeile {
   display: inline-flex;
   align-items: center;
-  gap: 0.6em;
-  font-family: var(--font-warm);
-  font-size: 13.5px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: var(--color-marke-2);
+  gap: 0.75em;
+  font-family: var(--font-data);
+  font-size: 11.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-kohle-3);
 }
 .warm .vorzeile::before {
   content: "";
@@ -212,7 +212,9 @@ body {
    Tabellenziffern (tnum), Plein nicht — dort zappeln Preise beim Rechnen um
    bis zu 25 px. Gemessen, nicht vermutet. */
 .warm .ziffern {
+  font-family: var(--font-data);
   font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.01em;
 }
 
 @keyframes warmRein {

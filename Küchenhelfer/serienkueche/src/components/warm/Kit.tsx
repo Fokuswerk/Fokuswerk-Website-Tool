@@ -40,7 +40,7 @@ export function WKnopf({
   aus?: boolean;
   typ?: "button" | "submit";
 }) {
-  const basis = `inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-colors ${
+  const basis = `inline-flex items-center justify-center gap-2 rounded-[3px] font-semibold transition-colors ${
     gross ? "px-7 py-3.5 text-[16px]" : "px-5 py-2.5 text-[14.5px]"
   }`;
   const stil = aus
@@ -62,7 +62,7 @@ export function Karte({
   className = "",
   ...rest
 }: { children: ReactNode; className?: string } & Omit<ComponentPropsWithoutRef<"div">, "className" | "children">) {
-  return <div className={`flaeche rounded-[16px] ${className}`} {...rest}>{children}</div>;
+  return <div className={`flaeche rounded-[3px] ${className}`} {...rest}>{children}</div>;
 }
 
 export function GrosseWahl<T extends string | number>({
@@ -89,13 +89,13 @@ export function GrosseWahl<T extends string | number>({
             // sonst springt eine sorgfaeltig gezogene Stelle auf Null zurueck.
             onClick={() => { if (!aktiv) setze(o.id); }}
             aria-pressed={aktiv}
-            className={`warm-wahl flaeche rounded-[14px] p-4 text-left ${
+            className={`warm-wahl flaeche rounded-[3px] p-4 text-left ${
               aktiv
                 ? "flaeche-hoch !border-kohle ring-1 ring-kohle"
                 : "hover:!border-linie-stark"
             }`}
           >
-            {o.bild && <div className="vertieft mb-3.5 overflow-hidden rounded-[10px] bg-creme-2">{o.bild}</div>}
+            {o.bild && <div className="vertieft mb-3.5 overflow-hidden rounded-[3px] bg-creme-2">{o.bild}</div>}
             <div className="gross text-[16.5px] font-bold leading-tight text-kohle">{o.titel}</div>
             {o.satz && <div className="mt-1.5 text-[13.5px] leading-snug text-kohle-2">{o.satz}</div>}
             {o.zusatz && (
@@ -150,7 +150,7 @@ export function GrosseZahl({
           type="button"
           onClick={() => setzeCm(cm - schritt)}
           aria-label="Kleiner"
-          className="flaeche flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-kohle transition-colors hover:!border-kohle-3 active:scale-95"
+          className="flaeche flex h-12 w-12 shrink-0 items-center justify-center rounded-[3px] text-kohle transition-colors hover:!border-kohle-3 active:scale-95"
         >
           <Minus size={20} strokeWidth={2} />
         </button>
@@ -180,7 +180,7 @@ export function GrosseZahl({
           type="button"
           onClick={() => setzeCm(cm + schritt)}
           aria-label="Größer"
-          className="flaeche flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-kohle transition-colors hover:!border-kohle-3 active:scale-95"
+          className="flaeche flex h-12 w-12 shrink-0 items-center justify-center rounded-[3px] text-kohle transition-colors hover:!border-kohle-3 active:scale-95"
         >
           <Plus size={20} strokeWidth={2} />
         </button>
@@ -243,7 +243,7 @@ export function Schieber({
 export function Notiz({ children, ton = "ruhig" }: { children: ReactNode; ton?: "ruhig" | "achtung" }) {
   return (
     <div
-      className={`rounded-[12px] border-l-2 py-3 pl-4 pr-3.5 text-[14px] leading-relaxed text-kohle-2 ${
+      className={`rounded-[3px] border-l-2 py-3 pl-4 pr-3.5 text-[14px] leading-relaxed text-kohle-2 ${
         ton === "achtung"
           ? "vertieft border-kohle bg-creme-2/80"
           : "border-linie-stark bg-papier/70 shadow-[0_1px_2px_rgba(21,20,15,.035)]"

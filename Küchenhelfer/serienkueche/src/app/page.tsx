@@ -114,7 +114,7 @@ function Knopf({ href, children, hell = false }: { href: string; children: React
   return (
     <Link
       href={href}
-      className={`inline-flex items-center gap-2.5 rounded-full px-8 py-4 text-[16.5px] font-semibold transition-colors ${
+      className={`inline-flex items-center gap-2.5 rounded-[3px] px-8 py-4 text-[16.5px] font-semibold transition-colors ${
         hell
           ? "bg-creme text-kohle hover:bg-white"
           : "bg-gradient-to-b from-[#3b382f] to-kohle text-creme shadow-[0_1px_2px_rgba(21,20,15,.2),0_10px_24px_-10px_rgba(21,20,15,.55),inset_0_1px_0_rgba(255,255,255,.14)] hover:from-[#474338]"
@@ -161,7 +161,7 @@ export default function Start() {
     <div className="warm min-h-full overflow-x-clip">
       <a
         href="#inhalt"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-kohle focus:px-4 focus:py-2 focus:text-[14px] focus:font-semibold focus:text-creme"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-[3px] focus:bg-kohle focus:px-4 focus:py-2 focus:text-[14px] focus:font-semibold focus:text-creme"
       >
         Zum Inhalt springen
       </a>
@@ -278,7 +278,7 @@ export default function Start() {
               const g = schaustueck(art);
               if (!g?.foto) return null;
               return (
-                <li key={art} className="flaeche flex flex-col overflow-hidden rounded-[18px]">
+                <li key={art} className="flaeche flex flex-col overflow-hidden rounded-[3px]">
                   <div className="vertieft flex h-[118px] items-center justify-center bg-papier sm:h-[158px]">
                     <Image
                       src={g.foto}
@@ -315,7 +315,7 @@ export default function Start() {
 
       {/* ---------- Bild, das über den Rand läuft ---------- */}
       <section className="mx-auto grid max-w-[1240px] items-center gap-10 px-5 pb-24 sm:px-8 sm:pb-32 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
-        <div className="relative h-[clamp(280px,46vw,540px)] overflow-hidden rounded-[22px] lg:-ml-[max(2rem,calc((100vw-1240px)/2+2rem))] lg:rounded-l-none">
+        <div className="relative h-[clamp(280px,46vw,540px)] overflow-hidden rounded-[3px] lg:-ml-[max(2rem,calc((100vw-1240px)/2+2rem))] lg:rounded-l-none">
           <Bild f={FOTOS.gruen} breite={1800} hoehe={1200} masse="(max-width: 1023px) 100vw, calc(50vw + 8px)" />
         </div>
         <div>
@@ -353,6 +353,13 @@ export default function Start() {
                 </div>
               ))}
             </div>
+            {/* Gemessen am Handy: zwischen diesem Band und dem Knopf im
+                Preisteil lagen 3928 px — 4,8 Bildschirme Galerie und Preise
+                ohne eine einzige Stelle zum Weitermachen. Hier ist die Zusage
+                gerade gegeben; das ist die Stelle, an der jemand loslegt. */}
+            <div className="mt-10">
+              <Knopf href="/kueche" hell>Küche planen</Knopf>
+            </div>
           </div>
           <div className="relative h-[clamp(220px,46vw,340px)] lg:h-auto">
             <Bild f={FOTOS.detail} breite={1200} hoehe={1600} schleier={false} masse="(max-width: 1023px) 100vw, 36vw" />
@@ -366,20 +373,20 @@ export default function Start() {
           So sieht so etwas aus, wenn es steht.
         </h2>
         <div className="mt-12 grid gap-5 lg:grid-cols-[1.35fr_1fr]">
-          <figure className="relative h-[clamp(260px,42vw,480px)] overflow-hidden rounded-[22px]">
+          <figure className="relative h-[clamp(260px,42vw,480px)] overflow-hidden rounded-[3px]">
             <Bild f={FOTOS.insel} breite={1800} hoehe={1200} masse="(max-width: 1023px) 100vw, 664px" />
             <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/85 via-kohle/80 via-70% to-transparent p-5 text-[13.5px] font-medium text-creme">
               Dunkle Fronten, heller Stein — dieselbe Technik, andere Oberfläche.
             </figcaption>
           </figure>
           <div className="grid gap-5">
-            <figure className="relative h-[clamp(180px,20vw,230px)] overflow-hidden rounded-[22px]">
+            <figure className="relative h-[clamp(180px,20vw,230px)] overflow-hidden rounded-[3px]">
               <Bild f={FOTOS.licht} breite={1200} hoehe={700} masse="(max-width: 1023px) 100vw, 492px" />
               <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/85 via-kohle/80 via-70% to-transparent p-4 text-[13px] font-medium text-creme">
                 Kochfeld in der Platte, nichts hängt darüber.
               </figcaption>
             </figure>
-            <figure className="relative h-[clamp(180px,20vw,230px)] overflow-hidden rounded-[22px]">
+            <figure className="relative h-[clamp(180px,20vw,230px)] overflow-hidden rounded-[3px]">
               <Bild f={FOTOS.marmor} breite={1200} hoehe={700} masse="(max-width: 1023px) 100vw, 492px" />
               <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/85 via-kohle/80 via-70% to-transparent p-4 text-[13px] font-medium text-creme">
                 Wandlänge gibt den Takt vor, nicht der Geschmack.
@@ -395,26 +402,33 @@ export default function Start() {
         <h2 className="gross max-w-[22ch] text-[32px] font-bold leading-[1.08] text-kohle sm:text-[46px]">
           Was kostet so eine Küche?
         </h2>
-        <p className="ziffern mt-6 max-w-[58ch] text-[16.5px] leading-relaxed text-kohle-2">
+        {/* Kein "ziffern" auf einem Absatz: die Klasse setzt jetzt die Mono, und
+            ein ganzer Fliesstext in Monospace ist genau die Terminal-Anmutung,
+            die abgelehnt wurde. Die Mono gehoert an die Zahl, nicht an den Satz. */}
+        <p className="mt-6 max-w-[58ch] text-[16.5px] leading-relaxed text-kohle-2">
           Diese drei Beispiele liegen zwischen {eur(brutto(von))} und {eur(brutto(bis))} — komplett, mit Geräten,
           Montage und Mehrwertsteuer. Größere Räume und gehobene Ausstattung kosten mehr. Gerechnet sind sie
           mit demselben Planer, der gleich auch deine Küche rechnet.
         </p>
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-3">
+        {/* Hier standen drei Karten mit der Zahl darin — genau das Muster, das
+            schon einmal durchgefallen ist: "Eine grosse Zahl braucht Raum,
+            keine Umrandung. In 400 px Spaltenbreite kann sie nicht wirken."
+            Also Kasten auf, Zahl frei, nur Haarlinien zwischen den Spalten.
+            Die Zahl laeuft in der Mono: gleiche Ziffernbreite, und sie sieht
+            aus wie abgelesen, nicht wie ausgedacht. */}
+        <div className="mt-14 grid divide-y divide-linie-stark border-y border-linie-stark sm:mt-16 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {beispiele.map((b) => (
-            <div key={b.titel} className="flaeche flex flex-col overflow-hidden rounded-[20px]">
-              {/* Die Zeichnung steht auf Creme statt auf Weiss: die Schraenke
-                  sind hell, auf weissem Grund verschwinden sie. */}
-              <div className="vertieft flex items-center bg-creme px-4 py-5">
-                <Kuechenbild typ={b.typ} variante={b.plan.variante} zeileId={b.typ.zeilen[0].id} hoehe={146} />
+            <div key={b.titel} className="flex flex-col px-0 py-9 sm:px-7 sm:py-10 sm:first:pl-0 sm:last:pr-0">
+              <div className="vorzeile">{b.titel}</div>
+              <div className="ziffern mt-5 text-[42px] font-medium leading-none tracking-[-0.03em] text-kohle sm:text-[46px]">
+                {eur(brutto(b.plan.preis))}
               </div>
-              <div className="flex flex-1 flex-col px-6 pb-6 pt-5">
-                <div className="gross text-[19px] font-bold text-kohle">{b.titel}</div>
-                <div className="mt-1.5 text-[14.5px] leading-snug text-kohle-2">{b.satz}</div>
-                <div className="gross ziffern mt-5 border-t border-linie-warm pt-4 text-[28px] font-bold leading-none text-kohle">
-                  {eur(brutto(b.plan.preis))}
-                </div>
+              <div className="mt-3.5 max-w-[34ch] text-[14.5px] leading-snug text-kohle-2">{b.satz}</div>
+              {/* Die Zeichnung steht auf Creme: die Schraenke sind hell, auf
+                  weissem Grund verschwinden sie. */}
+              <div className="mt-7 flex items-end bg-creme px-4 py-5">
+                <Kuechenbild typ={b.typ} variante={b.plan.variante} zeileId={b.typ.zeilen[0].id} hoehe={132} />
               </div>
             </div>
           ))}

@@ -46,7 +46,7 @@ export function Rechtsseite({
 /** Eine Angabe, die der Betreiber noch einsetzen muss. */
 export function Platzhalter({ children }: { children: ReactNode }) {
   return (
-    <mark className="rounded-[4px] bg-butter-soft px-1.5 py-0.5 text-kohle-2">
+    <mark className="rounded-[3px] bg-butter-soft px-1.5 py-0.5 text-kohle-2">
       [{children}]
     </mark>
   );

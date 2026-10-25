@@ -132,7 +132,7 @@ const Kuechenraum = dynamic(
   () => import("@/components/warm/Kuechenraum").then((m) => m.Kuechenraum),
   {
     ssr: false,
-    loading: () => <div className="h-[420px] animate-pulse rounded-[18px] bg-creme-2" />,
+    loading: () => <div className="h-[420px] animate-pulse rounded-[3px] bg-creme-2" />,
   },
 );
 
@@ -192,7 +192,7 @@ function VorschlagKarte({
             <div className="flex flex-wrap items-center gap-2">
               <span className="gross text-[20px] font-bold text-kohle">{v.titel}</span>
               {empfohlen && (
-                <span className="rounded-full bg-salbei-soft px-2.5 py-[3px] text-[11.5px] font-semibold text-salbei">
+                <span className="rounded-[3px] bg-salbei-soft px-2.5 py-[3px] text-[11.5px] font-semibold text-salbei">
                   Unser Tipp
                 </span>
               )}
@@ -441,6 +441,11 @@ export default function Kuechenplaner() {
     ueberschrift.current?.focus({ preventScroll: true });
   }, [schritt]);
   const standText = (() => {
+    /* Nie zusammen mit der Tab-Warnung: beide fragen im Kern dasselbe
+       ("welchen Stand willst du?"), und zwei gelbe Kaesten mit vier Links
+       sind das Erste, was man vom Planer sieht. Die Tab-Warnung ist die
+       dringendere und die genauere, also hat sie Vorrang. */
+    if (fremdstand) return null;
     if (!montiert || !stand || stand <= standGesehen || schritt === "start") return null;
     const alter = Date.now() - stand;
     if (alter < 1000 * 60 * 30) return null;
@@ -707,7 +712,7 @@ export default function Kuechenplaner() {
     <button
       type="button"
       onClick={dreh}
-      className="flaeche flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold text-kohle transition hover:!border-kohle-3"
+      className="flaeche flex shrink-0 items-center gap-1.5 rounded-[3px] px-3 py-1.5 text-[13px] font-semibold text-kohle transition hover:!border-kohle-3"
     >
       <RotateCw size={13} strokeWidth={2.3} />
       Drehen
@@ -726,7 +731,7 @@ export default function Kuechenplaner() {
             onClick={() => setzeRaum({ ausrichtung: i })}
             aria-pressed={i === raum.ausrichtung}
             aria-label={drehungName(raum.form, i)}
-            className={`rounded-[14px] border-2 p-1.5 transition ${
+            className={`rounded-[3px] border-2 p-1.5 transition ${
               i === raum.ausrichtung ? "border-kohle bg-papier" : "border-transparent bg-creme hover:bg-creme-2"
             }`}
           >
@@ -807,7 +812,7 @@ export default function Kuechenplaner() {
 
   const bildStreifen = (
     <div className="sticky top-[57px] z-10 -mx-5 bg-creme/80 px-5 pb-3 pt-2.5 backdrop-blur-xl backdrop-saturate-150 sm:-mx-8 sm:px-8 lg:hidden">
-      <div className="flaeche flex items-center gap-3 rounded-[16px] py-2 pl-2 pr-3">
+      <div className="flaeche flex items-center gap-3 rounded-[3px] py-2 pl-2 pr-3">
         <div className="w-[96px] shrink-0">
           <Raumbild raum={raum} hervorhebung={hervor} hoehe={66} />
         </div>
@@ -867,7 +872,7 @@ export default function Kuechenplaner() {
           <button
             onClick={neuStarten}
             aria-label={neuGefragt ? "Wirklich alles zurücksetzen" : "Alles zurücksetzen und neu beginnen"}
-            className={`-mr-2 flex h-11 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[13px] transition-colors ${
+            className={`-mr-2 flex h-11 shrink-0 items-center gap-1.5 rounded-[3px] px-2.5 text-[13px] transition-colors ${
               neuGefragt ? "bg-kohle text-creme" : "text-kohle-3 hover:text-kohle-2"
             }`}
           >
@@ -891,7 +896,7 @@ export default function Kuechenplaner() {
             laesst sich ohne Server nicht verhindern — aber es muss gesagt
             werden, bevor eine halbe Stunde Arbeit weg ist. */}
         {montiert && fremdstand && (
-          <div className="nicht-drucken mb-5 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-butter-2 bg-butter-soft px-4 py-3">
+          <div className="nicht-drucken mb-5 flex flex-wrap items-center justify-between gap-3 rounded-[3px] border border-butter-2 bg-butter-soft px-4 py-3">
             <span className="text-[13.5px] leading-snug text-kohle-2">
               In einem anderen Tab wird an derselben Küche geplant. Was du hier änderst, überschreibt
               den dortigen Stand.
@@ -916,7 +921,7 @@ export default function Kuechenplaner() {
         )}
 
         {standText && (
-          <div className="nicht-drucken mb-5 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-butter-2 bg-butter-soft px-4 py-3">
+          <div className="nicht-drucken mb-5 flex flex-wrap items-center justify-between gap-3 rounded-[3px] border border-butter-2 bg-butter-soft px-4 py-3">
             <span className="text-[13.5px] leading-snug text-kohle-2">
               Du planst an einem Stand {standText} weiter.
             </span>
@@ -963,7 +968,7 @@ export default function Kuechenplaner() {
 
             {/* Die Karte liegt im Bild, nicht darunter: vorher hing sie zur
                 Haelfte in der Leere unter dem Foto und sah kaputt aus. */}
-            <div className="relative h-[clamp(300px,46vw,500px)] overflow-hidden rounded-[22px]">
+            <div className="relative h-[clamp(300px,46vw,500px)] overflow-hidden rounded-[3px]">
               <NextImage
                 src={fotoUrl(FOTOS.gruen, 1200)}
                 alt={FOTOS.gruen.alt}
@@ -974,7 +979,7 @@ export default function Kuechenplaner() {
                 sizes="(max-width: 1024px) 100vw, 48vw"
               />
               {moegliche[0] && (
-                <div className="flaeche flaeche-hoch absolute bottom-4 left-4 right-4 rounded-[16px] px-3.5 pb-2.5 pt-3 sm:left-auto sm:w-[252px]">
+                <div className="flaeche flaeche-hoch absolute bottom-4 left-4 right-4 rounded-[3px] px-3.5 pb-2.5 pt-3 sm:left-auto sm:w-[252px]">
                   <div className="vorzeile mb-1.5">Beispiel, gerade gerechnet</div>
                   <Kuechenbild
                     typ={typ}
@@ -1097,7 +1102,7 @@ export default function Kuechenplaner() {
               </p>
             </div>
 
-            <div className="mt-8 overflow-hidden rounded-[16px] flaeche">
+            <div className="mt-8 overflow-hidden rounded-[3px] flaeche">
               {pruefpunkte.map((z, i) => (
                 <button
                   key={z.id}
@@ -1463,7 +1468,7 @@ export default function Kuechenplaner() {
             <>
               <Kopf anker={ueberschrift} vor={schrittText} titel={info.frage} satz={info.hilfe} />
 
-              <div className="vertieft relative mt-7 h-[clamp(140px,22vw,220px)] overflow-hidden rounded-[16px] bg-creme-2 ring-1 ring-black/[0.06]">
+              <div className="vertieft relative mt-7 h-[clamp(140px,22vw,220px)] overflow-hidden rounded-[3px] bg-creme-2 ring-1 ring-black/[0.06]">
                 <NextImage
                   src={fotoUrl(GERAETEFOTOS[geraeteArt], 1400)}
                   alt={GERAETEFOTOS[geraeteArt].alt}
@@ -1486,7 +1491,7 @@ export default function Kuechenplaner() {
                       type="button"
                       onClick={() => setMarken((v) => ({ ...v, [geraeteArt]: m }))}
                       aria-pressed={(marken[geraeteArt] ?? null) === m}
-                      className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+                      className={`rounded-[3px] px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
                         (marken[geraeteArt] ?? null) === m ? "bg-kohle text-creme" : "flaeche text-kohle-2 hover:!border-kohle-3"
                       }`}
                     >
@@ -1512,14 +1517,14 @@ export default function Kuechenplaner() {
                         type="button"
                         onClick={() => setzeGeraet(geraeteArt, g.id)}
                         aria-pressed={aktiv}
-                        className={`warm-wahl flaeche rounded-[14px] p-4 text-left ${
+                        className={`warm-wahl flaeche rounded-[3px] p-4 text-left ${
                           aktiv ? "flaeche-hoch !border-kohle ring-1 ring-kohle" : "hover:!border-linie-stark"
                         }`}
                       >
                         <div className="flex gap-4">
                           {/* Das Herstellerfoto des Modells, wo es eines gibt —
                               sonst die Zeichnung, die zeigt, was für ein Gerät es ist. */}
-                          <div className={`vertieft w-[104px] shrink-0 overflow-hidden rounded-[10px] ${g.foto ? "bg-papier" : "bg-creme-2"}`}>
+                          <div className={`vertieft w-[104px] shrink-0 overflow-hidden rounded-[3px] ${g.foto ? "bg-papier" : "bg-creme-2"}`}>
                             {g.foto ? (
                               <NextImage
                                 src={g.foto}
@@ -1730,7 +1735,7 @@ export default function Kuechenplaner() {
                         type="button"
                         onClick={() => { setAnsicht(id); setAngefasst(null); setTauschGrund(null); }}
                         aria-pressed={ansicht === id}
-                        className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition sm:px-4 sm:text-[13.5px] ${
+                        className={`rounded-[3px] px-3.5 py-1.5 text-[13px] font-semibold transition sm:px-4 sm:text-[13.5px] ${
                           ansicht === id
                             ? "bg-gradient-to-b from-white to-[#fbfaf7] text-kohle shadow-[0_1px_2px_rgba(21,20,15,.1),0_3px_8px_-3px_rgba(21,20,15,.22),inset_0_1px_0_#fff]"
                             : "text-kohle-2 hover:text-kohle"
@@ -1822,7 +1827,7 @@ export default function Kuechenplaner() {
                                   onClick={() => antippen(z.id, i)}
                                   aria-pressed={dran}
                                   aria-label={`Platz ${nr}, ${modulName(id)}${dran ? ", angefasst" : ziel ? ", mögliches Ziel" : ""}`}
-                                  className={`flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[12.5px] transition-colors ${
+                                  className={`flex min-h-11 items-center gap-1.5 rounded-[3px] px-3 text-[12.5px] transition-colors ${
                                     dran
                                       ? "bg-kohle text-creme"
                                       : ziel
@@ -1883,9 +1888,9 @@ export default function Kuechenplaner() {
                                       setzeBelegung(eigenerSchluessel!, { ...gewaehlterVorschlag.belegung, ...o.belegung });
                                       setTauschGrund(null);
                                     }}
-                                    className="warm-wahl flaeche rounded-[12px] p-3 text-left hover:!border-linie-stark"
+                                    className="warm-wahl flaeche rounded-[3px] p-3 text-left hover:!border-linie-stark"
                                   >
-                                    <div className="vertieft mb-2.5 overflow-hidden rounded-[8px] bg-creme-2">
+                                    <div className="vertieft mb-2.5 overflow-hidden rounded-[3px] bg-creme-2">
                                       <Schrankbild id={o.id} />
                                     </div>
                                     <div className="text-[14px] font-semibold leading-tight text-kohle">
@@ -2026,11 +2031,11 @@ export default function Kuechenplaner() {
                                 alt=""
                                 width={200}
                                 height={200}
-                                className="vertieft h-11 w-11 shrink-0 rounded-[8px] bg-papier object-contain p-1"
+                                className="vertieft h-11 w-11 shrink-0 rounded-[3px] bg-papier object-contain p-1"
                                 sizes="44px"
                               />
                             ) : (
-                              <span className="h-11 w-11 shrink-0 rounded-[8px] bg-creme-2" aria-hidden="true" />
+                              <span className="h-11 w-11 shrink-0 rounded-[3px] bg-creme-2" aria-hidden="true" />
                             )}
                             <span className="min-w-0 flex-1">
                               <span className="block truncate text-kohle-2">{g.name}</span>
@@ -2188,7 +2193,7 @@ export default function Kuechenplaner() {
                               value={String(kontakt[feld])}
                               onChange={(e) => setKontakt((k) => ({ ...k, [feld]: e.target.value }))}
                               placeholder={platz}
-                              className="flaeche w-full rounded-[12px] px-3.5 py-2.5 text-[15px] text-kohle placeholder:text-kohle-3"
+                              className="flaeche w-full rounded-[3px] px-3.5 py-2.5 text-[15px] text-kohle placeholder:text-kohle-3"
                             />
                           </label>
                         ))}
@@ -2201,7 +2206,7 @@ export default function Kuechenplaner() {
                           value={kontakt.text}
                           onChange={(e) => setKontakt((k) => ({ ...k, text: e.target.value }))}
                           rows={3}
-                          className="flaeche w-full rounded-[12px] px-3.5 py-2.5 text-[15px] text-kohle placeholder:text-kohle-3"
+                          className="flaeche w-full rounded-[3px] px-3.5 py-2.5 text-[15px] text-kohle placeholder:text-kohle-3"
                           placeholder="Besonderheiten im Raum, Wünsche, Termine"
                         />
                       </label>
@@ -2265,7 +2270,7 @@ export default function Kuechenplaner() {
               {/* Die Unterlagen verweisen auf „Positionsnummern wie in der
                   Zeichnung" — dann muss die Zeichnung auch dabei sein. */}
               <Abschnitt titel="Zeichnungen" nr="2" satz="Grundriss und jede Zeile von vorn, mit denselben Positionsnummern wie in den Tabellen.">
-                <div className="flaeche rounded-[14px] px-4 py-4">
+                <div className="flaeche rounded-[3px] px-4 py-4">
                   {/* Der Grundriss braucht nicht die volle Blattbreite — er
                       ist fast quadratisch und wuerde sonst eine Seite fuellen. */}
                   <div className="mx-auto max-w-[460px]">
@@ -2277,7 +2282,7 @@ export default function Kuechenplaner() {
                 </div>
                 <div className="mt-5 space-y-5">
                   {typ.zeilen.map((z) => (
-                    <div key={z.id} className="flaeche break-inside-avoid rounded-[14px] px-4 py-4">
+                    <div key={z.id} className="flaeche break-inside-avoid rounded-[3px] px-4 py-4">
                       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
                         <div className="gross text-[15px] font-bold text-kohle">{z.bezeichnung}</div>
                         <div className="ziffern text-[12.5px] text-kohle-3">{mm(z.laenge)} mm</div>

@@ -13,7 +13,7 @@ import { alsKuechentyp, planeKueche, STANDARD_RAUM, type Raumangaben } from "@/l
 
 const Kuechenraum = dynamic(
   () => import("@/components/warm/Kuechenraum").then((m) => m.Kuechenraum),
-  { ssr: false, loading: () => <div className="rounded-[18px] bg-creme-2" style={{ height: HOEHE }} /> },
+  { ssr: false, loading: () => <div className="rounded-[3px] bg-creme-2" style={{ height: HOEHE }} /> },
 );
 
 const MIN = 2200;
