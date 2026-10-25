@@ -6,20 +6,20 @@
 @theme {
   /* Dieselbe Familie wie der Privatkundenweg, nur sachlicher: warme
      Neutraltoene statt kuehlem Grau, damit beide Haelften zusammengehoeren. */
-  --color-ground: #f5f4f1;
+  --color-ground: #f3f4f5;
   --color-paper: #ffffff;
-  --color-ink: #1a1a16;
-  --color-ink-2: #56544c;
-  --color-ink-3: #6b6860;
-  --color-line: #e4e1da;
-  --color-line-2: #f0ede7;
-  --color-accent: #27465f;
-  --color-accent-2: #3a7ab0;
-  --color-accent-soft: #e9eff4;
-  --color-flag: #93650f;
-  --color-flag-soft: #faf2e0;
-  --color-good: #2f6b4f;
-  --color-good-soft: #e9f2ed;
+  --color-ink: #181a1b;
+  --color-ink-2: #525456;
+  --color-ink-3: #67686b;
+  --color-line: #e0e1e3;
+  --color-line-2: #ecedef;
+  --color-accent: #414345;
+  --color-accent-2: #737577;
+  --color-accent-soft: #edeef0;
+  --color-flag: #926618;
+  --color-flag-soft: #fbf2e3;
+  --color-good: #326a4f;
+  --color-good-soft: #e7f3ec;
 
   /* Der Bautraegerbereich setzt in derselben Textschrift wie der Rest — und
      fuer Masse und Artikelnummern in der Monospace, die das Geraet schon hat.
