@@ -1161,6 +1161,90 @@ export function passeAn(ids: string[], delta: number): string[] | null {
   return aus;
 }
 
+/**
+ * Die Wand ziehen, ohne dass die Kueche umspringt.
+ *
+ * besteAnordnung() ist ein globaler Optimierer ohne Gedaechtnis: fuer jede
+ * Wandlaenge sucht es alle Permutationen neu und bewertet sie als Ganzes.
+ * Das ist richtig, wenn jemand einmal einen Plan will. Beim Ziehen ist es
+ * verheerend. Nachgemessen ueber 2400-4800 mm in 10-mm-Schritten
+ * (werkzeuge/ziehtest.ts):
+ *
+ *   im Mittel bleiben 14,9 % der Zeile an ihrem Platz
+ *   bei 226 von 240 Schritten bricht mehr als die Haelfte weg
+ *   groesster Einzelsprung: 9 Module auf einmal
+ *   33 verschiedene Modulfolgen ueber die Spanne
+ *   die Passleiste steht links 80x, mittig 131x, rechts nur 14x
+ *
+ * Genau das ist der Grund, aus dem schon ein Regler durchgefallen ist:
+ * "wirkt auch ein bisschen billig, weil das so schnell springt alles."
+ *
+ * zieheAn() macht es andersherum und ruehrt die Reihenfolge nie an. Alles,
+ * was links steht — Spuele, Kochfeld, Geraete, jeder Schrank —, bleibt auf
+ * seinem Platz. Veraendert wird ausschliesslich das rechte Ende: zuerst die
+ * Passleiste, und wenn die an ihre Grenze kommt, kommt hinten ein
+ * Unterschrank dazu oder faellt weg. Das ist auch bautechnisch die ehrliche
+ * Antwort — wer eine Zeile verlaengert, haengt hinten etwas an, er baut
+ * nicht die ganze Kueche um.
+ *
+ * passeAn() bleibt daneben bestehen: es deckt nur die Spanne ab, die eine
+ * Passleiste allein auffangen kann (gemessen 40 von 81 Schritten), ist dafuer
+ * aber der kleinstmoegliche Eingriff.
+ */
+const ZIEHBAR = ["US600", "US450", "US300"] as const;
+
+function letzterZiehbarer(ids: string[]): number {
+  for (let i = ids.length - 1; i >= 0; i--) {
+    if ((ZIEHBAR as readonly string[]).includes(ids[i])) return i;
+  }
+  return -1;
+}
+
+export function zieheAn(ids: string[], delta: number): string[] | null {
+  const kette = ids.filter((m) => !m.startsWith("PBX:"));
+  const blende = ids.find((m) => m.startsWith("PBX:"));
+  let rest = delta + (blende ? modul(blende).breite ?? 0 : 0);
+
+  // Zu wenig Platz: von rechts abraeumen, was dort beim Ziehen hingekommen ist.
+  while (rest < 0) {
+    const i = letzterZiehbarer(kette);
+    if (i < 0) return null;
+    rest += modul(kette[i]).breite ?? 0;
+    kette.splice(i, 1);
+  }
+
+  // Zu viel Platz fuer eine Passleiste: hinten Schraenke anhaengen. Gewaehlt
+  // wird die groesste Breite, bei der der Rest wieder eine gueltige Blende
+  // ergibt — sonst bliebe bei 610 mm ein 10-mm-Streifen uebrig.
+  let wache = 0;
+  while (rest > PBX_MAX) {
+    if (++wache > 40) return null;
+    const passend = ZIEHBAR.map((id) => ({ id, b: modul(id).breite ?? 0 }))
+      .filter(({ b }) => {
+        const r = rest - b;
+        return r === 0 || r >= PBX_MIN;
+      })
+      .sort((a, b) => b.b - a.b)[0];
+    if (!passend) return null;
+    kette.push(passend.id);
+    rest -= passend.b;
+  }
+
+  if (rest === 0) return kette;
+
+  // Ein Streifen unter 20 mm ist keine Passleiste, sondern eine Fuge. Dann
+  // einen Schrank zurueckgeben: aus 10 mm Rest werden 310, und das ist eine
+  // Blende, die ein Schreiner wirklich zuschneidet.
+  if (rest < PBX_MIN) {
+    const i = letzterZiehbarer(kette);
+    if (i < 0) return null;
+    rest += modul(kette[i]).breite ?? 0;
+    kette.splice(i, 1);
+    if (rest > PBX_MAX || rest < PBX_MIN) return null;
+  }
+  return [...kette, `PBX:${rest}`];
+}
+
 const cm = (mm: number) => `${Math.round(mm / 10)} cm`;
 
 /** Was die Ausstattungsstufe auf alle Positionen aufschlaegt. */
