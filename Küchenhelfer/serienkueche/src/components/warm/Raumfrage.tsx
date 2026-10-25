@@ -39,7 +39,16 @@ const U = 96;
 const TIEFE = 13;
 const BLOCK = 17;
 
-/** Die Schraenke an einer Wand, als Reihe kleiner Kaesten. */
+const ALLE: WandId[] = ["haupt", "rechts", "gegenueber", "links"];
+
+const WANDWEG: Record<WandId, string> = {
+  haupt: `M${L} ${O} H${R}`,
+  rechts: `M${R} ${O} V${U}`,
+  gegenueber: `M${L} ${U} H${R}`,
+  links: `M${L} ${O} V${U}`,
+};
+
+/** Die Schraenke an einer Wand, als Reihe mit Geraeten darin. */
 function schraenkeAn(w: WandId) {
   const kaesten: Array<{ x: number; y: number; b: number; h: number }> = [];
   if (w === "haupt" || w === "gegenueber") {
@@ -52,82 +61,152 @@ function schraenkeAn(w: WandId) {
   return kaesten;
 }
 
+/** Die Kante der Arbeitsplatte, innen an der Schrankreihe entlang. */
+function platteAn(w: WandId): string {
+  if (w === "haupt") return `M${L} ${O + TIEFE} H${R}`;
+  if (w === "gegenueber") return `M${L} ${U - TIEFE} H${R}`;
+  if (w === "links") return `M${L + TIEFE} ${O} V${U}`;
+  return `M${R - TIEFE} ${O} V${U}`;
+}
+
+/** Herd und Spuele, damit man ohne ein Wort zu lesen eine Kueche erkennt. */
+function Geraet({ art, mx, my }: { art: "herd" | "spuele"; mx: number; my: number }) {
+  if (art === "herd") {
+    return (
+      <>
+        {[-2.6, 2.6].map((dx) =>
+          [-2.6, 2.6].map((dy) => (
+            <circle key={`${dx}-${dy}`} cx={mx + dx} cy={my + dy} r={1.5} className="fill-kohle" />
+          )),
+        )}
+      </>
+    );
+  }
+  return (
+    <>
+      <rect
+        x={mx - 4.4}
+        y={my - 3.2}
+        width={8.8}
+        height={6.4}
+        rx={1.2}
+        className="fill-none stroke-kohle"
+        strokeWidth={1.3}
+      />
+      <circle cx={mx} cy={my} r={1} className="fill-kohle" />
+    </>
+  );
+}
+
 function Raum({ form, wach }: { form: Raumform; wach: boolean }) {
   const waende = kuechenwaende({ form, ausrichtung: 0 });
+  /* Die Tuer kommt an die erste Wand ohne Kueche — ein Raum ohne Tuer ist
+     kein Raum, und im Grundriss ist sie das Zeichen, das ihn lesbar macht. */
+  const tuerwand = ALLE.find((w) => !waende.includes(w)) ?? "gegenueber";
+  const fenster = waende.includes("haupt") ? "gegenueber" : "haupt";
+
   return (
     <svg viewBox={`0 0 ${R + L} ${U + O}`} className="block w-full" aria-hidden="true">
-      {/* Der Raum: ein Rechteck mit Boden. */}
+      {/* Der Boden. Warm, nicht grau: das hier ist eine Wohnung. */}
       <rect x={L} y={O} width={R - L} height={U - O} className="fill-creme-2" />
-      {/* Die Wände, die die Küche tragen, liegen dick auf dem Rechteck. */}
-      {waende.map((w) => {
-        const d =
-          w === "haupt" ? `M${L} ${O} H${R}`
-          : w === "gegenueber" ? `M${L} ${U} H${R}`
-          : w === "links" ? `M${L} ${O} V${U}`
-          : `M${R} ${O} V${U}`;
-        return <path key={w} d={d} strokeWidth={5} className="stroke-kohle" fill="none" />;
-      })}
-      {/* Und auf Berührung rasten die Schränke ein — von der Wand her, nicht
-          nacheinander wie eine Aufzählung, sondern alle zugleich. */}
-      <g
-        style={{
-          opacity: wach ? 1 : 0,
-          transform: wach ? "none" : "scale(0.94)",
-          transformOrigin: "center",
-          transition: "opacity .14s ease-out, transform .18s cubic-bezier(.22,.9,.3,1)",
-        }}
-      >
-        {waende.flatMap((w, wi) =>
-          schraenkeAn(w).map((k, i) => {
-            /* Zwei Kaesten an der ersten Wand bekommen ein Geraet. Ohne das
-               sind es Kisten an einer Linie; mit Herd und Spuele erkennt man
-               eine Kueche, ohne ein Wort zu lesen. */
-            const geraet = wi === 0 ? (i === 1 ? "herd" : i === 3 ? "spuele" : null) : null;
-            const mx = k.x + k.b / 2;
-            const my = k.y + k.h / 2;
-            return (
-              <g key={`${w}-${i}`}>
-                <rect
-                  x={k.x}
-                  y={k.y}
-                  width={k.b}
-                  height={k.h}
-                  className="fill-papier stroke-kohle-3"
-                  strokeWidth={1.4}
-                />
-                {geraet === "herd" && (
-                  <>
-                    {[-2.6, 2.6].map((dx) =>
-                      [-2.6, 2.6].map((dy) => (
-                        <circle key={`${dx}-${dy}`} cx={mx + dx} cy={my + dy} r={1.5} className="fill-kohle" />
-                      )),
-                    )}
-                  </>
-                )}
-                {geraet === "spuele" && (
-                  <>
-                    <rect
-                      x={mx - 4.4}
-                      y={my - 3.4}
-                      width={8.8}
-                      height={6.8}
-                      rx={1.4}
-                      className="fill-none stroke-kohle"
-                      strokeWidth={1.4}
-                    />
-                    <path
-                      d={`M${mx} ${my - 3.4} V${my - 6.2}`}
-                      className="stroke-kohle"
-                      strokeWidth={1.4}
-                      strokeLinecap="round"
-                    />
-                  </>
-                )}
-              </g>
-            );
-          }),
-        )}
-      </g>
+
+      {/* Alle vier Waende duenn — der Raum ist geschlossen. */}
+      {ALLE.map((w) => (
+        <path key={`d-${w}`} d={WANDWEG[w]} strokeWidth={2} className="stroke-linie-stark" fill="none" />
+      ))}
+
+      {/* Das Fenster: ein heller Ausschnitt in der Wand gegenueber der Kueche. */}
+      {fenster === "haupt" ? (
+        <path d={`M${L + 44} ${O} H${L + 92}`} strokeWidth={5} className="stroke-papier" fill="none" />
+      ) : (
+        <path d={`M${L + 44} ${U} H${L + 92}`} strokeWidth={5} className="stroke-papier" fill="none" />
+      )}
+
+      {/* Die Waende, die die Kueche tragen, liegen dick darauf. */}
+      {waende.map((w) => (
+        <path key={w} d={WANDWEG[w]} strokeWidth={5} className="stroke-kohle" fill="none" />
+      ))}
+
+      {/* Die Schraenke. Immer sichtbar — ein leerer Kasten mit einer Linie ist
+          keine Kueche, sondern ein leerer Kasten mit einer Linie. */}
+      {waende.flatMap((w, wi) =>
+        schraenkeAn(w).map((k, i) => {
+          const geraet = wi === 0 ? (i === 1 ? "herd" : i === 3 ? "spuele" : null) : null;
+          return (
+            <g key={`${w}-${i}`}>
+              <rect
+                x={k.x}
+                y={k.y}
+                width={k.b}
+                height={k.h}
+                className="fill-papier stroke-linie-stark"
+                strokeWidth={1.2}
+              />
+              {geraet && <Geraet art={geraet} mx={k.x + k.b / 2} my={k.y + k.h / 2} />}
+            </g>
+          );
+        }),
+      )}
+
+      {/* Die Arbeitsplatte laeuft ueber die Fugen hinweg — eine Platte, nicht
+          sieben Deckel. Beim Beruehren wird sie kraeftig: das ist die Flaeche,
+          auf der gearbeitet wird. */}
+      {waende.map((w) => (
+        <path
+          key={`p-${w}`}
+          d={platteAn(w)}
+          strokeWidth={wach ? 3 : 2}
+          className={wach ? "stroke-kohle" : "stroke-kohle-3"}
+          fill="none"
+          style={{ transition: "stroke-width .16s ease-out" }}
+        />
+      ))}
+
+      {/* Die Tuer, als Viertelkreis wie im Grundriss. */}
+      {tuerwand === "gegenueber" && (
+        <>
+          <path d={`M${R - 46} ${U} H${R - 18}`} strokeWidth={5} className="stroke-papier" fill="none" />
+          <path
+            d={`M${R - 46} ${U} A28 28 0 0 1 ${R - 18} ${U - 28}`}
+            strokeWidth={1.4}
+            className="stroke-kohle-3"
+            fill="none"
+          />
+        </>
+      )}
+      {tuerwand === "links" && (
+        <>
+          <path d={`M${L} ${U - 40} V${U - 12}`} strokeWidth={5} className="stroke-papier" fill="none" />
+          <path
+            d={`M${L} ${U - 12} A28 28 0 0 1 ${L + 28} ${U - 40}`}
+            strokeWidth={1.4}
+            className="stroke-kohle-3"
+            fill="none"
+          />
+        </>
+      )}
+      {tuerwand === "rechts" && (
+        <>
+          <path d={`M${R} ${U - 40} V${U - 12}`} strokeWidth={5} className="stroke-papier" fill="none" />
+          <path
+            d={`M${R} ${U - 12} A28 28 0 0 0 ${R - 28} ${U - 40}`}
+            strokeWidth={1.4}
+            className="stroke-kohle-3"
+            fill="none"
+          />
+        </>
+      )}
+      {tuerwand === "haupt" && (
+        <>
+          <path d={`M${L + 14} ${O} H${L + 42}`} strokeWidth={5} className="stroke-papier" fill="none" />
+          <path
+            d={`M${L + 42} ${O} A28 28 0 0 1 ${L + 14} ${O + 28}`}
+            strokeWidth={1.4}
+            className="stroke-kohle-3"
+            fill="none"
+          />
+        </>
+      )}
     </svg>
   );
 }

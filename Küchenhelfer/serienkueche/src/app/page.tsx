@@ -220,15 +220,6 @@ export default function Start() {
         </main>
       </section>
 
-      {/* ---------- Das Band auf der Kante ----------
-           Es liegt auf der Farbgrenze und ragt in beide Abschnitte hinein:
-           oben ins Foto, unten ins Gruen. Die harte Kante bleibt hart — sie
-           laeuft links und rechts am Band vorbei weiter und wird dadurch zum
-           Motiv, statt weichgezeichnet zu werden. */}
-      <div className="relative z-10 -mt-[96px] sm:-mt-[150px]">
-        <Raumfrage />
-      </div>
-
       {/* ---------- So laeuft das sonst: Wiedererkennung ----------
            Hier standen nacheinander drei Versuche, das Rechnen vorzufuehren:
            ein Regler mit Preis, einer mit den Saetzen des Planers, dann das
@@ -238,8 +229,21 @@ export default function Start() {
            Deshalb steht hier jetzt kein Beweis, keine Tabelle und keine Zahl,
            sondern das, was jeder kennt, der schon mal eine Kueche gekauft
            hat. Nichts daran muss man lesen lernen. */}
-      <section className="auf-dunkel relative -mt-[112px] bg-marke pt-[136px] text-creme sm:-mt-[168px] sm:pt-[200px]">
-        <div className="mx-auto max-w-[1240px] px-5 pb-20 pt-4 sm:px-8 sm:pb-28 sm:pt-6">
+      <section className="auf-dunkel relative bg-marke text-creme">
+        {/* Das Band gehoert IN diesen Abschnitt, nicht zwischen die beiden.
+            Vorher lag es als eigener Block dazwischen, hatte selbst keinen
+            Hintergrund — und dadurch schaute links und rechts der Seitengrund
+            durch: ein cremefarbener Balken quer ueber die Seite, zwischen
+            dunklem Foto und Gruen. Gemessen waren das 366 px am Handy. Das sah
+            aus wie hingepfuscht, und es war es auch.
+            Jetzt faengt das Gruen genau da an, wo das Foto aufhoert — harte
+            Kante, kein Spalt — und das Band ragt mit negativem Rand nach oben
+            ins Foto hinein. Hinter seiner oberen Haelfte liegt das Foto, hinter
+            der unteren das Gruen. Dazwischen nichts. */}
+        <div className="relative z-10 -mt-[96px] sm:-mt-[150px]">
+          <Raumfrage />
+        </div>
+        <div className="mx-auto max-w-[1240px] px-5 pb-20 pt-12 sm:px-8 sm:pb-28 sm:pt-16">
           <h2 className="gross max-w-[14ch] text-[34px] font-bold leading-[1.04] sm:text-[52px]">
             So läuft das sonst.
           </h2>
