@@ -1,7 +1,7 @@
 import { MODULE, belegungsbreite, modul } from "@/data/module";
 import { KUECHENTYPEN, WOHNUNGEN, typFuer } from "@/data/projekt";
 import { VARIANTEN, type VarianteRoh } from "@/data/varianten";
-import type { Kuechentyp, Position, Zeile } from "@/lib/typen";
+import type { Kuechentyp, Position, Wandseite, Zeile } from "@/lib/typen";
 import { MWST } from "@/data/geraete";
 
 /**
@@ -137,6 +137,32 @@ export function arbeitsflaeche(v: VarianteRoh, typ: Kuechentyp): number {
   return Math.max(0, b.von - a.bis);
 }
 
+/**
+ * Abstand eines Laufmasses auf einer Wand bis zu einer bestimmten Raumecke.
+ *
+ * Die Wandkonvention steht im Kopf von data/projekt.ts: nord und sued laufen
+ * von links nach rechts, west und ost von oben nach unten. Ein Laufmass ist
+ * also immer vom westlichen bzw. noerdlichen Ende der Wand gemessen. Liegt
+ * die gesuchte Ecke an genau diesem Ende, IST das Laufmass der Abstand; liegt
+ * sie am anderen, ist es die Wandlaenge minus Laufmass.
+ */
+function abstandZurEcke(
+  wand: Wandseite,
+  laufmass: number,
+  ecke: { west: boolean; nord: boolean },
+  raum: { breite: number; tiefe: number },
+): number {
+  if (wand === "nord" || wand === "sued") return ecke.west ? laufmass : raum.breite - laufmass;
+  return ecke.nord ? laufmass : raum.tiefe - laufmass;
+}
+
+/** Die gemeinsame Ecke zweier aneinanderstossender Waende. */
+function gemeinsameEcke(a: Wandseite, b: Wandseite): { west: boolean; nord: boolean } {
+  const waagerecht = a === "nord" || a === "sued" ? a : b;
+  const senkrecht = a === "west" || a === "ost" ? a : b;
+  return { west: senkrecht === "west", nord: waagerecht === "nord" };
+}
+
 /** Weg von der Spülenmitte zum Abwasserfallstrang, in mm. */
 export function installationsweg(v: VarianteRoh, typ: Kuechentyp): number {
   const sp = finde(v, typ, "SP600");
@@ -145,11 +171,19 @@ export function installationsweg(v: VarianteRoh, typ: Kuechentyp): number {
   const spX = sp.zeile.start + mitte(sp.platz);
   const fsMitte = fs.von + Math.round(fs.breite / 2);
   if (sp.zeile.wand === fs.wand) return Math.abs(spX - fsMitte);
-  // Über Eck: Weg entlang beider Wände bis zur gemeinsamen Ecke.
-  const laengeWand =
-    sp.zeile.wand === "nord" || sp.zeile.wand === "sued" ? typ.raum.breite : typ.raum.tiefe;
-  const bisEcke = Math.min(spX, laengeWand - spX);
-  return bisEcke + fsMitte;
+  /* Ueber Eck: beide Teilstrecken gehen zur GEMEINSAMEN Ecke der beiden
+     Waende. Vorher nahm Math.min() die naehere Raumecke — also unter
+     Umstaenden die falsche — und das zweite Mass wurde vom eigenen
+     Wandanfang gezaehlt statt von der Ecke. Nachgemessen lag K-04 damit bei
+     525 mm statt 3915, und K-01-C bei 1125 statt 2325. Bei K-01 kamen so fuer
+     alle drei Varianten identische Wege heraus, womit spanne() bei max===min
+     pauschal 100 lieferte und jede Variante die vollen 20 Punkte fuer
+     Installation bekam. */
+  const ecke = gemeinsameEcke(sp.zeile.wand, fs.wand);
+  return (
+    abstandZurEcke(sp.zeile.wand, spX, ecke, typ.raum) +
+    abstandZurEcke(fs.wand, fsMitte, ecke, typ.raum)
+  );
 }
 
 /**

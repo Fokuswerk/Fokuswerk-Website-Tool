@@ -42,7 +42,16 @@ export default function Aufmass() {
      durchschlagen. Vorher gab das Aufmass eine Bestellvorbereitung fuer
      einen Typ heraus, den zwei Seiten weiter niemand mehr freigegeben hat. */
   const typFrei = istFreigegeben(typ, freigaben);
-  const bestellbar = lage === "bestaetigt" && snapshots.length > 0 && typFrei;
+  /* Der Kopf dieser Seite nennt den festgeschriebenen Stand als Grundlage
+     ("Grundlage V01"), die Positionen und die Summe kamen aber aus der
+     AKTUELLEN Variantenwahl. Wer nach dem Festschreiben die Variante wechselt,
+     bekam eine Bestellvorbereitung, die sich auf einen Stand beruft, den sie
+     nicht abbildet — K-01-A kostet 3.881 Euro je Kueche, K-01-B 3.951. Also
+     erst bestellfaehig, wenn der aktuelle Stand mit dem festgeschriebenen
+     uebereinstimmt. */
+  const standGleich =
+    snapshots.length > 0 && KUECHENTYPEN.every((t) => snapshots[0].auswahl[t.id] === auswahl[t.id]);
+  const bestellbar = lage === "bestaetigt" && snapshots.length > 0 && typFrei && standGleich;
 
   const zaehler = (l: AufmassLage) =>
     WOHNUNGEN.filter((w) => aufmassLage(w.messpunkte, aufmass[w.nr]) === l).length;
@@ -249,7 +258,9 @@ export default function Aufmass() {
                     ? "Es ist keine Spezifikation festgeschrieben. Ohne festen Stand gibt es keine Bestellgrundlage."
                     : !typFrei
                       ? `Typ ${typ.id} ist nicht mehr bestätigt. Ein festgeschriebener Stand enthält ihn, die Bestätigung wurde danach zurückgenommen — erst wieder bestätigen, dann bestellen.`
-                      : "Das Aufmaß dieser Einheit ist nicht vollständig bestätigt. Fertigungsmaße entstehen erst aus den Ist-Maßen — eine Bestellung aus Planmaßen passt mit hoher Wahrscheinlichkeit nicht."}
+                      : !standGleich
+                        ? "Die Variantenwahl weicht vom festgeschriebenen Stand ab. Diese Seite beruft sich auf den festen Stand — solange beide auseinanderlaufen, wäre die Bestellgrundlage eine andere Küche als die, die hier steht. Entweder zurück zur festgeschriebenen Wahl oder neu festschreiben."
+                        : "Das Aufmaß dieser Einheit ist nicht vollständig bestätigt. Fertigungsmaße entstehen erst aus den Ist-Maßen — eine Bestellung aus Planmaßen passt mit hoher Wahrscheinlichkeit nicht."}
                 </Hinweisband>
               ) : (
                 <Flaeche>

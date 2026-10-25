@@ -65,10 +65,27 @@ export function anschluesse(v: VarianteRoh, typ: Kuechentyp): Anschluss[] {
   const hauptzeile = typ.zeilen[0];
   const apOk = arbeitshoeheVon(typ);
   const schritt = Math.round(hauptzeile.laenge / 4);
+  /* Vor einem Hochschrank und in einer Fensteroeffnung gibt es keine
+     Arbeitsplatte — dort kann keine Arbeitsplattensteckdose sitzen. Vorher
+     wich die Verteilung nur der Spuele aus: gemessen lag bei K-03-B, K-04-A
+     und K-05-A je eine Steckdose auf 1150 mm Hoehe in der geschlossenen Front
+     eines Hochschranks, und bei K-06-A/B und K-03-A eine im Fenster. */
+  const plaetzeHaupt = platzierung(v, hauptzeile.id);
+  const aufHochschrank = (x: number) =>
+    plaetzeHaupt.some(
+      (pl) => modul(pl.modulId).kategorie === "hochschrank" && x >= pl.von && x <= pl.bis,
+    );
+  const imFenster = (x: number) =>
+    typ.oeffnungen.some((o) => {
+      if (o.art !== "fenster" || o.wand !== hauptzeile.wand) return false;
+      const von = o.von - hauptzeile.start;
+      return x >= von && x <= von + o.breite;
+    });
+
   for (let i = 1; i <= 3; i++) {
     const x = schritt * i;
     const imSpuelbereich = sp && sp.zeileId === hauptzeile.id && x > sp.von - 200 && x < sp.bis + 200;
-    if (imSpuelbereich) continue;
+    if (imSpuelbereich || aufHochschrank(x) || imFenster(x)) continue;
     liste.push({
       id: `A-SD${i}`, art: "steckdose", bezeichnung: `Steckdose Arbeitsplatte ${i}`, x, hoehe: apOk + 240,
       zeileId: hauptzeile.id, ausfuehrung: "Schuko, außerhalb des Schutzbereichs der Spüle", freigabe: "bestaetigt",
@@ -259,7 +276,6 @@ export function fertigungsmasse(
   const istHochschrank = (id: string) => modul(id).kategorie === "hochschrank";
   const korpusse = plaetze.filter((p) => !istBlende(p.modulId)).reduce((s, p) => s + p.breite, 0);
   const hoch = plaetze.filter((p) => istHochschrank(p.modulId)).reduce((s, p) => s + p.breite, 0);
-  const blendePlan = plaetze.filter((p) => istBlende(p.modulId)).reduce((s, p) => s + p.breite, 0);
 
   const nutzbarPlan = m1.planmass - versatzPlan;
   const nutzbarIst = istM1 - versatzIst;
@@ -295,7 +311,13 @@ export function fertigungsmasse(
     },
     {
       bezeichnung: "Passblende, Zuschnitt",
-      plan: blendePlan,
+      /* Dieselbe Kette wie in der Ist-Spalte: nutzbare Laenge minus Korpusse.
+         Vorher stand hier die Blendenbreite aus der Variantenbelegung — ein
+         Typwert, waehrend die nutzbare Laenge aus dem Messpunkt der einzelnen
+         Wohnung kommt. Bei WE 01 ergab das 2985 - 2850 = 135, die Tabelle
+         zeigte aber 150: wer das Planmass unveraendert als Istmass eintrug,
+         las in der Differenzspalte -15 mm, ohne dass irgendetwas abwich. */
+      plan: nutzbarPlan - korpusse,
       ist: blendeIst,
       folge:
         blendeIst >= BLENDE_MIN && blendeIst <= BLENDE_MAX

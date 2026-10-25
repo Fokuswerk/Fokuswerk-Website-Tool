@@ -3,14 +3,48 @@
 import { useState } from "react";
 import { ArrowRight, FlipHorizontal2 } from "lucide-react";
 import { KUECHENTYPEN, nischenspanne, TOLERANZBAND, WOHNUNGEN } from "@/data/projekt";
-import { eur, kennzahlen, variante, zahl } from "@/lib/berechnung";
-import { istFreigegeben, offeneFreigaben, typMitFreigabe } from "@/lib/ableitung";
+import { eur, kennzahlen, platzierung, variante, zahl } from "@/lib/berechnung";
+import { BLENDE_MAX, BLENDE_MIN, istFreigegeben, offeneFreigaben, typMitFreigabe } from "@/lib/ableitung";
+import { modul } from "@/data/module";
 import { useDemo } from "@/store/demo";
 import { Grundriss } from "@/components/plan/Grundriss";
 import {
   Abschnitt, Flaeche, Hinweisband, Inhalt, Knopf, Marke,
   Seitenkopf, Tabelle, Td, Th,
 } from "@/components/ui/kit";
+
+/**
+ * Passt der gewaehlte Plan wirklich in jede zugeordnete Wohnung?
+ *
+ * Die Seite behauptete das frueher pauschal: "keine weicht um mehr als 65 mm
+ * vom Nennmass ab — erlaubt sind +/- 80 mm, diese Differenz nimmt die
+ * Passblende am Zeilenende auf." Nachgemessen stimmt das fuer kein einziges
+ * Typ-Plan-Paar. Die Belegungen summieren exakt auf das Nennmass, und bei
+ * K-02-A und K-03-B — beides die Standardwahl — besteht die Summe
+ * ausschliesslich aus Korpussen: Passblende im Plan 0 mm. Es gibt also gar
+ * nichts, was eine Differenz aufnehmen koennte, und eine negative Abweichung
+ * verlangte eine Blende unter 0 mm. Bei WE 11 heisst das in Millimetern:
+ * 2700 mm Korpusse in eine 2645 mm lange Nische.
+ *
+ * Statt der Behauptung steht hier jetzt die Rechnung, und die Einheiten, bei
+ * denen es reisst, werden benannt.
+ */
+function passung(typId: string, variantenId: string | undefined) {
+  const t = KUECHENTYPEN.find((x) => x.id === typId);
+  const v = variantenId ? variante(variantenId) : undefined;
+  if (!t || !v) return { geprueft: 0, eng: [] as string[] };
+  const korpusse = platzierung(v, t.zeilen[0].id)
+    .filter((pl) => modul(pl.modulId).kategorie !== "blende")
+    .reduce((sum, pl) => sum + pl.breite, 0);
+  const einheiten = WOHNUNGEN.filter((w) => w.typId === typId);
+  const eng = einheiten
+    .filter((w) => {
+      const blende = w.nischenlaenge - korpusse;
+      return blende < BLENDE_MIN || blende > BLENDE_MAX;
+    })
+    .map((w) => w.nr);
+  return { geprueft: einheiten.length, eng };
+}
 
 export default function Kuechentypen() {
   const { auswahl, freigaben } = useDemo();
@@ -105,9 +139,31 @@ export default function Kuechentypen() {
                   <span className="num">{zahl(Math.max(...WOHNUNGEN.map((w) => w.nischenlaenge)))}</span> mm;
                   keine weicht um mehr als{" "}
                   <span className="num">{Math.max(...WOHNUNGEN.map((w) => Math.abs(w.abweichung)))} mm</span>{" "}
-                  vom Nennmaß ihres Typs ab — erlaubt sind ± {TOLERANZBAND} mm. Diese Differenz nimmt die
-                  Passblende am Zeilenende auf. Gespiegelte Grundrisse werden über eine
-                  Spiegelsignatur erkannt und erben die Planung ihres Typs.
+                  vom Nennmaß ihres Typs ab — erlaubt sind ± {TOLERANZBAND} mm. Gespiegelte Grundrisse
+                  werden über eine Spiegelsignatur erkannt und erben die Planung ihres Typs.
+                  {(() => {
+                    /* Ob die Differenz die Passblende wirklich aufnimmt, haengt
+                       am gewaehlten Plan — und nicht jeder hat eine. Deshalb
+                       gerechnet statt behauptet. */
+                    const eng = KUECHENTYPEN.flatMap((t) => passung(t.id, auswahl[t.id]).eng);
+                    if (eng.length === 0) {
+                      return (
+                        <>
+                          {" "}Mit der aktuellen Variantenwahl nimmt die Passblende am Zeilenende
+                          diese Differenz in allen {WOHNUNGEN.length} Einheiten auf.
+                        </>
+                      );
+                    }
+                    return (
+                      <>
+                        {" "}Mit der aktuellen Variantenwahl geht das aber nicht überall auf: in{" "}
+                        <span className="num">{eng.length}</span> von{" "}
+                        <span className="num">{WOHNUNGEN.length}</span> Einheiten läge die Passblende
+                        außerhalb von {BLENDE_MIN} bis {BLENDE_MAX} mm — {eng.join(", ")}. Dort muss
+                        die Modulauswahl angepasst werden, die Blende allein reicht nicht.
+                      </>
+                    );
+                  })()}
                 </p>
               </Flaeche>
             </Abschnitt>
@@ -221,9 +277,19 @@ export default function Kuechentypen() {
                   </Tabelle>
                 </Flaeche>
                 <p className="border-t border-line-2 px-3.5 py-3 text-[12px] leading-relaxed text-ink-2">
-                  Geplant und bestellt wird das Nennmaß. Was eine Einheit davon abweicht, nimmt die
-                  Passblende am Zeilenende auf — deshalb braucht nicht jede Wohnung eine eigene
+                  Geplant und bestellt wird das Nennmaß. Was eine Einheit davon abweicht, soll die
+                  Passblende am Zeilenende aufnehmen — deshalb braucht nicht jede Wohnung eine eigene
                   Planung. Die Spalte „gegen Typmaß“ zeigt, wie viel das jeweils ist.
+                  {(() => {
+                    const { eng } = passung(typ.id, auswahl[typ.id]);
+                    if (eng.length === 0) return null;
+                    return (
+                      <>
+                        {" "}Bei diesem Typ reicht sie in {eng.length} Einheit
+                        {eng.length === 1 ? "" : "en"} nicht: {eng.join(", ")}.
+                      </>
+                    );
+                  })()}
                 </p>
               </Abschnitt>
             </div>

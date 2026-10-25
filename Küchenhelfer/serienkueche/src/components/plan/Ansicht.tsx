@@ -112,15 +112,35 @@ export function Ansicht({
         );
       })}
 
-      {/* Hängeschränke über den Feldern ohne Hochschrank und ohne Fenster */}
-      {plaetze.map((p) => {
-        const m = modul(p.modulId);
-        if (m.kategorie === "hochschrank") return null;
-        const stoert = fenster.some((f) => {
-          const v = f.von - zeile.start;
-          return p.von < v + f.breite && p.bis > v;
+      {/* Hängeschränke: so viele, wie die Variante wirklich enthält.
+          Vorher bekam JEDES zulässige Feld einen Rahmen, ohne variante.weitere
+          anzusehen. Gezeichnet gegen bestellt, nachgemessen: K-03-B 0 gegen 2,
+          K-02-A 6 gegen 3, K-04-A 7 gegen 4, K-05-C 10 gegen 5. Die Zeichnung
+          zeigte also eine andere Küche als die Stückliste daneben. Die Esse
+          über dem Kochfeld bleibt davon unberührt — sie ist kein Schrank. */}
+      {(() => {
+        const zulaessig = plaetze.filter((p) => {
+          if (modul(p.modulId).kategorie === "hochschrank") return false;
+          return !fenster.some((f) => {
+            const v = f.von - zeile.start;
+            return p.von < v + f.breite && p.bis > v;
+          });
         });
-        if (stoert) return null;
+        /* Die Esse zählt nicht gegen die Hängeschrankmenge. */
+        const esse = zulaessig.filter((p) => p.modulId === "KF600");
+        const uebrig = zulaessig.filter((p) => p.modulId !== "KF600");
+        const anzahl = variante.weitere
+          .filter((w) => modul(w.modulId).kategorie === "haengeschrank")
+          .reduce((n, w) => n + w.menge, 0);
+        /* Die breitesten Felder zuerst: ein Hängeschrank geht dorthin, wo er
+           ganz hinpasst. Reihenfolge danach wieder nach Lage, damit die
+           Zeichnung nicht springt. */
+        const gewaehlt = [...uebrig]
+          .sort((a2, b2) => b2.breite - a2.breite)
+          .slice(0, anzahl)
+          .sort((a2, b2) => a2.von - b2.von);
+        return [...gewaehlt, ...esse];
+      })().map((p) => {
         const kochfeld = p.modulId === "KF600";
         return (
           <g key={`os-${p.index}`}>
