@@ -39,25 +39,25 @@
      warmer Akzent fuer Marken und Ziffern.
      Die Markenfarbe traegt grosse Flaechen und den Verlauf ueber dem
      Hero-Foto. Auf Pillen-Knoepfen hat sie nichts zu suchen. */
-  --color-marke: #2c3a2a;
-  --color-marke-2: #3d5238;
-  --color-marke-tief: #1b241a;
-  --color-marke-soft: #e8ece5;
-  --color-messing: #a97f45;
-  --color-messing-soft: #f3ecdf;
+  --color-marke: #313b1a;
+  --color-marke-2: #455329;
+  --color-marke-tief: #1c240b;
+  --color-marke-soft: #e7ecda;
+  --color-messing: #aa813c;
+  --color-messing-soft: #f6ebd8;
 
-  --color-creme: #f5f3ef;
-  --color-creme-2: #ebe8e1;
+  --color-creme: #f5f3ed;
+  --color-creme-2: #ebe8de;
   --color-papier: #ffffff;
-  --color-kohle: #15140f;
-  --color-kohle-2: #56534a;
-  --color-kohle-3: #6c6860;
+  --color-kohle: #15140d;
+  --color-kohle-2: #555348;
+  --color-kohle-3: #6b695e;
   /* Nur noch im Produkt selbst, nicht in der Oberflaeche. */
-  --color-butter: #c9a227;
-  --color-butter-2: #e4cf8e;
-  --color-butter-soft: #f4efe2;
-  --color-salbei: #4a6f50;
-  --color-salbei-soft: #e9efe9;
+  --color-butter: #bc9a40;
+  --color-butter-2: #e3d09d;
+  --color-butter-soft: #f6eed8;
+  --color-salbei: #5d7144;
+  --color-salbei-soft: #e8eede;
   /* EIN Radius, nicht zehn. Gemessen an den eigenen Referenzseiten:
      kaemper 2px, andre-henken 2px, karosseriebau genau ein --radius,
      glanzwerk 12px. Auf dieser Seite lagen zehn Werte zwischen 3 und 22 px
@@ -65,8 +65,8 @@
      aussah. Eine Kueche ist ein rechtwinkliges Ding; 3 px ist die Kante
      eines gefrästen Blechs, 22 px ist eine Seifenblase. */
   --radius: 3px;
-  --color-linie-warm: #d9d4c8;
-  --color-linie-stark: #cfcabe;
+  --color-linie-warm: #d8d5c7;
+  --color-linie-stark: #cecbbb;
   /* Holz aus dem 3D-Bild — die einzige Farbe, die in Zeichnungen auftaucht. */
   --color-holz: #cbae87;
   --color-holz-soft: #e8dcc8;
