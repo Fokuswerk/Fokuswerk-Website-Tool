@@ -92,11 +92,15 @@ function Bild({
         width={breite}
         height={hoehe}
         priority={prioritaet}
-        className="h-full w-full object-cover"
-        /* Mittig beschnitten lag im Hero oben ein dunkler Schrankstreifen —
-           unter der Leiste sah das aus wie ein schmutziger Rand. Der
-           Ausschnitt sitzt jetzt tiefer, die Arbeitsflaeche traegt das Bild. */
-        style={{ objectPosition: "center 64%" }}
+        /* Der Ausschnitt haengt am Seitenverhaeltnis des Platzes, nicht an
+           einem festen Wert — deshalb steht er in CSS und nicht hier.
+           Nachgemessen: das Foto ist 2400x3200, ein Hochformat. Am Handy
+           (Rahmen 0,46) ist die ganze Hoehe zu sehen, der senkrechte Wert
+           aendert dort gar nichts. Am Schreibtisch (Rahmen bis 1,91) bleibt
+           nur ein knappes Drittel der Hoehe uebrig: bei 64 Prozent war das
+           die dunkle Insel, und der Auftakt sah aus wie eine schwarze Flaeche.
+           Bei 30 Prozent liegt dort die Decke mit dem Fensterlicht. */
+        className="hero-foto h-full w-full object-cover"
         sizes={masse}
       />
       {schleier && (
@@ -171,24 +175,14 @@ export default function Start() {
           ein- und ausfahrende Browserleiste das Bild nicht springen laesst. */}
       <section className="auf-dunkel relative isolate flex min-h-svh flex-col">
         <div className="absolute inset-0 -z-10 overflow-hidden bg-marke-tief">
-          <Bild f={FOTOS.hero} breite={2400} hoehe={1500} schleier={false} prioritaet masse="100vw" />
+          <Bild f={FOTOS.hero} breite={2400} hoehe={3200} schleier={false} prioritaet masse="100vw" />
           <span
             aria-hidden="true"
-            className="absolute inset-0"
+            className="absolute inset-0 hero-schleier"
             /* Der Verlauf faerbt das Foto in der Markenfarbe ein, statt es nur
                abzudunkeln. Mit Fast-Schwarz wirkt ein Tageslichtfoto einfach
                dunkel; mit dem Oliv bekommt die ganze Seite ein Gesicht. */
-            style={{
-              background: [
-                /* Von unten kraeftig, in der Mitte duenn: das Foto soll zu
-                   sehen sein, nicht nur zu ahnen. */
-                "linear-gradient(0deg, rgba(27,36,26,0.84) 0%, rgba(34,46,33,0.38) 46%, rgba(34,46,33,0.14) 72%)",
-                /* Von links, damit der Text auf ruhigem Grund steht. */
-                "linear-gradient(90deg, rgba(27,36,26,0.66) 0%, rgba(27,36,26,0.12) 58%, transparent 78%)",
-                /* Eigener Streifen oben fuer die Leiste. */
-                "linear-gradient(180deg, rgba(22,30,21,0.62) 0%, transparent 128px)",
-              ].join(", "),
-            }}
+
           />
         </div>
 
@@ -203,7 +197,12 @@ export default function Start() {
           </Link>
         </header>
 
-        <main id="inhalt" className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col justify-center px-5 pb-28 pt-10 sm:px-8 sm:pb-36">
+        {/* Der Text stand mittig — also genau ueber der hellsten Stelle des Fotos,
+            der weissen Decke am Fensterlicht. Damit er dort lesbar war, musste
+            der Schleier das ganze Bild zudecken, und uebrig blieb eine gruene
+            Flaeche. Jetzt steht er unten, wo die Insel und der Boden ohnehin
+            dunkel sind: die obere Haelfte bleibt das Foto. */}
+        <main id="inhalt" className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col justify-end px-5 pb-20 pt-10 sm:px-8 sm:pb-24">
           <h1 className="gross gross-xl max-w-[18ch] text-[44px] font-bold text-creme sm:text-[68px] lg:text-[86px]">
             Deine neue Küche. Ohne Termin im Küchenstudio.
           </h1>
@@ -322,7 +321,7 @@ export default function Start() {
           Luft oben und unten mittig im hellen Abschnitt. */}
       <section className="mx-auto grid max-w-[1240px] items-center gap-10 px-5 py-24 sm:px-8 sm:py-32 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
         <div className="relative h-[clamp(280px,46vw,540px)] overflow-hidden rounded-[3px] lg:-ml-[max(2rem,calc((100vw-1240px)/2+2rem))] lg:rounded-l-none">
-          <Bild f={FOTOS.gruen} breite={1800} hoehe={1200} masse="(max-width: 1023px) 100vw, calc(50vw + 8px)" />
+          <Bild f={FOTOS.gruen} breite={1800} hoehe={1565} masse="(max-width: 1023px) 100vw, calc(50vw + 8px)" />
         </div>
         <div>
           <h2 className="gross max-w-[18ch] text-[30px] font-bold leading-[1.08] text-kohle sm:text-[40px]">
@@ -372,7 +371,7 @@ export default function Start() {
             </div>
           </div>
           <div className="relative h-[clamp(220px,46vw,340px)] lg:h-auto">
-            <Bild f={FOTOS.detail} breite={1200} hoehe={1600} schleier={false} masse="(max-width: 1023px) 100vw, 36vw" />
+            <Bild f={FOTOS.detail} breite={1200} hoehe={1500} schleier={false} masse="(max-width: 1023px) 100vw, 36vw" />
           </div>
         </div>
       </section>
@@ -384,20 +383,20 @@ export default function Start() {
         </h2>
         <div className="mt-12 grid gap-5 lg:grid-cols-[1.35fr_1fr]">
           <figure className="relative h-[clamp(260px,42vw,480px)] overflow-hidden rounded-[3px]">
-            <Bild f={FOTOS.insel} breite={1800} hoehe={1200} masse="(max-width: 1023px) 100vw, 664px" />
+            <Bild f={FOTOS.insel} breite={1200} hoehe={1800} masse="(max-width: 1023px) 100vw, 664px" />
             <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/85 via-kohle/80 via-70% to-transparent p-5 text-[13.5px] font-medium text-creme">
               Dunkle Fronten, heller Stein — dieselbe Technik, andere Oberfläche.
             </figcaption>
           </figure>
           <div className="grid gap-5">
             <figure className="relative h-[clamp(180px,20vw,230px)] overflow-hidden rounded-[3px]">
-              <Bild f={FOTOS.licht} breite={1200} hoehe={700} masse="(max-width: 1023px) 100vw, 492px" />
+              <Bild f={FOTOS.licht} breite={1200} hoehe={1600} masse="(max-width: 1023px) 100vw, 492px" />
               <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/85 via-kohle/80 via-70% to-transparent p-4 text-[13px] font-medium text-creme">
                 Kochfeld in der Platte, nichts hängt darüber.
               </figcaption>
             </figure>
             <figure className="relative h-[clamp(180px,20vw,230px)] overflow-hidden rounded-[3px]">
-              <Bild f={FOTOS.marmor} breite={1200} hoehe={700} masse="(max-width: 1023px) 100vw, 492px" />
+              <Bild f={FOTOS.marmor} breite={1200} hoehe={784} masse="(max-width: 1023px) 100vw, 492px" />
               <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-kohle/85 via-kohle/80 via-70% to-transparent p-4 text-[13px] font-medium text-creme">
                 Wandlänge gibt den Takt vor, nicht der Geschmack.
               </figcaption>

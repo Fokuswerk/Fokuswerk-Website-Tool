@@ -217,6 +217,49 @@ body {
   letter-spacing: -0.01em;
 }
 
+/* Der Schleier ueber dem Auftaktfoto.
+   Er lag vorher als Inline-Stil am Element und hatte drei Lagen, von denen
+   eine nur am Schreibtisch Sinn ergibt: der Verlauf von links sorgt dafuer,
+   dass die Textspalte auf ruhigem Grund steht. Am Handy laeuft der Text
+   ueber die ganze Breite — dort deckt genau diese Lage das Foto zu, und der
+   Auftakt sieht aus wie eine gruene Flaeche. Also gilt sie erst ab 640 px.
+   Das Foto ist ausserdem ein Hochformat (2400x3200, nachgemessen), im Code
+   stand bisher 2400x1500. Auf einem schmalen Schirm ist deshalb die ganze
+   Hoehe zu sehen und nur die Mitte der Breite — der senkrechte Ausschnitt
+   muss dort gar nichts ausgleichen. */
+.hero-foto { object-position: 50% 58%; }
+@media (min-width: 640px) { .hero-foto { object-position: 50% 30%; } }
+
+.hero-schleier {
+  background:
+    /* Gemessen am Handy: in der obersten Ueberschriftenzeile lag der Kontrast
+       bei 2,77 — unter den 3,0, die grosse Schrift nach AA braucht. Die
+       Ueberschrift steht dort zwischen 44 und 66 Prozent ueber der Unterkante,
+       also sind genau diese Stufen angehoben. Ueber 82 Prozent bleibt es fast
+       klar: das ist die helle Decke am Fenster, und die soll man sehen. */
+    linear-gradient(0deg,
+      rgba(20,27,19,0.92) 0%,
+      rgba(20,27,19,0.88) 30%,
+      rgba(20,27,19,0.74) 50%,
+      rgba(22,30,21,0.40) 68%,
+      rgba(24,33,23,0.10) 82%,
+      transparent 92%),
+    linear-gradient(180deg, rgba(20,27,19,0.50) 0%, transparent 112px);
+}
+@media (min-width: 640px) {
+  .hero-schleier {
+    background:
+      linear-gradient(0deg,
+        rgba(20,27,19,0.88) 0%,
+        rgba(20,27,19,0.76) 30%,
+        rgba(22,30,21,0.44) 52%,
+        rgba(24,33,23,0.12) 70%,
+        transparent 84%),
+      linear-gradient(90deg, rgba(20,27,19,0.46) 0%, rgba(20,27,19,0.10) 46%, transparent 68%),
+      linear-gradient(180deg, rgba(20,27,19,0.52) 0%, transparent 120px);
+  }
+}
+
 @keyframes warmRein {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: none; }
