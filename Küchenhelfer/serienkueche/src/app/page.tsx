@@ -203,7 +203,7 @@ export default function Start() {
             der Schleier das ganze Bild zudecken, und uebrig blieb eine gruene
             Flaeche. Jetzt steht er unten, wo die Insel und der Boden ohnehin
             dunkel sind: die obere Haelfte bleibt das Foto. */}
-        <main id="inhalt" className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col justify-end px-5 pb-32 pt-10 sm:px-8 sm:pb-44">
+        <main id="inhalt" className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col justify-end px-5 pb-24 pt-10 sm:px-8 sm:pb-28">
           <h1 className="gross gross-xl max-w-[18ch] text-[44px] font-bold text-creme sm:text-[68px] lg:text-[86px]">
             Deine neue Küche. Ohne Termin im Küchenstudio.
           </h1>
@@ -230,20 +230,14 @@ export default function Start() {
            sondern das, was jeder kennt, der schon mal eine Kueche gekauft
            hat. Nichts daran muss man lesen lernen. */}
       <section className="auf-dunkel relative bg-marke text-creme">
-        {/* Das Band gehoert IN diesen Abschnitt, nicht zwischen die beiden.
-            Vorher lag es als eigener Block dazwischen, hatte selbst keinen
-            Hintergrund — und dadurch schaute links und rechts der Seitengrund
-            durch: ein cremefarbener Balken quer ueber die Seite, zwischen
-            dunklem Foto und Gruen. Gemessen waren das 366 px am Handy. Das sah
-            aus wie hingepfuscht, und es war es auch.
-            Jetzt faengt das Gruen genau da an, wo das Foto aufhoert — harte
-            Kante, kein Spalt — und das Band ragt mit negativem Rand nach oben
-            ins Foto hinein. Hinter seiner oberen Haelfte liegt das Foto, hinter
-            der unteren das Gruen. Dazwischen nichts. */}
-        <div className="relative z-10 -mt-[96px] sm:-mt-[150px]">
+        {/* Erst die Frage, dann die Wiedererkennung. Beides steht auf
+            demselben Grund — es gibt hier kein aufgesetztes Band mehr, das
+            ueber der Kante schwebt. Die Kante zwischen Foto und Gruen ist eine
+            Kante und sonst nichts. */}
+        <div className="pb-16 pt-20 sm:pb-24 sm:pt-28">
           <Raumfrage />
         </div>
-        <div className="mx-auto max-w-[1240px] px-5 pb-20 pt-12 sm:px-8 sm:pb-28 sm:pt-16">
+        <div className="mx-auto max-w-[1240px] px-5 pb-20 sm:px-8 sm:pb-28">
           <h2 className="gross max-w-[14ch] text-[34px] font-bold leading-[1.04] sm:text-[52px]">
             So läuft das sonst.
           </h2>

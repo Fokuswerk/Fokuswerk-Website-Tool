@@ -228,19 +228,31 @@ export function Raumfrage() {
   }
 
   return (
-    <div className="nicht-drucken relative z-10">
+    /* Kein Kasten mehr.
+       Hier lagen nacheinander ein weisser und ein fast schwarzer Kasten, beide
+       auf der Naht zwischen Foto und gruenem Abschnitt, beide mit demselben
+       Urteil: "das sieht da wie ein Fremdkoerper aus, einfach billig
+       reingepfuscht." Die Farbe war nie das Problem. Ein Kasten, der auf einer
+       Kante liegt, ist immer ein aufgeklebtes Ding — er gehoert weder zu dem,
+       was ueber ihm liegt, noch zu dem darunter.
+       Also gibt es ihn nicht mehr. Die Frage steht jetzt als erstes IM gruenen
+       Abschnitt, auf dessen eigenem Grund, ohne Rahmen, ohne eigene Farbe,
+       ohne Ueberlappung. Die harte Kante zwischen Foto und Gruen bleibt genau
+       das: eine Kante. Kaesten gibt es nur noch dort, wo der Kasten die
+       Handlung ist — die vier Raeume, die man antippt. */
+    <div className="nicht-drucken">
       <div className="mx-auto w-full max-w-[1240px] px-5 sm:px-8">
-        <div className="bg-kohle px-5 py-7 text-creme sm:px-9 sm:py-9">
+        <div>
           <div className="sm:flex sm:items-end sm:justify-between sm:gap-10">
-            <h2 className="gross max-w-[16ch] text-[26px] font-bold leading-[1.1] sm:text-[34px]">
+            <h2 className="gross max-w-[16ch] text-[30px] font-bold leading-[1.06] text-creme sm:text-[42px]">
               Fangen wir mit deinem Raum an.
             </h2>
-            <p className="mt-2.5 max-w-[34ch] text-[15px] leading-snug text-creme/65 sm:mt-0 sm:shrink-0">
+            <p className="mt-3 max-w-[34ch] text-[15.5px] leading-snug text-creme/65 sm:mt-0 sm:shrink-0">
               Tipp an, wie deine Küche steht. Den Rest rechnen wir.
             </p>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-2.5 sm:mt-8 sm:grid-cols-4 sm:gap-4">
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:mt-11 sm:grid-cols-4 sm:gap-5">
             {FORMEN.map((f) => (
               <button
                 key={f.id}
