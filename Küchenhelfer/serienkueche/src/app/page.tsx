@@ -229,29 +229,25 @@ export default function Start() {
            Deshalb steht hier jetzt kein Beweis, keine Tabelle und keine Zahl,
            sondern das, was jeder kennt, der schon mal eine Kueche gekauft
            hat. Nichts daran muss man lesen lernen. */}
-      {/* Nachgemessen lagen hier 3,3 Bildschirme am Stueck bei Helligkeit 2 von
-          100 — der Auftakt und dieser Abschnitt waren beide dunkel, und der
-          Schnitt dazwischen trennte Dunkel von Dunkel. Eine Kante, die man
-          sieht, die aber nichts trennt, liest sich als Fehler. Dazu sassen die
-          vier Karten als einziges Helles mitten in dieser Strecke.
-          Jetzt ist der Abschnitt mit der Frage HELL. Damit trennt der Schnitt
-          wirklich etwas, die Karten stehen nicht mehr als Insel im Dunkeln,
-          und die Seite wechselt sich ab: dunkel, hell, dunkel, hell. */}
-      {/* KEIN z-index auf diesem Abschnitt. Mit "relative z-10" macht er einen
-          eigenen Stapelkontext auf, und dann koennen die Karten darin nicht
-          mehr ueber den dunklen Abschnitt steigen — der helle Grund malt die
-          Ueberlappung wieder zu. Gemessen: der dunkle Abschnitt beginnt 140 px
-          vor dem Kartenende, zu sehen war davon nichts. Der Stapelkontext
-          gehoert an das Kartenraster, nicht an den Abschnitt. */}
+      {/* Kein Sandwich mehr.
+          Zweimal hat er "dieser fette weisse Balken" gesagt, und zweimal habe
+          ich es als lokalen Mangel gelesen: erst als Luecke zwischen den
+          Abschnitten, dann als Farbfrage. Gemeint war die Form. Ein helles Band
+          von 0,6 Bildschirmen, oben und unten von Dunkel begrenzt, IST ein
+          Balken — bei jeder Farbe. Beim Versuch, die dunkle Strecke zu brechen,
+          habe ich ihn selbst gebaut und dabei vergroessert.
+          Jetzt gibt es keine Einfassung mehr: nach dem Auftakt laeuft es hell
+          durch, ueber vier Bildschirme, bis zum einen dunklen Band spaeter. Ein
+          heller Bereich, der laenger ist als der Bildschirm, liest sich als
+          Grund und nicht als Streifen. Die Karten ragen nach oben ins Foto —
+          das ist die Tiefe, ohne dass dafuer eine Flaeche eingefuegt wird. */}
       <section className="bg-creme">
-        <div className="pt-24 sm:pt-32">
+        <div className="pt-20 sm:pt-28">
           <Raumfrage />
         </div>
-      </section>
 
-      <section className="auf-dunkel relative bg-marke text-creme">
-        <div className="mx-auto max-w-[1240px] px-5 pb-20 pt-[150px] sm:px-8 sm:pb-28 sm:pt-[200px]">
-          <h2 className="gross max-w-[14ch] text-[34px] font-bold leading-[1.04] sm:text-[52px]">
+        <div className="mx-auto max-w-[1240px] px-5 pb-20 pt-24 sm:px-8 sm:pb-28 sm:pt-32">
+          <h2 className="gross max-w-[14ch] text-[34px] font-bold leading-[1.04] text-kohle sm:text-[52px]">
             So läuft das sonst.
           </h2>
 
@@ -259,30 +255,30 @@ export default function Start() {
             {SAMSTAGE.map(([nr, satz, dazu]) => (
               <li
                 key={nr}
-                className="grid gap-x-8 gap-y-2 border-t border-creme/15 py-7 sm:grid-cols-[64px_minmax(0,1fr)] sm:py-9"
+                className="grid gap-x-8 gap-y-2 border-t border-linie-warm py-7 sm:grid-cols-[64px_minmax(0,1fr)] sm:py-9"
               >
-                <span className="gross ziffern text-[15px] leading-none text-messing sm:pt-2">{nr}</span>
+                <span className="gross ziffern text-[15px] leading-none text-kohle-3 sm:pt-2">{nr}</span>
                 <div className="min-w-0">
-                  <p className="gross max-w-[26ch] text-[23px] font-semibold leading-[1.18] text-creme sm:text-[31px]">
+                  <p className="gross max-w-[26ch] text-[23px] font-semibold leading-[1.18] text-kohle sm:text-[31px]">
                     {satz}
                   </p>
-                  <p className="mt-2.5 max-w-[52ch] text-[15.5px] leading-relaxed text-creme/60">{dazu}</p>
+                  <p className="mt-2.5 max-w-[52ch] text-[15.5px] leading-relaxed text-kohle-2">{dazu}</p>
                 </div>
               </li>
             ))}
           </ol>
 
-          <p className="gross mt-12 text-[26px] font-semibold leading-tight text-creme sm:mt-14 sm:text-[36px]">
+          <p className="gross mt-12 text-[26px] font-semibold leading-tight text-kohle sm:mt-14 sm:text-[36px]">
             Kann man so machen. Muss man nicht.
           </p>
           <div className="mt-8">
-            <Knopf href="/kueche" hell>Küche planen</Knopf>
+            <Knopf href="/kueche">Küche planen</Knopf>
           </div>
         </div>
       </section>
 
       {/* ---------- Die Geräte, die wirklich drinstehen ---------- */}
-      <section className="border-y border-linie-warm bg-creme">
+      <section className="bg-creme">
         <div className="mx-auto max-w-[1240px] px-5 py-24 sm:px-8 sm:py-32">
           <div className="lg:flex lg:items-end lg:justify-between lg:gap-12">
             <h2 className="gross max-w-[20ch] text-[32px] font-bold leading-[1.08] text-kohle sm:text-[46px]">

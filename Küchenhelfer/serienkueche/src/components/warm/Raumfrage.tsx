@@ -243,6 +243,12 @@ export function Raumfrage() {
     <div className="nicht-drucken">
       <div className="mx-auto w-full max-w-[1240px] px-5 sm:px-8">
         <div>
+          {/* Kein negativer Rand mehr. Er zog nicht nur den Inhalt nach oben, sondern
+              den ganzen Abschnitt samt Hintergrund — der helle Grund deckte damit
+              die unteren 254 px des Fotos zu, und die helle Ueberschrift stand
+              unsichtbar auf Hellgrau. Dreimal hat diese Ueberlappung
+              Geometriefehler erzeugt; die Tiefe kommt jetzt allein aus den
+              Schatten der Karten, und die reicht. */}
           <div className="mb-8 sm:mb-11 sm:flex sm:items-end sm:justify-between sm:gap-10">
             <h2 className="gross max-w-[16ch] text-[30px] font-bold leading-[1.06] text-kohle sm:text-[42px]">
               Fangen wir mit deinem Raum an.
@@ -260,7 +266,7 @@ export function Raumfrage() {
               ragen unten in den dunklen Abschnitt hinein. Dasselbe Spiel mit
               der Tiefe, nur andersherum: weisse Karten auf Dunkel traegt sogar
               besser als auf einem Foto. */}
-          <div className="relative z-10 -mb-[104px] grid grid-cols-2 gap-3 sm:-mb-[140px] sm:grid-cols-4 sm:gap-5">
+          <div className="relative z-10 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-5">
             {FORMEN.map((f) => (
               <button
                 key={f.id}
