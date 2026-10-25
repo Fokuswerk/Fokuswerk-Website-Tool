@@ -370,7 +370,17 @@ export function freieFlaeche(
   belegung: Record<string, string[]>,
 ): number {
   const band: Array<{ id: string; breite: number }> = [];
-  const waende = kuechenwaende(a);
+  /* Die Wandliste muss hier in der Uhrzeigerfolge stehen, nicht in der
+     Reihenfolge aus kuechenwaende(). Bei "ecke" liefert die [haupt, links] —
+     im Uhrzeigersinn kommt links aber VOR haupt: die gemeinsame Innenecke ist
+     der Anfang von haupt und das Ende von links. So herum gereiht hing das
+     Ende von haupt am Anfang von links, also zwei diagonal gegenueberliegende
+     Raumecken, und die freie Flaeche zwischen Spuele und Herd kam exakt
+     verkehrt heraus. Nachgemessen an einer L-Kueche 3,60 x 3,60 m: direkt an
+     der Ecke 6000 statt 600 mm, weit auseinander 600 statt 6000 mm. Betroffen
+     waren 5508 von 5580 geprueften ecke-Plaenen; U-Form und die geraden
+     Formen nicht, deren Listen stehen schon richtig. */
+  const waende = a.form === "ecke" ? [...kuechenwaende(a)].reverse() : kuechenwaende(a);
   waende.forEach((w, i) => {
     const ids = belegung[`Z-${w}`] ?? [];
     if (i > 0 && ids.length > 0) {

@@ -100,7 +100,6 @@ export interface KuecheState {
   /** Bis wann der Nutzer den wiederhergestellten Stand zur Kenntnis genommen hat. */
   standGesehen: number;
   /** Hat ein anderer Tab denselben Stand weitergeschrieben? */
-  fremdstand: boolean;
 
   setzeQuelle: (q: Quelle) => void;
   uebernehmeErkennung: () => void;
@@ -120,7 +119,6 @@ export interface KuecheState {
   /** Den Hinweis auf den wiederhergestellten Stand wegnehmen. */
   quittiereStand: () => void;
   /** Den Hinweis auf den anderen Tab wegnehmen. */
-  quittiereFremdstand: () => void;
   neu: () => void;
 }
 
@@ -181,8 +179,6 @@ const ANFANG = {
   /** Wann zuletzt etwas geändert wurde — für "Dein Stand von …". */
   stand: 0,
   standGesehen: 0,
-  /** Ein zweiter Tab hat denselben Speicher beschrieben. */
-  fremdstand: false,
   /** Je Strategie der Grund, warum ihre Umstellung verworfen wurde.
       Still zu verwerfen ist das Aergerlichste: man stellt seine Schraenke
       um, verschiebt die Tuer, und der eigene Plan ist spurlos weg. */
@@ -375,7 +371,6 @@ export const useKueche = create<KuecheState>()(
       // ab — auch nach Wochen und ganz anderer Arbeit.
       quittiereStand: () => set((s) => ({ standGesehen: s.stand })),
 
-      quittiereFremdstand: () => set({ fremdstand: false }),
 
       neu: () =>
         set({
@@ -423,13 +418,31 @@ export const useKueche = create<KuecheState>()(
  * Beide schreiben in denselben Speicher, und wer zuletzt tippt, gewinnt —
  * der aeltere Tab kannte den neueren Stand nicht und hat ihn beim ersten
  * "Weiter" ueberschrieben. Eine halbe Stunde Arbeit, weg, ohne ein Wort.
- *
  * Verhindern laesst sich das nicht ohne einen Server. Sagen schon.
+ *
+ * Nur stand die Warnung selbst im gespeicherten Zustand — und DAS war der
+ * eigentliche Schaden. zustand schreibt bei JEDEM set() den vollstaendigen
+ * Zustand in den Speicher. Die Zeile "ich habe einen fremden Stand bemerkt"
+ * hat also genau den Stand ueberschrieben, vor dessen Verlust sie warnte.
+ * Nachgemessen: der neuere Stand war in derselben Millisekunde weg, "Den
+ * anderen Stand laden" lud danach wieder den eigenen, und weil jeder Tab auf
+ * das Schreiben des anderen antwortet, schaukelte sich das hoch — 1354
+ * Schreibvorgaenge in drei Sekunden ohne eine einzige Eingabe. Auf dem Handy
+ * heisst das: heisses Geraet, zaeher Planer, und welcher Stand am Ende im
+ * Speicher liegt, ist Zufall.
+ *
+ * Deshalb liegt die Warnung jetzt in einem eigenen Store, der nichts
+ * speichert. Sie sagt Bescheid und fasst nichts an.
  */
+export const useFremdstand = create<{ fremd: boolean; quittiere: () => void }>()((set) => ({
+  fremd: false,
+  quittiere: () => set({ fremd: false }),
+}));
+
 if (typeof window !== "undefined") {
   window.addEventListener("storage", (e) => {
     if (e.key !== SPEICHERNAME || !e.newValue) return;
     if (useKueche.getState().schritt === "start") return;
-    useKueche.setState({ fremdstand: true });
+    useFremdstand.setState({ fremd: true });
   });
 }

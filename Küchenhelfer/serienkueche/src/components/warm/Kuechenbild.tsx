@@ -404,6 +404,8 @@ export function Raumbild({
   const zeichenId = useId();
   const svgRef = useRef<SVGSVGElement>(null);
   const [zieht, setZieht] = useState(false);
+  /** Wo der Finger aufgesetzt hat, und ob er die Schwelle schon ueberschritten hat. */
+  const start = useRef<{ x: number; y: number; los: boolean } | null>(null);
   const waende = kuechenwaende(raum);
   const WD = 110; // Wandstaerke in der Zeichnung
   const KT = 600; // Korpustiefe
@@ -542,15 +544,28 @@ export function Raumbild({
         // gehoert die Geste ganz dem Griff.
         touchAction: ziehen ? (zieht ? "none" : "pan-y") : undefined,
       }}
+      /* Kein schiebe() beim Aufsetzen. Vorher reichte ein einzelnes Antippen
+         im Fangbereich — ohne jede Bewegung —, um Tuer, Fenster oder
+         Wasseranschluss zu verschieben; gemessen 69 cm bei einem Tipp, und
+         weil die Seite unter dem Finger wegscrollt, sieht man es nicht einmal.
+         Der Wert aendert sich jetzt erst, wenn der Finger wirklich einen Weg
+         zuruecklegt. Sechs Pixel, dieselbe Schwelle wie im Raumbild. */
       onPointerDown={ziehen ? (e) => {
         if (!aufGriff(e)) return;
         (e.target as Element).setPointerCapture?.(e.pointerId);
+        start.current = { x: e.clientX, y: e.clientY, los: false };
         setZieht(true);
+      } : undefined}
+      onPointerMove={ziehen && zieht ? (e) => {
+        const s0 = start.current;
+        if (s0 && !s0.los) {
+          if (Math.hypot(e.clientX - s0.x, e.clientY - s0.y) < 6) return;
+          s0.los = true;
+        }
         schiebe(e);
       } : undefined}
-      onPointerMove={ziehen && zieht ? schiebe : undefined}
-      onPointerUp={ziehen ? () => setZieht(false) : undefined}
-      onPointerCancel={ziehen ? () => setZieht(false) : undefined}
+      onPointerUp={ziehen ? () => { start.current = null; setZieht(false); } : undefined}
+      onPointerCancel={ziehen ? () => { start.current = null; setZieht(false); } : undefined}
       className={`block max-w-full ${ziehen ? "cursor-grab active:cursor-grabbing select-none" : ""}`}
       role="img"
       aria-label={

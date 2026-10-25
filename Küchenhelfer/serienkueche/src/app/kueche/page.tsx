@@ -16,7 +16,7 @@ import {
   pruefeAngaben, wandlaenge, WANDNAME, WANDNAME_DAT, zeilenBereich,
   type Raumform, type Strategie, type Vorschlag, type WandId,
 } from "@/lib/planer";
-import { herkunftVon, HERKUNFT_TEXT, schrittFolge, useKueche, type Feld, type Herkunft, type SchrittId } from "@/store/kueche";
+import { herkunftVon, HERKUNFT_TEXT, schrittFolge, useFremdstand, useKueche, type Feld, type Herkunft, type SchrittId } from "@/store/kueche";
 import { Kuechenbild, Raumbild } from "@/components/warm/Kuechenbild";
 import { Geraetebild, Schrankbild } from "@/components/warm/Geraetebild";
 
@@ -296,7 +296,8 @@ function Tabelle({
 }
 
 export default function Kuechenplaner() {
-  const { raum, quelle, erkannt, schritt, gewaehlt, eigeneBelegung, setzeRaum, setzeGeraet, setzeNutz, setzeQuelle, uebernehmeErkennung, geheZu, weiter, zurueck, waehle, setzeBelegung, umstellungVerworfen, quittiereVerworfen, beruehrt, planArt, merkePlanArt, stand, standGesehen, quittiereStand, fremdstand, quittiereFremdstand, neu } = useKueche();
+  const { raum, quelle, erkannt, schritt, gewaehlt, eigeneBelegung, setzeRaum, setzeGeraet, setzeNutz, setzeQuelle, uebernehmeErkennung, geheZu, weiter, zurueck, waehle, setzeBelegung, umstellungVerworfen, quittiereVerworfen, beruehrt, planArt, merkePlanArt, stand, standGesehen, quittiereStand, neu } = useKueche();
+  const { fremd: fremdstand, quittiere: quittiereFremdstand } = useFremdstand();
   const [details, setDetails] = useState(false);
   const [lauf, setLauf] = useState<number | null>(null);
   const [ansicht, setAnsicht] = useState<"raum" | "vorn" | "umstellen">("raum");
@@ -1855,7 +1856,10 @@ export default function Kuechenplaner() {
                           const neu = ausBelegung(raum, typ, grundVorschlag!.strategie, {
                             ...gewaehlterVorschlag.belegung, ...plan.belegung,
                           });
-                          return { id, belegung: plan.belegung, delta: neu.preis - gewaehlterVorschlag.preis };
+                          /* Brutto, wie jede andere Zahl im Privatkundenteil. Netto stand hier
+                             19 Prozent daneben: die Karte sagte "-129 Euro", der
+                             Gesamtpreis darueber fiel um 154. */
+                          return { id, belegung: plan.belegung, delta: brutto(neu.preis) - brutto(gewaehlterVorschlag.preis) };
                         })
                         .filter((x): x is { id: string; belegung: Record<string, string[]>; delta: number } => !!x);
 
