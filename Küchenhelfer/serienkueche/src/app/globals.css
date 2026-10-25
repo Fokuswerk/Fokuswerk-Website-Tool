@@ -65,7 +65,8 @@
   --color-holz-soft: #e8dcc8;
 
   --font-warm: var(--schrift-warm), ui-sans-serif, system-ui, sans-serif;
-  --font-gross: var(--schrift-gross), ui-sans-serif, system-ui, sans-serif;
+  /* Dieselbe Schrift, nur schwerer gesetzt. */
+  --font-gross: var(--schrift-warm), ui-sans-serif, system-ui, sans-serif;
 
   --radius-xs: 2px;
   --radius-sm: 3px;
@@ -173,7 +174,8 @@ body {
 }
 .warm h1, .warm h2, .warm h3, .warm .gross {
   font-family: var(--font-gross);
-  letter-spacing: -0.012em;
+  font-weight: 700;
+  letter-spacing: -0.022em;
 }
 /* Grosse Zeilen vertragen mehr Enge als kleine. */
 .warm .gross-xl { letter-spacing: -0.024em; line-height: 1.0; }
@@ -210,9 +212,7 @@ body {
    Tabellenziffern (tnum), Plein nicht — dort zappeln Preise beim Rechnen um
    bis zu 25 px. Gemessen, nicht vermutet. */
 .warm .ziffern {
-  font-family: var(--font-gross);
   font-variant-numeric: tabular-nums lining-nums;
-  font-weight: 500;
 }
 
 @keyframes warmRein {

@@ -66,11 +66,6 @@ const ARTNAME: Record<string, string> = {
   dunstabzug: "Dunstabzug",
 };
 
-const SCHRITTE = [
-  ["01", "Raum beschreiben", "Wandlängen, Fenster, Tür, Wasseranschluss. Mit dem Zollstock in fünf Minuten erledigt."],
-  ["02", "Oder Grundriss hochladen", "Hast du einen Plan? Dann lesen wir die Maße heraus, und du prüfst sie einmal nach."],
-  ["03", "Küche aussuchen", "Fertige Vorschläge mit Preis. Umstellen, bis es passt — dann schicken wir das Angebot."],
-];
 
 const ZUSAGEN = [
   ["Wir rechnen auf den Zentimeter", "Die Summe aller Schrankbreiten ergibt exakt die Länge deiner Küchenzeile — die Passleiste eingerechnet. Immer."],
@@ -98,6 +93,10 @@ function Bild({
         height={hoehe}
         priority={prioritaet}
         className="h-full w-full object-cover"
+        /* Mittig beschnitten lag im Hero oben ein dunkler Schrankstreifen —
+           unter der Leiste sah das aus wie ein schmutziger Rand. Der
+           Ausschnitt sitzt jetzt tiefer, die Arbeitsflaeche traegt das Bild. */
+        style={{ objectPosition: "center 64%" }}
         sizes={masse}
       />
       {schleier && (
@@ -257,26 +256,6 @@ export default function Start() {
             <Knopf href="/kueche" hell>Küche planen</Knopf>
           </div>
         </div>
-      </section>
-
-      {/* ---------- Drei Schritte ---------- */}
-      <section className="mx-auto max-w-[1240px] px-5 py-24 sm:px-8 sm:py-32">
-        <h2 className="gross max-w-[20ch] text-[32px] font-bold leading-[1.08] text-kohle sm:text-[46px]">
-          Drei Schritte, keine Vorkenntnisse.
-        </h2>
-        <ol className="mt-12 grid gap-4 sm:grid-cols-3">
-          {SCHRITTE.map(([nr, titel, satz]) => (
-            <li key={nr} className="flaeche relative rounded-[20px] px-6 pb-7 pt-7 sm:px-7">
-              {/* Die Zahl liegt vertieft im Papier statt als Zeile darüber:
-                  man sieht die Reihenfolge, ohne sie zu lesen. */}
-              <span className="vertieft ziffern gross flex h-11 w-11 items-center justify-center rounded-full text-[15px] font-bold text-kohle-2">
-                {nr}
-              </span>
-              <h3 className="gross mt-5 text-[20px] font-bold leading-tight text-kohle">{titel}</h3>
-              <p className="mt-2.5 text-[15.5px] leading-relaxed text-kohle-2">{satz}</p>
-            </li>
-          ))}
-        </ol>
       </section>
 
       {/* ---------- Die Geräte, die wirklich drinstehen ---------- */}
