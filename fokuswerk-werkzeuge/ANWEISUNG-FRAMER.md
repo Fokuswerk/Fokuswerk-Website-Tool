@@ -83,32 +83,40 @@ Alle Fehlerfälle sichtbar bauen, nicht nur den Erfolgsfall.
 
 ## Du hast Vercel-Zugang — nutze ihn dafür
 
-Das Vercel-Projekt heißt `fokuswerk-werkzeuge`. Was du dort selbst erledigen kannst,
-ohne zu fragen:
+Das Vercel-Projekt heißt `fokuswerk-werkzeuge`. **Es ist fertig eingerichtet und
+geprüft** — `ANTHROPIC_API_KEY`, `MODELL` und `ORIGINS` sind gesetzt, der Endpunkt
+liefert. Du musst dort nichts einrichten, um anzufangen.
 
-- **Die Produktionsadresse nachsehen** und als Vorgabewert in die Komponenteneigenschaft
-  eintragen, statt sie zu raten.
-- **`ORIGINS` setzen oder ergänzen.** Ohne die richtige Herkunft in dieser Liste
-  antwortet der Endpunkt dem Browser nicht, und zwar wortlos — das sieht aus wie ein
-  Fehler in der Komponente, ist aber der Türsteher. Hinein gehören
-  `https://fokuswerk.de`, `https://www.fokuswerk.de` und die Framer-Vorschauadresse,
-  unter der du gerade arbeitest.
-- **`MODELL`** steht auf `claude-sonnet-5-5`. Nicht ändern.
+Wofür du den Zugang trotzdem brauchst:
+
+- **`ORIGINS` ergänzen, falls deine Framer-Vorschau anders heißt.** In der Liste stehen
+  `https://fokuswerk.de`, `https://www.fokuswerk.de` und
+  `https://frank-site-485713.framer.app`. Arbeitest du unter einer anderen
+  Vorschauadresse, trag sie dazu — sonst antwortet der Endpunkt deinem Browser nicht,
+  und zwar wortlos. Das sieht aus wie ein Fehler in deiner Komponente, ist aber der
+  Türsteher. Nach jeder Änderung an Umgebungsvariablen einmal `npx vercel --prod`,
+  sonst greift sie nicht.
 - **Die Laufzeitprotokolle lesen**, wenn ein Aufruf scheitert. Dort steht, ob die
   Website nicht lesbar war oder das Modell gestreikt hat.
+- **`MODELL`** steht auf `claude-sonnet-5-5`. Nicht ändern.
 
-**Den `ANTHROPIC_API_KEY` setzt Thees selbst.** Nicht danach fragen, nicht irgendwo
-hineinschreiben, nicht aus einer anderen Datei kopieren. Fehlt er, antwortet der
-Endpunkt mit 502 `modell_nicht_erreichbar` — dann ist das der Grund.
+**Den `ANTHROPIC_API_KEY` nicht anfassen.** Nicht auslesen, nicht kopieren, nicht
+irgendwo hineinschreiben, nicht danach fragen. Er ist gesetzt.
 
-Das Projekt steht schon, `MODELL` und `ORIGINS` sind gesetzt. Fehlt nur der Schlüssel —
-solange der fehlt, ist jede Antwort 502 `modell_nicht_erreichbar`, und das ist kein
-Fehler deiner Komponente.
+## Du baust gegen den echten Endpunkt
 
-## Solange der Endpunkt noch nicht steht
+Keine Platzhalterdaten nötig — der Dienst läuft. So prüfst du von der Kommandozeile,
+dass er antwortet, bevor du die erste Zeile Komponente schreibst:
 
-Platzhalterdaten im Code, deutlich als solche markiert, damit sie niemand live
-übersieht. Gegen die obige Form bauen — sie ändert sich nicht mehr.
+```bash
+curl -X POST https://fokuswerk-werkzeuge.vercel.app/api/stellenanzeige \
+  -H "content-type: application/json" \
+  -d '{"domain":"knolle-harpstedt.de","beruf":"Landschaftsgärtner"}'
+```
+
+Erster Aufruf rund 30 Sekunden, derselbe Aufruf danach kommt in unter einer Sekunde
+aus dem Zwischenspeicher. Beim Entwickeln also ruhig dieselbe Domain nehmen — das
+kostet nur einmal.
 
 ## Code-Komponente
 
