@@ -15,7 +15,7 @@
 #fw-ew button { flex: 1; font: 500 13px/1 Inter, "Inter Placeholder", system-ui, sans-serif; padding: 13px 14px; border-radius: 999px; cursor: pointer;
   border: 1px solid rgba(245, 243, 239, .3); background: transparent; color: rgb(245, 243, 239); transition: background .2s, color .2s; }
 #fw-ew button:hover, #fw-ew button:focus-visible { background: rgb(245, 243, 239); color: rgb(22, 20, 19); outline: none; }
-@media (max-width: 809.98px) { #fw-ew { bottom: 92px; } } /* über der Handlungsleiste */
+@media (max-width: 809.98px) { #fw-ew { bottom: var(--fw-ew-unten, 16px); } } /* siehe abstandSetzen() */
 @media (prefers-reduced-motion: reduce) { #fw-ew { transition: none; } }
 </style>
 <script id="fokuswerk-einwilligung-skript">
@@ -53,6 +53,31 @@
     schliessen(box);
     if (wert === "ja") analytics(); else { cookiesLoeschen(); if (vorher === "ja") location.reload(); }
   }
+  // Wie weit der Kasten vom unteren Rand wegbleiben muss.
+  //
+  // Auf Seiten mit fester Handlungsleiste („Projekt besprechen" am unteren Rand) muss er
+  // darüber stehen, sonst deckt er sie zu. Auf Seiten ohne sie — /stellenanzeige zum
+  // Beispiel — hing er vorher 92 px in der Luft. Statt den Abstand zu raten, wird
+  // nachgesehen, ob unten wirklich etwas klebt.
+  function abstandSetzen(box) {
+    var hoch = 16;
+    try {
+      var alle = document.body.querySelectorAll("div, nav, footer, section, aside");
+      for (var i = 0; i < alle.length; i++) {
+        var e = alle[i];
+        if (e === box || e.contains(box)) continue;
+        if (getComputedStyle(e).position !== "fixed") continue;
+        var r = e.getBoundingClientRect();
+        if (r.height < 40 || r.width < 120) continue;
+        if (r.bottom > window.innerHeight - 24 && r.top > window.innerHeight * 0.55) {
+          hoch = Math.round(window.innerHeight - r.top) + 16;
+          break;
+        }
+      }
+    } catch (e) {}
+    box.style.setProperty("--fw-ew-unten", hoch + "px");
+  }
+
   function zeigen() {
     if (document.getElementById("fw-ew")) return;
     var box = document.createElement("div");
@@ -60,7 +85,13 @@
     box.innerHTML = '<b>Statistik nur mit Ihrer Zustimmung</b><p>Mit Google Analytics sehen wir, wie unsere Website genutzt wird, und können sie verbessern. Das setzt Cookies und überträgt Daten an Google. <a href="/datenschutz">Datenschutzerklärung</a></p><div class="fw-ew-k"><button type="button" data-w="nein">Ablehnen</button><button type="button" data-w="ja">Zustimmen</button></div>';
     box.addEventListener("click", function (e) { var w = e.target.getAttribute && e.target.getAttribute("data-w"); if (w) speichern(w, box); });
     document.body.appendChild(box);
+    abstandSetzen(box);
     requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add("fw-an"); }); });
+    // Die Handlungsleiste kann erst beim Scrollen auftauchen, und beim Drehen des Geräts
+    // stimmt die Messung nicht mehr.
+    var nachmessen = function () { if (document.body.contains(box)) abstandSetzen(box); };
+    window.addEventListener("resize", nachmessen);
+    window.addEventListener("scroll", nachmessen, { passive: true });
   }
   window.fwCookieEinstellungen = zeigen;
   // „Cookie-Einstellungen“ (Fuß, Datenschutzerklärung) öffnet den Hinweis erneut
