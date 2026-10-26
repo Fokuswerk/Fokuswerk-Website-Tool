@@ -173,15 +173,14 @@ function normal(w: string) {
 // Treffer, die vorn anfangen, stehen oben — wer „kfz" tippt, will zuerst den
 // Kfz-Mechatroniker sehen und nicht irgendeine Bezeichnung, in der „kfz" mittendrin steckt.
 function passende(eingabe: string) {
-    const roh = eingabe.trim()
-    const n = normal(roh)
+    const n = normal(eingabe)
     if (n.length < 2) return []
     const vorn: string[] = []
     const drin: string[] = []
     for (const b of BERUFE) {
-        // Nur wegfallen lassen, was buchstabengleich schon im Feld steht. Wer „koch" tippt,
-        // soll „Koch" angeboten bekommen — mit der richtigen Schreibweise.
-        if (b === roh) continue
+        // Nichts wegfiltern, auch nicht den Volltreffer. Wer „Koch" fertig getippt hat und
+        // die Zeile dann verschwinden sieht, liest das als „gibt es nicht" — dabei ist es
+        // genau die Bezeichnung, die gemeint war. Sie bleibt stehen und bleibt anklickbar.
         const nb = normal(b)
         if (nb.indexOf(n) === 0) vorn.push(b)
         else if (nb.indexOf(n) > 0) drin.push(b)
@@ -328,13 +327,39 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
     const [kopiert, setKopiert] = useState<number | null>(null)
     const [sekunden, setSekunden] = useState(0)
 
-    // Nach jedem Schritt an den Anfang des Trichters springen.
+    // Nach einem Schritt nachführen — aber nur, wenn es nötig ist.
     //
-    // Ohne das bleibt das Handy dort stehen, wo der Finger getippt hat: Die neue Frage steht
-    // dann über dem sichtbaren Bereich, und der Trichter wirkt, als sei nichts passiert. Am
-    // Schreibtisch fällt das nicht auf, auf dem Handy ist es der Abbruchgrund.
+    // Ohne jedes Nachführen bleibt das Handy dort stehen, wo der Finger getippt hat: Die neue
+    // Frage steht über dem sichtbaren Bereich, und der Trichter wirkt, als sei nichts passiert.
+    //
+    // ▲ Der erste Entwurf sprang dafür bei JEDEM Schritt an den Anfang der Karte. Am
+    // Schreibtisch sah das falsch aus: Die Karte war längst vollständig im Bild, die Seite
+    // ruckte trotzdem und klebte den Kasten an die Oberkante, mit viel Leere darunter. Jetzt
+    // wird erst gemessen, ob der Schritt überhaupt ganz sichtbar ist. Ist er es, bleibt die
+    // Seite stehen.
     const rahmen = useRef<HTMLDivElement | null>(null)
     const ersterLauf = useRef(true)
+
+    // Höhe der Kopfleiste, die über dem Inhalt klebt — ohne sie rutscht die Frage darunter.
+    function kopfhoehe() {
+        try {
+            let unten = 0
+            const alle = document.body.querySelectorAll("div, nav, header")
+            for (let i = 0; i < alle.length; i++) {
+                const e = alle[i] as HTMLElement
+                const lage = getComputedStyle(e).position
+                if (lage !== "fixed" && lage !== "sticky") continue
+                const r = e.getBoundingClientRect()
+                if (r.top <= 2 && r.height > 24 && r.height < 220 && r.width > window.innerWidth * 0.8) {
+                    unten = Math.max(unten, r.bottom)
+                }
+            }
+            return unten
+        } catch (e) {
+            return 0
+        }
+    }
+
     useEffect(() => {
         if (ersterLauf.current) {
             ersterLauf.current = false
@@ -342,8 +367,27 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         }
         const k = rahmen.current
         if (!k) return
-        const oben = k.getBoundingClientRect().top + window.scrollY - 24
-        window.scrollTo({ top: oben, behavior: "smooth" })
+        const r = k.getBoundingClientRect()
+        const kopf = kopfhoehe()
+        const luft = 20
+        // Bewegt wird nur in zwei Fällen: Der Anfang der Karte steckt unter der Kopfleiste,
+        // oder sie fängt so weit unten an, dass von der Frage nichts mehr zu sehen ist.
+        //
+        // Auf dem Handy ist eine Karte oft höher als der Bildschirm — „ganz sichtbar" als
+        // Bedingung hätte dort bei jedem Schritt einen Sprung ausgelöst. Es zählt nur, ob der
+        // Anfang der Frage steht, wo man ihn lesen kann.
+        const verdeckt = r.top < kopf + 4
+        const zuTief = r.top > window.innerHeight * 0.55
+        if (!verdeckt && !zuTief) return
+        const ziel = Math.max(0, window.scrollY + r.top - kopf - luft)
+        // ▲ KEIN `scrollTo({ behavior: "smooth" })`. Auf dieser Seite läuft ein
+        // Smooth-Scroll-Baustein (Lenis 1.1.20, liegt als `window.__sanftscroll`). Er
+        // übernimmt das Scrollen, und beide weichen Wege laufen wirkungslos durch:
+        // `scrollTo` mit `behavior: "smooth"` ebenso wie `lenis.scrollTo(...)` — gemessen
+        // am 27.10.2026, die Seite blieb in beiden Fällen exakt stehen. Nur die
+        // Zwei-Argument-Form kommt durch. Hart ist hier ohnehin das Richtige: Gesprungen
+        // wird nur, wenn der Schritt gar nicht im Bild steht.
+        window.scrollTo(0, ziel)
     }, [schritt, lage])
 
     function waehlen(f: Frage, wert: string) {
