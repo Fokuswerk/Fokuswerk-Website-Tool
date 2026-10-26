@@ -48,6 +48,8 @@ const LINIE = "rgba(14, 15, 18, 0.14)"
 // unter 24 px gilt der abgedunkelte Ton: 4,98 : 1 auf Papier, 5,52 : 1 auf Weiß.
 const AKZENT_TEXT = "#B84116"
 const SIGNAL = "rgb(255, 90, 31)"
+// Eingelassene Flächen in der Karte. Weiße Felder auf weißer Karte verschwinden.
+const FLAECHE = "rgb(250, 249, 246)"
 
 interface Wahl {
     wert: string
@@ -111,16 +113,81 @@ const SCHRITT_WEBSITE = FRAGEN.length + 1
 const SCHRITT_KONTAKT = FRAGEN.length + 2
 const SCHRITTE_GESAMT = FRAGEN.length + 3
 
-// Vorschläge für den ersten Schritt. Kein Pflichtraster — wer etwas anderes sucht, tippt es
-// ein. Sie stehen da, damit der Einstieg ein Tipp ist und keine leere Zeile.
-const BERUF_VORSCHLAEGE = [
-    "Kfz-Mechatroniker",
-    "Anlagenmechaniker SHK",
-    "Elektroniker",
-    "Dachdecker",
-    "Maler und Lackierer",
-    "Tischler",
+// Bezeichnungen für die Vervollständigung im ersten Schritt.
+//
+// Sechs feste Pillen standen vorher da, alle aus dem Handwerk — das sah aus, als sei das
+// Werkzeug nur für Handwerker. Die Liste ist deshalb breit: Gastronomie, Pflege, Handel,
+// Büro, Logistik, Reinigung, Kosmetik, Erziehung, Technik. Sie engt nichts ein, wer etwas
+// anderes sucht, tippt es einfach zu Ende.
+//
+// Sortiert bleibt sie, wie sie hier steht; die Reihenfolge der Treffer macht `passende()`.
+const BERUFE = [
+    // Kfz und Technik
+    "Kfz-Mechatroniker", "Kfz-Mechaniker", "Kfz-Servicetechniker", "Karosseriebauer",
+    "Fahrzeuglackierer", "Zweiradmechaniker", "Landmaschinenmechaniker", "Servicetechniker",
+    "Industriemechaniker", "Zerspanungsmechaniker", "Schweißer", "Metallbauer", "Schlosser",
+    "Maschinenbediener", "Mechatroniker", "Monteur",
+    // Bau und Ausbau
+    "Anlagenmechaniker SHK", "Heizungsbauer", "Sanitärinstallateur", "Elektroniker",
+    "Elektriker", "Dachdecker", "Zimmerer", "Maurer", "Fliesenleger", "Trockenbauer",
+    "Maler und Lackierer", "Stuckateur", "Bodenleger", "Glaser", "Tischler", "Schreiner",
+    "Straßenbauer", "Bauhelfer", "Bauleiter", "Polier", "Gerüstbauer",
+    // Garten und Außen
+    "Landschaftsgärtner", "Gärtner", "Forstwirt", "Hausmeister", "Schornsteinfeger",
+    // Gastronomie und Hotel
+    "Koch", "Küchenhilfe", "Beikoch", "Küchenchef", "Servicekraft", "Kellner", "Barkeeper",
+    "Restaurantfachmann", "Hotelfachmann", "Rezeptionist", "Zimmermädchen", "Bäcker",
+    "Konditor", "Metzger", "Fleischer", "Verkäufer in der Bäckerei",
+    // Pflege und Gesundheit
+    "Pflegefachkraft", "Altenpfleger", "Gesundheits- und Krankenpfleger", "Pflegehelfer",
+    "Medizinische Fachangestellte", "Zahnmedizinische Fachangestellte", "Zahntechniker",
+    "Physiotherapeut", "Ergotherapeut", "Logopäde", "Hebamme", "Pharmazeutisch-technische Assistentin",
+    "Augenoptiker", "Hörakustiker", "Orthopädietechniker", "Betreuungskraft",
+    // Handel und Büro
+    "Verkäufer", "Einzelhandelskaufmann", "Bürokaufmann", "Bürokraft", "Buchhalter",
+    "Steuerfachangestellte", "Sachbearbeiter", "Assistenz der Geschäftsführung",
+    "Empfangskraft", "Vertriebsmitarbeiter", "Außendienstmitarbeiter", "Kundenberater",
+    // Logistik
+    "Berufskraftfahrer", "LKW-Fahrer", "Auslieferungsfahrer", "Kurierfahrer", "Lagerist",
+    "Fachkraft für Lagerlogistik", "Staplerfahrer", "Disponent", "Produktionshelfer",
+    // Reinigung und Service
+    "Reinigungskraft", "Gebäudereiniger", "Glasreiniger", "Objektleiter",
+    // Kosmetik und Haare
+    "Friseur", "Barbier", "Kosmetiker", "Nageldesigner", "Fußpfleger",
+    // Erziehung und Soziales
+    "Erzieher", "Kinderpfleger", "Sozialpädagoge", "Pädagogische Fachkraft",
+    // Medien und Technik
+    "Mediengestalter", "Grafikdesigner", "Social-Media-Manager", "Online-Marketing-Manager",
+    "Fachinformatiker", "IT-Systemadministrator", "Webentwickler", "Technischer Zeichner",
 ]
+
+// Für den Vergleich alles kleinschreiben, Umlaute auflösen, Binde- und Leerzeichen weg:
+// „kfz mecha", „Kfz-Mecha" und „KFZMECHA" sollen dasselbe finden.
+function normal(w: string) {
+    return w
+        .toLowerCase()
+        .replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ß/g, "ss")
+        .replace(/[^a-z0-9]/g, "")
+}
+
+// Treffer, die vorn anfangen, stehen oben — wer „kfz" tippt, will zuerst den
+// Kfz-Mechatroniker sehen und nicht irgendeine Bezeichnung, in der „kfz" mittendrin steckt.
+function passende(eingabe: string) {
+    const roh = eingabe.trim()
+    const n = normal(roh)
+    if (n.length < 2) return []
+    const vorn: string[] = []
+    const drin: string[] = []
+    for (const b of BERUFE) {
+        // Nur wegfallen lassen, was buchstabengleich schon im Feld steht. Wer „koch" tippt,
+        // soll „Koch" angeboten bekommen — mit der richtigen Schreibweise.
+        if (b === roh) continue
+        const nb = normal(b)
+        if (nb.indexOf(n) === 0) vorn.push(b)
+        else if (nb.indexOf(n) > 0) drin.push(b)
+    }
+    return vorn.concat(drin).slice(0, 4)
+}
 
 interface Anzeige {
     titel: string
@@ -241,6 +308,10 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
     const [lage, setLage] = useState<"formular" | "laeuft" | "fertig" | "fehler">("formular")
     const [domain, setDomain] = useState("")
     const [beruf, setBeruf] = useState("")
+    // Vorschlagsliste: offen, solange getippt wird, und mit einem hervorgehobenen Eintrag,
+    // damit die Eingabetaste etwas Sinnvolles tut.
+    const [vorschlaegeAuf, setVorschlaegeAuf] = useState(false)
+    const [markiert, setMarkiert] = useState(-1)
     const [antworten, setAntworten] = useState<Record<string, any>>({})
     const [name, setName] = useState("")
     const [mail, setMail] = useState("")
@@ -347,7 +418,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         boxSizing: "border-box",
         font: `400 17px/1.4 ${SCHRIFT}`,
         color: TINTE,
-        background: "rgb(255,255,255)",
+        background: FLAECHE,
         border: `1px solid ${LINIE}`,
         borderRadius: 12,
         padding: "15px 16px",
@@ -365,15 +436,17 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
     }
     const hauptKnopf = (aus: boolean): CSSProperties => ({
         font: `500 17px/1 ${SCHRIFT}`,
-        color: PAPIER,
-        background: TINTE,
-        border: "none",
+        color: aus ? LEISE : PAPIER,
+        background: aus ? FLAECHE : TINTE,
+        border: aus ? `1px solid ${LINIE}` : "1px solid transparent",
         borderRadius: 999,
         padding: "18px 28px",
         minHeight: 56,
         cursor: aus ? "default" : "pointer",
-        opacity: aus ? 0.45 : 1,
-        alignSelf: "start",
+        alignSelf: "stretch",
+        width: "100%",
+        boxSizing: "border-box",
+        transition: "background .2s, color .2s",
     })
     const hakenZeile: CSSProperties = {
         display: "flex",
@@ -396,7 +469,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         font: `400 17px/1.35 ${SCHRIFT}`,
         textAlign: "left",
         color: TINTE,
-        background: gewaehlt ? "rgba(255,90,31,0.10)" : "rgb(255,255,255)",
+        background: gewaehlt ? "rgba(255,90,31,0.10)" : FLAECHE,
         border: `1.5px solid ${gewaehlt ? SIGNAL : LINIE}`,
         borderRadius: 12,
         padding: "16px 18px",
@@ -423,16 +496,34 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         alignItems: "center",
         justifyContent: "center",
     })
-    const vorschlag: CSSProperties = {
-        font: `400 14px/1 ${SCHRIFT}`,
-        color: TINTE,
+    // Die Karte, in der ein Schritt steht. Sie fasst den Trichter zusammen und hebt ihn vom
+    // Fließtext der Seite ab — ohne sie lagen Frage, Feld und Knopf lose auf dem Papier.
+    const karte: CSSProperties = {
         background: "rgb(255,255,255)",
         border: `1px solid ${LINIE}`,
-        borderRadius: 999,
-        padding: "0 14px",
-        minHeight: 44,
-        cursor: "pointer",
+        borderRadius: 20,
+        padding: "22px 20px",
+        boxShadow: "0 1px 2px rgba(14,15,18,.04), 0 18px 40px -28px rgba(14,15,18,.35)",
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
     }
+    const vorschlagZeile = (hell: boolean): CSSProperties => ({
+        font: `400 16px/1.3 ${SCHRIFT}`,
+        textAlign: "left",
+        color: TINTE,
+        background: hell ? "rgba(255,90,31,0.08)" : "transparent",
+        border: "none",
+        borderBottom: `1px solid ${LINIE}`,
+        borderRadius: 8,
+        padding: "12px 14px",
+        minHeight: 46,
+        width: "100%",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        boxSizing: "border-box",
+    })
 
     const frage = schritt >= 1 && schritt <= FRAGEN.length ? FRAGEN[schritt - 1] : null
     const kontaktSchritt = schritt === SCHRITT_KONTAKT
@@ -494,46 +585,79 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
 
                     {/* Schritt 0 — wen suchen Sie */}
                     {schritt === SCHRITT_BERUF && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                            <p style={{ margin: 0, font: `500 22px/1.3 ${SCHRIFT}` }}>
+                        <div style={karte}>
+                            <p style={{ margin: 0, font: `500 23px/1.25 ${SCHRIFT}`, letterSpacing: "-0.01em" }}>
                                 Wen suchen Sie?
                             </p>
-                            <p style={{ margin: "-6px 0 0", font: `400 15px/1.5 ${SCHRIFT}`, color: LEISE }}>
-                                Die Bezeichnung, die in Ihrem Betrieb üblich ist.
+                            <p style={{ margin: "-8px 0 0", font: `400 15px/1.5 ${SCHRIFT}`, color: LEISE }}>
+                                Tippen Sie los — wir schlagen die passende Bezeichnung vor.
                             </p>
-                            <input
-                                id="fw-beruf"
-                                name="beruf"
-                                type="text"
-                                autoComplete="off"
-                                placeholder="z. B. Kfz-Mechatroniker"
-                                value={beruf}
-                                onChange={(e) => setBeruf(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter" && beruf.trim()) setSchritt(1)
-                                }}
-                                style={feldStil}
-                            />
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                                {BERUF_VORSCHLAEGE.map((b) => (
-                                    <button
-                                        key={b}
-                                        type="button"
-                                        onClick={() => {
-                                            setBeruf(b)
-                                            setSchritt(1)
-                                        }}
-                                        style={vorschlag}
+                            <div>
+                                <input
+                                    id="fw-beruf"
+                                    name="beruf"
+                                    type="text"
+                                    autoComplete="off"
+                                    placeholder="z. B. Kfz-Mechatroniker"
+                                    value={beruf}
+                                    onChange={(e) => {
+                                        setBeruf(e.target.value)
+                                        setVorschlaegeAuf(true)
+                                        setMarkiert(-1)
+                                    }}
+                                    onFocus={() => setVorschlaegeAuf(true)}
+                                    onKeyDown={(e) => {
+                                        const treffer = vorschlaegeAuf ? passende(beruf) : []
+                                        if (e.key === "ArrowDown" && treffer.length) {
+                                            e.preventDefault()
+                                            setMarkiert((m) => (m + 1) % treffer.length)
+                                        } else if (e.key === "ArrowUp" && treffer.length) {
+                                            e.preventDefault()
+                                            setMarkiert((m) => (m <= 0 ? treffer.length - 1 : m - 1))
+                                        } else if (e.key === "Escape") {
+                                            setVorschlaegeAuf(false)
+                                        } else if (e.key === "Enter") {
+                                            e.preventDefault()
+                                            const gewaehlt = markiert >= 0 ? treffer[markiert] : null
+                                            if (gewaehlt) setBeruf(gewaehlt)
+                                            setVorschlaegeAuf(false)
+                                            if (gewaehlt || beruf.trim()) setSchritt(1)
+                                        }
+                                    }}
+                                    style={feldStil}
+                                />
+                                {vorschlaegeAuf && passende(beruf).length > 0 && (
+                                    <div
+                                        // Ein Tipp auf die Liste darf das Feld nicht vorher verlassen
+                                        // lassen — sonst ist die Liste weg, bevor der Klick ankommt.
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        style={{ marginTop: 6 }}
                                     >
-                                        {b}
-                                    </button>
-                                ))}
+                                        {passende(beruf).map((b, i) => (
+                                            <button
+                                                key={b}
+                                                type="button"
+                                                onClick={() => {
+                                                    setBeruf(b)
+                                                    setVorschlaegeAuf(false)
+                                                    setSchritt(1)
+                                                }}
+                                                style={vorschlagZeile(i === markiert)}
+                                            >
+                                                {b}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             <button
                                 type="button"
                                 disabled={!beruf.trim()}
-                                onClick={() => setSchritt(1)}
-                                style={hauptKnopf(!beruf.trim())}
+                                onClick={() => {
+                                    setVorschlaegeAuf(false)
+                                    setSchritt(1)
+                                }}
+                                style={{ ...hauptKnopf(!beruf.trim()), alignSelf: "stretch" }}
                             >
                                 Weiter
                             </button>
@@ -542,8 +666,10 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
 
                     {/* Schritte 1–4 — je eine Frage */}
                     {frage && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                            <p style={{ margin: 0, font: `500 22px/1.3 ${SCHRIFT}` }}>{frage.titel}</p>
+                        <div style={karte}>
+                            <p style={{ margin: 0, font: `500 23px/1.25 ${SCHRIFT}`, letterSpacing: "-0.01em" }}>
+                                {frage.titel}
+                            </p>
                             {frage.hinweis && (
                                 <p style={{ margin: "-6px 0 0", font: `400 15px/1.5 ${SCHRIFT}`, color: LEISE }}>
                                     {frage.hinweis}
@@ -581,7 +707,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                         bottom: 12,
                                         zIndex: 2,
                                         paddingTop: 10,
-                                        background: `linear-gradient(to top, ${PAPIER} 60%, rgba(245,243,239,0))`,
+                                        background: "linear-gradient(to top, rgb(255,255,255) 60%, rgba(255,255,255,0))",
                                     }}
                                 >
                                     <button
@@ -604,8 +730,8 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
 
                     {/* Vorletzter Schritt — die Website */}
                     {schritt === SCHRITT_WEBSITE && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                            <p style={{ margin: 0, font: `500 22px/1.3 ${SCHRIFT}` }}>
+                        <div style={karte}>
+                            <p style={{ margin: 0, font: `500 23px/1.25 ${SCHRIFT}`, letterSpacing: "-0.01em" }}>
                                 Wie lautet die Adresse Ihrer Website?
                             </p>
                             <p style={{ margin: "-6px 0 0", font: `400 15px/1.5 ${SCHRIFT}`, color: LEISE }}>
@@ -640,8 +766,8 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
 
                     {/* Letzter Schritt — Kontaktdaten */}
                     {kontaktSchritt && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                            <p style={{ margin: 0, font: `500 22px/1.3 ${SCHRIFT}` }}>
+                        <div style={karte}>
+                            <p style={{ margin: 0, font: `500 23px/1.25 ${SCHRIFT}`, letterSpacing: "-0.01em" }}>
                                 Fast geschafft — wohin dürfen wir die Anzeigen schicken?
                             </p>
                             <p style={{ margin: "-6px 0 4px", font: `400 15px/1.55 ${SCHRIFT}`, color: LEISE }}>
