@@ -360,18 +360,34 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         }
     }
 
-    useEffect(() => {
-        if (ersterLauf.current) {
-            ersterLauf.current = false
-            return
+    // Wo der Block anfängt, zu dem der Trichter gehört.
+    //
+    // Nachgeführt wird nicht auf die nackte Karte — die klebte dann unter der Kopfleiste,
+    // und Überschrift, Einleitung und Fortschrittsbalken waren weg. Sichtbar sein soll der
+    // ganze Abschnitt. Dafür von der Komponente aus nach oben gehen, solange der Elternblock
+    // nicht viel früher anfängt; der erste, der deutlich weiter oben beginnt, gehört schon
+    // zur Seite und nicht mehr zum Trichter.
+    function abschnittOben(k: HTMLElement) {
+        let oben = k.getBoundingClientRect().top
+        const grenze = oben - 800
+        let e: HTMLElement | null = k.parentElement
+        for (let i = 0; i < 6 && e && e !== document.body; i++) {
+            const t = e.getBoundingClientRect().top
+            if (t < grenze) break
+            oben = t
+            e = e.parentElement
         }
+        return oben
+    }
+
+    function nachfuehren() {
         const k = rahmen.current
         if (!k) return
         const r = k.getBoundingClientRect()
         const kopf = kopfhoehe()
         const luft = 20
-        // Bewegt wird nur in zwei Fällen: Der Anfang der Karte steckt unter der Kopfleiste,
-        // oder sie fängt so weit unten an, dass von der Frage nichts mehr zu sehen ist.
+        // Bewegt wird nur in zwei Fällen: Der Anfang des Schritts steckt unter der
+        // Kopfleiste, oder er fängt so weit unten an, dass von der Frage nichts zu sehen ist.
         //
         // Auf dem Handy ist eine Karte oft höher als der Bildschirm — „ganz sichtbar" als
         // Bedingung hätte dort bei jedem Schritt einen Sprung ausgelöst. Es zählt nur, ob der
@@ -379,15 +395,33 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         const verdeckt = r.top < kopf + 4
         const zuTief = r.top > window.innerHeight * 0.55
         if (!verdeckt && !zuTief) return
-        const ziel = Math.max(0, window.scrollY + r.top - kopf - luft)
+
+        let ziel = window.scrollY + abschnittOben(k) - kopf - luft
+        // Ist der Abschnittskopf so hoch, dass die Frage dadurch aus dem Bild rutscht,
+        // zählt wieder die Komponente selbst.
+        const trichter = window.scrollY + r.top
+        if (trichter - ziel > window.innerHeight * 0.5) ziel = trichter - kopf - luft
         // ▲ KEIN `scrollTo({ behavior: "smooth" })`. Auf dieser Seite läuft ein
         // Smooth-Scroll-Baustein (Lenis 1.1.20, liegt als `window.__sanftscroll`). Er
         // übernimmt das Scrollen, und beide weichen Wege laufen wirkungslos durch:
         // `scrollTo` mit `behavior: "smooth"` ebenso wie `lenis.scrollTo(...)` — gemessen
         // am 27.10.2026, die Seite blieb in beiden Fällen exakt stehen. Nur die
-        // Zwei-Argument-Form kommt durch. Hart ist hier ohnehin das Richtige: Gesprungen
-        // wird nur, wenn der Schritt gar nicht im Bild steht.
-        window.scrollTo(0, ziel)
+        // Zwei-Argument-Form kommt durch.
+        window.scrollTo(0, Math.max(0, ziel))
+    }
+
+    useEffect(() => {
+        if (ersterLauf.current) {
+            ersterLauf.current = false
+            return
+        }
+        nachfuehren()
+        // Zweiter Anlauf nach einer kurzen Pause. Nach einem Textfeld schließt sich auf dem
+        // iPhone die Tastatur, und das Betriebssystem setzt dabei die Scrollposition selbst
+        // noch einmal — der erste Anlauf wird davon überschrieben. Genau das war der Grund,
+        // warum der Trichter nach der Berufseingabe woanders stand als nach den Tippfragen.
+        const t = setTimeout(nachfuehren, 420)
+        return () => clearTimeout(t)
     }, [schritt, lage])
 
     function waehlen(f: Frage, wert: string) {
@@ -665,7 +699,10 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                             const gewaehlt = markiert >= 0 ? treffer[markiert] : null
                                             if (gewaehlt) setBeruf(gewaehlt)
                                             setVorschlaegeAuf(false)
-                                            if (gewaehlt || beruf.trim()) setSchritt(1)
+                                            if (gewaehlt || beruf.trim()) {
+                                                e.currentTarget.blur()
+                                                setSchritt(1)
+                                            }
                                         }
                                     }}
                                     style={feldStil}
@@ -682,6 +719,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                                 key={b}
                                                 type="button"
                                                 onClick={() => {
+                                                    document.getElementById("fw-beruf")?.blur()
                                                     setBeruf(b)
                                                     setVorschlaegeAuf(false)
                                                     setSchritt(1)
@@ -698,6 +736,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                 type="button"
                                 disabled={!beruf.trim()}
                                 onClick={() => {
+                                    document.getElementById("fw-beruf")?.blur()
                                     setVorschlaegeAuf(false)
                                     setSchritt(1)
                                 }}
@@ -799,7 +838,10 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                             <button
                                 type="button"
                                 disabled={!domain.trim()}
-                                onClick={() => setSchritt(SCHRITT_KONTAKT)}
+                                onClick={() => {
+                                    document.getElementById("fw-domain")?.blur()
+                                    setSchritt(SCHRITT_KONTAKT)
+                                }}
                                 style={hauptKnopf(!domain.trim())}
                             >
                                 Weiter
