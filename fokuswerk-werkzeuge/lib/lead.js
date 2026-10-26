@@ -23,9 +23,14 @@ const AN_UNS = "contact@fokuswerk.de";
 // ändert er sich dort, gehört er auch hier geändert — am Datensatz soll stehen, wem der
 // Mensch tatsächlich zugestimmt hat.
 const EINWILLIGUNG =
-  "Fokuswerk darf mir die Anzeigen zuschicken und mich zu dieser Anfrage per E-Mail oder " +
-  "Telefon kontaktieren. Die Angaben werden nicht weitergegeben, die Einwilligung kann ich " +
-  "jederzeit widerrufen.";
+  "Fokuswerk darf mir die Anzeigen schicken und sich zu dieser Anfrage melden. Jederzeit " +
+  "widerrufbar, die Angaben gehen an niemanden sonst.";
+
+// Das zweite, freiwillige Häkchen. Getrennt gespeichert, weil es getrennt gegeben wurde:
+// Nur dieser Wortlaut trägt eine Werbeeinwilligung nach § 7 UWG.
+const NEWSLETTER_EINWILLIGUNG =
+  "Schickt mir außerdem, was bei anderen Betrieben funktioniert hat — ein paar Mal im Jahr, " +
+  "jederzeit abbestellbar.";
 
 // ---------------------------------------------------------------------------
 // 1. Sales-Funnel im Outreach-Werkzeug
@@ -50,10 +55,12 @@ export async function meldeAnFunnel(daten) {
       telefon: k.telefon || null,
       firma: daten?.betrieb || domain || null,
       freebie: "Stellenanzeigen-Generator",
-      // Keine Newsletter-Freigabe: Der Besucher stimmt der Antwort auf SEINE Anfrage zu,
-      // nicht laufender Werbung. Das sind zwei verschiedene Einwilligungen.
-      newsletter: false,
-      einwilligungstext: EINWILLIGUNG,
+      // Zwei Einwilligungen, zwei Häkchen: Die erste gilt der Antwort auf SEINE Anfrage,
+      // die zweite laufender Werbung. Nur die zweite macht ihn zu einem Newsletter-Empfänger.
+      newsletter: daten?.newsletter === true,
+      einwilligungstext: daten?.newsletter === true
+        ? EINWILLIGUNG + " | Newsletter: " + NEWSLETTER_EINWILLIGUNG
+        : EINWILLIGUNG,
       // Woher der Besucher kam. Schickt die Seite nichts mit, steht "funnel" —
       // besser als leer, und sobald die Komponente UTM-Werte durchreicht,
       // stehen hier meta/google und die Kampagne.

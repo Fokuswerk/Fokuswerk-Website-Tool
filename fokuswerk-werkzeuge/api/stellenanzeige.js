@@ -99,6 +99,8 @@ export default async function handler(req, res) {
       email: text(koerper?.kontakt?.email, 120),
       telefon: text(koerper?.kontakt?.telefon, 40),
     },
+    // Eigenes Häkchen für laufende Werbung, getrennt von der Einwilligung zur Anfrage.
+    newsletter: koerper?.newsletter === true,
     // Woher der Besucher kam, falls die Seite die UTM-Werte durchreicht.
     // Tut sie das nicht, trägt der Funnel „funnel" ein.
     herkunft: {
