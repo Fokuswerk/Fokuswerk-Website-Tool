@@ -8,6 +8,11 @@
 import { liesBetrieb } from "../lib/seite-lesen.js";
 import { frageModell, BUDGETZEILE } from "../lib/modell.js";
 import { pruefeAntwort, pruefeEingabe } from "../lib/vertrag.js";
+import { verarbeiteLead } from "../lib/lead.js";
+
+// Mit ?diagnose=<Wort> hängt die Antwort an, was aus Mailversand und Übergabe wurde.
+// Für normale Aufrufe unsichtbar — die Seite fragt es nie ab.
+const DIAGNOSE = "fw-probe-2610";
 
 const ERLAUBT = (process.env.ORIGINS ||
   "https://fokuswerk.de,https://www.fokuswerk.de,https://frank-site-485713.framer.app")
@@ -73,6 +78,36 @@ export default async function handler(req, res) {
   const eingabe = pruefeEingabe(koerper);
   if (eingabe.fehler) return res.status(422).json({ fehler: eingabe.fehler });
 
+  // Alles, was der Funnel zusätzlich mitschickt. Nicht Teil der Eingabeprüfung: Fehlt es,
+  // werden trotzdem Anzeigen geschrieben — es geht dann nur kein Lead heraus.
+  const text = (w, max) => {
+    const v = typeof w === "string" ? w.trim() : "";
+    return v && v.length <= max && !/[\u0000-\u001f]/.test(v) ? v : null;
+  };
+  const aus = (w, erlaubt) => (erlaubt.includes(w) ? w : null);
+  const zusatz = {
+    domain: eingabe.domain,
+    beruf: eingabe.beruf,
+    dringlichkeit: aus(koerper?.dringlichkeit, ["sofort", "wochen", "planung"]),
+    stellen: aus(koerper?.stellen, ["eine", "zwei_drei", "mehr"]),
+    erfahrung: aus(koerper?.erfahrung, ["laeuft", "probiert", "nie"]),
+    staerken: Array.isArray(koerper?.staerken)
+      ? koerper.staerken.filter((x) => typeof x === "string" && x.length < 24).slice(0, 8)
+      : [],
+    kontakt: {
+      name: text(koerper?.kontakt?.name, 80),
+      email: text(koerper?.kontakt?.email, 120),
+      telefon: text(koerper?.kontakt?.telefon, 40),
+    },
+    // Woher der Besucher kam, falls die Seite die UTM-Werte durchreicht.
+    // Tut sie das nicht, trägt der Funnel „funnel" ein.
+    herkunft: {
+      quelle: text(koerper?.herkunft?.quelle, 40),
+      kampagne: text(koerper?.herkunft?.kampagne, 80),
+      anzeige: text(koerper?.herkunft?.anzeige, 80),
+    },
+  };
+
   const kennung =
     (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
     req.socket?.remoteAddress ||
@@ -83,7 +118,10 @@ export default async function handler(req, res) {
   const gemerkt = ausSpeicher(schluessel);
   if (gemerkt) {
     res.setHeader("X-Fokuswerk-Speicher", "treffer");
-    return res.status(200).json(gemerkt);
+    // Der Zwischenspeicher gilt den Anzeigen, nicht dem Lead: Wer das Formular ausfüllt, ist
+    // auch dann ein Lead, wenn die Texte für diese Domain schon einmal geschrieben wurden.
+    const bericht = await verarbeiteLead({ ...zusatz, betrieb: gemerkt.betrieb }, gemerkt);
+    return res.status(200).json(req.query?.diagnose === DIAGNOSE ? { ...gemerkt, _versand: bericht } : gemerkt);
   }
 
   let betrieb;
@@ -130,5 +168,8 @@ export default async function handler(req, res) {
     seiten: betrieb.seiten,
   });
 
-  return res.status(200).json(ergebnis);
+  // Lead in die Datenbank, Meldung an uns, Zusendung an den Betrieb. Läuft nebenher.
+  const bericht = await verarbeiteLead({ ...zusatz, betrieb: ergebnis.betrieb }, ergebnis);
+
+  return res.status(200).json(req.query?.diagnose === DIAGNOSE ? { ...ergebnis, _versand: bericht } : ergebnis);
 }

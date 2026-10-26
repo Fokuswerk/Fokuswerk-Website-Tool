@@ -54,7 +54,12 @@ export async function meldeAnFunnel(daten) {
       // nicht laufender Werbung. Das sind zwei verschiedene Einwilligungen.
       newsletter: false,
       einwilligungstext: EINWILLIGUNG,
-      quelle: "werkzeug",
+      // Woher der Besucher kam. Schickt die Seite nichts mit, steht "funnel" —
+      // besser als leer, und sobald die Komponente UTM-Werte durchreicht,
+      // stehen hier meta/google und die Kampagne.
+      quelle: daten?.herkunft?.quelle || "funnel",
+      kampagne: daten?.herkunft?.kampagne || null,
+      anzeige: daten?.herkunft?.anzeige || null,
       seite: "/stellenanzeige",
       // Die Antworten aus dem Trichter. Sie sind der eigentliche Wert dieses Leads:
       // Wer hier steht, hat gesagt, wen er sucht und wie dringend.
