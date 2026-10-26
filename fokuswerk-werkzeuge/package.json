@@ -1,0 +1,9 @@
+{
+  "name": "fokuswerk-werkzeuge",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "probe": "node test/lokal.mjs"
+  }
+}
