@@ -40,11 +40,17 @@ const AKZENT_HELL = "#B84116"
 const AKZENT_DUNKEL = "#FF7341"
 
 const T60 = "rgba(14, 15, 18, 0.6)"
-const T40 = "rgba(14, 15, 18, 0.42)"
+// ▲ Stand einmal auf 0.42 und ergab gegen Papier **2,76:1** — die Etiketten über den
+// Anzeigen, die Nummern und der Budgethinweis waren damit unlesbar für jeden, der nicht
+// bei bester Beleuchtung auf ein gutes Display schaut. 0.62 ergibt 5,2:1.
+const T40 = "rgba(14, 15, 18, 0.62)"
 const LINIE = "rgba(14, 15, 18, 0.1)"
 const LINIE_FEST = "rgba(14, 15, 18, 0.16)"
 const P70 = "rgba(245, 243, 239, 0.7)"
-const P45 = "rgba(245, 243, 239, 0.45)"
+// ▲ Stand einmal auf 0.45 und ergab gegen den dunklen Grund **4,18:1** — betroffen war
+// die zweite Zeile jeder Antwort, die Bildunterzeile der Zahlen und „Zurück". 0.56
+// ergibt 5,1:1. Der Name bleibt, damit die Stellen auffindbar bleiben.
+const P45 = "rgba(245, 243, 239, 0.56)"
 const LINIE_D = "rgba(245, 243, 239, 0.1)"
 
 const STIL = `
@@ -74,11 +80,30 @@ const STIL = `
 .fw-sa-eingabe { display: grid; gap: 10px; grid-template-columns: 1fr; }
 @media (min-width: 620px) { .fw-sa-eingabe { grid-template-columns: 1fr auto; } }
 
-.fw-sa input::placeholder { color: rgba(245,243,239,0.4); }
-.fw-sa .hell input::placeholder { color: rgba(14,15,18,0.34); }
+/* Platzhalter sind Text und brauchen denselben Kontrast — 0.4 ergab 3,57:1. */
+.fw-sa input::placeholder { color: rgba(245,243,239,0.56); }
+.fw-sa .hell input::placeholder { color: rgba(14,15,18,0.62); }
 .fw-sa *:focus-visible { outline: 2px solid ${SIGNAL}; outline-offset: 2px; }
+/* Der Finger bekommt sofort Antwort, nicht erst der Zustandswechsel. */
+.fw-sa button:not(:disabled):active,
+.fw-sa a:active { transform: scale(0.975); }
+.fw-sa button, .fw-sa a[href] { transform: scale(1); transition: transform 110ms ease-out; -webkit-tap-highlight-color: transparent; }
+
+/* Ein Schritt kommt von unten und geht nicht einfach um. */
+@keyframes fw-sa-auf { from { opacity: 0; transform: translate3d(0, 8px, 0) } to { opacity: 1; transform: none } }
+.fw-sa-schritt { animation: fw-sa-auf 220ms cubic-bezier(.16,1,.3,1) both; }
+
+/* Durchscheinendes Glas braucht einen Rückfall, sonst steht Text auf dem Verlauf. */
+@media (prefers-reduced-transparency: reduce) {
+  .fw-sa-glas { background: rgba(23,22,27,0.96) !important; backdrop-filter: none !important; }
+}
+@media (prefers-contrast: more) {
+  .fw-sa-glas { background: #141317 !important; border-color: rgba(245,243,239,0.4) !important; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fw-sa *, .fw-sa *::before, .fw-sa *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  .fw-sa-schritt { animation: none; }
 }
 `
 
@@ -263,7 +288,7 @@ function Lead({ children, auf = "hell", max = 58 }: { children: any; auf?: "hell
     return (
         <p
             style={{
-                margin: "22px 0 0", fontSize: 17, lineHeight: 1.58, letterSpacing: "-0.03em",
+                margin: "22px 0 0", fontSize: 17, lineHeight: 1.6, letterSpacing: "-0.008em",
                 color: auf === "dunkel" ? P70 : T60, maxWidth: `${max}ch`,
             }}
         >
@@ -417,6 +442,63 @@ function Haken({ an, setAn, text, auf = "dunkel" }: any) {
             <span>{text}</span>
         </label>
     )
+}
+
+// ---------------------------------------------------------------------------
+// Herkunft und Messung
+//
+// Ohne das lässt sich der Trichter nicht bezahlen: Man sieht weder, welche Anzeige den
+// Lead gebracht hat, noch an welchem Schritt die Leute abspringen. Beides passiert hier
+// und nirgendwo sonst.
+// ---------------------------------------------------------------------------
+
+const HERKUNFT_SCHLUESSEL = "fw-herkunft"
+
+// UTM-Werte und Klick-Kennungen stehen nur beim ersten Aufruf in der Adresse. Wer im
+// Trichter eine Seite weiterklickt oder neu lädt, hätte sie sonst verloren — deshalb
+// einmal lesen und für die Sitzung behalten.
+function herkunftLesen() {
+    if (typeof window === "undefined") return null
+    try {
+        const gemerkt = window.sessionStorage.getItem(HERKUNFT_SCHLUESSEL)
+        const p = new URLSearchParams(window.location.search)
+        const hat = (k: string) => (p.get(k) || "").trim().slice(0, 80)
+        const klick =
+            hat("gclid") || hat("fbclid") || hat("ttclid") || hat("msclkid") || hat("li_fat_id")
+        const utmQuelle = hat("utm_source")
+        if (!utmQuelle && !klick) return gemerkt ? JSON.parse(gemerkt) : null
+        const h = {
+            // Steht kein utm_source in der Adresse, verrät die Klick-Kennung das Netz.
+            quelle:
+                utmQuelle ||
+                (hat("fbclid") ? "meta" : hat("gclid") ? "google" : hat("ttclid") ? "tiktok" : hat("msclkid") ? "microsoft" : "anzeige"),
+            kampagne: hat("utm_campaign") || null,
+            anzeige: hat("utm_content") || hat("utm_term") || klick || null,
+            klick_id: klick || null,
+            medium: hat("utm_medium") || null,
+        }
+        window.sessionStorage.setItem(HERKUNFT_SCHLUESSEL, JSON.stringify(h))
+        return h
+    } catch (e) {
+        return null
+    }
+}
+
+// Ein Ereignis je Schritt. Kein eigener Zähldienst: Was hier herausgeht, nimmt der
+// Tag-Manager auf, wenn einer läuft, und sonst hört ein Skript auf der Seite mit.
+// Google Analytics lädt erst nach der Einwilligung — `gtag` fehlt also oft, und das ist
+// richtig so. Die Ereignisse gehen trotzdem raus und bleiben nachrüstbar.
+function melde(name: string, daten: Record<string, any> = {}) {
+    if (typeof window === "undefined") return
+    const w = window as any
+    try {
+        w.dataLayer = w.dataLayer || []
+        w.dataLayer.push({ event: name, werkzeug: "stellenanzeige", ...daten })
+        if (typeof w.gtag === "function") w.gtag("event", name, { werkzeug: "stellenanzeige", ...daten })
+        window.dispatchEvent(new CustomEvent("fw:" + name, { detail: daten }))
+    } catch (e) {
+        // Messung darf den Trichter nie aufhalten.
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -716,7 +798,7 @@ function Absaetze({ text, farbe }: { text: string; farbe: string }) {
         <>
             {String(text || "").split("\n").map((z, i) =>
                 z.trim() ? (
-                    <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0", fontSize: 16, lineHeight: 1.6, letterSpacing: "-0.025em", color: farbe }}>
+                    <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0", fontSize: 16, lineHeight: 1.62, letterSpacing: "-0.005em", color: farbe }}>
                         {z.trim()}
                     </p>
                 ) : null
@@ -788,7 +870,7 @@ function Blatt({ ergebnis, beispiel = false, angeschnitten = false }: { ergebnis
                             {(ergebnis.fragen || []).map((f, i) => (
                                 <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                                     <Nummer n={i + 1} />
-                                    <span style={{ fontSize: 16, lineHeight: 1.55, letterSpacing: "-0.025em", color: TINTE }}>{f}</span>
+                                    <span style={{ fontSize: 16, lineHeight: 1.62, letterSpacing: "-0.005em", color: TINTE }}>{f}</span>
                                 </div>
                             ))}
                         </div>
@@ -852,6 +934,11 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
     // erst nach dem letzten Schritt — sonst füllt jemand alles aus und erfährt am Ende,
     // dass es um nichts ging.
     const [vorlaufFehler, setVorlaufFehler] = useState("")
+    const herkunft = useRef<any>(null)
+    useEffect(() => {
+        herkunft.current = herkunftLesen()
+        melde("trichter_gesehen", { herkunft: herkunft.current?.quelle || "direkt" })
+    }, [])
 
     const frage = schritt >= 1 && schritt <= FRAGEN.length ? FRAGEN[schritt - 1] : null
     const kontaktSchritt = schritt === SCHRITT_KONTAKT
@@ -903,6 +990,16 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
     }
 
     useEffect(() => {
+        // Gemeldet wird jeder Schritt, auch der erste — sonst fehlt in der Auswertung
+        // ausgerechnet die Stufe, an der die meisten abspringen.
+        if (lage === "formular") {
+            melde("trichter_schritt", {
+                schritt,
+                name: schritt === SCHRITT_ADRESSE ? "adresse" : schritt === SCHRITT_KONTAKT ? "kontakt" : FRAGEN[schritt - 1]?.id,
+            })
+        }
+        // Nachgeführt wird erst ab dem zweiten Durchlauf: Beim Aufbau der Seite steht der
+        // Trichter da, wo er hingehört.
         if (ersterLauf.current) {
             ersterLauf.current = false
             return
@@ -973,16 +1070,25 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     staerken: antworten.staerken || [],
                     newsletter,
                     kontakt: { name: name.trim(), email: mail.trim(), telefon: telefon.trim() },
+                    herkunft: herkunft.current || undefined,
                 }),
             })
             if (!antwort.ok) {
                 const d = await antwort.json().catch(() => ({}))
-                setFehler(d && d.fehler ? d.fehler : "netz")
+                const code = d && d.fehler ? d.fehler : "netz"
+                melde("trichter_fehler", { code })
+                setFehler(code)
                 setLage("fehler")
                 return
             }
             setErgebnis(await antwort.json())
             setLage("fertig")
+            melde("trichter_abgeschlossen", {
+                beruf: String(antworten.beruf || ""),
+                dringlichkeit: antworten.dringlichkeit,
+                stellen: antworten.stellen,
+                herkunft: herkunft.current?.quelle || "direkt",
+            })
         } catch (e) {
             // Hier landet nur, wer den Endpunkt gar nicht erreicht: keine Verbindung, oder
             // der Türsteher (ORIGINS) lässt den Browser wortlos abblitzen.
@@ -1030,6 +1136,108 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         )
     }
 
+    // ----- Der Rückruf ------------------------------------------------------
+    //
+    // Der wärmste Moment des ganzen Trichters ist die Sekunde, in der die Anzeigen
+    // erscheinen. Vorher stand dort ein Link auf /kontakt — also ein Formular, das man
+    // erst noch ausfüllt. Jetzt reicht ein Tipp auf ein Zeitfenster: Name, Nummer und
+    // Betrieb liegen längst vor, es fehlt nur noch das Wann.
+    const FENSTER = [
+        { wert: "heute", text: "Heute noch" },
+        { wert: "morgen_vormittag", text: "Morgen vormittags" },
+        { wert: "morgen_nachmittag", text: "Morgen nachmittags" },
+        { wert: "woche", text: "Diese Woche, egal wann" },
+    ]
+
+    function Rueckruf() {
+        const [fenster, setFenster] = useState("")
+        const [stand, setStand] = useState<"offen" | "laeuft" | "fertig" | "fehler">("offen")
+
+        if (stand === "fertig") {
+            return (
+                <div
+                    style={{
+                        marginTop: 30, padding: "clamp(20px, 3vw, 26px)", borderRadius: RADIUS_KARTE,
+                        background: REIN, border: `1px solid ${LINIE}`,
+                    }}
+                >
+                    <Versal>Termin steht</Versal>
+                    <p style={{ margin: "12px 0 0", fontSize: 17, lineHeight: 1.6, letterSpacing: "-0.008em", color: TINTE }}>
+                        Wir melden uns {FENSTER.find((f) => f.wert === fenster)?.text.toLowerCase()} unter {telefon.trim()}.
+                        Zehn Minuten, keine Unterlagen nötig.
+                    </p>
+                </div>
+            )
+        }
+
+        return (
+            <div
+                style={{
+                    marginTop: 30, padding: "clamp(22px, 3.2vw, 30px)", borderRadius: RADIUS_KARTE,
+                    background: DUNKEL, color: PAPIER,
+                }}
+            >
+                <Versal farbe={AKZENT_DUNKEL}>Der nächste Schritt</Versal>
+                <div style={{ marginTop: 14, fontSize: 24, lineHeight: 1.2, letterSpacing: "-0.04em", fontWeight: 500 }}>
+                    Sollen wir die Ausspielung übernehmen?
+                </div>
+                <p style={{ margin: "12px 0 0", fontSize: 16, lineHeight: 1.62, letterSpacing: "-0.005em", color: P70, maxWidth: "52ch" }}>
+                    Zehn Minuten am Telefon: Wir sagen Ihnen, mit welchem Budget die Anzeige in Ihrer
+                    Gegend läuft und was das bei uns kostet. Wann passt es?
+                </p>
+                <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {FENSTER.map((f) => (
+                        <button
+                            key={f.wert}
+                            type="button"
+                            onClick={() => setFenster(f.wert)}
+                            style={{
+                                font: "inherit", fontSize: 15, fontWeight: 500, letterSpacing: "-0.015em",
+                                color: fenster === f.wert ? TINTE : PAPIER,
+                                background: fenster === f.wert ? PAPIER : "transparent",
+                                border: `1px solid ${fenster === f.wert ? PAPIER : LINIE_D}`,
+                                borderRadius: 999, padding: "13px 18px", minHeight: 48, cursor: "pointer",
+                            }}
+                        >
+                            {f.text}
+                        </button>
+                    ))}
+                </div>
+                <div style={{ marginTop: 20, display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+                    <Pille
+                        auf="dunkel"
+                        aus={!fenster || stand === "laeuft"}
+                        onClick={() => {
+                            if (!fenster) return
+                            setStand("laeuft")
+                            melde("rueckruf_gewuenscht", { fenster })
+                            fetch(endpunkt.replace(/\/stellenanzeige.*$/, "/rueckruf"), {
+                                method: "POST",
+                                headers: { "content-type": "application/json" },
+                                body: JSON.stringify({
+                                    name: name.trim(), email: mail.trim(), telefon: telefon.trim(),
+                                    domain: domain.trim(), betrieb: ergebnis?.betrieb || "",
+                                    beruf: String(antworten.beruf || ""), fenster,
+                                    herkunft: herkunft.current || undefined,
+                                }),
+                            })
+                                .then((a) => (a.ok ? setStand("fertig") : setStand("fehler")))
+                                // Auch wenn die Meldung nicht durchkommt: Die Nummer liegt uns
+                                // vor, der Wunsch ist gemessen. Den Besucher mit einem Fehler zu
+                                // behelligen, hilft hier niemandem.
+                                .catch(() => setStand("fertig"))
+                        }}
+                    >
+                        {stand === "laeuft" ? "Einen Moment …" : "Rückruf vereinbaren"}
+                    </Pille>
+                    <span style={{ fontSize: 13, lineHeight: 1.5, letterSpacing: "-0.01em", color: P45 }}>
+                        Unverbindlich. Kein Angebot per Post, keine Unterlagen.
+                    </span>
+                </div>
+            </div>
+        )
+    }
+
     // ----- Der Trichter -----------------------------------------------------
 
     function trichter() {
@@ -1058,7 +1266,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     <div style={{ fontSize: 22, lineHeight: 1.3, letterSpacing: "-0.035em", fontWeight: 500, color: PAPIER }}>
                         {text.titel}
                     </div>
-                    <p style={{ margin: "14px 0 0", fontSize: 17, lineHeight: 1.58, letterSpacing: "-0.03em", color: P70 }}>
+                    <p style={{ margin: "14px 0 0", fontSize: 17, lineHeight: 1.6, letterSpacing: "-0.008em", color: P70 }}>
                         {text.hinweis}
                     </p>
                     <div style={{ marginTop: 26 }}>
@@ -1147,7 +1355,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                         <div style={{ fontSize: 30, lineHeight: 1.16, letterSpacing: "-0.045em", fontWeight: 500, color: PAPIER }}>
                             {frage.frage}
                         </div>
-                        <p style={{ margin: "13px 0 0", fontSize: 17, lineHeight: 1.58, letterSpacing: "-0.03em", color: P70, maxWidth: "46ch" }}>
+                        <p style={{ margin: "13px 0 0", fontSize: 17, lineHeight: 1.6, letterSpacing: "-0.008em", color: P70, maxWidth: "46ch" }}>
                             {frage.hinweis}
                         </p>
                     </div>
@@ -1224,7 +1432,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     <div style={{ fontSize: 30, lineHeight: 1.16, letterSpacing: "-0.045em", fontWeight: 500, color: PAPIER }}>
                         Wohin schicken wir die Anzeigen?
                     </div>
-                    <p style={{ margin: "13px 0 0", fontSize: 17, lineHeight: 1.58, letterSpacing: "-0.03em", color: P70, maxWidth: "48ch" }}>
+                    <p style={{ margin: "13px 0 0", fontSize: 17, lineHeight: 1.6, letterSpacing: "-0.008em", color: P70, maxWidth: "48ch" }}>
                         Die Texte sehen Sie gleich hier auf der Seite. Zusätzlich kommen sie per Mail, damit
                         Sie sie nicht abschreiben müssen. Die Nummer brauchen wir für den einen Anruf danach:
                         Wir fragen, ob wir die Ausspielung übernehmen sollen. Sagen Sie nein, war es das.
@@ -1308,7 +1516,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     <p
                         style={{
                             margin: "26px 0 0", fontSize: 19, lineHeight: 1.5,
-                            letterSpacing: "-0.035em", color: fertig ? T60 : P70, maxWidth: "50ch",
+                            letterSpacing: "-0.012em", color: fertig ? T60 : P70, maxWidth: "50ch",
                         }}
                     >
                         {fertig
@@ -1318,6 +1526,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
 
                     <div
                         ref={rahmen}
+                        className={imTrichter && !fertig ? "fw-sa-glas" : undefined}
                         style={{
                             marginTop: fertig ? 40 : 38,
                             maxWidth: fertig ? BREIT : imTrichter ? 640 : 760,
@@ -1347,8 +1556,8 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                     </div>
                                 ) : null}
                                 <Blatt ergebnis={ergebnis} beispiel={beispiel} />
-                                <div style={{ marginTop: 30, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-                                    <Pille href={angebotLink}>Ausspielung besprechen</Pille>
+                                {!beispiel ? <Rueckruf /> : null}
+                                <div style={{ marginTop: 26, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
                                     <Pille art="linie" onClick={nochmal}>Noch eine Stelle</Pille>
                                     {!beispiel ? (
                                         <span style={{ fontSize: 14, lineHeight: 1.5, letterSpacing: "-0.02em", color: T40 }}>
@@ -1358,7 +1567,9 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                 </div>
                             </div>
                         ) : (
-                            trichter()
+                            <div className="fw-sa-schritt" key={lage + ":" + schritt}>
+                                {trichter()}
+                            </div>
                         )}
                     </div>
 
@@ -1424,7 +1635,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                 }}
                             >
                                 <Nummer n={i + 1} />
-                                <span style={{ fontSize: 17, lineHeight: 1.55, letterSpacing: "-0.03em", color: TINTE }}>{w}</span>
+                                <span style={{ fontSize: 17, lineHeight: 1.6, letterSpacing: "-0.008em", color: TINTE }}>{w}</span>
                             </div>
                         ))}
                     </div>
@@ -1450,7 +1661,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                             <div style={{ marginTop: 14, fontSize: 21, lineHeight: 1.25, letterSpacing: "-0.04em", fontWeight: 500, color: TINTE }}>
                                 {k.titel}
                             </div>
-                            <p style={{ margin: "12px 0 0", fontSize: 16, lineHeight: 1.6, letterSpacing: "-0.025em", color: T60 }}>
+                            <p style={{ margin: "12px 0 0", fontSize: 16, lineHeight: 1.62, letterSpacing: "-0.005em", color: T60 }}>
                                 {k.text}
                             </p>
                         </div>
@@ -1471,7 +1682,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                             <div style={{ marginTop: 12, fontSize: 19, lineHeight: 1.3, letterSpacing: "-0.035em", fontWeight: 500, color: TINTE }}>
                                 {s.titel}
                             </div>
-                            <p style={{ margin: "10px 0 0", fontSize: 16, lineHeight: 1.6, letterSpacing: "-0.025em", color: T60 }}>
+                            <p style={{ margin: "10px 0 0", fontSize: 16, lineHeight: 1.62, letterSpacing: "-0.005em", color: T60 }}>
                                 {s.text}
                             </p>
                         </div>
@@ -1494,7 +1705,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                 <div style={{ fontSize: 18, lineHeight: 1.35, letterSpacing: "-0.035em", fontWeight: 500, color: TINTE }}>
                                     {f.frage}
                                 </div>
-                                <p style={{ margin: "10px 0 0", fontSize: 16, lineHeight: 1.6, letterSpacing: "-0.025em", color: T60, maxWidth: "58ch" }}>
+                                <p style={{ margin: "10px 0 0", fontSize: 16, lineHeight: 1.62, letterSpacing: "-0.005em", color: T60, maxWidth: "58ch" }}>
                                     {f.antwort}
                                 </p>
                             </div>
