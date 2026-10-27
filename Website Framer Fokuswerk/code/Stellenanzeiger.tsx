@@ -1,165 +1,427 @@
-import { addPropertyControls, ControlType, useIsStaticRenderer } from "framer"
-import { useEffect, useRef, useState, type CSSProperties } from "react"
+import { addPropertyControls, ControlType } from "framer"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 // Stellenanzeiger — das Werkzeug auf /stellenanzeige.
 //
-// Zweck ist nicht das Werkzeug, sondern der Lead: Am Ende stehen Name, E-Mail und Telefon eines
-// Betriebs, der gerade jemanden sucht. Deshalb eine Schrittfolge statt eines einzelnen Formulars.
+// Zweck ist nicht das Werkzeug, sondern der Lead: Am Ende stehen Name, E-Mail und Telefon
+// eines Betriebs, der gerade jemanden sucht.
 //
-// Warum die Fragen vor der Abfrage stehen (Entscheidung Thees, 26.10.2026): Wer vier Fragen
-// beantwortet hat, hat Arbeit investiert und gibt seine Daten eher heraus, damit die Mühe nicht
-// umsonst war. Die Fragen sind deshalb bewusst mit einem Klick zu beantworten — kein Tippen.
+// Gebaut wie /sichtbarkeit (SeoAnalyse.tsx) — gleiche Marke, gleiche Bausteine, gleiche
+// Seitenfolge. Die Komponente trägt die ganze Seite, nicht nur das Formular: Auftakt mit
+// einem einzigen Feld, der Beweis, was herauskommt, Wiedererkennung, was man bekommt, der
+// Ablauf, Fragen und Antworten, Abzweig. Auf dem Handy ist der Auftakt die ganze Seite —
+// ein Feld, ein Knopf, drei Etiketten.
 //
 // Die Fragen arbeiten doppelt:
-//   fachlich  — Dringlichkeit, Zahl der Stellen und die Stärken der Stelle gehen in die Anzeige ein
-//   vertriebl. — dieselben Antworten qualifizieren den Lead (Dringlichkeit ≈ Kaufbereitschaft,
-//                Zahl der Stellen ≈ Budget, bisherige Erfahrung ≈ Gesprächseinstieg)
+//   fachlich   — Beruf, Dringlichkeit, Zahl der Stellen und Stärken gehen in die Anzeige ein
+//   vertrieblich — dieselben Antworten qualifizieren den Lead
 //
-// Aufbau: Schritt 0 Beruf · Schritte 1–4 je eine Frage · Schritt 5 Website · Schritt 6
-// Kontaktdaten · danach Lauf und Ergebnis. Zurück ist aus jedem Schritt möglich.
+// Der Vorlauf: Sobald Adresse und Beruf stehen, läuft die Erzeugung los, während der
+// Besucher die restlichen Fragen beantwortet (`?vorlauf=1` am Endpunkt, Antwort nur
+// { bereit, betrieb }). Der zweite Aufruf trifft den Zwischenspeicher und kommt sofort.
+// Die halbe Minute verschwindet damit nicht aus der Technik, aber aus dem Erleben.
 //
-// Warum der Beruf vorn steht und die Website hinten (27.10.2026): Tippen ist die teuerste
-// Eingabe, die man verlangen kann, und zwei leere Felder als Eröffnung sind die Stelle, an
-// der die meisten abspringen. Jetzt beginnt der Trichter mit einer Frage, die ein Fingertipp
-// beantwortet — die acht häufigsten Berufe stehen als Vorschläge da. Die Website wird erst
-// gefragt, wenn längst klar ist, wofür sie gebraucht wird, und die Frage sagt es dazu.
-//
-// Anfangszustand ist Schritt 0 — kein `useEffect`, das erst nach dem Hochfahren etwas einblendet.
-// Bei Auftaktleiste.tsx und Arbeitsschau.tsx stand im ausgelieferten HTML sonst nichts.
-//
-// Vertrag des Endpunkts (existiert noch nicht, erweitert um die Antworten):
-//   POST https://fokuswerk-werkzeuge.vercel.app/api/stellenanzeige
-//   { domain, beruf,
-//     dringlichkeit: "sofort"|"wochen"|"planung",
-//     stellen: "eine"|"zwei_drei"|"mehr",
-//     erfahrung: "laeuft"|"probiert"|"nie",
-//     staerken: string[],
+// Vertrag des Endpunkts:
+//   POST /api/stellenanzeige[?vorlauf=1]
+//   { domain, beruf, dringlichkeit, stellen, erfahrung, staerken[], newsletter,
 //     kontakt: { name, email, telefon } }
 //   200 → { betrieb, anzeigen:[{titel,text}×3], fragen:[×4], budget }
-//   422 → { fehler: "seite_nicht_lesbar" | "beruf_unklar" }
-// Solange er fehlt, liefert die Komponente BEISPIEL-Daten und sagt das sichtbar an.
+//   422 → { fehler: "seite_nicht_lesbar" | "beruf_unklar" | … }
 
 const SCHRIFT = "Inter, 'Inter Placeholder', system-ui, sans-serif"
-const TINTE = "rgb(14, 15, 18)"
-const PAPIER = "rgb(245, 243, 239)"
-const LEISE = "rgba(14, 15, 18, 0.56)"
-const LINIE = "rgba(14, 15, 18, 0.14)"
-// Markenorange erreicht als Kleintext den Kontrast nicht (2,81 : 1 auf Papier). Für Schrift
-// unter 24 px gilt der abgedunkelte Ton: 4,98 : 1 auf Papier, 5,52 : 1 auf Weiß.
-const AKZENT_TEXT = "#B84116"
-const SIGNAL = "rgb(255, 90, 31)"
-// Eingelassene Flächen in der Karte. Weiße Felder auf weißer Karte verschwinden.
-const FLAECHE = "rgb(250, 249, 246)"
+const TINTE = "#0e0f12"
+const PAPIER = "#f5f3ef"
+const REIN = "#ffffff"
+const DUNKEL = "#17161b"
+const SIGNAL = "#ff5a1f"
+const SIGNAL_TIEF = "#d9440f"
+// Markenorange erreicht als Kleintext den Kontrast nicht — dafür diese beiden.
+const AKZENT_HELL = "#B84116"
+const AKZENT_DUNKEL = "#FF7341"
 
-interface Wahl {
-    wert: string
-    text: string
+const T60 = "rgba(14, 15, 18, 0.6)"
+const T40 = "rgba(14, 15, 18, 0.42)"
+const LINIE = "rgba(14, 15, 18, 0.1)"
+const LINIE_FEST = "rgba(14, 15, 18, 0.16)"
+const P70 = "rgba(245, 243, 239, 0.7)"
+const P45 = "rgba(245, 243, 239, 0.45)"
+const LINIE_D = "rgba(245, 243, 239, 0.1)"
+
+const STIL = `
+.fw-sa { --rand: 20px; }
+@media (min-width: 810px) { .fw-sa { --rand: 32px; } }
+
+/* Zahlenreihe im Auftakt: auf dem Handy untereinander mit Trennlinien nach oben,
+   ab 810 px nebeneinander mit Trennlinien nach links. */
+.fw-sa-zahlen { display: grid; grid-template-columns: 1fr; }
+.fw-sa-zahlen > * { padding: 22px 0 4px; border-top: 1px solid rgba(245,243,239,0.1); }
+@media (min-width: 810px) {
+  .fw-sa-zahlen { grid-template-columns: repeat(3, 1fr); }
+  .fw-sa-zahlen > * { padding: 26px 0 4px 34px; border-top: none; border-left: 1px solid rgba(245,243,239,0.1); }
+  .fw-sa-zahlen > *:first-child { padding-left: 0; border-left: none; }
 }
-interface Frage {
-    schluessel: "dringlichkeit" | "stellen" | "erfahrung" | "staerken"
-    titel: string
-    hinweis?: string
-    mehrfach?: boolean
-    optionen: Wahl[]
+
+.fw-sa-karten { display: grid; gap: 14px; grid-template-columns: 1fr; }
+@media (min-width: 810px) { .fw-sa-karten { gap: 20px; grid-template-columns: repeat(2, 1fr); } }
+
+.fw-sa-drei { display: grid; gap: 28px; grid-template-columns: 1fr; }
+@media (min-width: 810px) { .fw-sa-drei { gap: 44px; grid-template-columns: repeat(3, 1fr); } }
+
+.fw-sa-zwei { display: grid; gap: 32px; grid-template-columns: 1fr; }
+@media (min-width: 810px) { .fw-sa-zwei { gap: 72px; grid-template-columns: 1fr 1.15fr; } }
+
+/* Die Eingabe im Auftakt: untereinander, ab 620 px nebeneinander. */
+.fw-sa-eingabe { display: grid; gap: 10px; grid-template-columns: 1fr; }
+@media (min-width: 620px) { .fw-sa-eingabe { grid-template-columns: 1fr auto; } }
+
+.fw-sa input::placeholder { color: rgba(245,243,239,0.4); }
+.fw-sa .hell input::placeholder { color: rgba(14,15,18,0.34); }
+.fw-sa *:focus-visible { outline: 2px solid ${SIGNAL}; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .fw-sa *, .fw-sa *::before, .fw-sa *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+`
+
+const BREIT = 1240
+const RAND = "clamp(20px, 4vw, 32px)"
+const LUFT = "clamp(80px, 10vw, 150px)"
+const RADIUS_KARTE = 16
+const RADIUS_FELD = 12
+
+// ---------------------------------------------------------------------------
+// Bausteine — dieselben wie auf /sichtbarkeit, damit beide Werkzeuge erkennbar
+// aus einem Haus kommen.
+// ---------------------------------------------------------------------------
+
+function Versal({ children, farbe, style }: { children: any; farbe?: string; style?: any }) {
+    return (
+        <div
+            style={{
+                fontSize: 11, fontWeight: 500, lineHeight: 1, letterSpacing: "0.12em",
+                textTransform: "uppercase", color: farbe || AKZENT_HELL, ...style,
+            }}
+        >
+            {children}
+        </div>
+    )
 }
 
-const FRAGEN: Frage[] = [
-    {
-        schluessel: "dringlichkeit",
-        titel: "Wie schnell muss die Stelle besetzt sein?",
-        optionen: [
-            { wert: "sofort", text: "So schnell wie möglich" },
-            { wert: "wochen", text: "In den nächsten Wochen" },
-            { wert: "planung", text: "Wir planen vor" },
-        ],
-    },
-    {
-        schluessel: "stellen",
-        titel: "Wie viele Stellen sind offen?",
-        optionen: [
-            { wert: "eine", text: "Eine" },
-            { wert: "zwei_drei", text: "Zwei bis drei" },
-            { wert: "mehr", text: "Mehr als drei" },
-        ],
-    },
-    {
-        schluessel: "erfahrung",
-        titel: "Haben Sie schon einmal Anzeigen bei Facebook oder Instagram geschaltet?",
-        optionen: [
-            { wert: "laeuft", text: "Ja, läuft gerade" },
-            { wert: "probiert", text: "Schon probiert, hat wenig gebracht" },
-            { wert: "nie", text: "Noch nie" },
-        ],
-    },
-    {
-        schluessel: "staerken",
-        titel: "Was spricht bei Ihnen für die Stelle?",
-        hinweis: "Mehreres möglich. Das geht in die Anzeigentexte ein.",
-        mehrfach: true,
-        optionen: [
-            { wert: "bezahlung", text: "Bezahlung über dem Üblichen" },
-            { wert: "feierabend", text: "Geregelter Feierabend" },
-            { wert: "team", text: "Kleines, eingespieltes Team" },
-            { wert: "technik", text: "Moderne Ausrüstung" },
-            { wert: "aufstieg", text: "Weiterbildung und Aufstieg" },
-            { wert: "sicherheit", text: "Sicherer Arbeitsplatz" },
-        ],
-    },
-]
+function Pfeil({ farbe, groesse = 13 }: { farbe: string; groesse?: number }) {
+    return (
+        <svg
+            width={groesse} height={groesse} viewBox="0 0 24 24" fill="none"
+            aria-hidden style={{ flex: "0 0 auto", transition: "transform 180ms ease" }}
+        >
+            <path d="M5 12h13M12 5.5 18.5 12 12 18.5" stroke={farbe} strokeWidth="2.2"
+                strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    )
+}
 
-// Die Reihenfolge der Schritte an einer Stelle, damit Rücksprünge aus Fehlern nicht raten.
-const SCHRITT_BERUF = 0
-const SCHRITT_WEBSITE = FRAGEN.length + 1
-const SCHRITT_KONTAKT = FRAGEN.length + 2
-const SCHRITTE_GESAMT = FRAGEN.length + 3
+function Pille({
+    children, onClick, href, art = "voll", auf = "hell", weit = false, aus = false,
+}: {
+    children: any
+    onClick?: () => void
+    href?: string
+    art?: "voll" | "linie"
+    auf?: "hell" | "dunkel"
+    weit?: boolean
+    aus?: boolean
+}) {
+    const [ueber, setUeber] = useState(false)
+    const dunkelGrund = auf === "dunkel"
+    const voll = art === "voll"
+    const grund = voll ? (dunkelGrund ? PAPIER : TINTE) : "transparent"
+    const schrift = voll ? (dunkelGrund ? TINTE : PAPIER) : dunkelGrund ? PAPIER : TINTE
+    const pfeilFarbe = voll ? (dunkelGrund ? SIGNAL_TIEF : SIGNAL) : dunkelGrund ? SIGNAL : SIGNAL_TIEF
+    const gemeinsam = {
+        display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 10,
+        font: "inherit", fontSize: 15, fontWeight: 500, letterSpacing: "-0.015em",
+        background: grund, color: schrift,
+        border: voll ? "1px solid transparent" : `1px solid ${dunkelGrund ? LINIE_D : LINIE_FEST}`,
+        padding: "14px 22px", minHeight: 48, borderRadius: 999,
+        textDecoration: "none", cursor: aus ? "default" : "pointer",
+        width: weit ? "100%" : "auto", opacity: aus ? 0.4 : 1,
+        transition: "opacity 160ms ease, background 160ms ease",
+    } as const
+    const inhalt = (
+        <>
+            <span>{children}</span>
+            <span style={{ display: "inline-flex", transform: ueber && !aus ? "translateX(3px)" : "none", transition: "transform 180ms ease" }}>
+                <Pfeil farbe={pfeilFarbe} />
+            </span>
+        </>
+    )
+    if (href) {
+        return (
+            <a href={href} style={gemeinsam} onMouseEnter={() => setUeber(true)} onMouseLeave={() => setUeber(false)}>
+                {inhalt}
+            </a>
+        )
+    }
+    return (
+        <button
+            type="button" onClick={onClick} disabled={aus} style={gemeinsam}
+            onMouseEnter={() => setUeber(true)} onMouseLeave={() => setUeber(false)}
+        >
+            {inhalt}
+        </button>
+    )
+}
 
-// Bezeichnungen für die Vervollständigung im ersten Schritt.
+function Etikett({ children, auf = "hell" }: { children: any; auf?: "hell" | "dunkel" }) {
+    const dunkelGrund = auf === "dunkel"
+    return (
+        <span
+            style={{
+                display: "inline-flex", alignItems: "center", fontSize: 12, fontWeight: 500,
+                letterSpacing: "-0.01em", padding: "6px 11px", borderRadius: 999,
+                border: `1px solid ${dunkelGrund ? LINIE_D : LINIE}`,
+                color: dunkelGrund ? P70 : T60,
+            }}
+        >
+            {children}
+        </span>
+    )
+}
+
+function Geisterwort({ children, auf = "hell" }: { children: any; auf?: "hell" | "dunkel" }) {
+    return (
+        <div
+            aria-hidden
+            style={{
+                fontSize: "clamp(3.4rem, 12vw, 8.5rem)", lineHeight: 0.82, fontWeight: 500,
+                letterSpacing: "-0.055em", whiteSpace: "nowrap",
+                color: auf === "dunkel" ? "rgba(245,243,239,0.07)" : "rgba(14,15,18,0.055)",
+                marginBottom: "-0.26em", userSelect: "none", pointerEvents: "none",
+                maxWidth: "100%", overflow: "hidden",
+            }}
+        >
+            {children}
+        </div>
+    )
+}
+
+function Nummer({ n, auf = "hell" }: { n: number; auf?: "hell" | "dunkel" }) {
+    return (
+        <span
+            style={{
+                fontSize: 11, fontWeight: 500, letterSpacing: "0.12em",
+                color: auf === "dunkel" ? P45 : T40, fontVariantNumeric: "tabular-nums",
+                flex: "0 0 auto",
+            }}
+        >
+            {String(n).padStart(2, "0")}
+        </span>
+    )
+}
+
+function Notenstrich({ note, farbe = TINTE, grund = LINIE, hoehe = 3 }: { note: number | null; farbe?: string; grund?: string; hoehe?: number }) {
+    return (
+        <div style={{ height: hoehe, background: grund, borderRadius: 999, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${Math.max(2, Math.min(100, note ?? 0))}%`, background: farbe, borderRadius: 999, transition: "width 420ms ease" }} />
+        </div>
+    )
+}
+
+function Abschnitt({
+    grund = PAPIER, children, geist, auf = "hell", luft = LUFT,
+}: {
+    grund?: string
+    children: any
+    geist?: string
+    auf?: "hell" | "dunkel"
+    luft?: string
+}) {
+    return (
+        <section style={{ background: grund, paddingBlock: luft, paddingLeft: RAND, paddingRight: RAND }}>
+            <div style={{ maxWidth: BREIT, margin: "0 auto" }}>
+                {geist ? <Geisterwort auf={auf}>{geist}</Geisterwort> : null}
+                {children}
+            </div>
+        </section>
+    )
+}
+
+function H2({ children, auf = "hell" }: { children: any; auf?: "hell" | "dunkel" }) {
+    return (
+        <h2
+            style={{
+                margin: 0, fontSize: "clamp(1.9rem, 5vw, 3.5rem)", lineHeight: 1.0,
+                letterSpacing: "-0.05em", fontWeight: 500,
+                color: auf === "dunkel" ? PAPIER : TINTE,
+                maxWidth: "20ch", textWrap: "balance" as any,
+            }}
+        >
+            {children}
+        </h2>
+    )
+}
+
+function Lead({ children, auf = "hell", max = 58 }: { children: any; auf?: "hell" | "dunkel"; max?: number }) {
+    return (
+        <p
+            style={{
+                margin: "22px 0 0", fontSize: 17, lineHeight: 1.58, letterSpacing: "-0.03em",
+                color: auf === "dunkel" ? P70 : T60, maxWidth: `${max}ch`,
+            }}
+        >
+            {children}
+        </p>
+    )
+}
+
+function Feld({
+    kennung, wert, setWert, platzhalter, auf = "dunkel", gross = false, onEnter, ...rest
+}: any) {
+    const dunkelGrund = auf === "dunkel"
+    return (
+        <input
+            id={kennung}
+            value={wert}
+            placeholder={platzhalter}
+            onChange={(e: any) => setWert(e.target.value)}
+            onKeyDown={(e: any) => {
+                if (e.key !== "Enter" || !onEnter) return
+                e.preventDefault()
+                e.target.blur()
+                onEnter()
+            }}
+            style={{
+                width: "100%", font: "inherit", fontSize: gross ? 17 : 16,
+                letterSpacing: "-0.03em",
+                color: dunkelGrund ? PAPIER : TINTE,
+                background: dunkelGrund ? "rgba(245,243,239,0.06)" : "rgba(14,15,18,0.03)",
+                border: `1px solid ${dunkelGrund ? "rgba(245,243,239,0.14)" : LINIE_FEST}`,
+                borderRadius: gross ? 999 : RADIUS_FELD,
+                padding: gross ? "17px 24px" : "14px 16px",
+                minHeight: gross ? 56 : 50, boxSizing: "border-box", outlineOffset: 2,
+            }}
+            {...rest}
+        />
+    )
+}
+
+// Tippfeld mit Vorschlägen. Sechs Treffer, nicht acht: Acht waren auf 375 px fünf Reihen
+// und haben den Weiter-Knopf unter den Rand geschoben.
 //
-// Sechs feste Pillen standen vorher da, alle aus dem Handwerk — das sah aus, als sei das
-// Werkzeug nur für Handwerker. Die Liste ist deshalb breit: Gastronomie, Pflege, Handel,
-// Büro, Logistik, Reinigung, Kosmetik, Erziehung, Technik. Sie engt nichts ein, wer etwas
-// anderes sucht, tippt es einfach zu Ende.
-//
-// Sortiert bleibt sie, wie sie hier steht; die Reihenfolge der Treffer macht `passende()`.
-const BERUFE = [
-    // Kfz und Technik
-    "Kfz-Mechatroniker", "Kfz-Mechaniker", "Kfz-Servicetechniker", "Karosseriebauer",
-    "Fahrzeuglackierer", "Zweiradmechaniker", "Landmaschinenmechaniker", "Servicetechniker",
-    "Industriemechaniker", "Zerspanungsmechaniker", "Schweißer", "Metallbauer", "Schlosser",
-    "Maschinenbediener", "Mechatroniker", "Monteur",
-    // Bau und Ausbau
-    "Anlagenmechaniker SHK", "Heizungsbauer", "Sanitärinstallateur", "Elektroniker",
-    "Elektriker", "Dachdecker", "Zimmerer", "Maurer", "Fliesenleger", "Trockenbauer",
-    "Maler und Lackierer", "Stuckateur", "Bodenleger", "Glaser", "Tischler", "Schreiner",
-    "Straßenbauer", "Bauhelfer", "Bauleiter", "Polier", "Gerüstbauer",
-    // Garten und Außen
-    "Landschaftsgärtner", "Gärtner", "Forstwirt", "Hausmeister", "Schornsteinfeger",
-    // Gastronomie und Hotel
-    "Koch", "Küchenhilfe", "Beikoch", "Küchenchef", "Servicekraft", "Kellner", "Barkeeper",
-    "Restaurantfachmann", "Hotelfachmann", "Rezeptionist", "Zimmermädchen", "Bäcker",
-    "Konditor", "Metzger", "Fleischer", "Verkäufer in der Bäckerei",
-    // Pflege und Gesundheit
-    "Pflegefachkraft", "Altenpfleger", "Gesundheits- und Krankenpfleger", "Pflegehelfer",
-    "Medizinische Fachangestellte", "Zahnmedizinische Fachangestellte", "Zahntechniker",
-    "Physiotherapeut", "Ergotherapeut", "Logopäde", "Hebamme", "Pharmazeutisch-technische Assistentin",
-    "Augenoptiker", "Hörakustiker", "Orthopädietechniker", "Betreuungskraft",
-    // Handel und Büro
-    "Verkäufer", "Einzelhandelskaufmann", "Bürokaufmann", "Bürokraft", "Buchhalter",
-    "Steuerfachangestellte", "Sachbearbeiter", "Assistenz der Geschäftsführung",
-    "Empfangskraft", "Vertriebsmitarbeiter", "Außendienstmitarbeiter", "Kundenberater",
-    // Logistik
-    "Berufskraftfahrer", "LKW-Fahrer", "Auslieferungsfahrer", "Kurierfahrer", "Lagerist",
-    "Fachkraft für Lagerlogistik", "Staplerfahrer", "Disponent", "Produktionshelfer",
-    // Reinigung und Service
-    "Reinigungskraft", "Gebäudereiniger", "Glasreiniger", "Objektleiter",
-    // Kosmetik und Haare
-    "Friseur", "Barbier", "Kosmetiker", "Nageldesigner", "Fußpfleger",
-    // Erziehung und Soziales
-    "Erzieher", "Kinderpfleger", "Sozialpädagoge", "Pädagogische Fachkraft",
-    // Medien und Technik
-    "Mediengestalter", "Grafikdesigner", "Social-Media-Manager", "Online-Marketing-Manager",
-    "Fachinformatiker", "IT-Systemadministrator", "Webentwickler", "Technischer Zeichner",
-]
+// Der Volltreffer bleibt in der Liste stehen. Wer „Koch" fertig tippt und die Zeile dann
+// verschwinden sieht, liest das als „gibt es nicht" — dabei ist es die gemeinte Bezeichnung.
+function Tippfeld({ wert, setWert, platzhalter, vorschlaege, weiter, kennung, auf = "dunkel" }: any) {
+    const [offen, setOffen] = useState(false)
+    const treffer = useMemo(() => {
+        const roh = normal(String(wert || ""))
+        if (roh.length < 2) return []
+        const vorn: string[] = []
+        const drin: string[] = []
+        for (const v of vorschlaege) {
+            const k = normal(v)
+            if (k.indexOf(roh) === 0) vorn.push(v)
+            else if (k.indexOf(roh) > 0) drin.push(v)
+        }
+        return vorn.concat(drin).slice(0, 6)
+    }, [wert, vorschlaege])
+    const dunkelGrund = auf === "dunkel"
+
+    return (
+        <div>
+            <Feld
+                kennung={kennung} wert={wert} setWert={setWert} platzhalter={platzhalter} auf={auf}
+                autoComplete="off"
+                onEnter={() => { if (String(wert).trim().length >= 2) weiter() }}
+                onFocus={() => setOffen(true)}
+                onBlur={() => window.setTimeout(() => setOffen(false), 140)}
+            />
+            {offen && treffer.length > 0 ? (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
+                    {treffer.map((v: string) => (
+                        <button
+                            key={v}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => { setWert(v); setOffen(false) }}
+                            style={{
+                                font: "inherit", fontSize: 12, fontWeight: 500, letterSpacing: "-0.01em",
+                                color: dunkelGrund ? P70 : T60, background: "transparent",
+                                border: `1px solid ${dunkelGrund ? LINIE_D : LINIE}`,
+                                borderRadius: 999, padding: "9px 13px", minHeight: 38, cursor: "pointer",
+                            }}
+                        >
+                            {v}
+                        </button>
+                    ))}
+                </div>
+            ) : null}
+        </div>
+    )
+}
+
+function Antwortknopf({ text, neben, gewaehlt, mehrfach = false, onClick, auf = "dunkel" }: any) {
+    const dunkelGrund = auf === "dunkel"
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            style={{
+                display: "flex", alignItems: "center", gap: 14, width: "100%", textAlign: "left",
+                font: "inherit", cursor: "pointer", borderRadius: RADIUS_FELD,
+                background: gewaehlt
+                    ? dunkelGrund ? "rgba(245,243,239,0.1)" : "rgba(14,15,18,0.05)"
+                    : dunkelGrund ? "rgba(245,243,239,0.04)" : "rgba(14,15,18,0.025)",
+                border: `1px solid ${gewaehlt ? (dunkelGrund ? "rgba(245,243,239,0.4)" : LINIE_FEST) : dunkelGrund ? LINIE_D : LINIE}`,
+                padding: "15px 18px", minHeight: 60,
+                transition: "border-color 140ms ease, background 140ms ease",
+            }}
+        >
+            {/* Rund heißt: eine Antwort. Eckig heißt: mehrere möglich. */}
+            <span
+                aria-hidden
+                style={{
+                    width: 17, height: 17, borderRadius: mehrfach ? 5 : "50%", flex: "0 0 auto",
+                    border: `1px solid ${gewaehlt ? (dunkelGrund ? PAPIER : TINTE) : dunkelGrund ? "rgba(245,243,239,0.3)" : LINIE_FEST}`,
+                    background: gewaehlt ? (dunkelGrund ? PAPIER : TINTE) : "transparent",
+                    boxShadow: gewaehlt ? `inset 0 0 0 3.5px ${dunkelGrund ? DUNKEL : PAPIER}` : "none",
+                }}
+            />
+            <span style={{ minWidth: 0 }}>
+                <span style={{ display: "block", fontSize: 17, fontWeight: 500, letterSpacing: "-0.03em", color: dunkelGrund ? PAPIER : TINTE }}>
+                    {text}
+                </span>
+                {neben ? (
+                    <span style={{ display: "block", marginTop: 3, fontSize: 14, lineHeight: 1.5, letterSpacing: "-0.02em", color: dunkelGrund ? P45 : T40 }}>
+                        {neben}
+                    </span>
+                ) : null}
+            </span>
+        </button>
+    )
+}
+
+function Haken({ an, setAn, text, auf = "dunkel" }: any) {
+    const dunkelGrund = auf === "dunkel"
+    return (
+        <label
+            style={{
+                display: "flex", gap: 13, alignItems: "flex-start", cursor: "pointer",
+                fontSize: 14, lineHeight: 1.5, letterSpacing: "-0.02em",
+                color: dunkelGrund ? P70 : T60, padding: "4px 0", minHeight: 36,
+            }}
+        >
+            <input
+                type="checkbox"
+                checked={an}
+                onChange={(e) => setAn(e.target.checked)}
+                style={{ width: 19, height: 19, flex: "0 0 auto", marginTop: 1, accentColor: dunkelGrund ? PAPIER : TINTE }}
+            />
+            <span>{text}</span>
+        </label>
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Inhalt
+// ---------------------------------------------------------------------------
 
 // Für den Vergleich alles kleinschreiben, Umlaute auflösen, Binde- und Leerzeichen weg:
 // „kfz mecha", „Kfz-Mecha" und „KFZMECHA" sollen dasselbe finden.
@@ -170,28 +432,169 @@ function normal(w: string) {
         .replace(/[^a-z0-9]/g, "")
 }
 
-// Treffer, die vorn anfangen, stehen oben — wer „kfz" tippt, will zuerst den
-// Kfz-Mechatroniker sehen und nicht irgendeine Bezeichnung, in der „kfz" mittendrin steckt.
-function passende(eingabe: string) {
-    const n = normal(eingabe)
-    if (n.length < 2) return []
-    const vorn: string[] = []
-    const drin: string[] = []
-    for (const b of BERUFE) {
-        // Nichts wegfiltern, auch nicht den Volltreffer. Wer „Koch" fertig getippt hat und
-        // die Zeile dann verschwinden sieht, liest das als „gibt es nicht" — dabei ist es
-        // genau die Bezeichnung, die gemeint war. Sie bleibt stehen und bleibt anklickbar.
-        const nb = normal(b)
-        if (nb.indexOf(n) === 0) vorn.push(b)
-        else if (nb.indexOf(n) > 0) drin.push(b)
-    }
-    return vorn.concat(drin).slice(0, 4)
+// Bezeichnungen für die Vervollständigung. Bewusst breit — sechs feste Handwerksberufe
+// sahen aus, als sei das Werkzeug nur dafür. Die Liste engt nichts ein: Wer etwas anderes
+// sucht, tippt es zu Ende.
+const BERUFE = [
+    "Kfz-Mechatroniker", "Kfz-Mechaniker", "Kfz-Servicetechniker", "Karosseriebauer",
+    "Fahrzeuglackierer", "Zweiradmechaniker", "Landmaschinenmechaniker", "Servicetechniker",
+    "Industriemechaniker", "Zerspanungsmechaniker", "Schweißer", "Metallbauer", "Schlosser",
+    "Maschinenbediener", "Mechatroniker", "Monteur",
+    "Anlagenmechaniker SHK", "Heizungsbauer", "Sanitärinstallateur", "Elektroniker",
+    "Elektriker", "Dachdecker", "Zimmerer", "Maurer", "Fliesenleger", "Trockenbauer",
+    "Maler und Lackierer", "Stuckateur", "Bodenleger", "Glaser", "Tischler", "Schreiner",
+    "Straßenbauer", "Bauhelfer", "Bauleiter", "Polier", "Gerüstbauer",
+    "Landschaftsgärtner", "Gärtner", "Forstwirt", "Hausmeister", "Schornsteinfeger",
+    "Koch", "Küchenhilfe", "Beikoch", "Küchenchef", "Servicekraft", "Kellner", "Barkeeper",
+    "Restaurantfachmann", "Hotelfachmann", "Rezeptionist", "Zimmermädchen", "Bäcker",
+    "Konditor", "Metzger", "Fleischer", "Verkäufer in der Bäckerei",
+    "Pflegefachkraft", "Altenpfleger", "Gesundheits- und Krankenpfleger", "Pflegehelfer",
+    "Medizinische Fachangestellte", "Zahnmedizinische Fachangestellte", "Zahntechniker",
+    "Physiotherapeut", "Ergotherapeut", "Logopäde", "Hebamme", "Betreuungskraft",
+    "Augenoptiker", "Hörakustiker", "Orthopädietechniker",
+    "Verkäufer", "Einzelhandelskaufmann", "Bürokaufmann", "Bürokraft", "Buchhalter",
+    "Steuerfachangestellte", "Sachbearbeiter", "Assistenz der Geschäftsführung",
+    "Empfangskraft", "Vertriebsmitarbeiter", "Außendienstmitarbeiter", "Kundenberater",
+    "Berufskraftfahrer", "LKW-Fahrer", "Auslieferungsfahrer", "Kurierfahrer", "Lagerist",
+    "Fachkraft für Lagerlogistik", "Staplerfahrer", "Disponent", "Produktionshelfer",
+    "Reinigungskraft", "Gebäudereiniger", "Glasreiniger", "Objektleiter",
+    "Friseur", "Barbier", "Kosmetiker", "Nageldesigner", "Fußpfleger",
+    "Erzieher", "Kinderpfleger", "Sozialpädagoge", "Pädagogische Fachkraft",
+    "Mediengestalter", "Grafikdesigner", "Social-Media-Manager", "Online-Marketing-Manager",
+    "Fachinformatiker", "IT-Systemadministrator", "Webentwickler", "Technischer Zeichner",
+]
+
+interface Frage {
+    id: "beruf" | "dringlichkeit" | "stellen" | "erfahrung" | "staerken"
+    art: "text" | "eine" | "mehrere"
+    frage: string
+    hinweis: string
+    platzhalter?: string
+    vorschlaege?: string[]
+    optionen?: { wert: string; text: string; neben?: string }[]
 }
 
-interface Anzeige {
-    titel: string
-    text: string
+const FRAGEN: Frage[] = [
+    {
+        id: "beruf",
+        art: "text",
+        frage: "Wen suchen Sie?",
+        hinweis: "Die Bezeichnung, die in Ihrem Betrieb üblich ist. Sie steht später in der Überschrift der Anzeige — danach suchen die Leute.",
+        platzhalter: "z. B. Kfz-Mechatroniker",
+        vorschlaege: BERUFE,
+    },
+    {
+        id: "dringlichkeit",
+        art: "eine",
+        frage: "Wie schnell muss die Stelle besetzt sein?",
+        hinweis: "Das entscheidet über den Ton der Anzeige und über das Budget, das wir Ihnen nennen.",
+        optionen: [
+            { wert: "sofort", text: "So schnell wie möglich", neben: "Die Arbeit liegt schon da" },
+            { wert: "wochen", text: "In den nächsten Wochen", neben: "Es drückt, aber es brennt nicht" },
+            { wert: "planung", text: "Wir planen vor", neben: "Für die kommende Saison" },
+        ],
+    },
+    {
+        id: "stellen",
+        art: "eine",
+        frage: "Wie viele Stellen sind offen?",
+        hinweis: "Für mehrere Stellen schreibt man anders — und das Budget sieht anders aus.",
+        optionen: [
+            { wert: "eine", text: "Eine", neben: "Eine Person, eine Aufgabe" },
+            { wert: "zwei_drei", text: "Zwei bis drei", neben: "Das Team soll wachsen" },
+            { wert: "mehr", text: "Mehr als drei", neben: "Wir bauen auf" },
+        ],
+    },
+    {
+        id: "erfahrung",
+        art: "eine",
+        frage: "Haben Sie schon einmal Anzeigen bei Facebook oder Instagram geschaltet?",
+        hinweis: "Damit die Budgetzeile zu Ihrem Stand passt und nicht zu irgendeinem.",
+        optionen: [
+            { wert: "laeuft", text: "Ja, läuft gerade", neben: "Wir werben schon" },
+            { wert: "probiert", text: "Schon probiert, hat wenig gebracht", neben: "Einmal versucht, dann gelassen" },
+            { wert: "nie", text: "Noch nie", neben: "Bisher nur Stellenportale oder gar nichts" },
+        ],
+    },
+    {
+        id: "staerken",
+        art: "mehrere",
+        frage: "Was spricht bei Ihnen für die Stelle?",
+        hinweis: "Mehreres möglich. Genau das steht später in den Anzeigen — statt „wir bieten ein nettes Team\".",
+        optionen: [
+            { wert: "bezahlung", text: "Bezahlung über dem Üblichen", neben: "Mehr als Tarif oder Ortsschnitt" },
+            { wert: "feierabend", text: "Geregelter Feierabend", neben: "Keine Dauer-Überstunden" },
+            { wert: "team", text: "Kleines, eingespieltes Team", neben: "Man kennt sich" },
+            { wert: "technik", text: "Moderne Ausrüstung", neben: "Werkzeug und Maschinen auf Stand" },
+            { wert: "aufstieg", text: "Weiterbildung und Aufstieg", neben: "Meister, Lehrgänge, mehr Verantwortung" },
+            { wert: "sicherheit", text: "Sicherer Arbeitsplatz", neben: "Volle Auftragsbücher, unbefristet" },
+        ],
+    },
+]
+
+const SCHRITT_ADRESSE = 0
+const SCHRITT_KONTAKT = FRAGEN.length + 1
+const SCHRITTE_GESAMT = FRAGEN.length + 2
+
+const EINWILLIGUNGSTEXT =
+    "Fokuswerk darf mir die Anzeigen schicken und sich zu dieser Anfrage melden. Jederzeit widerrufbar, die Angaben gehen an niemanden sonst."
+const NEWSLETTER_TEXT =
+    "Schickt mir außerdem, was bei anderen Betrieben funktioniert hat — ein paar Mal im Jahr, jederzeit abbestellbar. Freiwillig."
+
+// Die Antwort braucht rund 30 Sekunden. Läuft der Vorlauf, ist sie meist schon da.
+const LAUFTEXTE = [
+    { ab: 0, text: "Wir lesen Ihre Website." },
+    { ab: 7, text: "Wir sehen nach, was Ihren Betrieb ausmacht." },
+    { ab: 16, text: "Wir schreiben die Anzeigen. Gleich fertig." },
+    { ab: 32, text: "Dauert heute etwas länger. Bitte bleiben Sie noch einen Moment." },
+]
+
+const FEHLERTEXTE: Record<string, { titel: string; hinweis: string; zurueck: number }> = {
+    domain_fehlt: {
+        titel: "Die Adresse Ihrer Website fehlt",
+        hinweis: "Tragen Sie die Adresse ein, unter der Ihr Betrieb erreichbar ist.",
+        zurueck: SCHRITT_ADRESSE,
+    },
+    beruf_fehlt: {
+        titel: "Der gesuchte Beruf fehlt",
+        hinweis: "Tragen Sie ein, wen Sie suchen — möglichst mit der üblichen Berufsbezeichnung.",
+        zurueck: 1,
+    },
+    seite_nicht_lesbar: {
+        titel: "Wir konnten diese Seite nicht abrufen",
+        hinweis: "Stimmt die Adresse? Möglich ist auch, dass die Seite gerade nicht erreichbar ist oder hinter einem Schutz steht. Prüfen Sie die Schreibweise und versuchen Sie es noch einmal.",
+        zurueck: SCHRITT_ADRESSE,
+    },
+    beruf_unklar: {
+        titel: "Dieser Beruf passt nicht zu dem Betrieb auf dieser Seite",
+        hinweis: "Prüfen Sie, ob Adresse und Beruf zusammengehören. Hilfreich ist die Bezeichnung, die in Ihrem Betrieb üblich ist — also „Kfz-Mechatroniker\" statt „Mitarbeiter\".",
+        zurueck: 1,
+    },
+    zu_viele_abrufe: {
+        titel: "Bitte in ein paar Minuten noch einmal",
+        hinweis: "Von dieser Verbindung kamen gerade viele Anfragen. Das ist eine Bremse gegen Dauerfeuer, keine Sperre für Sie.",
+        zurueck: -1,
+    },
+    modell: {
+        titel: "Da ist bei uns etwas schiefgegangen",
+        hinweis: "Bitte noch einmal versuchen. Bleibt es dabei, schreiben Sie uns kurz — dann schicken wir Ihnen die Anzeigen von Hand.",
+        zurueck: -1,
+    },
+    netz: {
+        titel: "Die Verbindung kam nicht zustande",
+        hinweis: "Das lag an uns, nicht an Ihnen. Versuchen Sie es in einem Moment noch einmal.",
+        zurueck: -1,
+    },
 }
+
+// Der Endpunkt meldet mehrere Modellfehler (modell_nicht_erreichbar, modell_antwortet_nicht …).
+// Für den Nutzer sind die alle dasselbe.
+function fehlerText(code: string) {
+    if (code && code.indexOf("modell") === 0) return FEHLERTEXTE.modell
+    return FEHLERTEXTE[code] || FEHLERTEXTE.netz
+}
+
+interface Anzeige { titel: string; text: string }
 interface Ergebnis {
     betrieb: string
     anzeigen: Anzeige[]
@@ -199,98 +602,228 @@ interface Ergebnis {
     budget: string
 }
 
-// BEISPIEL — wird ausgeliefert, solange der Endpunkt fehlt. Das Ergebnis weist sichtbar darauf hin.
+// Echtes Ergebnis eines Durchlaufs, hier als Beweis, was herauskommt. Steht ausdrücklich
+// als Beispiel da — es ist nicht die Seite des Besuchers.
 const BEISPIEL: Ergebnis = {
-    betrieb: "Beispielbetrieb",
+    betrieb: "Knolle Garten- und Landschaftsbau",
     anzeigen: [
         {
-            titel: "Die ehrliche",
-            text: "Wir suchen jemanden, der bei uns anpackt. Kein Großbetrieb, keine Hierarchie über drei Ecken: Sie wissen morgens, mit wem Sie rausfahren, und abends, was Sie geschafft haben. Wenn Sie das Handwerk können und zuverlässig sind, reden wir über den Rest.",
+            titel: "Landschaftsgärtner (m/w/d) in Harpstedt",
+            text: "Wir bauen Gärten in Harpstedt und Umgebung.\nWas Sie bei uns finden: ein festes Team, Maschinen, die laufen, und Feierabend, wenn Feierabend ist.\nBewerbung in zwei Minuten, ohne Lebenslauf.",
         },
         {
-            titel: "Die konkrete",
-            text: "Feierabend ist Feierabend. Keine Wochenenden, keine Montage über Nacht. Wir zahlen nach Tarif, die Ausrüstung ist neu, und wer sich weiterbilden will, bekommt die Zeit dafür bezahlt. Melden Sie sich, auch wenn Sie noch in einem anderen Betrieb sind.",
+            titel: "Kein Bock mehr auf Baustellen quer durch Niedersachsen?",
+            text: "Bei uns sind die Fahrten kurz. Unsere Baustellen liegen im Umkreis.\nEingespieltes Team, moderne Maschinen, Bezahlung über dem Üblichen.\nMelden Sie sich — wir rufen zurück.",
         },
         {
-            titel: "Die direkte",
-            text: "Zwei Minuten für Ihre Bewerbung, mehr brauchen wir nicht. Kein Anschreiben, kein Lebenslauf im ersten Schritt. Sie schreiben uns, was Sie können und ab wann Sie Zeit haben — alles Weitere klären wir im Gespräch.",
+            titel: "Landschaftsgärtner gesucht — Harpstedt",
+            text: "Festanstellung, unbefristet, ab sofort.\nWir suchen zwei bis drei Leute für unser Team.\nSchreiben Sie uns, worauf Sie Lust haben. Den Rest klären wir im Gespräch.",
         },
     ],
     fragen: [
-        "Wie lange arbeiten Sie schon in dem Beruf?",
-        "Haben Sie einen Führerschein der Klasse B?",
+        "Haben Sie eine abgeschlossene Ausbildung im Garten- und Landschaftsbau?",
+        "Besitzen Sie einen Führerschein der Klasse B?",
         "Ab wann könnten Sie anfangen?",
         "Wie erreichen wir Sie am besten?",
     ],
-    budget: "Für eine Stelle dieser Art reichen in der Regel 15 bis 25 € am Tag über zwei bis drei Wochen. Das ergibt im Umkreis von 30 km genug Reichweite, um eine Stelle zu besetzen.",
+    budget: "Für zwei bis drei Stellen im Umkreis von Harpstedt rechnen Sie mit 15 bis 25 Euro am Tag über vier Wochen.",
 }
 
-// Jeder Fehler, den der Endpunkt kennt, bekommt einen eigenen Text — der Nutzer soll wissen,
-// ob er etwas ändern kann oder ob es an uns lag. `zurueck` sagt, in welchen Schritt der Knopf
-// zurückführt: bei Eingabefehlern an den Anfang, sonst auf den Kontaktschritt.
-const FEHLERTEXTE: Record<string, { titel: string; hinweis: string; zurueck: number }> = {
-    domain_fehlt: {
-        titel: "Die Adresse Ihrer Website fehlt",
-        hinweis: "Tragen Sie die Adresse ein, unter der Ihr Betrieb erreichbar ist.",
-        zurueck: SCHRITT_WEBSITE,
-    },
-    beruf_fehlt: {
-        titel: "Der gesuchte Beruf fehlt",
-        hinweis: "Tragen Sie ein, wen Sie suchen — möglichst mit der üblichen Berufsbezeichnung.",
-        zurueck: SCHRITT_BERUF,
-    },
-    seite_nicht_lesbar: {
-        titel: "Wir konnten diese Seite nicht abrufen",
-        hinweis:
-            "Stimmt die Adresse? Möglich ist auch, dass die Seite gerade nicht erreichbar ist oder hinter einem Schutz steht. Prüfen Sie die Schreibweise und versuchen Sie es noch einmal.",
-        zurueck: SCHRITT_WEBSITE,
-    },
-    beruf_unklar: {
-        titel: "Dieser Beruf passt nicht zu dem Betrieb auf dieser Seite",
-        hinweis: `Prüfen Sie, ob Adresse und Beruf zusammengehören. Hilfreich ist die Bezeichnung, die in Ihrem Betrieb üblich ist — also „Kfz-Mechatroniker" statt „Mitarbeiter".`,
-        zurueck: SCHRITT_BERUF,
-    },
-    zu_viele_abrufe: {
-        titel: "Bitte in ein paar Minuten noch einmal",
-        hinweis:
-            "Von dieser Verbindung kamen gerade viele Anfragen. Das ist eine Bremse gegen Dauerfeuer, keine Sperre für Sie.",
-        zurueck: -1,
-    },
-    modell: {
-        titel: "Da ist bei uns etwas schiefgegangen",
-        hinweis:
-            "Bitte noch einmal versuchen. Bleibt es dabei, schreiben Sie uns kurz — dann schicken wir Ihnen die Anzeigen von Hand.",
-        zurueck: -1,
-    },
-    netz: {
-        titel: "Die Verbindung kam nicht zustande",
-        hinweis:
-            "Das lag an uns, nicht an Ihnen. Versuchen Sie es in einem Moment noch einmal.",
-        zurueck: -1,
-    },
-}
-
-// Der Endpunkt meldet mehrere Modellfehler (modell_nicht_erreichbar, modell_antwortet_nicht …).
-// Für den Nutzer sind die alle dasselbe, deshalb auf einen Text zusammengefasst.
-function fehlerText(code: string) {
-    if (code && code.indexOf("modell") === 0) return FEHLERTEXTE.modell
-    return FEHLERTEXTE[code] || FEHLERTEXTE.netz
-}
-
-// Die Antwort braucht rund 30 Sekunden — so lange dauert es, die Website zu lesen und die Texte
-// zu schreiben. Statt eines Kreisels benennt die Seite, was gerade passiert.
-const LAUFTEXTE = [
-    { ab: 0, text: "Wir rufen Ihre Website ab." },
-    { ab: 7, text: "Wir lesen, was Ihr Betrieb anbietet." },
-    { ab: 16, text: "Wir schreiben die Anzeigen. Gleich fertig." },
-    { ab: 32, text: "Dauert heute etwas länger. Bitte bleiben Sie noch einen Moment." },
+const WIEDERERKENNEN = [
+    "Die Anzeige steht seit sechs Wochen online. Zwei Bewerbungen, beide unpassend.",
+    "Sie wissen, dass Sie bei Facebook und Instagram werben müssten, und schieben es seit Monaten.",
+    "Der Text, der zuletzt funktioniert hat, ist fünf Jahre alt.",
+    "Sie haben einmal eine Anzeige geschaltet. Es kam nichts, und keiner konnte sagen, warum.",
+    "Die Aufträge sind da. Der Mann dafür nicht.",
+    "Beim Schreiben kommt immer dasselbe heraus: „Wir bieten ein nettes Team und gute Bezahlung.\"",
 ]
 
+const WAS_SIE_BEKOMMEN = [
+    {
+        titel: "Drei Anzeigentexte",
+        text: "Drei verschiedene Anläufe auf dieselbe Stelle — einer sachlich, einer direkt, einer über das, was bei Ihnen anders ist. Sie können sie unverändert einstellen.",
+    },
+    {
+        titel: "Vier Fragen für die Bewerbung",
+        text: "Die Fragen, die im Formular stehen sollten, damit Sie nach der Bewerbung wissen, ob sich der Rückruf lohnt. Kein Lebenslauf nötig.",
+    },
+    {
+        titel: "Eine Budgetzeile",
+        text: "Was die Ausspielung in Ihrer Gegend ungefähr kostet, bezogen auf die Zahl der Stellen und die Dringlichkeit, die Sie angegeben haben.",
+    },
+    {
+        titel: "Aus Ihrer Website, nicht aus dem Nichts",
+        text: "Wir lesen vorher Ihre Seite: Leistungen, Orte, Ton. Was dort steht, steht in den Anzeigen. Deshalb klingen sie nach Ihnen und nicht nach Vorlage.",
+    },
+]
+
+const ABLAUF = [
+    { titel: "Adresse und Beruf", text: "Zwei Angaben. Während Sie die restlichen Fragen beantworten, liest das Werkzeug schon Ihre Seite." },
+    { titel: "Vier Fragen", text: "Dringlichkeit, Zahl der Stellen, bisherige Erfahrung, Stärken der Stelle. Alles zum Antippen." },
+    { titel: "Ergebnis", text: "Die Anzeigen stehen hier auf der Seite und kommen zusätzlich per Mail. Danach melden wir uns einmal — sagen Sie nein, war es das." },
+]
+
+const FAQ = [
+    {
+        frage: "Was kostet das?",
+        antwort: "Nichts. Keine Anmeldung, kein Konto, keine Zahlungsdaten. Sie bekommen die Anzeigen auch dann, wenn daraus nie ein Auftrag wird.",
+    },
+    {
+        frage: "Warum brauchen Sie meine Telefonnummer?",
+        antwort: "Für den einen Anruf danach. Wir fragen, ob wir die Ausspielung übernehmen sollen. Sagen Sie nein, war es das — die Anzeigen behalten Sie.",
+    },
+    {
+        frage: "Sind die Texte wirklich brauchbar oder nur Füllmaterial?",
+        antwort: "Sie entstehen aus dem Inhalt Ihrer Website und aus Ihren Angaben, nicht aus einer Vorlage. Oben auf dieser Seite steht ein echtes Ergebnis — sehen Sie selbst, bevor Sie etwas eingeben.",
+    },
+    {
+        frage: "Reicht die Anzeige allein, damit sich jemand meldet?",
+        antwort: "Nein. Die Anzeige ist der kleinere Teil. Wer sie sieht, bei welchem Budget und wie die Bewerbung hereinkommt, entscheidet mehr. Deshalb steht am Ende eine Budgetzeile und keine Erfolgsgarantie.",
+    },
+    {
+        frage: "Was passiert mit meinen Daten?",
+        antwort: "Sie bleiben bei uns. Für die Texte wird der öffentliche Inhalt Ihrer Website an Anthropic übertragen — das steht in der Datenschutzerklärung. Weitergegeben wird nichts.",
+    },
+]
+
+function Fortschritt({ schritt, auf = "dunkel" }: { schritt: number; auf?: "hell" | "dunkel" }) {
+    const anteil = Math.round(((schritt + 1) / SCHRITTE_GESAMT) * 100)
+    const dunkelGrund = auf === "dunkel"
+    return (
+        <div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 11 }}>
+                <Versal farbe={dunkelGrund ? P45 : T40}>Schritt {schritt} von {SCHRITTE_GESAMT - 1}</Versal>
+                <Versal farbe={dunkelGrund ? P45 : T40}>{anteil} %</Versal>
+            </div>
+            <Notenstrich
+                note={anteil} hoehe={2}
+                farbe={dunkelGrund ? PAPIER : TINTE}
+                grund={dunkelGrund ? LINIE_D : LINIE}
+            />
+        </div>
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Das Blatt — die drei Anzeigen
+//
+// Es erscheint zweimal: oben angeschnitten als Beweis, was herauskommt, und als Ergebnis
+// vollständig. Dieselbe Darstellung, damit Versprechen und Ergebnis erkennbar dasselbe sind.
+// ---------------------------------------------------------------------------
+
+function Absaetze({ text, farbe }: { text: string; farbe: string }) {
+    return (
+        <>
+            {String(text || "").split("\n").map((z, i) =>
+                z.trim() ? (
+                    <p key={i} style={{ margin: i === 0 ? 0 : "10px 0 0", fontSize: 16, lineHeight: 1.6, letterSpacing: "-0.025em", color: farbe }}>
+                        {z.trim()}
+                    </p>
+                ) : null
+            )}
+        </>
+    )
+}
+
+function Blatt({ ergebnis, beispiel = false, angeschnitten = false }: { ergebnis: Ergebnis; beispiel?: boolean; angeschnitten?: boolean }) {
+    const [kopiert, setKopiert] = useState<number | null>(null)
+    const anzeigen = angeschnitten ? ergebnis.anzeigen.slice(0, 2) : ergebnis.anzeigen
+
+    function kopieren(i: number, text: string) {
+        try {
+            navigator.clipboard.writeText(text)
+            setKopiert(i)
+            window.setTimeout(() => setKopiert(null), 2000)
+        } catch (e) {
+            // Ohne Zwischenablage bleibt der Text markierbar. Kein Grund für eine Meldung.
+        }
+    }
+
+    return (
+        <div>
+            <div className="fw-sa-karten">
+                {anzeigen.map((a, i) => (
+                    <div
+                        key={i}
+                        style={{
+                            background: REIN, border: `1px solid ${LINIE}`, borderRadius: RADIUS_KARTE,
+                            padding: "clamp(20px, 3vw, 28px)", display: "flex", flexDirection: "column", gap: 14,
+                        }}
+                    >
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <Nummer n={i + 1} />
+                            <Versal farbe={T40}>Anzeige</Versal>
+                        </div>
+                        <div style={{ fontSize: 19, lineHeight: 1.3, letterSpacing: "-0.035em", fontWeight: 500, color: TINTE }}>
+                            {a.titel}
+                        </div>
+                        <div style={{ flex: "1 1 auto" }}>
+                            <Absaetze text={a.text} farbe={T60} />
+                        </div>
+                        {!angeschnitten ? (
+                            <div>
+                                <button
+                                    type="button"
+                                    onClick={() => kopieren(i, (a.titel ? a.titel + "\n\n" : "") + a.text)}
+                                    style={{
+                                        font: "inherit", fontSize: 12, fontWeight: 500, letterSpacing: "-0.01em",
+                                        color: kopiert === i ? AKZENT_HELL : T60, background: "transparent",
+                                        border: `1px solid ${LINIE}`, borderRadius: 999,
+                                        padding: "9px 14px", minHeight: 40, cursor: "pointer",
+                                    }}
+                                >
+                                    {kopiert === i ? "Kopiert" : "Text kopieren"}
+                                </button>
+                            </div>
+                        ) : null}
+                    </div>
+                ))}
+            </div>
+
+            {!angeschnitten ? (
+                <div className="fw-sa-karten" style={{ marginTop: 14 }}>
+                    <div style={{ background: REIN, border: `1px solid ${LINIE}`, borderRadius: RADIUS_KARTE, padding: "clamp(20px, 3vw, 28px)" }}>
+                        <Versal farbe={T40}>Vier Fragen für die Bewerbung</Versal>
+                        <div style={{ marginTop: 16, display: "grid", gap: 12 }}>
+                            {(ergebnis.fragen || []).map((f, i) => (
+                                <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                                    <Nummer n={i + 1} />
+                                    <span style={{ fontSize: 16, lineHeight: 1.55, letterSpacing: "-0.025em", color: TINTE }}>{f}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div style={{ background: REIN, border: `1px solid ${LINIE}`, borderRadius: RADIUS_KARTE, padding: "clamp(20px, 3vw, 28px)" }}>
+                        <Versal farbe={T40}>Budget</Versal>
+                        <div style={{ marginTop: 16 }}>
+                            <Absaetze text={ergebnis.budget || ""} farbe={TINTE} />
+                        </div>
+                        <p style={{ margin: "16px 0 0", fontSize: 14, lineHeight: 1.55, letterSpacing: "-0.02em", color: T40 }}>
+                            Richtwert aus Ihren Angaben, keine Zusage. Was wirklich nötig ist, hängt an Ort,
+                            Beruf und Wettbewerb.
+                        </p>
+                    </div>
+                </div>
+            ) : null}
+
+            {beispiel ? (
+                <p style={{ margin: "18px 0 0", fontSize: 13, lineHeight: 1.5, letterSpacing: "-0.02em", color: T40 }}>
+                    Echtes Ergebnis eines Durchlaufs für einen anderen Betrieb — nicht Ihre Seite.
+                </p>
+            ) : null}
+        </div>
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Die Komponente
+// ---------------------------------------------------------------------------
+
 interface StellenanzeigerProps {
-    endpunkt: string
-    beispielZeigen: boolean
-    angebotLink: string
-    style?: CSSProperties
+    endpunkt?: string
+    beispielZeigen?: boolean
+    angebotLink?: string
+    style?: any
 }
 
 export default function Stellenanzeiger(props: StellenanzeigerProps) {
@@ -301,54 +834,48 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         style,
     } = props
 
-    const statisch = useIsStaticRenderer()
-
-    const [schritt, setSchritt] = useState(0) // 0 = Start, 1..4 = Fragen, 5 = Kontakt
     const [lage, setLage] = useState<"formular" | "laeuft" | "fertig" | "fehler">("formular")
+    const [schritt, setSchritt] = useState(SCHRITT_ADRESSE)
     const [domain, setDomain] = useState("")
-    const [beruf, setBeruf] = useState("")
-    // Vorschlagsliste: offen, solange getippt wird, und mit einem hervorgehobenen Eintrag,
-    // damit die Eingabetaste etwas Sinnvolles tut.
-    const [vorschlaegeAuf, setVorschlaegeAuf] = useState(false)
-    const [markiert, setMarkiert] = useState(-1)
     const [antworten, setAntworten] = useState<Record<string, any>>({})
     const [name, setName] = useState("")
     const [mail, setMail] = useState("")
     const [telefon, setTelefon] = useState("")
     const [einwilligung, setEinwilligung] = useState(false)
-    // Zweites, getrenntes Haekchen. Es ist freiwillig und blockiert das Absenden
-    // nicht: Die Einwilligung oben gilt der Antwort auf diese Anfrage, diese hier
-    // laufender Werbung. Zwei Zwecke, zwei Haekchen — ein gemeinsames waere keine
-    // wirksame Einwilligung (Kopplungsverbot).
     const [newsletter, setNewsletter] = useState(false)
     const [ergebnis, setErgebnis] = useState<Ergebnis | null>(null)
     const [fehler, setFehler] = useState("netz")
     const [beispiel, setBeispiel] = useState(false)
-    const [kopiert, setKopiert] = useState<number | null>(null)
     const [sekunden, setSekunden] = useState(0)
+    const [betriebName, setBetriebName] = useState("")
+    // Was der Vorlauf gemeldet hat. Scheitert er, soll das sofort gesagt werden und nicht
+    // erst nach dem letzten Schritt — sonst füllt jemand alles aus und erfährt am Ende,
+    // dass es um nichts ging.
+    const [vorlaufFehler, setVorlaufFehler] = useState("")
 
-    // Nach einem Schritt nachführen — aber nur, wenn es nötig ist.
+    const frage = schritt >= 1 && schritt <= FRAGEN.length ? FRAGEN[schritt - 1] : null
+    const kontaktSchritt = schritt === SCHRITT_KONTAKT
+    const imTrichter = lage === "formular" ? schritt > SCHRITT_ADRESSE : lage !== "fertig"
+    const fertig = lage === "fertig"
+    const kontaktVollstaendig = !!name.trim() && !!mail.trim() && !!telefon.trim() && einwilligung
+    const laufText = LAUFTEXTE.filter((l) => sekunden >= l.ab).slice(-1)[0]?.text || LAUFTEXTE[0].text
+
+    // ----- Nachführen -------------------------------------------------------
     //
-    // Ohne jedes Nachführen bleibt das Handy dort stehen, wo der Finger getippt hat: Die neue
-    // Frage steht über dem sichtbaren Bereich, und der Trichter wirkt, als sei nichts passiert.
-    //
-    // ▲ Der erste Entwurf sprang dafür bei JEDEM Schritt an den Anfang der Karte. Am
-    // Schreibtisch sah das falsch aus: Die Karte war längst vollständig im Bild, die Seite
-    // ruckte trotzdem und klebte den Kasten an die Oberkante, mit viel Leere darunter. Jetzt
-    // wird erst gemessen, ob der Schritt überhaupt ganz sichtbar ist. Ist er es, bleibt die
-    // Seite stehen.
+    // Ohne Nachführen bleibt das Handy dort stehen, wo der Finger getippt hat: Die neue
+    // Frage steht über dem sichtbaren Bereich, und der Trichter wirkt, als sei nichts
+    // passiert. Mit zu viel Nachführen ruckt die Seite bei jeder Antwort. Also messen.
     const rahmen = useRef<HTMLDivElement | null>(null)
     const ersterLauf = useRef(true)
 
-    // Höhe der Kopfleiste, die über dem Inhalt klebt — ohne sie rutscht die Frage darunter.
     function kopfhoehe() {
         try {
             let unten = 0
             const alle = document.body.querySelectorAll("div, nav, header")
             for (let i = 0; i < alle.length; i++) {
                 const e = alle[i] as HTMLElement
-                const lage = getComputedStyle(e).position
-                if (lage !== "fixed" && lage !== "sticky") continue
+                const pos = getComputedStyle(e).position
+                if (pos !== "fixed" && pos !== "sticky") continue
                 const r = e.getBoundingClientRect()
                 if (r.top <= 2 && r.height > 24 && r.height < 220 && r.width > window.innerWidth * 0.8) {
                     unten = Math.max(unten, r.bottom)
@@ -360,54 +887,19 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         }
     }
 
-    // Wo der Block anfängt, zu dem der Trichter gehört.
-    //
-    // Nachgeführt wird nicht auf die nackte Karte — die klebte dann unter der Kopfleiste,
-    // und Überschrift, Einleitung und Fortschrittsbalken waren weg. Sichtbar sein soll der
-    // ganze Abschnitt. Dafür von der Komponente aus nach oben gehen, solange der Elternblock
-    // nicht viel früher anfängt; der erste, der deutlich weiter oben beginnt, gehört schon
-    // zur Seite und nicht mehr zum Trichter.
-    function abschnittOben(k: HTMLElement) {
-        let oben = k.getBoundingClientRect().top
-        const grenze = oben - 800
-        let e: HTMLElement | null = k.parentElement
-        for (let i = 0; i < 6 && e && e !== document.body; i++) {
-            const t = e.getBoundingClientRect().top
-            if (t < grenze) break
-            oben = t
-            e = e.parentElement
-        }
-        return oben
-    }
-
     function nachfuehren() {
         const k = rahmen.current
         if (!k) return
         const r = k.getBoundingClientRect()
         const kopf = kopfhoehe()
         const luft = 20
-        // Bewegt wird nur in zwei Fällen: Der Anfang des Schritts steckt unter der
-        // Kopfleiste, oder er fängt so weit unten an, dass von der Frage nichts zu sehen ist.
-        //
-        // Auf dem Handy ist eine Karte oft höher als der Bildschirm — „ganz sichtbar" als
-        // Bedingung hätte dort bei jedem Schritt einen Sprung ausgelöst. Es zählt nur, ob der
-        // Anfang der Frage steht, wo man ihn lesen kann.
         const verdeckt = r.top < kopf + 4
         const zuTief = r.top > window.innerHeight * 0.55
         if (!verdeckt && !zuTief) return
-
-        let ziel = window.scrollY + abschnittOben(k) - kopf - luft
-        // Ist der Abschnittskopf so hoch, dass die Frage dadurch aus dem Bild rutscht,
-        // zählt wieder die Komponente selbst.
-        const trichter = window.scrollY + r.top
-        if (trichter - ziel > window.innerHeight * 0.5) ziel = trichter - kopf - luft
-        // ▲ KEIN `scrollTo({ behavior: "smooth" })`. Auf dieser Seite läuft ein
-        // Smooth-Scroll-Baustein (Lenis 1.1.20, liegt als `window.__sanftscroll`). Er
-        // übernimmt das Scrollen, und beide weichen Wege laufen wirkungslos durch:
-        // `scrollTo` mit `behavior: "smooth"` ebenso wie `lenis.scrollTo(...)` — gemessen
-        // am 27.10.2026, die Seite blieb in beiden Fällen exakt stehen. Nur die
-        // Zwei-Argument-Form kommt durch.
-        window.scrollTo(0, Math.max(0, ziel))
+        // ▲ KEIN `scrollTo({ behavior: "smooth" })`. Auf dieser Seite läuft Lenis als
+        // Smooth-Scroll-Baustein, und der schluckt beide weichen Wege — `behavior: "smooth"`
+        // ebenso wie `lenis.scrollTo(...)`. Nur die Zwei-Argument-Form kommt an.
+        window.scrollTo(0, Math.max(0, window.scrollY + r.top - kopf - luft))
     }
 
     useEffect(() => {
@@ -416,46 +908,73 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
             return
         }
         nachfuehren()
-        // Zweiter Anlauf nach einer kurzen Pause. Nach einem Textfeld schließt sich auf dem
-        // iPhone die Tastatur, und das Betriebssystem setzt dabei die Scrollposition selbst
-        // noch einmal — der erste Anlauf wird davon überschrieben. Genau das war der Grund,
-        // warum der Trichter nach der Berufseingabe woanders stand als nach den Tippfragen.
-        const t = setTimeout(nachfuehren, 420)
-        return () => clearTimeout(t)
+        // Zweiter Anlauf: Nach einem Textfeld schließt sich auf dem iPhone die Tastatur,
+        // und iOS setzt die Scrollposition dabei selbst noch einmal.
+        const t = window.setTimeout(nachfuehren, 420)
+        return () => window.clearTimeout(t)
     }, [schritt, lage])
 
-    function waehlen(f: Frage, wert: string) {
-        if (f.mehrfach) {
-            const bisher: string[] = antworten[f.schluessel] || []
-            const neu = bisher.includes(wert) ? bisher.filter((x) => x !== wert) : [...bisher, wert]
-            setAntworten({ ...antworten, [f.schluessel]: neu })
-            return
-        }
-        setAntworten({ ...antworten, [f.schluessel]: wert })
-        setSchritt((s) => s + 1) // Einfachauswahl führt direkt weiter
+    // ----- Zähler für die Lauftexte -----------------------------------------
+    useEffect(() => {
+        if (lage !== "laeuft") return
+        setSekunden(0)
+        const t = window.setInterval(() => setSekunden((s) => s + 1), 1000)
+        return () => window.clearInterval(t)
+    }, [lage])
+
+    // ----- Der Vorlauf ------------------------------------------------------
+    //
+    // Sobald Adresse und Beruf stehen, läuft die Erzeugung los, während der Besucher die
+    // vier restlichen Fragen beantwortet. `?vorlauf=1` gibt nur den Betriebsnamen zurück,
+    // nicht die Anzeigen — sonst stünde das ganze Ergebnis in der Antwort, bevor jemand
+    // seine Daten eingetragen hat. Der zweite Aufruf trifft den Zwischenspeicher.
+    const vorlaufLaeuft = useRef("")
+
+    function vorlaufStarten() {
+        const d = domain.trim()
+        const b = String(antworten.beruf || "").trim()
+        if (!d || b.length < 2) return
+        const schluessel = d.toLowerCase() + "|" + b.toLowerCase()
+        if (vorlaufLaeuft.current === schluessel) return
+        vorlaufLaeuft.current = schluessel
+        fetch(endpunkt + "?vorlauf=1", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ domain: d, beruf: b }),
+        })
+            .then((a) => a.json())
+            .then((x) => {
+                if (x && x.betrieb) setBetriebName(x.betrieb)
+                // Adresse nicht lesbar oder Beruf passt nicht zum Betrieb: Das ist jetzt
+                // schon klar und wird beim nächsten Weiter gezeigt.
+                if (x && x.fehler) setVorlaufFehler(String(x.fehler))
+            })
+            .catch(() => {
+                // Netzfehler im Vorlauf sind kein Grund abzubrechen: Der echte Aufruf läuft
+                // am Ende ohnehin und meldet dann einen richtigen Fehler.
+            })
     }
 
     async function absenden() {
         setLage("laeuft")
         setBeispiel(false)
-        setSekunden(0)
-        // Zähler für die Lauftexte. Kein Zeitlimit: Der Endpunkt darf bis zu 60 Sekunden
-        // brauchen, und ein eigener Abbruch würde eine fertige Antwort wegwerfen.
-        const ticker = setInterval(() => setSekunden((s) => s + 1), 1000)
         try {
+            // Kein Zeitlimit: Der Endpunkt darf bis zu 60 Sekunden brauchen, und ein eigener
+            // Abbruch würde eine fertige Antwort wegwerfen.
             const antwort = await fetch(endpunkt, {
                 method: "POST",
                 headers: { "content-type": "application/json" },
                 body: JSON.stringify({
                     domain: domain.trim(),
-                    beruf: beruf.trim(),
-                    ...antworten,
-                    kontakt: { name: name.trim(), email: mail.trim(), telefon: telefon.trim() },
+                    beruf: String(antworten.beruf || "").trim(),
+                    dringlichkeit: antworten.dringlichkeit,
+                    stellen: antworten.stellen,
+                    erfahrung: antworten.erfahrung,
+                    staerken: antworten.staerken || [],
                     newsletter,
+                    kontakt: { name: name.trim(), email: mail.trim(), telefon: telefon.trim() },
                 }),
             })
-            // Jede Antwort des Endpunkts ist JSON mit einem Feld `fehler` — auch 429 und 502.
-            // Nur wenn gar keine Antwort kommt, greift unten der Netzfall.
             if (!antwort.ok) {
                 const d = await antwort.json().catch(() => ({}))
                 setFehler(d && d.fehler ? d.fehler : "netz")
@@ -464,9 +983,9 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
             }
             setErgebnis(await antwort.json())
             setLage("fertig")
-        } catch {
-            // Hier landet nur, wer den Endpunkt gar nicht erreicht: keine Verbindung, oder der
-            // Türsteher (ORIGINS) lässt den Browser wortlos abblitzen.
+        } catch (e) {
+            // Hier landet nur, wer den Endpunkt gar nicht erreicht: keine Verbindung, oder
+            // der Türsteher (ORIGINS) lässt den Browser wortlos abblitzen.
             if (beispielZeigen) {
                 setErgebnis({ ...BEISPIEL, betrieb: domain.trim() || BEISPIEL.betrieb })
                 setBeispiel(true)
@@ -475,179 +994,35 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                 setFehler("netz")
                 setLage("fehler")
             }
-        } finally {
-            clearInterval(ticker)
         }
     }
 
-    function kopieren(i: number, text: string) {
-        try {
-            navigator.clipboard.writeText(text)
-            setKopiert(i)
-            setTimeout(() => setKopiert(null), 2000)
-        } catch {
-            setKopiert(null)
-        }
+    function nochmal() {
+        setLage("formular")
+        setSchritt(SCHRITT_ADRESSE)
+        setErgebnis(null)
+        setBetriebName("")
+        setVorlaufFehler("")
+        setBeispiel(false)
+        vorlaufLaeuft.current = ""
     }
 
-    // ---------- Stile ----------
-    const feldStil: CSSProperties = {
-        width: "100%",
-        boxSizing: "border-box",
-        font: `400 17px/1.4 ${SCHRIFT}`,
-        color: TINTE,
-        background: FLAECHE,
-        border: `1px solid ${LINIE}`,
-        borderRadius: 12,
-        padding: "15px 16px",
-        minHeight: 52,
-        outline: "none",
-        appearance: "none",
-    }
-    const etikett: CSSProperties = {
-        font: `500 11px/1 ${SCHRIFT}`,
-        letterSpacing: "0.16em",
-        color: LEISE,
-        textTransform: "uppercase",
-        marginBottom: 8,
-        display: "block",
-    }
-    const hauptKnopf = (aus: boolean): CSSProperties => ({
-        font: `500 17px/1 ${SCHRIFT}`,
-        color: aus ? LEISE : PAPIER,
-        background: aus ? FLAECHE : TINTE,
-        border: aus ? `1px solid ${LINIE}` : "1px solid transparent",
-        borderRadius: 999,
-        padding: "18px 28px",
-        minHeight: 56,
-        cursor: aus ? "default" : "pointer",
-        alignSelf: "stretch",
-        width: "100%",
-        boxSizing: "border-box",
-        transition: "background .2s, color .2s",
-    })
-    const hakenZeile: CSSProperties = {
-        display: "flex",
-        gap: 10,
-        alignItems: "flex-start",
-        font: `400 14px/1.5 ${SCHRIFT}`,
-        color: LEISE,
-        cursor: "pointer",
-        minHeight: 44,
-        padding: "4px 0",
-    }
-    const hakenKasten: CSSProperties = {
-        width: 20,
-        height: 20,
-        marginTop: 2,
-        flex: "0 0 auto",
-        accentColor: SIGNAL,
-    }
-    const wahlKnopf = (gewaehlt: boolean): CSSProperties => ({
-        font: `400 17px/1.35 ${SCHRIFT}`,
-        textAlign: "left",
-        color: TINTE,
-        background: gewaehlt ? "rgba(255,90,31,0.10)" : FLAECHE,
-        border: `1.5px solid ${gewaehlt ? SIGNAL : LINIE}`,
-        borderRadius: 12,
-        padding: "16px 18px",
-        minHeight: 56,
-        cursor: "pointer",
-        width: "100%",
-        boxSizing: "border-box",
-        display: "flex",
-        alignItems: "center",
-        gap: 14,
-    })
-    // Ein Rand allein reicht nicht, um „ausgewählt" zu zeigen — bei Mehrfachauswahl schon gar
-    // nicht. Rund heißt: eine Antwort. Eckig heißt: mehrere möglich. Das kennt jeder.
-    const wahlMarke = (gewaehlt: boolean, mehrfach: boolean): CSSProperties => ({
-        width: 22,
-        height: 22,
-        flex: "0 0 auto",
-        borderRadius: mehrfach ? 6 : 999,
-        border: `1.5px solid ${gewaehlt ? SIGNAL : LINIE}`,
-        background: gewaehlt ? SIGNAL : "transparent",
-        color: "rgb(255,255,255)",
-        font: `600 13px/1 ${SCHRIFT}`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-    })
-    // Die Karte, in der ein Schritt steht. Sie fasst den Trichter zusammen und hebt ihn vom
-    // Fließtext der Seite ab — ohne sie lagen Frage, Feld und Knopf lose auf dem Papier.
-    const karte: CSSProperties = {
-        background: "rgb(255,255,255)",
-        border: `1px solid ${LINIE}`,
-        borderRadius: 20,
-        padding: "22px 20px",
-        boxShadow: "0 1px 2px rgba(14,15,18,.04), 0 18px 40px -28px rgba(14,15,18,.35)",
-        display: "flex",
-        flexDirection: "column",
-        gap: 14,
-    }
-    const vorschlagZeile = (hell: boolean): CSSProperties => ({
-        font: `400 16px/1.3 ${SCHRIFT}`,
-        textAlign: "left",
-        color: TINTE,
-        background: hell ? "rgba(255,90,31,0.08)" : "transparent",
-        border: "none",
-        borderBottom: `1px solid ${LINIE}`,
-        borderRadius: 8,
-        padding: "12px 14px",
-        minHeight: 46,
-        width: "100%",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        boxSizing: "border-box",
-    })
-
-    const frage = schritt >= 1 && schritt <= FRAGEN.length ? FRAGEN[schritt - 1] : null
-    const kontaktSchritt = schritt === SCHRITT_KONTAKT
-    const kontaktVollstaendig = !!name.trim() && !!mail.trim() && !!telefon.trim() && einwilligung
-
-    // ---------- Fortschritt ----------
-    function Fortschritt() {
-        // Der Balken steht beim ersten Schritt schon auf einem Siebtel, nicht auf null: Ein
-        // angefangener Weg wird eher zu Ende gegangen als ein leerer.
-        const anteil = Math.min(1, (schritt + 1) / SCHRITTE_GESAMT)
-        return (
-            <div style={{ marginBottom: 24, maxWidth: 560 }}>
-                <div style={{ height: 2, background: LINIE, borderRadius: 2, overflow: "hidden" }}>
-                    <div
-                        style={{
-                            height: "100%",
-                            width: `${anteil * 100}%`,
-                            background: SIGNAL,
-                            transition: "width .35s cubic-bezier(.16,1,.3,1)",
-                        }}
-                    />
-                </div>
-                <p style={{ margin: "8px 0 0", font: `500 12px/1 ${SCHRIFT}`, color: LEISE, letterSpacing: "0.08em" }}>
-                    Schritt {schritt + 1} von {SCHRITTE_GESAMT}
-                </p>
-            </div>
-        )
+    function weiterVonAdresse() {
+        if (domain.trim().length < 3) return
+        setVorlaufFehler("")
+        vorlaufLaeuft.current = ""
+        setSchritt(1)
     }
 
-    function Zurueck() {
-        if (schritt === 0 || lage !== "formular") return null
+    function Zurueck({ auf = "dunkel" }: { auf?: "hell" | "dunkel" }) {
         return (
             <button
                 type="button"
-                onClick={() => setSchritt((s) => Math.max(0, s - 1))}
+                onClick={() => setSchritt((s) => Math.max(SCHRITT_ADRESSE, s - 1))}
                 style={{
-                    font: `400 15px/1 ${SCHRIFT}`,
-                    color: LEISE,
-                    background: "transparent",
-                    border: "none",
-                    padding: "12px 0",
-                    minHeight: 44,
-                    cursor: "pointer",
-                    alignSelf: "start",
-                    textDecoration: "underline",
-                    textUnderlineOffset: 3,
+                    font: "inherit", fontSize: 12, fontWeight: 500, letterSpacing: "0.12em",
+                    textTransform: "uppercase", color: auf === "dunkel" ? P45 : T40,
+                    background: "none", border: "none", padding: "11px 0", cursor: "pointer", minHeight: 40,
                 }}
             >
                 Zurück
@@ -655,491 +1030,514 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         )
     }
 
-    return (
-        <div ref={rahmen} style={{ ...style, font: `400 17px/1.6 ${SCHRIFT}`, color: TINTE, width: "100%" }}>
-            {lage === "formular" && (
-                <div style={{ maxWidth: 560 }}>
-                    <Fortschritt />
+    // ----- Der Trichter -----------------------------------------------------
 
-                    {/* Schritt 0 — wen suchen Sie */}
-                    {schritt === SCHRITT_BERUF && (
-                        <div style={karte}>
-                            <p style={{ margin: 0, font: `500 23px/1.25 ${SCHRIFT}`, letterSpacing: "-0.01em" }}>
-                                Wen suchen Sie?
-                            </p>
-                            <p style={{ margin: "-8px 0 0", font: `400 15px/1.5 ${SCHRIFT}`, color: LEISE }}>
-                                Tippen Sie los — wir schlagen die passende Bezeichnung vor.
-                            </p>
-                            <div>
-                                <input
-                                    id="fw-beruf"
-                                    name="beruf"
-                                    type="text"
-                                    autoComplete="off"
-                                    placeholder="z. B. Kfz-Mechatroniker"
-                                    value={beruf}
-                                    onChange={(e) => {
-                                        setBeruf(e.target.value)
-                                        setVorschlaegeAuf(true)
-                                        setMarkiert(-1)
-                                    }}
-                                    onFocus={() => setVorschlaegeAuf(true)}
-                                    onKeyDown={(e) => {
-                                        const treffer = vorschlaegeAuf ? passende(beruf) : []
-                                        if (e.key === "ArrowDown" && treffer.length) {
-                                            e.preventDefault()
-                                            setMarkiert((m) => (m + 1) % treffer.length)
-                                        } else if (e.key === "ArrowUp" && treffer.length) {
-                                            e.preventDefault()
-                                            setMarkiert((m) => (m <= 0 ? treffer.length - 1 : m - 1))
-                                        } else if (e.key === "Escape") {
-                                            setVorschlaegeAuf(false)
-                                        } else if (e.key === "Enter") {
-                                            e.preventDefault()
-                                            const gewaehlt = markiert >= 0 ? treffer[markiert] : null
-                                            if (gewaehlt) setBeruf(gewaehlt)
-                                            setVorschlaegeAuf(false)
-                                            if (gewaehlt || beruf.trim()) {
-                                                e.currentTarget.blur()
-                                                setSchritt(1)
-                                            }
-                                        }
-                                    }}
-                                    style={feldStil}
-                                />
-                                {vorschlaegeAuf && passende(beruf).length > 0 && (
-                                    <div
-                                        // Ein Tipp auf die Liste darf das Feld nicht vorher verlassen
-                                        // lassen — sonst ist die Liste weg, bevor der Klick ankommt.
-                                        onMouseDown={(e) => e.preventDefault()}
-                                        style={{ marginTop: 6 }}
-                                    >
-                                        {passende(beruf).map((b, i) => (
-                                            <button
-                                                key={b}
-                                                type="button"
-                                                onClick={() => {
-                                                    document.getElementById("fw-beruf")?.blur()
-                                                    setBeruf(b)
-                                                    setVorschlaegeAuf(false)
-                                                    setSchritt(1)
-                                                }}
-                                                style={vorschlagZeile(i === markiert)}
-                                            >
-                                                {b}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            <button
-                                type="button"
-                                disabled={!beruf.trim()}
-                                onClick={() => {
-                                    document.getElementById("fw-beruf")?.blur()
-                                    setVorschlaegeAuf(false)
-                                    setSchritt(1)
-                                }}
-                                style={{ ...hauptKnopf(!beruf.trim()), alignSelf: "stretch" }}
-                            >
-                                Weiter
-                            </button>
+    function trichter() {
+        if (lage === "laeuft") {
+            return (
+                <div>
+                    <div style={{ fontSize: 19, lineHeight: 1.26, letterSpacing: "-0.04em", fontWeight: 500, color: PAPIER }}>
+                        {laufText}
+                    </div>
+                    <div style={{ marginTop: 22 }}>
+                        <Notenstrich note={Math.min(96, 16 + sekunden * 7)} hoehe={3} farbe={SIGNAL} grund={LINIE_D} />
+                    </div>
+                    <div style={{ marginTop: 16, fontSize: 14, lineHeight: 1.5, letterSpacing: "-0.02em", color: P45 }}>
+                        {betriebName
+                            ? "Geschrieben wird für: " + betriebName
+                            : "Wir rufen Ihre Website ab. Das dauert einen Moment."}
+                    </div>
+                </div>
+            )
+        }
+
+        if (lage === "fehler") {
+            const text = fehlerText(fehler)
+            return (
+                <div>
+                    <div style={{ fontSize: 22, lineHeight: 1.3, letterSpacing: "-0.035em", fontWeight: 500, color: PAPIER }}>
+                        {text.titel}
+                    </div>
+                    <p style={{ margin: "14px 0 0", fontSize: 17, lineHeight: 1.58, letterSpacing: "-0.03em", color: P70 }}>
+                        {text.hinweis}
+                    </p>
+                    <div style={{ marginTop: 26 }}>
+                        <Pille
+                            auf="dunkel"
+                            onClick={() => {
+                                setLage("formular")
+                                setSchritt(text.zurueck < 0 ? SCHRITT_KONTAKT : text.zurueck)
+                                if (text.zurueck === SCHRITT_ADRESSE || text.zurueck === 1) {
+                                    vorlaufLaeuft.current = ""
+                                    setVorlaufFehler("")
+                                    setBetriebName("")
+                                }
+                            }}
+                        >
+                            {text.zurueck === SCHRITT_ADRESSE ? "Adresse ändern" : text.zurueck === 1 ? "Beruf ändern" : "Noch einmal versuchen"}
+                        </Pille>
+                    </div>
+                </div>
+            )
+        }
+
+        // Schritt 0 — die Adresse. Ein Feld, nicht zwei: Bei zwei leeren Textfeldern als
+        // Eröffnung springen die meisten ab, alles Weitere lässt sich antippen.
+        if (schritt === SCHRITT_ADRESSE) {
+            return (
+                <div>
+                    <div className="fw-sa-eingabe">
+                        <div style={{ minWidth: 0 }}>
+                            <label htmlFor="fw-domain" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
+                                Adresse Ihrer Website
+                            </label>
+                            <Feld
+                                kennung="fw-domain" wert={domain} setWert={setDomain}
+                                platzhalter="ihre-firma.de" auf="dunkel" gross
+                                onEnter={weiterVonAdresse}
+                                inputMode="url" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                            />
                         </div>
-                    )}
+                        {/* Unter 620 px steht der Knopf unter dem Feld und füllt die Zeile
+                            ganz aus; darüber steht er daneben. Das regelt .fw-sa-eingabe. */}
+                        <div style={{ minWidth: 0 }}>
+                            <Pille auf="dunkel" onClick={weiterVonAdresse} weit>Anzeigen schreiben lassen</Pille>
+                        </div>
+                    </div>
+                    <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <Etikett auf="dunkel">Aus Ihrer Website</Etikett>
+                        <Etikett auf="dunkel">Ohne Anmeldung</Etikett>
+                        <Etikett auf="dunkel">Unter zwei Minuten</Etikett>
+                    </div>
+                </div>
+            )
+        }
 
-                    {/* Schritte 1–4 — je eine Frage */}
-                    {frage && (
-                        <div style={karte}>
-                            <p style={{ margin: 0, font: `500 23px/1.25 ${SCHRIFT}`, letterSpacing: "-0.01em" }}>
-                                {frage.titel}
-                            </p>
-                            {frage.hinweis && (
-                                <p style={{ margin: "-6px 0 0", font: `400 15px/1.5 ${SCHRIFT}`, color: LEISE }}>
-                                    {frage.hinweis}
-                                </p>
-                            )}
-                            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                                {frage.optionen.map((o) => {
-                                    const wert = antworten[frage.schluessel]
-                                    const gewaehlt = frage.mehrfach
-                                        ? (wert || []).includes(o.wert)
+        // Die fünf Fragen.
+        if (frage) {
+            const wert = antworten[frage.id]
+            const mehrfachGewaehlt: string[] = Array.isArray(wert) ? wert : []
+            const weiter = () => {
+                if (frage.id === "beruf") {
+                    setVorlaufFehler("")
+                    vorlaufStarten()
+                    setSchritt(schritt + 1)
+                    return
+                }
+                // Hat der Vorlauf schon gemeldet, dass Adresse oder Beruf nicht taugen,
+                // wird das hier gesagt — nicht erst nach dem Kontaktschritt.
+                if (vorlaufFehler) {
+                    setFehler(vorlaufFehler)
+                    setLage("fehler")
+                    return
+                }
+                setSchritt(schritt + 1)
+            }
+            const kannWeiter =
+                frage.art === "text"
+                    ? String(wert || "").trim().length >= 2
+                    : frage.art === "mehrere"
+                      ? mehrfachGewaehlt.length > 0
+                      : true
+
+            return (
+                <div>
+                    <Fortschritt schritt={schritt} />
+                    <div style={{ marginTop: 30 }}>
+                        <div style={{ fontSize: 30, lineHeight: 1.16, letterSpacing: "-0.045em", fontWeight: 500, color: PAPIER }}>
+                            {frage.frage}
+                        </div>
+                        <p style={{ margin: "13px 0 0", fontSize: 17, lineHeight: 1.58, letterSpacing: "-0.03em", color: P70, maxWidth: "46ch" }}>
+                            {frage.hinweis}
+                        </p>
+                    </div>
+
+                    <div style={{ marginTop: 26 }}>
+                        {frage.art === "text" ? (
+                            <Tippfeld
+                                kennung={"fw-" + frage.id}
+                                wert={wert || ""}
+                                setWert={(w: string) => setAntworten({ ...antworten, [frage.id]: w })}
+                                platzhalter={frage.platzhalter || ""}
+                                vorschlaege={frage.vorschlaege || []}
+                                weiter={weiter}
+                            />
+                        ) : (
+                            <div style={{ display: "grid", gap: 10 }}>
+                                {(frage.optionen || []).map((o) => {
+                                    const gewaehlt = frage.art === "mehrere"
+                                        ? mehrfachGewaehlt.indexOf(o.wert) >= 0
                                         : wert === o.wert
                                     return (
-                                        <button
+                                        <Antwortknopf
                                             key={o.wert}
-                                            type="button"
-                                            onClick={() => waehlen(frage, o.wert)}
-                                            style={wahlKnopf(gewaehlt)}
-                                        >
-                                            <span style={wahlMarke(gewaehlt, !!frage.mehrfach)}>
-                                                {gewaehlt ? "✓" : ""}
-                                            </span>
-                                            <span>{o.text}</span>
-                                        </button>
+                                            text={o.text}
+                                            neben={o.neben}
+                                            gewaehlt={gewaehlt}
+                                            mehrfach={frage.art === "mehrere"}
+                                            onClick={() => {
+                                                if (frage.art === "mehrere") {
+                                                    const neu = gewaehlt
+                                                        ? mehrfachGewaehlt.filter((x) => x !== o.wert)
+                                                        : mehrfachGewaehlt.concat([o.wert])
+                                                    setAntworten({ ...antworten, [frage.id]: neu })
+                                                    return
+                                                }
+                                                setAntworten({ ...antworten, [frage.id]: o.wert })
+                                                // Einfachauswahl schaltet selbst weiter: ein Tipp,
+                                                // ein Schritt. Ein Weiter-Knopf wäre ein zweiter.
+                                                window.setTimeout(weiter, 130)
+                                            }}
+                                        />
                                     )
                                 })}
                             </div>
-                            {frage.mehrfach && (
-                                // Sechs Antworten sind auf dem Handy länger als der Bildschirm.
-                                // Stünde „Weiter" einfach darunter, müsste man nach jedem Tipp
-                                // erst scrollen, um weiterzukommen — also klebt der Knopf am
-                                // unteren Rand, sobald etwas gewählt ist.
-                                <div
-                                    style={{
-                                        position: "sticky",
-                                        bottom: 12,
-                                        zIndex: 2,
-                                        paddingTop: 10,
-                                        background: "linear-gradient(to top, rgb(255,255,255) 60%, rgba(255,255,255,0))",
-                                    }}
-                                >
-                                    <button
-                                        type="button"
-                                        disabled={!(antworten[frage.schluessel] || []).length}
-                                        onClick={() => setSchritt((s) => s + 1)}
-                                        style={{
-                                            ...hauptKnopf(!(antworten[frage.schluessel] || []).length),
-                                            alignSelf: "stretch",
-                                            width: "100%",
-                                        }}
-                                    >
-                                        Weiter
-                                    </button>
-                                </div>
-                            )}
-                            <Zurueck />
-                        </div>
-                    )}
-
-                    {/* Vorletzter Schritt — die Website */}
-                    {schritt === SCHRITT_WEBSITE && (
-                        <div style={karte}>
-                            <p style={{ margin: 0, font: `500 23px/1.25 ${SCHRIFT}`, letterSpacing: "-0.01em" }}>
-                                Wie lautet die Adresse Ihrer Website?
-                            </p>
-                            <p style={{ margin: "-6px 0 0", font: `400 15px/1.5 ${SCHRIFT}`, color: LEISE }}>
-                                Wir lesen daraus, was Ihren Betrieb ausmacht — Leistungen, Orte, Ton.
-                                Genau das steht dann in den Anzeigen, statt allgemeiner Floskeln.
-                            </p>
-                            <input
-                                id="fw-domain"
-                                name="domain"
-                                type="text"
-                                inputMode="url"
-                                autoComplete="url"
-                                placeholder="ihr-betrieb.de"
-                                value={domain}
-                                onChange={(e) => setDomain(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter" && domain.trim()) setSchritt(SCHRITT_KONTAKT)
-                                }}
-                                style={feldStil}
-                            />
-                            <button
-                                type="button"
-                                disabled={!domain.trim()}
-                                onClick={() => {
-                                    document.getElementById("fw-domain")?.blur()
-                                    setSchritt(SCHRITT_KONTAKT)
-                                }}
-                                style={hauptKnopf(!domain.trim())}
-                            >
-                                Weiter
-                            </button>
-                            <Zurueck />
-                        </div>
-                    )}
-
-                    {/* Letzter Schritt — Kontaktdaten */}
-                    {kontaktSchritt && (
-                        <div style={karte}>
-                            <p style={{ margin: 0, font: `500 23px/1.25 ${SCHRIFT}`, letterSpacing: "-0.01em" }}>
-                                Fast geschafft — wohin dürfen wir die Anzeigen schicken?
-                            </p>
-                            <p style={{ margin: "-6px 0 4px", font: `400 15px/1.55 ${SCHRIFT}`, color: LEISE }}>
-                                Sie sehen das Ergebnis gleich hier auf der Seite. Die Angaben brauchen wir,
-                                um es Ihnen zusätzlich zuzuschicken und bei Rückfragen erreichbar zu sein.
-                            </p>
-                            <div>
-                                <label htmlFor="fw-name" style={etikett}>
-                                    Name
-                                </label>
-                                <input
-                                    id="fw-name"
-                                    name="Name"
-                                    type="text"
-                                    autoComplete="name"
-                                    placeholder="Vor- und Nachname"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    style={feldStil}
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="fw-mail" style={etikett}>
-                                    E-Mail
-                                </label>
-                                <input
-                                    id="fw-mail"
-                                    name="E-Mail"
-                                    type="email"
-                                    autoComplete="email"
-                                    placeholder="name@betrieb.de"
-                                    value={mail}
-                                    onChange={(e) => setMail(e.target.value)}
-                                    style={feldStil}
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="fw-tel" style={etikett}>
-                                    Telefon
-                                </label>
-                                <input
-                                    id="fw-tel"
-                                    name="Telefon"
-                                    type="tel"
-                                    autoComplete="tel"
-                                    placeholder="Für Rückfragen zur Anzeige"
-                                    value={telefon}
-                                    onChange={(e) => setTelefon(e.target.value)}
-                                    style={feldStil}
-                                />
-                            </div>
-                            <label style={hakenZeile}>
-                                <input
-                                    type="checkbox"
-                                    checked={einwilligung}
-                                    onChange={(e) => setEinwilligung(e.target.checked)}
-                                    style={hakenKasten}
-                                />
-                                <span>
-                                    Fokuswerk darf mir die Anzeigen schicken und sich zu dieser Anfrage
-                                    melden. Jederzeit widerrufbar, die Angaben gehen an niemanden sonst.{" "}
-                                    <a href="/datenschutz" style={{ color: TINTE }}>
-                                        Datenschutzerklärung
-                                    </a>
-                                </span>
-                            </label>
-                            {/*
-                                Zweites Häkchen, getrennt und freiwillig. Zwei Zwecke brauchen zwei
-                                Einwilligungen: Die obere gilt der Antwort auf diese Anfrage, diese hier
-                                laufender Werbung. Zusammengelegt wäre keine von beiden wirksam, und
-                                vorangekreuzt erst recht nicht.
-                            */}
-                            <label style={{ ...hakenZeile, marginTop: -8 }}>
-                                <input
-                                    type="checkbox"
-                                    checked={newsletter}
-                                    onChange={(e) => setNewsletter(e.target.checked)}
-                                    style={hakenKasten}
-                                />
-                                <span>
-                                    Schickt mir außerdem, was bei anderen Betrieben funktioniert hat — ein
-                                    paar Mal im Jahr, jederzeit abbestellbar.{" "}
-                                    <span style={{ opacity: 0.7 }}>Freiwillig.</span>
-                                </span>
-                            </label>
-                            <button
-                                type="button"
-                                disabled={!kontaktVollstaendig}
-                                onClick={absenden}
-                                style={hauptKnopf(!kontaktVollstaendig)}
-                            >
-                                Anzeigen erstellen
-                            </button>
-                            <p style={{ margin: "-4px 0 0", font: `400 13px/1.5 ${SCHRIFT}`, color: LEISE }}>
-                                Kostenlos, kein Abo. Ihre Angaben gehen an niemanden sonst.
-                            </p>
-                            <Zurueck />
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Zwischenzustand — benennt den Schritt, dreht sich nicht */}
-            {lage === "laeuft" && !statisch && (
-                <div style={{ maxWidth: 560 }} aria-live="polite">
-                    <div style={{ height: 1, background: LINIE, overflow: "hidden" }}>
-                        <div
-                            style={{
-                                height: "100%",
-                                background: SIGNAL,
-                                transformOrigin: "0 50%",
-                                animation: "fwStellenLauf 2.4s cubic-bezier(.3,.1,.3,1) infinite",
-                            }}
-                        />
+                        )}
                     </div>
-                    <p style={{ margin: "14px 0 0", color: LEISE, font: `400 15px/1.5 ${SCHRIFT}` }}>
-                        {LAUFTEXTE.filter((l) => sekunden >= l.ab).slice(-1)[0].text}
-                    </p>
-                    <p style={{ margin: "6px 0 0", color: LEISE, font: `400 13px/1.5 ${SCHRIFT}` }}>
-                        Das dauert etwa eine halbe Minute. Bitte schließen Sie die Seite nicht.
-                    </p>
-                    <style>{`@keyframes fwStellenLauf{0%{transform:scaleX(0)}60%{transform:scaleX(.92)}100%{transform:scaleX(1)}}`}</style>
-                </div>
-            )}
 
-            {/* Fehlerfälle */}
-            {lage === "fehler" && (
-                <div role="alert" style={{ maxWidth: 560, borderTop: `2px solid ${AKZENT_TEXT}`, paddingTop: 18 }}>
-                    <p style={{ margin: 0, font: `500 19px/1.35 ${SCHRIFT}`, color: TINTE }}>
-                        {fehlerText(fehler).titel}
+                    <div style={{ marginTop: 26, display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+                        <Zurueck />
+                        {frage.art !== "eine" ? (
+                            <div style={{ marginLeft: "auto" }}>
+                                <Pille auf="dunkel" onClick={weiter} aus={!kannWeiter}>Weiter</Pille>
+                            </div>
+                        ) : null}
+                    </div>
+
+                    {betriebName ? (
+                        <div style={{ marginTop: 24, paddingTop: 18, borderTop: `1px solid ${LINIE_D}`, display: "flex", gap: 10, alignItems: "center" }}>
+                            <span aria-hidden style={{ width: 8, height: 8, borderRadius: "50%", background: "#5FBE91", flex: "0 0 auto" }} />
+                            <span style={{ fontSize: 14, lineHeight: 1.5, letterSpacing: "-0.02em", color: P70 }}>
+                                Ihre Seite ist gelesen: {betriebName}. Die Anzeigen entstehen gerade.
+                            </span>
+                        </div>
+                    ) : null}
+                </div>
+            )
+        }
+
+        // Kontaktschritt.
+        return (
+            <div>
+                <Fortschritt schritt={schritt} />
+                <div style={{ marginTop: 30 }}>
+                    <div style={{ fontSize: 30, lineHeight: 1.16, letterSpacing: "-0.045em", fontWeight: 500, color: PAPIER }}>
+                        Wohin schicken wir die Anzeigen?
+                    </div>
+                    <p style={{ margin: "13px 0 0", fontSize: 17, lineHeight: 1.58, letterSpacing: "-0.03em", color: P70, maxWidth: "48ch" }}>
+                        Die Texte sehen Sie gleich hier auf der Seite. Zusätzlich kommen sie per Mail, damit
+                        Sie sie nicht abschreiben müssen. Die Nummer brauchen wir für den einen Anruf danach:
+                        Wir fragen, ob wir die Ausspielung übernehmen sollen. Sagen Sie nein, war es das.
                     </p>
-                    <p style={{ margin: "8px 0 16px", color: LEISE, font: `400 16px/1.55 ${SCHRIFT}` }}>
-                        {fehlerText(fehler).hinweis}
-                    </p>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            const z = fehlerText(fehler).zurueck
-                            setLage("formular")
-                            // −1 heißt: nichts an der Eingabe ändern, direkt noch einmal senden
-                            setSchritt(z < 0 ? SCHRITT_KONTAKT : z)
+                </div>
+
+                <div style={{ marginTop: 26, display: "grid", gap: 10 }}>
+                    <Feld kennung="fw-name" wert={name} setWert={setName} platzhalter="Ihr Name" autoComplete="name" />
+                    <Feld kennung="fw-mail" wert={mail} setWert={setMail} platzhalter="E-Mail-Adresse" type="email" inputMode="email" autoComplete="email" />
+                    <Feld kennung="fw-tel" wert={telefon} setWert={setTelefon} platzhalter="Telefonnummer" type="tel" inputMode="tel" autoComplete="tel" />
+                </div>
+
+                {/* Zwei Zwecke, zwei Häkchen. Die obere Einwilligung gilt der Antwort auf
+                    diese Anfrage, die untere laufender Werbung. Zusammengelegt wäre keine
+                    von beiden wirksam. */}
+                <div style={{ marginTop: 22, display: "grid", gap: 14 }}>
+                    <Haken an={einwilligung} setAn={setEinwilligung} text={EINWILLIGUNGSTEXT} />
+                    <Haken an={newsletter} setAn={setNewsletter} text={NEWSLETTER_TEXT} />
+                </div>
+
+                <div style={{ marginTop: 18, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <Etikett auf="dunkel">Kostenlos</Etikett>
+                    <Etikett auf="dunkel">Keine Verpflichtung</Etikett>
+                    <Etikett auf="dunkel">Die Texte gehören Ihnen</Etikett>
+                </div>
+
+                <div style={{ marginTop: 26, display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+                    <Zurueck />
+                    <div style={{ marginLeft: "auto", flex: "1 1 220px", minWidth: 0 }}>
+                        <Pille auf="dunkel" onClick={absenden} aus={!kontaktVollstaendig} weit>
+                            Anzeigen ansehen
+                        </Pille>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    // ----- Die Seite --------------------------------------------------------
+
+    return (
+        <div className="fw-sa" style={{ ...style, fontFamily: SCHRIFT, background: PAPIER, color: TINTE, WebkitFontSmoothing: "antialiased" }}>
+            <style dangerouslySetInnerHTML={{ __html: STIL }} />
+
+            {/* ── 1 Auftakt ──────────────────────────────────────────────────────────
+                Dunkel mit warmem Lichtschweif, wie die Startseite. Liegen die Anzeigen vor,
+                wird der Grund hell: Texte gehören auf Papier. */}
+            <section
+                style={{
+                    position: "relative", overflow: "hidden",
+                    background: fertig
+                        ? PAPIER
+                        : `radial-gradient(118% 82% at 74% 14%, rgba(255,90,31,0.26) 0%, rgba(255,90,31,0.07) 36%, rgba(255,90,31,0) 66%),
+                           radial-gradient(85% 70% at 12% 92%, rgba(255,90,31,0.1) 0%, rgba(255,90,31,0) 58%),
+                           ${DUNKEL}`,
+                    color: fertig ? TINTE : PAPIER,
+                    paddingBlock: fertig ? "clamp(56px, 7vw, 104px)" : "clamp(64px, 8vw, 128px)",
+                    paddingLeft: RAND, paddingRight: RAND,
+                    transition: "background 320ms ease",
+                }}
+            >
+                <div style={{ maxWidth: BREIT, margin: "0 auto", position: "relative" }}>
+                    <Versal farbe={fertig ? AKZENT_HELL : AKZENT_DUNKEL}>
+                        {fertig ? "Ihre Anzeigen · gerade geschrieben" : "Kostenloses Werkzeug"}
+                    </Versal>
+
+                    {/* Die H1 bleibt stehen, auch über dem Ergebnis: Im ausgelieferten HTML
+                        ist die Lage immer „formular", dort steht also die richtige
+                        Hauptüberschrift. Ein Tausch brächte nichts und flackerte nur. */}
+                    <h1
+                        style={{
+                            margin: "26px 0 0", fontSize: "clamp(2.4rem, 7.4vw, 5.1rem)",
+                            lineHeight: 0.98, letterSpacing: "-0.055em", fontWeight: 500,
+                            maxWidth: "17ch", textWrap: "balance" as any,
+                            color: fertig ? TINTE : PAPIER,
                         }}
-                        style={hauptKnopf(false)}
                     >
-                        {fehlerText(fehler).zurueck < 0 ? "Noch einmal versuchen" : "Eingabe prüfen"}
-                    </button>
-                </div>
-            )}
+                        Ihre Stellenanzeige, fertig geschrieben
+                    </h1>
 
-            {/* Ergebnis */}
-            {lage === "fertig" && ergebnis && (
-                <div>
-                    {beispiel && (
-                        <p
-                            style={{
-                                margin: "0 0 20px",
-                                padding: "12px 14px",
-                                borderRadius: 10,
-                                background: "rgba(255,90,31,0.10)",
-                                color: AKZENT_TEXT,
-                                font: `500 14px/1.5 ${SCHRIFT}`,
-                                maxWidth: 560,
-                            }}
-                        >
-                            Beispielergebnis. Das Werkzeug ist noch nicht an die Auswertung angeschlossen —
-                            die Texte unten sind Muster, nicht aus Ihrer Website gelesen.
-                        </p>
-                    )}
-
-                    <p style={{ ...etikett, marginBottom: 14 }}>Drei Anzeigen für {ergebnis.betrieb}</p>
+                    <p
+                        style={{
+                            margin: "26px 0 0", fontSize: 19, lineHeight: 1.5,
+                            letterSpacing: "-0.035em", color: fertig ? T60 : P70, maxWidth: "50ch",
+                        }}
+                    >
+                        {fertig
+                            ? "Drei Texte, vier Fragen für die Bewerbung, eine Budgetzeile. Stellen Sie die Texte unverändert ein oder ändern Sie, was nicht passt."
+                            : "Wir lesen Ihre Website und schreiben daraus drei Anzeigentexte für Facebook und Instagram — dazu vier Fragen für die Bewerbung und eine Budgetzeile."}
+                    </p>
 
                     <div
+                        ref={rahmen}
                         style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                            gap: 16,
+                            marginTop: fertig ? 40 : 38,
+                            maxWidth: fertig ? BREIT : imTrichter ? 640 : 760,
+                            scrollMarginTop: 90,
+                            // Glaskarte, sobald der Trichter läuft: durchscheinend mit
+                            // Haarlinie, 16 px Radius — dasselbe Muster wie im Haus.
+                            background: imTrichter && !fertig ? "rgba(245,243,239,0.05)" : "transparent",
+                            border: imTrichter && !fertig ? `1px solid ${LINIE_D}` : "none",
+                            borderRadius: imTrichter && !fertig ? RADIUS_KARTE : 0,
+                            padding: imTrichter && !fertig ? "clamp(22px, 3.6vw, 34px)" : 0,
+                            backdropFilter: imTrichter && !fertig ? "blur(14px)" : undefined,
                         }}
                     >
-                        {(ergebnis.anzeigen || []).map((a, i) => (
+                        {fertig && ergebnis ? (
+                            <div>
+                                {beispiel ? (
+                                    <div
+                                        style={{
+                                            marginBottom: 20, padding: "15px 18px", borderRadius: RADIUS_FELD,
+                                            background: "rgba(184,65,22,0.06)", border: "1px solid rgba(184,65,22,0.25)",
+                                            fontSize: 14, lineHeight: 1.5, letterSpacing: "-0.02em", color: AKZENT_HELL,
+                                        }}
+                                    >
+                                        Das Werkzeug war gerade nicht erreichbar. Unten steht ein echtes Ergebnis
+                                        für einen anderen Betrieb als Beispiel — nicht Ihres. Bitte später noch
+                                        einmal versuchen.
+                                    </div>
+                                ) : null}
+                                <Blatt ergebnis={ergebnis} beispiel={beispiel} />
+                                <div style={{ marginTop: 30, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                                    <Pille href={angebotLink}>Ausspielung besprechen</Pille>
+                                    <Pille art="linie" onClick={nochmal}>Noch eine Stelle</Pille>
+                                    {!beispiel ? (
+                                        <span style={{ fontSize: 14, lineHeight: 1.5, letterSpacing: "-0.02em", color: T40 }}>
+                                            Die Texte sind unterwegs an {mail.trim()}.
+                                        </span>
+                                    ) : null}
+                                </div>
+                            </div>
+                        ) : (
+                            trichter()
+                        )}
+                    </div>
+
+                    {/* Drei Zahlen offen zwischen Haarlinien — das Belegzahlen-Muster der
+                        Startseite. Kein Kasten: Eine große Zahl braucht Raum. */}
+                    {!imTrichter && !fertig ? (
+                        <div className="fw-sa-zahlen" style={{ marginTop: "clamp(40px, 6vw, 76px)" }}>
+                            {[
+                                { zahl: "3", label: "fertige Anzeigentexte", quelle: "zum Einstellen oder Ändern" },
+                                { zahl: "4", label: "Fragen für die Bewerbung", quelle: "damit Sie wissen, wen Sie zurückrufen" },
+                                { zahl: "0", label: "Euro, keine Anmeldung", quelle: "auch ohne Folgegespräch" },
+                            ].map((b) => (
+                                <div key={b.label} style={{ minWidth: 0 }}>
+                                    <div style={{ fontSize: "clamp(2.2rem, 5vw, 3.5rem)", lineHeight: 0.92, fontWeight: 500, letterSpacing: "-0.055em", color: PAPIER, fontVariantNumeric: "tabular-nums" }}>
+                                        {b.zahl}
+                                    </div>
+                                    <div style={{ marginTop: 12, fontSize: 14, lineHeight: 1.5, letterSpacing: "-0.02em", color: P70 }}>{b.label}</div>
+                                    <div style={{ marginTop: 4, fontSize: 12, lineHeight: 1.45, letterSpacing: "-0.01em", color: P45 }}>{b.quelle}</div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : null}
+                </div>
+            </section>
+
+            {/* ── 2 Der Beweis ───────────────────────────────────────────────────────
+                Direkt nach dem Auftakt gehört das Ergebnis, nicht die Methode. Liegen die
+                echten Anzeigen vor, fällt der Abschnitt weg — sonst stünde dieselbe
+                Darstellung zweimal auf einer Seite. */}
+            {!fertig ? (
+                <Abschnitt grund={PAPIER}>
+                    <Versal>So sieht das Ergebnis aus</Versal>
+                    <div style={{ marginTop: 22 }}>
+                        <H2>Zwei von drei Texten, aus einem echten Durchlauf</H2>
+                        <Lead>
+                            Das ist kein Entwurf für diese Seite, sondern das, was bei einem Betrieb
+                            herausgekommen ist. Der dritte Text, die vier Bewerberfragen und die
+                            Budgetzeile stehen in Ihrem eigenen Ergebnis.
+                        </Lead>
+                    </div>
+                    <div style={{ marginTop: 36 }}>
+                        <Blatt ergebnis={BEISPIEL} beispiel angeschnitten />
+                    </div>
+                </Abschnitt>
+            ) : null}
+
+            {/* ── 3 Wiedererkennung ──────────────────────────────────────────────── */}
+            <Abschnitt grund={REIN} geist="Kennen Sie">
+                <div className="fw-sa-zwei">
+                    <div>
+                        <Versal>Warum Sie hier sind</Versal>
+                        <div style={{ marginTop: 22 }}>
+                            <H2>Einer dieser Sätze trifft zu</H2>
+                        </div>
+                    </div>
+                    <div style={{ display: "grid", gap: 0 }}>
+                        {WIEDERERKENNEN.map((w, i) => (
                             <div
                                 key={i}
                                 style={{
-                                    border: `1px solid ${LINIE}`,
-                                    borderRadius: 16,
-                                    padding: 20,
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    gap: 12,
-                                    background: "rgb(255,255,255)",
+                                    display: "flex", gap: 16, alignItems: "flex-start",
+                                    padding: "18px 0", borderTop: i === 0 ? "none" : `1px solid ${LINIE}`,
                                 }}
                             >
-                                <p
-                                    style={{
-                                        margin: 0,
-                                        font: `500 12px/1 ${SCHRIFT}`,
-                                        letterSpacing: "0.14em",
-                                        textTransform: "uppercase",
-                                        color: AKZENT_TEXT,
-                                    }}
-                                >
-                                    {a.titel}
-                                </p>
-                                <div style={{ flex: 1 }}>
-                                    {String(a.text || "")
-                                        .split("\n")
-                                        .filter((z) => z.trim())
-                                        .map((z, j) => (
-                                            <p
-                                                key={j}
-                                                style={{
-                                                    margin: j === 0 ? 0 : "10px 0 0",
-                                                    font: `400 16px/1.6 ${SCHRIFT}`,
-                                                }}
-                                            >
-                                                {z}
-                                            </p>
-                                        ))}
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => kopieren(i, a.text)}
-                                    style={{
-                                        font: `500 15px/1 ${SCHRIFT}`,
-                                        color: TINTE,
-                                        background: "transparent",
-                                        border: `1px solid ${LINIE}`,
-                                        borderRadius: 999,
-                                        padding: "13px 18px",
-                                        minHeight: 44,
-                                        cursor: "pointer",
-                                        alignSelf: "start",
-                                    }}
-                                >
-                                    {kopiert === i ? "Kopiert" : "Text kopieren"}
-                                </button>
+                                <Nummer n={i + 1} />
+                                <span style={{ fontSize: 17, lineHeight: 1.55, letterSpacing: "-0.03em", color: TINTE }}>{w}</span>
                             </div>
                         ))}
                     </div>
+                </div>
+            </Abschnitt>
 
-                    <div style={{ marginTop: 36, maxWidth: 680 }}>
-                        <p style={etikett}>Vier Fragen für die Bewerbung</p>
-                        <ol style={{ margin: "6px 0 0", paddingLeft: 22 }}>
-                            {(ergebnis.fragen || []).map((f, i) => (
-                                <li key={i} style={{ margin: "0 0 8px", font: `400 17px/1.55 ${SCHRIFT}` }}>
-                                    {f}
-                                </li>
-                            ))}
-                        </ol>
+            {/* ── 4 Was Sie bekommen ─────────────────────────────────────────────── */}
+            <Abschnitt grund={PAPIER} geist="Inhalt">
+                <Versal>Was herauskommt</Versal>
+                <div style={{ marginTop: 22 }}>
+                    <H2>Vier Dinge, keine Folien</H2>
+                </div>
+                <div className="fw-sa-karten" style={{ marginTop: 40 }}>
+                    {WAS_SIE_BEKOMMEN.map((k, i) => (
+                        <div
+                            key={k.titel}
+                            style={{
+                                background: REIN, border: `1px solid ${LINIE}`, borderRadius: RADIUS_KARTE,
+                                padding: "clamp(22px, 3vw, 30px)",
+                            }}
+                        >
+                            <Nummer n={i + 1} />
+                            <div style={{ marginTop: 14, fontSize: 21, lineHeight: 1.25, letterSpacing: "-0.04em", fontWeight: 500, color: TINTE }}>
+                                {k.titel}
+                            </div>
+                            <p style={{ margin: "12px 0 0", fontSize: 16, lineHeight: 1.6, letterSpacing: "-0.025em", color: T60 }}>
+                                {k.text}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            </Abschnitt>
+
+            {/* ── 5 Ablauf ───────────────────────────────────────────────────────── */}
+            <Abschnitt grund={REIN}>
+                <Versal>Ablauf</Versal>
+                <div style={{ marginTop: 22 }}>
+                    <H2>Drei Schritte, keine Anmeldung</H2>
+                </div>
+                <div className="fw-sa-drei" style={{ marginTop: 44 }}>
+                    {ABLAUF.map((s, i) => (
+                        <div key={s.titel} style={{ paddingTop: 20, borderTop: `1px solid ${LINIE}` }}>
+                            <Nummer n={i + 1} />
+                            <div style={{ marginTop: 12, fontSize: 19, lineHeight: 1.3, letterSpacing: "-0.035em", fontWeight: 500, color: TINTE }}>
+                                {s.titel}
+                            </div>
+                            <p style={{ margin: "10px 0 0", fontSize: 16, lineHeight: 1.6, letterSpacing: "-0.025em", color: T60 }}>
+                                {s.text}
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            </Abschnitt>
+
+            {/* ── 6 Fragen und Antworten ─────────────────────────────────────────── */}
+            <Abschnitt grund={PAPIER} geist="Fragen">
+                <div className="fw-sa-zwei">
+                    <div>
+                        <Versal>Fragen und Antworten</Versal>
+                        <div style={{ marginTop: 22 }}>
+                            <H2>Was Betriebe vorher wissen wollen</H2>
+                        </div>
                     </div>
-
-                    <div style={{ marginTop: 32, maxWidth: 680, borderTop: `1px solid ${LINIE}`, paddingTop: 18 }}>
-                        <p style={etikett}>Budget</p>
-                        <p style={{ margin: "6px 0 0", font: `400 17px/1.6 ${SCHRIFT}` }}>{ergebnis.budget}</p>
-                    </div>
-
-                    <div style={{ marginTop: 32, maxWidth: 680, borderTop: `1px solid ${LINIE}`, paddingTop: 20 }}>
-                        <p style={{ margin: 0, color: LEISE, font: `400 16px/1.6 ${SCHRIFT}` }}>
-                            Die Anzeigen liegen auch in Ihrem Postfach. Was darüber entscheidet, ob sich
-                            jemand meldet, ist die Ausspielung: Wer sie sieht, bei welchem Budget und wie die
-                            Bewerbung hereinkommt.{" "}
-                            <a href={angebotLink} style={{ color: TINTE }}>
-                                Darüber sprechen wir gern
-                            </a>
-                            .
-                        </p>
+                    <div>
+                        {FAQ.map((f, i) => (
+                            <div key={f.frage} style={{ padding: "22px 0", borderTop: i === 0 ? "none" : `1px solid ${LINIE}` }}>
+                                <div style={{ fontSize: 18, lineHeight: 1.35, letterSpacing: "-0.035em", fontWeight: 500, color: TINTE }}>
+                                    {f.frage}
+                                </div>
+                                <p style={{ margin: "10px 0 0", fontSize: 16, lineHeight: 1.6, letterSpacing: "-0.025em", color: T60, maxWidth: "58ch" }}>
+                                    {f.antwort}
+                                </p>
+                            </div>
+                        ))}
                     </div>
                 </div>
-            )}
+            </Abschnitt>
+
+            {/* ── 7 Abzweig ──────────────────────────────────────────────────────── */}
+            <Abschnitt grund={DUNKEL} auf="dunkel" luft="clamp(64px, 8vw, 118px)">
+                <Versal farbe={AKZENT_DUNKEL}>Danach</Versal>
+                <div style={{ marginTop: 22 }}>
+                    <H2 auf="dunkel">Die Anzeige ist der kleinere Teil</H2>
+                    <Lead auf="dunkel" max={54}>
+                        Ob sich jemand meldet, entscheidet die Ausspielung: wer sie sieht, bei welchem
+                        Budget, und wie die Bewerbung hereinkommt. Genau das machen wir für Betriebe im
+                        Nordwesten. Die Texte oben bekommen Sie so oder so.
+                    </Lead>
+                </div>
+                <div style={{ marginTop: 34, display: "flex", gap: 12, flexWrap: "wrap" }}>
+                    <Pille auf="dunkel" href={angebotLink}>Projekt besprechen</Pille>
+                </div>
+            </Abschnitt>
         </div>
     )
 }
-
-Stellenanzeiger.displayName = "Stellenanzeiger"
 
 addPropertyControls(Stellenanzeiger, {
     endpunkt: {
         type: ControlType.String,
         title: "Endpunkt",
         defaultValue: "https://fokuswerk-werkzeuge.vercel.app/api/stellenanzeige",
+        description: "Zieladresse des Dienstes. Zieht später auf werkzeuge.fokuswerk.de um.",
     },
     beispielZeigen: {
         type: ControlType.Boolean,
-        title: "Beispiel statt Fehler",
+        title: "Beispiel bei Ausfall",
         defaultValue: false,
-        description:
-            "Seit 26.10.2026 aus: Der Endpunkt läuft, also sollen echte Fehler sichtbar werden. Nur einschalten, wenn der Endpunkt vorübergehend nicht erreichbar ist.",
+        description: "Zeigt das Beispielergebnis, wenn der Endpunkt nicht erreichbar ist. Nur zum Entwerfen.",
     },
-    angebotLink: { type: ControlType.Link, title: "Abzweig", defaultValue: "/kontakt" },
+    angebotLink: {
+        type: ControlType.String,
+        title: "Abzweig",
+        defaultValue: "/kontakt",
+    },
 })
