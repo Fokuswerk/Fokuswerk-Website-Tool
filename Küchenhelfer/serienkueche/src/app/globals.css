@@ -266,6 +266,25 @@ body {
 }
 .warm-rein { animation: warmRein .3s cubic-bezier(.22,.8,.3,1) both; }
 
+/* Jeder Schritt kommt als Ganzes herein. Vorher tauschte sich der Inhalt
+   lautlos aus: oben stand eine neue Frage, und nichts sagte einem, dass man
+   gerade einen Schritt weiter ist. Eine Strecke soll sich anfuehlen wie eine
+   Folge, nicht wie ein Formular, das sich hinter dem Ruecken neu laedt. */
+@keyframes schrittRein {
+  from { opacity: 0; transform: translateY(9px); }
+  to { opacity: 1; transform: none; }
+}
+.schritt-rein { animation: schrittRein .34s cubic-bezier(.22,.8,.3,1) both; }
+
+/* Der Haken auf der Quittung: kurz ueber die Zielgroesse hinaus, dann sitzt
+   er. Das ist die einzige Stelle im Weg, an der etwas huepfen darf — sie
+   quittiert sechs beantwortete Fragen. */
+@keyframes hakenRein {
+  from { opacity: 0; transform: scale(.4); }
+  to { opacity: 1; transform: none; }
+}
+.haken-rein { animation: hakenRein .3s cubic-bezier(.34,1.5,.5,1) both; }
+
 /* Auswahlflaechen antworten ruhig: Rand und Grund, kein Huepfen. */
 .warm-wahl { transition: border-color .16s ease, background-color .16s ease, color .16s ease; }
 .warm-wahl:active { transform: scale(.995); }

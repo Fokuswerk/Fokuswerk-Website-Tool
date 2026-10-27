@@ -508,6 +508,11 @@ export function Kuechenraum({
           <OrbitControls
             target={blick.ziel}
             enablePan={false}
+            /* Steht die Buehne in einer scrollenden Seite, gehoert das
+               Mausrad der Seite. Vorher zoomte es die Kueche, und wer mit
+               dem Zeiger ueber dem Bild nach unten scrollte, kam auf dem
+               Ergebnis keinen Pixel weiter — Preis und Knopf lagen darunter. */
+            enableZoom={!scrollen}
             enableDamping
             dampingFactor={0.07}
             rotateSpeed={0.6}

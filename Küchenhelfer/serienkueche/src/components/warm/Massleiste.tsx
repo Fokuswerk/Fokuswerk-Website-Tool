@@ -66,12 +66,12 @@ export function Massleiste({ stationen }: { stationen: Station[] }) {
               ? { type: "button" as const, onClick: s.hin, title: `Zurück zu ${s.name}` }
               : {})}
             style={{ ["--spanne" as string]: s.gesamt }}
-            className={`massfeld group flex min-w-0 flex-col justify-center px-1.5 text-left ${
+            className={`massfeld group flex min-w-0 flex-col justify-center px-1 text-left sm:px-1.5 ${
               s.hin ? "cursor-pointer" : "cursor-default"
             }`}
           >
             {/* Die Beschriftung sitzt über der Lücke, nicht auf der Linie. */}
-            <span className="flex min-w-0 items-baseline gap-1.5 pb-[3px]">
+            <span className="flex min-w-0 items-baseline gap-1 pb-[3px] sm:gap-1.5">
               <span
                 className={`truncate text-[11.5px] leading-none ${
                   s.jetzt
@@ -84,12 +84,15 @@ export function Massleiste({ stationen }: { stationen: Station[] }) {
                 <span className="sm:hidden">{s.kurz}</span>
                 <span className="hidden sm:inline">{s.name}</span>
               </span>
-              {/* Auf dem Handy nur dort eine Zahl, wo man gerade steht —
-                  vier Zaehler nebeneinander fressen die Namen auf. */}
+              {/* Auf dem Handy steht hier nur der Haken. Der Zaehler der
+                  laufenden Station war zweistellig ("10/11") und hat alle
+                  vier Namen auf "Rau…", "Gerä…", "Ausstattu…" gekuerzt — die
+                  Leiste sagte dann nicht mehr, wo man ist. Wie weit man
+                  innerhalb der Station ist, zeigt die Masslinie darunter. */}
               <span
                 className={`ziffern shrink-0 text-[10.5px] leading-none ${
                   s.jetzt ? "text-kohle-2" : "text-kohle-3/80"
-                } ${fertig || s.jetzt ? "" : "hidden sm:inline"}`}
+                } ${fertig ? "" : "hidden sm:inline"}`}
               >
                 {fertig ? "✓" : `${s.erledigt}/${s.gesamt}`}
               </span>

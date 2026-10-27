@@ -193,7 +193,10 @@ export default function Start() {
             <span className="gross text-[16px] font-bold text-creme">Serienküche</span>
             <span className="ml-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-creme/55">Prototyp</span>
           </div>
-          <Link href="/dashboard" className="text-[14px] font-medium text-creme/75 transition-colors hover:text-creme">
+          <Link
+            href="/dashboard"
+            className="-mr-2 flex h-11 items-center px-2 text-[14px] font-medium text-creme/75 transition-colors hover:text-creme"
+          >
             Für Bauträger
           </Link>
         </header>
@@ -493,10 +496,16 @@ export default function Start() {
         {/* Rechtsseiten gehoeren in die Fusszeile — ohne sie ist die Seite
             nicht oeffentlich betreibbar, und es gab bisher keinen Ort, an dem
             sie verlinkt waeren. */}
-        <nav aria-label="Rechtliches" className="mt-10 flex flex-wrap gap-x-5 gap-y-2 border-t border-linie-warm pt-6 text-[13.5px]">
-          <Link href="/impressum" className="text-kohle-2 underline underline-offset-2 hover:text-kohle">Impressum</Link>
-          <Link href="/datenschutz" className="text-kohle-2 underline underline-offset-2 hover:text-kohle">Datenschutz</Link>
-          <Link href="/dashboard" className="text-kohle-2 underline underline-offset-2 hover:text-kohle">Für Bauträger</Link>
+        <nav aria-label="Rechtliches" className="mt-8 flex flex-wrap items-center gap-x-3 border-t border-linie-warm pt-4 text-[13.5px]">
+          {[["/impressum", "Impressum"], ["/datenschutz", "Datenschutz"], ["/dashboard", "Für Bauträger"]].map(([href, text]) => (
+            <Link
+              key={href}
+              href={href}
+              className="flex h-11 items-center text-kohle-2 underline underline-offset-2 hover:text-kohle"
+            >
+              {text}
+            </Link>
+          ))}
         </nav>
 
         <p className="mt-6 max-w-[78ch] text-[13px] leading-relaxed text-kohle-3">

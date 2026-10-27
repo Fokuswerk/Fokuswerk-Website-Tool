@@ -19,23 +19,30 @@ export type SchrittId =
   | "breite" | "tiefe"
   | `zeile-${WandId}`
   | "fensterJa" | "fenster"
-  | "tuer" | "wasser"
+  | "tuer" | "wasser" | "raum"
   | `geraet-${GeraeteArt}`
   | "niveau" | "vorschlaege" | "ergebnis" | "unterlagen";
 
+/**
+ * Beide Wege stellen dieselben Fragen.
+ *
+ * Vorher endete der Grundrissweg in einer einzigen Seite mit sechs Werten
+ * untereinander, jeder zum Aufklappen. Das ist keine Strecke, das ist ein
+ * Formular: man sieht sechs Aufgaben auf einmal und keiner Zeile an, ob sie
+ * erledigt ist. Jetzt läuft auch der Grundrissweg Frage für Frage — nur mit
+ * dem Plan im Rücken und einer gelesenen Zahl schon im Feld. Die Wandlängen
+ * je Zeile bleiben ihm erspart, die stehen im Plan.
+ */
 export function schrittFolge(raum: Raumangaben, quelle: Quelle): SchrittId[] {
   const f: SchrittId[] = ["start", "quelle"];
-  if (quelle === "plan") {
-    f.push("upload", "pruefen");
-  } else {
-    f.push("form");
-    if (raum.form !== "eine-wand") f.push("drehung");
-    f.push("breite", "tiefe");
-    for (const w of kuechenwaende(raum)) f.push(`zeile-${w}` as SchrittId);
-    f.push("fensterJa");
-    if (raum.fenster) f.push("fenster");
-    f.push("tuer", "wasser");
-  }
+  if (quelle === "plan") f.push("upload", "pruefen");
+  f.push("form");
+  if (raum.form !== "eine-wand") f.push("drehung");
+  f.push("breite", "tiefe");
+  if (quelle === "fragen") for (const w of kuechenwaende(raum)) f.push(`zeile-${w}` as SchrittId);
+  f.push("fensterJa");
+  if (raum.fenster) f.push("fenster");
+  f.push("tuer", "wasser", "raum");
   f.push(
     "geraet-kuehlschrank", "geraet-kochfeld", "geraet-backofen",
     "geraet-spuelmaschine", "geraet-dunstabzug",
@@ -58,7 +65,7 @@ export type Quelle = "fragen" | "plan";
 const ORDNUNG: SchrittId[] = [
   "start", "quelle", "upload", "pruefen", "form", "drehung", "breite", "tiefe",
   "zeile-haupt", "zeile-links", "zeile-rechts", "zeile-gegenueber",
-  "fensterJa", "fenster", "tuer", "wasser",
+  "fensterJa", "fenster", "tuer", "wasser", "raum",
   "geraet-kuehlschrank", "geraet-kochfeld", "geraet-backofen",
   "geraet-spuelmaschine", "geraet-dunstabzug",
   "niveau", "vorschlaege", "ergebnis", "unterlagen",
@@ -93,6 +100,9 @@ export interface KuecheState {
   umstellungVerworfen: Record<string, string>;
   /** Welche Felder der Nutzer selbst gesetzt hat. */
   beruehrt: Feld[];
+  /** Welche Fragen hinter ihm liegen — auch die, bei denen er den
+      vorgeschlagenen Wert stehen gelassen hat. */
+  bestaetigt: Feld[];
   /** Was im Upload-Schritt ankam. */
   planArt: Planart;
   /** Zeitpunkt der letzten Änderung, als Millisekunden. */
@@ -132,13 +142,34 @@ export type Planart = null | "bild" | "pdf";
  * über Standardwerten, die kein Plan geliefert hat, und blieb stehen, nachdem
  * der Nutzer den Wert selbst geändert hatte.
  */
-export type Herkunft = "plan" | "geschaetzt" | "geraten" | "geaendert" | "annahme";
+export type Herkunft = "plan" | "geschaetzt" | "geraten" | "geaendert" | "annahme" | "bestaetigt";
 
 /** Welche Felder der Nutzer selbst angefasst hat. */
 export type Feld = "breite" | "tiefe" | "fenster" | "tuer" | "wasser" | "form";
 
-export function herkunftVon(feld: Feld, erkannt: boolean, beruehrt: Feld[]): Herkunft {
+/** Welche Frage welche Angabe abnimmt — fuer "hast du das schon gesehen?". */
+const FELD_VON_SCHRITT: Partial<Record<SchrittId, Feld>> = {
+  form: "form",
+  breite: "breite",
+  tiefe: "tiefe",
+  fensterJa: "fenster",
+  fenster: "fenster",
+  tuer: "tuer",
+  wasser: "wasser",
+};
+
+export function herkunftVon(
+  feld: Feld,
+  erkannt: boolean,
+  beruehrt: Feld[],
+  bestaetigt: Feld[] = [],
+): Herkunft {
   if (beruehrt.includes(feld)) return "geaendert";
+  /* Wer den vorgeschlagenen Wert stehen laesst, hat ihn trotzdem gesehen und
+     mit "Weiter" abgenickt. Vorher stand ueber jeder solchen Angabe weiter
+     "Annahme — sag uns den echten Wert", auch direkt nachdem er sie
+     bestaetigt hatte. */
+  if (bestaetigt.includes(feld)) return "bestaetigt";
   if (!erkannt) return "annahme";
   if (feld === "breite" || feld === "tiefe") return "plan";
   if (feld === "wasser") return "geraten";
@@ -152,6 +183,7 @@ export const HERKUNFT_TEXT: Record<Herkunft, string> = {
   geraten: "im Plan nicht eingezeichnet — geraten",
   geaendert: "von dir geändert",
   annahme: "Annahme — sag uns den echten Wert",
+  bestaetigt: "von dir bestätigt",
 };
 
 /** Was der simulierte Erkennungslauf aus einem Plan liest. */
@@ -174,6 +206,8 @@ const ANFANG = {
   eigeneBelegung: {} as Record<string, Record<string, string[]>>,
   /** Welche Felder der Nutzer selbst gesetzt hat. */
   beruehrt: [] as Feld[],
+  /** Welche Fragen er schon durchlaufen hat. */
+  bestaetigt: [] as Feld[],
   /** Was hochgeladen wurde; bleibt erhalten, das Bild selbst nicht. */
   planArt: null as Planart,
   /** Wann zuletzt etwas geändert wurde — für "Dein Stand von …". */
@@ -320,8 +354,10 @@ export const useKueche = create<KuecheState>()(
           return {
             raum,
             erkannt: true,
-            // Was der Lauf geliefert hat, gilt als nicht von Hand geaendert.
+            // Was der Lauf geliefert hat, gilt als nicht von Hand geaendert
+            // und auch als noch nicht abgenickt — genau darum geht es ja.
             beruehrt: [],
+            bestaetigt: [],
             stand: Date.now(),
             ...rette(s, raum),
           };
@@ -332,7 +368,16 @@ export const useKueche = create<KuecheState>()(
       weiter: () =>
         set((s) => {
           const f = schrittFolge(s.raum, s.quelle);
-          return { schritt: f[Math.min(f.length - 1, stelleIn(f, s.schritt, 1) + 1)], stand: Date.now() };
+          /* "Gibt es ein Fenster?" beantwortet die Frage nach dem Fenster
+             nur dann ganz, wenn es keins gibt. Gibt es eins, kommt die
+             Stelle erst im naechsten Schritt — vorher stand dort schon
+             "von dir bestaetigt", bevor man sie gesehen hatte. */
+          const feld = s.schritt === "fensterJa" && s.raum.fenster ? undefined : FELD_VON_SCHRITT[s.schritt];
+          return {
+            schritt: f[Math.min(f.length - 1, stelleIn(f, s.schritt, 1) + 1)],
+            bestaetigt: feld ? [...new Set([...s.bestaetigt, feld])] : s.bestaetigt,
+            stand: Date.now(),
+          };
         }),
 
       zurueck: () =>

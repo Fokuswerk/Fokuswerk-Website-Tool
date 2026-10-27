@@ -113,7 +113,7 @@ function Schild({
 }
 
 export function Planauflage({
-  raum, rahmen, setzeRahmen, bild, kinder, maxHoehe = "48vh", setzeTiefe,
+  raum, rahmen, setzeRahmen, bild, kinder, maxHoehe = "48vh", setzeTiefe, onBildFehler,
 }: {
   raum: Raumangaben;
   rahmen: Rahmen;
@@ -127,8 +127,24 @@ export function Planauflage({
   /** Deckel für die Höhe, damit der Plan nicht das ganze Bild einnimmt und
       die Liste darunter unerreichbar wird. */
   maxHoehe?: string;
+  /** Die Datei lässt sich nicht anzeigen — damit die Seite den Satz
+      darunter richtigstellen kann. */
+  onBildFehler?: () => void;
 }) {
   const huelle = useRef<HTMLDivElement>(null);
+  /**
+   * Eine Datei, die der Browser nicht entschluesseln kann.
+   *
+   * Das passiert oefter als man denkt: HEIC vom iPhone, ein TIFF aus dem
+   * Scanner, eine halb hochgeladene Datei. Ein <img> ohne lesbares Bild hat
+   * keine Eigengroesse — die Huelle fiel dann auf null zusammen, und der
+   * Rahmen mitsamt seinen Griffen lag als Haufen auf einer Linie. Ohne
+   * Fehlermeldung, aber sichtbar kaputt. Also: zurueck auf den gezeichneten
+   * Plan und sagen, woran es lag.
+   */
+  const [bildKaputt, setBildKaputt] = useState(false);
+  useEffect(() => { setBildKaputt(false); }, [bild]);
+  const zeigeBild = bild && !bildKaputt;
   const waende = kuechenwaende(raum);
   // Flacher oder schmaler Rahmen: dann stehen die Schilder davor statt darin.
   const [eng, setEng] = useState(false);
@@ -264,7 +280,7 @@ export function Planauflage({
         ref={huelle}
         className="vertieft relative mx-auto w-fit max-w-full select-none overflow-hidden rounded-[3px] bg-papier ring-1 ring-black/[0.06]"
       >
-      {bild ? (
+      {zeigeBild ? (
         // Beliebiger Upload, deshalb kein next/image.
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -273,6 +289,7 @@ export function Planauflage({
           className="block max-w-full"
           style={{ maxHeight: maxHoehe, width: "auto" }}
           draggable={false}
+          onError={() => { setBildKaputt(true); onBildFehler?.(); }}
         />
       ) : (
         kinder
