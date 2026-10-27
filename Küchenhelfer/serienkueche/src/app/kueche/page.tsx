@@ -1971,6 +1971,8 @@ export default function Kuechenplaner() {
             return { id: n, name: n === "einfach" ? "Einfach" : n === "mittel" ? "Mittel" : "Gehoben", betrag: nt + Math.round(nt * MWST) };
           });
 
+          const selbstUmgestellt = !!eigen && Object.keys(eigen).length > 0;
+
           const nichtDrin = [
             "Elektroarbeiten: Starkstrom für den Herd, zusätzliche Steckdosen",
             ...(gewaehlterVorschlag.wegZumWasser > 600
@@ -1988,6 +1990,24 @@ export default function Kuechenplaner() {
               <p className="mx-auto mt-4 max-w-[48ch] text-[16.5px] text-kohle-2">
                 {gewaehlterVorschlag.titel} · {FORMEN.find((f) => f.id === raum.form)!.titel} · Ausstattung {stufe}
               </p>
+              {/* Eine von Hand umgestellte Anordnung ueberlebt die Sitzung —
+                  und stand danach ohne ein Wort da. Wer nach Tagen
+                  zurueckkommt, haelt sie fuer unseren Vorschlag und wundert
+                  sich, warum die Spuele neben dem Herd steht. */}
+              {selbstUmgestellt && (
+                <div className="mx-auto mt-4 flex max-w-[52ch] flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-[3px] border border-butter-2 bg-butter-soft px-4 py-2.5">
+                  <span className="text-[13.5px] leading-snug text-kohle-2">
+                    Diese Anordnung hast du selbst umgestellt — sie ist nicht unser Vorschlag.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { setzeBelegung(eigenerSchluessel!, {}); setAngefasst(null); setTauschGrund(null); }}
+                    className="text-[13.5px] font-semibold text-kohle underline underline-offset-2"
+                  >
+                    Wieder wie vorgeschlagen
+                  </button>
+                </div>
+              )}
             </div>
 
             <Karte className="mt-8 overflow-hidden flaeche-hoch">
@@ -2319,16 +2339,24 @@ export default function Kuechenplaner() {
                 {" "}Befunde aus der Prüfung
               </div>
               <div className="flaeche overflow-hidden rounded-[3px]">
-                {gewaehlterVorschlag.gutPunkte.map((g, i) => (
-                  <div key={g} className={`flex items-start gap-3 px-4 py-3 sm:px-5 ${i > 0 ? "border-t border-linie-warm" : ""}`}>
-                    <Check size={15} strokeWidth={2.8} className="mt-[3px] shrink-0 text-salbei" />
-                    <span className="text-[14.5px] leading-snug text-kohle-2">{g}</span>
-                  </div>
-                ))}
-                {gewaehlterVorschlag.achtungPunkte.map((x) => (
-                  <div key={x} className="flex items-start gap-3 border-t border-linie-warm bg-butter-soft px-4 py-3 sm:px-5">
+                {gewaehlterVorschlag.achtungPunkte.map((x, i) => (
+                  <div
+                    key={x}
+                    className={`flex items-start gap-3 bg-butter-soft px-4 py-3 sm:px-5 ${i > 0 ? "border-t border-butter-2" : ""}`}
+                  >
                     <span aria-hidden="true" className="mt-[5px] h-[11px] w-[2px] shrink-0 bg-butter" />
                     <span className="text-[14.5px] leading-snug text-kohle-2">{x}</span>
+                  </div>
+                ))}
+                {gewaehlterVorschlag.gutPunkte.map((g, i) => (
+                  <div
+                    key={g}
+                    className={`flex items-start gap-3 px-4 py-3 sm:px-5 ${
+                      i > 0 || gewaehlterVorschlag.achtungPunkte.length > 0 ? "border-t border-linie-warm" : ""
+                    }`}
+                  >
+                    <Check size={15} strokeWidth={2.8} className="mt-[3px] shrink-0 text-salbei" />
+                    <span className="text-[14.5px] leading-snug text-kohle-2">{g}</span>
                   </div>
                 ))}
               </div>

@@ -148,7 +148,19 @@ function useSichtbareWaende(breite: number, tiefe: number): Sicht {
 /** Schild an einem Gerät: ein Punkt, ein feiner Umriss, der Name.
     Auf einer schmalen Flaeche stattdessen eine Ziffer — sonst liegen die
     Namen uebereinander und man liest keinen einzigen mehr. */
-function Geraetemarke({ marke, stark = false, ziffer }: { marke: Marke; stark?: boolean; ziffer?: number }) {
+function Geraetemarke({
+  marke,
+  stark = false,
+  ziffer,
+  hoch = 0,
+}: {
+  marke: Marke;
+  stark?: boolean;
+  ziffer?: number;
+  /** Bildpunkte, um die das Schild angehoben wird, damit es nicht auf dem
+      Schild des Nachbarn liegt. */
+  hoch?: number;
+}) {
   const k = marke.kasten;
   return (
     <group>
@@ -163,6 +175,7 @@ function Geraetemarke({ marke, stark = false, ziffer }: { marke: Marke; stark?: 
         style={{ pointerEvents: "none" }}
       >
         <span
+          style={hoch ? { position: "relative", top: -hoch } : undefined}
           className={`flex items-center justify-center whitespace-nowrap font-semibold shadow-[0_2px_8px_rgba(21,20,15,.35)] backdrop-blur-sm ${
             ziffer === undefined
               ? "rounded-[3px] px-2.5 py-1 text-[11px]"
@@ -174,6 +187,11 @@ function Geraetemarke({ marke, stark = false, ziffer }: { marke: Marke; stark?: 
       </Html>
     </group>
   );
+}
+
+/** Runde Ziffern sind klein genug, dass sie sich nicht ins Gehege kommen. */
+function ziffer_aus(ziffern: boolean | undefined, betont: string | undefined): boolean {
+  return !!ziffern && !betont;
 }
 
 function Raum({
@@ -280,16 +298,44 @@ function Raum({
       {/* Steht ein Gerät im Mittelpunkt — etwa weil man es gerade aussucht —,
           dann zeigen wir nur dieses, dafür aber unabhängig vom Blickwinkel. */}
       {zeigeGeraete &&
-        szene.marken
-          .filter((m) => (betont ? m.rolle === betont : sicht[m.wand]))
-          .map((m) => (
+        (() => {
+          /**
+           * Schilder, die sich nicht gegenseitig zudecken.
+           *
+           * Herd und Spüle stehen oft nebeneinander, und ihre Schilder hängen
+           * beide auf Arbeitsplattenhöhe: auf dem Bild lagen "Herd" und
+           * "Spüle" übereinander, und der "Backofen" darunter lief in die
+           * Zeile hinein. Deshalb werden die sichtbaren Schilder einmal
+           * entlang der Wand sortiert, und wer seinem Vorgänger zu nah kommt
+           * — weniger als 90 cm Wand und weniger als 35 cm Höhe —, rückt um
+           * eine Schildhöhe nach oben. Die Verschiebung sitzt in Bildpunkten
+           * am Schild selbst, gilt also in jedem Blickwinkel.
+           */
+          const sichtbar = szene.marken.filter((m) => (betont ? m.rolle === betont : sicht[m.wand]));
+          const laengs = (m: Marke) => (m.wand === "nord" || m.wand === "sued" ? m.pos[0] : m.pos[1]);
+          const sortiert = [...sichtbar].sort((a, b) => laengs(a) - laengs(b));
+          const stufe = new Map<string, number>();
+          let vorher: Marke | null = null;
+          let auf = 0;
+          for (const m of sortiert) {
+            if (vorher && Math.abs(laengs(m) - laengs(vorher)) < 900 && Math.abs(m.pos[2] - vorher.pos[2]) < 350) {
+              auf = auf === 0 ? 26 : 0;
+            } else {
+              auf = 0;
+            }
+            stufe.set(m.id, auf);
+            vorher = m;
+          }
+          return sichtbar.map((m) => (
             <Geraetemarke
               key={m.id}
               marke={m}
               stark={!!betont}
+              hoch={ziffer_aus(ziffern, betont) ? 0 : (stufe.get(m.id) ?? 0)}
               ziffer={ziffern && !betont ? szene.marken.findIndex((x) => x.id === m.id) + 1 : undefined}
             />
-          ))}
+          ));
+        })()}
       {betont &&
         szene.marken
           .filter((m) => m.rolle === betont)
