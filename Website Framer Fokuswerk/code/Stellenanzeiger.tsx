@@ -71,27 +71,53 @@ const STIL = `
 @media (min-width: 810px) { .fw-sa-karten { gap: 20px; grid-template-columns: repeat(2, 1fr); } }
 
 .fw-sa-drei { display: grid; gap: 28px; grid-template-columns: 1fr; }
-@media (min-width: 810px) { .fw-sa-drei { gap: 44px; grid-template-columns: repeat(3, 1fr); } }
+/* Erst ab 1000 px dreispaltig — bei 810 px waren die Spalten 214 px breit und
+   brachen den Fließtext auf 23 Zeichen je Zeile. */
+@media (min-width: 1000px) { .fw-sa-drei { gap: 44px; grid-template-columns: repeat(3, 1fr); } }
+
+/* Die Nummer steht auf dem Handy über dem Satz: Als Spalte nahm sie 33 von 335 px
+   und drückte die Sätze auf 26 Zeichen je Zeile. */
+.fw-sa-satz { display: block; }
+.fw-sa-satz > span:last-child { display: block; margin-top: 6px; }
+@media (min-width: 620px) {
+  .fw-sa-satz { display: flex; gap: 16px; align-items: baseline; }
+  .fw-sa-satz > span:last-child { margin-top: 0; }
+}
 
 .fw-sa-zwei { display: grid; gap: 32px; grid-template-columns: 1fr; }
-@media (min-width: 810px) { .fw-sa-zwei { gap: 72px; grid-template-columns: 1fr 1.15fr; } }
+/* Zweispaltig erst, wenn die Überschrift nicht dreizeilig mit kurzer Mittelzeile
+   bricht — bei 810 px tat sie genau das. Lücke 20 px wie bei den Karten, damit die
+   zweite Kante auf der Kartenkante sitzt. */
+@media (min-width: 1000px) { .fw-sa-zwei { gap: 20px; grid-template-columns: 1fr 1fr; } }
 
 /* Die Eingabe im Auftakt: untereinander, ab 620 px nebeneinander. */
-.fw-sa-eingabe { display: grid; gap: 10px; grid-template-columns: 1fr; }
-@media (min-width: 620px) { .fw-sa-eingabe { grid-template-columns: 1fr auto; } }
+.fw-sa-eingabe { display: grid; gap: 10px; grid-template-columns: 1fr; align-items: stretch; }
+@media (min-width: 620px) { .fw-sa-eingabe { grid-template-columns: 1fr auto; gap: 12px; } }
+/* Feld und Knopf standen nebeneinander auf 57 und 48 px — die Unterkanten lagen
+   neun Pixel auseinander. Jetzt beide auf Feldhöhe. */
+/* Mit Vorrang, weil die Pille ihre 48 px als Inline-Stil mitbringt und der sonst
+   gewinnt. Ohne das blieben Feld und Knopf nebeneinander neun Pixel versetzt. */
+.fw-sa-eingabe > * > button, .fw-sa-eingabe > * > a { min-height: 57px !important; height: 100%; }
+.fw-sa-eingabe > * { display: flex; }
 
 /* Platzhalter sind Text und brauchen denselben Kontrast — 0.4 ergab 3,57:1. */
+.fw-sa p { text-wrap: pretty; }
 .fw-sa input::placeholder { color: rgba(245,243,239,0.56); }
 .fw-sa .hell input::placeholder { color: rgba(14,15,18,0.62); }
 .fw-sa *:focus-visible { outline: 2px solid ${SIGNAL}; outline-offset: 2px; }
 /* Der Finger bekommt sofort Antwort, nicht erst der Zustandswechsel. */
 .fw-sa button:not(:disabled):active,
 .fw-sa a:active { transform: scale(0.975); }
-.fw-sa button, .fw-sa a[href] { transform: scale(1); transition: transform 110ms ease-out; -webkit-tap-highlight-color: transparent; }
+.fw-sa button, .fw-sa a[href] { transform: scale(1); transition: transform 160ms ease-out !important; -webkit-tap-highlight-color: transparent; }
+.fw-sa button:not(:disabled):active, .fw-sa a:active { transition: transform 110ms ease-out !important; }
 
 /* Ein Schritt kommt von unten und geht nicht einfach um. */
 @keyframes fw-sa-auf { from { opacity: 0; transform: translate3d(0, 8px, 0) } to { opacity: 1; transform: none } }
 .fw-sa-schritt { animation: fw-sa-auf 220ms cubic-bezier(.16,1,.3,1) both; }
+/* Entprellung an der Schrittgrenze: Der frisch eingeblendete Schritt nimmt 320 ms lang
+   keine Tipps an, sonst erledigt der zweite Tipp eines Doppeltipps die nächste Frage. */
+@keyframes fw-sa-taub { from { pointer-events: none } to { pointer-events: auto } }
+.fw-sa-schritt { animation: fw-sa-auf 220ms cubic-bezier(.16,1,.3,1) both, fw-sa-taub 320ms step-end both; }
 
 /* Durchscheinendes Glas braucht einen Rückfall, sonst steht Text auf dem Verlauf. */
 @media (prefers-reduced-transparency: reduce) {
@@ -219,7 +245,7 @@ function Geisterwort({ children, auf = "hell" }: { children: any; auf?: "hell" |
                 fontSize: "clamp(3.4rem, 12vw, 8.5rem)", lineHeight: 0.82, fontWeight: 500,
                 letterSpacing: "-0.055em", whiteSpace: "nowrap",
                 color: auf === "dunkel" ? "rgba(245,243,239,0.07)" : "rgba(14,15,18,0.055)",
-                marginBottom: "-0.26em", userSelect: "none", pointerEvents: "none",
+                marginBottom: "-0.1em", userSelect: "none", pointerEvents: "none",
                 maxWidth: "100%", overflow: "hidden",
             }}
         >
@@ -273,7 +299,7 @@ function H2({ children, auf = "hell" }: { children: any; auf?: "hell" | "dunkel"
     return (
         <h2
             style={{
-                margin: 0, fontSize: "clamp(1.9rem, 5vw, 3.5rem)", lineHeight: 1.0,
+                margin: 0, fontSize: "clamp(1.9rem, 5vw, 3.5rem)", lineHeight: 1.06,
                 letterSpacing: "-0.05em", fontWeight: 500,
                 color: auf === "dunkel" ? PAPIER : TINTE,
                 maxWidth: "20ch", textWrap: "balance" as any,
@@ -315,7 +341,7 @@ function Feld({
             }}
             style={{
                 width: "100%", font: "inherit", fontSize: gross ? 17 : 16,
-                letterSpacing: "-0.03em",
+                letterSpacing: "-0.008em",
                 color: dunkelGrund ? PAPIER : TINTE,
                 background: dunkelGrund ? "rgba(245,243,239,0.06)" : "rgba(14,15,18,0.03)",
                 border: `1px solid ${dunkelGrund ? "rgba(245,243,239,0.14)" : LINIE_FEST}`,
@@ -333,7 +359,7 @@ function Feld({
 //
 // Der Volltreffer bleibt in der Liste stehen. Wer „Koch" fertig tippt und die Zeile dann
 // verschwinden sieht, liest das als „gibt es nicht" — dabei ist es die gemeinte Bezeichnung.
-function Tippfeld({ wert, setWert, platzhalter, vorschlaege, weiter, kennung, auf = "dunkel" }: any) {
+function Tippfeld({ wert, setWert, platzhalter, vorschlaege, weiter, kennung, auf = "dunkel", ...rest }: any) {
     const [offen, setOffen] = useState(false)
     const treffer = useMemo(() => {
         const roh = normal(String(wert || ""))
@@ -357,6 +383,7 @@ function Tippfeld({ wert, setWert, platzhalter, vorschlaege, weiter, kennung, au
                 onEnter={() => { if (String(wert).trim().length >= 2) weiter() }}
                 onFocus={() => setOffen(true)}
                 onBlur={() => window.setTimeout(() => setOffen(false), 140)}
+                {...rest}
             />
             {offen && treffer.length > 0 ? (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
@@ -367,10 +394,10 @@ function Tippfeld({ wert, setWert, platzhalter, vorschlaege, weiter, kennung, au
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => { setWert(v); setOffen(false) }}
                             style={{
-                                font: "inherit", fontSize: 12, fontWeight: 500, letterSpacing: "-0.01em",
+                                font: "inherit", fontSize: 14, fontWeight: 500, letterSpacing: "-0.01em",
                                 color: dunkelGrund ? P70 : T60, background: "transparent",
                                 border: `1px solid ${dunkelGrund ? LINIE_D : LINIE}`,
-                                borderRadius: 999, padding: "9px 13px", minHeight: 38, cursor: "pointer",
+                                borderRadius: 999, padding: "11px 15px", minHeight: 44, cursor: "pointer",
                             }}
                         >
                             {v}
@@ -404,7 +431,7 @@ function Antwortknopf({ text, neben, gewaehlt, mehrfach = false, onClick, auf = 
                 aria-hidden
                 style={{
                     width: 17, height: 17, borderRadius: mehrfach ? 5 : "50%", flex: "0 0 auto",
-                    border: `1px solid ${gewaehlt ? (dunkelGrund ? PAPIER : TINTE) : dunkelGrund ? "rgba(245,243,239,0.3)" : LINIE_FEST}`,
+                    border: `1px solid ${gewaehlt ? (dunkelGrund ? PAPIER : TINTE) : dunkelGrund ? "rgba(245,243,239,0.46)" : LINIE_FEST}`,
                     background: gewaehlt ? (dunkelGrund ? PAPIER : TINTE) : "transparent",
                     boxShadow: gewaehlt ? `inset 0 0 0 3.5px ${dunkelGrund ? DUNKEL : PAPIER}` : "none",
                 }}
@@ -610,6 +637,9 @@ const FRAGEN: Frage[] = [
             { wert: "technik", text: "Moderne Ausrüstung", neben: "Werkzeug und Maschinen auf Stand" },
             { wert: "aufstieg", text: "Weiterbildung und Aufstieg", neben: "Meister, Lehrgänge, mehr Verantwortung" },
             { wert: "sicherheit", text: "Sicherer Arbeitsplatz", neben: "Volle Auftragsbücher, unbefristet" },
+            // Ohne diese Zeile musste ankreuzen, wer nichts davon bieten kann — und die
+            // Behauptung stand danach in einer echten Stellenanzeige.
+            { wert: "nichts", text: "Nichts davon trifft zu", neben: "Schreibt nur, was auf meiner Website steht" },
         ],
     },
 ]
@@ -716,7 +746,7 @@ const WIEDERERKENNEN = [
     "Sie wissen, dass Sie bei Facebook und Instagram werben müssten, und schieben es seit Monaten.",
     "Der Text, der zuletzt funktioniert hat, ist fünf Jahre alt.",
     "Sie haben einmal eine Anzeige geschaltet. Es kam nichts, und keiner konnte sagen, warum.",
-    "Die Aufträge sind da. Der Mann dafür nicht.",
+    "Die Aufträge sind da. Die Leute dafür nicht.",
     "Beim Schreiben kommt immer dasselbe heraus: „Wir bieten ein nettes Team und gute Bezahlung.\"",
 ]
 
@@ -769,13 +799,14 @@ const FAQ = [
 ]
 
 function Fortschritt({ schritt, auf = "dunkel" }: { schritt: number; auf?: "hell" | "dunkel" }) {
-    const anteil = Math.round(((schritt + 1) / SCHRITTE_GESAMT) * 100)
+    // Der Balken zeigt denselben Stand wie die Zeile daneben. Vorher stand „Schritt 1 von 6"
+    // neben „29 %" — das ist 2/7 und widerspricht der Zeile.
+    const anteil = Math.round((schritt / (SCHRITTE_GESAMT - 1)) * 100)
     const dunkelGrund = auf === "dunkel"
     return (
         <div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 11 }}>
                 <Versal farbe={dunkelGrund ? P45 : T40}>Schritt {schritt} von {SCHRITTE_GESAMT - 1}</Versal>
-                <Versal farbe={dunkelGrund ? P45 : T40}>{anteil} %</Versal>
             </div>
             <Notenstrich
                 note={anteil} hoehe={2}
@@ -814,6 +845,7 @@ function Blatt({ ergebnis, beispiel = false, angeschnitten = false }: { ergebnis
     function kopieren(i: number, text: string) {
         try {
             navigator.clipboard.writeText(text)
+            melde("anzeige_kopiert", { nummer: i + 1 })
             setKopiert(i)
             window.setTimeout(() => setKopiert(null), 2000)
         } catch (e) {
@@ -934,6 +966,9 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
     // erst nach dem letzten Schritt — sonst füllt jemand alles aus und erfährt am Ende,
     // dass es um nichts ging.
     const [vorlaufFehler, setVorlaufFehler] = useState("")
+    // Was gerade fehlt. Wird vorgelesen (aria-live), damit niemand vor einem stummen
+    // Knopf steht und rät.
+    const [hinweis, setHinweis] = useState("")
     const herkunft = useRef<any>(null)
     useEffect(() => {
         herkunft.current = herkunftLesen()
@@ -982,7 +1017,11 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         const luft = 20
         const verdeckt = r.top < kopf + 4
         const zuTief = r.top > window.innerHeight * 0.55
-        if (!verdeckt && !zuTief) return
+        // Passt der Schritt nicht ins Bild, wird er nach oben angedockt — sonst stehen
+        // die unteren Antworten unter der Kante, und wer dafür scrollt, wird beim
+        // Antippen wieder zurückgeworfen.
+        const ragtRaus = r.bottom > window.innerHeight && r.top > kopf + 16
+        if (!verdeckt && !zuTief && !ragtRaus) return
         // ▲ KEIN `scrollTo({ behavior: "smooth" })`. Auf dieser Seite läuft Lenis als
         // Smooth-Scroll-Baustein, und der schluckt beide weichen Wege — `behavior: "smooth"`
         // ebenso wie `lenis.scrollTo(...)`. Nur die Zwei-Argument-Form kommt an.
@@ -1067,7 +1106,9 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     dringlichkeit: antworten.dringlichkeit,
                     stellen: antworten.stellen,
                     erfahrung: antworten.erfahrung,
-                    staerken: antworten.staerken || [],
+                    // „Nichts davon" ist eine Fluchtoption für den Besucher, keine Angabe
+                    // für den Text — sie geht nicht mit raus.
+                    staerken: (antworten.staerken || []).filter((x: string) => x !== "nichts"),
                     newsletter,
                     kontakt: { name: name.trim(), email: mail.trim(), telefon: telefon.trim() },
                     herkunft: herkunft.current || undefined,
@@ -1113,11 +1154,36 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         vorlaufLaeuft.current = ""
     }
 
+    // Nur grob: Es geht darum, einen Tippfehler zu fangen, nicht darum, Adressen zu
+    // bewerten. Das macht der Endpunkt, der die Seite wirklich abruft.
+    const mailOk = (w: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(w.trim())
+    const telOk = (w: string) => (w.match(/\d/g) || []).length >= 6
+
     function weiterVonAdresse() {
-        if (domain.trim().length < 3) return
+        if (domain.trim().length < 3) {
+            setHinweis("Tragen Sie die Adresse Ihrer Website ein, zum Beispiel ihre-firma.de")
+            document.getElementById("fw-domain")?.focus()
+            return
+        }
+        setHinweis("")
         setVorlaufFehler("")
         vorlaufLaeuft.current = ""
         setSchritt(1)
+    }
+
+    // Zurück zum Eingabefeld. Zwei-Argument-Form, weil Lenis die weichen Wege schluckt.
+    function zumFeld() {
+        const k = rahmen.current
+        if (!k) return
+        const kopf = kopfhoehe()
+        window.scrollTo(0, Math.max(0, window.scrollY + k.getBoundingClientRect().top - kopf - 20))
+        window.setTimeout(() => document.getElementById("fw-domain")?.focus(), 240)
+        melde("zurueck_zum_feld")
+    }
+
+    function meldeFehlt(text: string, feld: string) {
+        setHinweis(text)
+        if (feld) document.getElementById(feld)?.focus()
     }
 
     function Zurueck({ auf = "dunkel" }: { auf?: "hell" | "dunkel" }) {
@@ -1128,7 +1194,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                 style={{
                     font: "inherit", fontSize: 12, fontWeight: 500, letterSpacing: "0.12em",
                     textTransform: "uppercase", color: auf === "dunkel" ? P45 : T40,
-                    background: "none", border: "none", padding: "11px 0", cursor: "pointer", minHeight: 40,
+                    background: "none", border: "none", padding: "13px 0", cursor: "pointer", minHeight: 44,
                 }}
             >
                 Zurück
@@ -1142,16 +1208,56 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
     // erscheinen. Vorher stand dort ein Link auf /kontakt — also ein Formular, das man
     // erst noch ausfüllt. Jetzt reicht ein Tipp auf ein Zeitfenster: Name, Nummer und
     // Betrieb liegen längst vor, es fehlt nur noch das Wann.
+    // Die Zeitfenster richten sich nach dem Tag eines Handwerkers, nicht nach dem eines
+    // Büros: Vormittags und nachmittags steht er auf der Baustelle und geht nicht ran.
     const FENSTER = [
-        { wert: "heute", text: "Heute noch" },
-        { wert: "morgen_vormittag", text: "Morgen vormittags" },
-        { wert: "morgen_nachmittag", text: "Morgen nachmittags" },
-        { wert: "woche", text: "Diese Woche, egal wann" },
+        { wert: "gleich", text: "Gleich, ich bin am Handy" },
+        { wert: "mittag", text: "In der Mittagspause" },
+        { wert: "feierabend", text: "Nach Feierabend, ab 17 Uhr" },
+        { wert: "frueh", text: "Morgen früh, vor 7:30 Uhr" },
     ]
 
     function Rueckruf() {
         const [fenster, setFenster] = useState("")
         const [stand, setStand] = useState<"offen" | "laeuft" | "fertig" | "fehler">("offen")
+
+        function senden(gewaehlt: string) {
+            if (!gewaehlt || stand === "laeuft") return
+            setStand("laeuft")
+            melde("rueckruf_gewuenscht", { fenster: gewaehlt })
+            fetch(endpunkt.replace(/\/stellenanzeige.*$/, "/rueckruf"), {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({
+                    name: name.trim(), email: mail.trim(), telefon: telefon.trim(),
+                    domain: domain.trim(), betrieb: ergebnis?.betrieb || "",
+                    beruf: String(antworten.beruf || ""), fenster: gewaehlt,
+                    herkunft: herkunft.current || undefined,
+                }),
+            })
+                // Ehrlich bleiben: „Rückruf eingetragen" darf nur stehen, wenn er
+                // wirklich angekommen ist. Sonst wartet jemand auf einen Anruf, von dem
+                // niemand weiß.
+                .then((a) => setStand(a.ok ? "fertig" : "fehler"))
+                .catch(() => setStand("fehler"))
+        }
+
+        if (stand === "fehler") {
+            return (
+                <div
+                    style={{
+                        marginTop: 30, padding: "clamp(20px, 3vw, 26px)", borderRadius: RADIUS_KARTE,
+                        background: REIN, border: `1px solid ${LINIE}`,
+                    }}
+                >
+                    <Versal>Das hat nicht geklappt</Versal>
+                    <p style={{ margin: "12px 0 0", fontSize: 17, lineHeight: 1.6, letterSpacing: "-0.008em", color: TINTE }}>
+                        Ihr Rückrufwunsch ist nicht bei uns angekommen. Rufen Sie durch:{" "}
+                        <a href="tel:+4917663307587" style={{ color: AKZENT_HELL }}>0176 63307587</a>.
+                    </p>
+                </div>
+            )
+        }
 
         if (stand === "fertig") {
             return (
@@ -1161,10 +1267,10 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                         background: REIN, border: `1px solid ${LINIE}`,
                     }}
                 >
-                    <Versal>Termin steht</Versal>
+                    <Versal>Rückruf eingetragen</Versal>
                     <p style={{ margin: "12px 0 0", fontSize: 17, lineHeight: 1.6, letterSpacing: "-0.008em", color: TINTE }}>
-                        Wir melden uns {FENSTER.find((f) => f.wert === fenster)?.text.toLowerCase()} unter {telefon.trim()}.
-                        Zehn Minuten, keine Unterlagen nötig.
+                        Wir rufen Sie an: {FENSTER.find((f) => f.wert === fenster)?.text.toLowerCase()}, unter {telefon.trim()}.
+                        Wir rufen von 0176 63307587 an — speichern Sie die Nummer, dann wissen Sie, wer dran ist.
                     </p>
                 </div>
             )
@@ -1177,20 +1283,22 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     background: DUNKEL, color: PAPIER,
                 }}
             >
-                <Versal farbe={AKZENT_DUNKEL}>Der nächste Schritt</Versal>
+                <Versal farbe={AKZENT_DUNKEL}>Und jetzt?</Versal>
                 <div style={{ marginTop: 14, fontSize: 24, lineHeight: 1.2, letterSpacing: "-0.04em", fontWeight: 500 }}>
-                    Sollen wir die Ausspielung übernehmen?
+                    Die Texte stehen. Jetzt müssen sie noch die Richtigen sehen.
                 </div>
                 <p style={{ margin: "12px 0 0", fontSize: 16, lineHeight: 1.62, letterSpacing: "-0.005em", color: P70, maxWidth: "52ch" }}>
-                    Zehn Minuten am Telefon: Wir sagen Ihnen, mit welchem Budget die Anzeige in Ihrer
-                    Gegend läuft und was das bei uns kostet. Wann passt es?
+                    Einstellen können Sie sie selbst. Auf Ihrer Firmenseite sehen den Text aber vor
+                    allem die, die Sie schon kennen. Damit Gesellen im Umkreis ihn sehen, die Ihre
+                    Seite nie besucht haben, muss die Anzeige gezielt geschaltet werden. Wenn wir das
+                    machen sollen: zehn Minuten am Telefon, danach sagen Sie Ja oder Nein.
                 </p>
                 <div style={{ marginTop: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
                     {FENSTER.map((f) => (
                         <button
                             key={f.wert}
                             type="button"
-                            onClick={() => setFenster(f.wert)}
+                            onClick={() => { setFenster(f.wert); senden(f.wert) }}
                             style={{
                                 font: "inherit", fontSize: 15, fontWeight: 500, letterSpacing: "-0.015em",
                                 color: fenster === f.wert ? TINTE : PAPIER,
@@ -1203,37 +1311,10 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                         </button>
                     ))}
                 </div>
-                <div style={{ marginTop: 20, display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
-                    <Pille
-                        auf="dunkel"
-                        aus={!fenster || stand === "laeuft"}
-                        onClick={() => {
-                            if (!fenster) return
-                            setStand("laeuft")
-                            melde("rueckruf_gewuenscht", { fenster })
-                            fetch(endpunkt.replace(/\/stellenanzeige.*$/, "/rueckruf"), {
-                                method: "POST",
-                                headers: { "content-type": "application/json" },
-                                body: JSON.stringify({
-                                    name: name.trim(), email: mail.trim(), telefon: telefon.trim(),
-                                    domain: domain.trim(), betrieb: ergebnis?.betrieb || "",
-                                    beruf: String(antworten.beruf || ""), fenster,
-                                    herkunft: herkunft.current || undefined,
-                                }),
-                            })
-                                .then((a) => (a.ok ? setStand("fertig") : setStand("fehler")))
-                                // Auch wenn die Meldung nicht durchkommt: Die Nummer liegt uns
-                                // vor, der Wunsch ist gemessen. Den Besucher mit einem Fehler zu
-                                // behelligen, hilft hier niemandem.
-                                .catch(() => setStand("fertig"))
-                        }}
-                    >
-                        {stand === "laeuft" ? "Einen Moment …" : "Rückruf vereinbaren"}
-                    </Pille>
-                    <span style={{ fontSize: 13, lineHeight: 1.5, letterSpacing: "-0.01em", color: P45 }}>
-                        Unverbindlich. Kein Angebot per Post, keine Unterlagen.
-                    </span>
-                </div>
+                <p style={{ margin: "16px 0 0", fontSize: 13, lineHeight: 1.5, letterSpacing: "-0.01em", color: P45 }}>
+                    Ein Tipp genügt — Ihre Nummer liegt uns vor. Unverbindlich, und sagen Sie
+                    danach Nein, ruft keiner wieder an.
+                </p>
             </div>
         )
     }
@@ -1255,6 +1336,19 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                             ? "Geschrieben wird für: " + betriebName
                             : "Wir rufen Ihre Website ab. Das dauert einen Moment."}
                     </div>
+                    {sekunden >= 35 ? (
+                        <div style={{ marginTop: 20, paddingTop: 18, borderTop: `1px solid ${LINIE_D}` }}>
+                            <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55, letterSpacing: "-0.01em", color: P70 }}>
+                                Das dauert heute länger. Die Anzeigen kommen auch per Mail — Sie können
+                                die Seite schließen.
+                            </p>
+                            <div style={{ marginTop: 14 }}>
+                                <Pille auf="dunkel" art="linie" onClick={() => { setLage("formular"); setSchritt(SCHRITT_KONTAKT) }}>
+                                    Zurück zu Ihren Angaben
+                                </Pille>
+                            </div>
+                        </div>
+                    ) : null}
                 </div>
             )
         }
@@ -1268,6 +1362,11 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     </div>
                     <p style={{ margin: "14px 0 0", fontSize: 17, lineHeight: 1.6, letterSpacing: "-0.008em", color: P70 }}>
                         {text.hinweis}
+                    </p>
+                    <p style={{ margin: "16px 0 0", fontSize: 15, lineHeight: 1.6, letterSpacing: "-0.008em", color: P45, maxWidth: "48ch" }}>
+                        Keine Website, oder klappt es einfach nicht? Rufen Sie durch unter{" "}
+                        <a href="tel:+4917663307587" style={{ color: PAPIER }}>0176 63307587</a> — dann
+                        schreiben wir die Anzeigen von Hand.
                     </p>
                     <div style={{ marginTop: 26 }}>
                         <Pille
@@ -1304,6 +1403,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                 platzhalter="ihre-firma.de" auf="dunkel" gross
                                 onEnter={weiterVonAdresse}
                                 inputMode="url" autoCapitalize="off" autoCorrect="off" spellCheck={false}
+                                enterKeyHint="go"
                             />
                         </div>
                         {/* Unter 620 px steht der Knopf unter dem Feld und füllt die Zeile
@@ -1312,10 +1412,13 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                             <Pille auf="dunkel" onClick={weiterVonAdresse} weit>Anzeigen schreiben lassen</Pille>
                         </div>
                     </div>
+                    <p aria-live="polite" style={{ margin: hinweis ? "14px 0 0" : 0, fontSize: 14, lineHeight: 1.5, letterSpacing: "-0.01em", color: AKZENT_DUNKEL, minHeight: hinweis ? undefined : 0 }}>
+                        {hinweis}
+                    </p>
                     <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <Etikett auf="dunkel">Aus Ihrer Website</Etikett>
-                        <Etikett auf="dunkel">Ohne Anmeldung</Etikett>
-                        <Etikett auf="dunkel">Unter zwei Minuten</Etikett>
+                        <Etikett auf="dunkel">Kostenlos, kein Konto</Etikett>
+                        <Etikett auf="dunkel">Danach ein Anruf, zehn Minuten</Etikett>
                     </div>
                 </div>
             )
@@ -1366,6 +1469,9 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                 kennung={"fw-" + frage.id}
                                 wert={wert || ""}
                                 setWert={(w: string) => setAntworten({ ...antworten, [frage.id]: w })}
+                                autoCorrect="off"
+                                spellCheck={false}
+                                enterKeyHint="next"
                                 platzhalter={frage.platzhalter || ""}
                                 vorschlaege={frage.vorschlaege || []}
                                 weiter={weiter}
@@ -1394,7 +1500,13 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                                 setAntworten({ ...antworten, [frage.id]: o.wert })
                                                 // Einfachauswahl schaltet selbst weiter: ein Tipp,
                                                 // ein Schritt. Ein Weiter-Knopf wäre ein zweiter.
-                                                window.setTimeout(weiter, 130)
+                                                //
+                                                // 240 statt 130 ms: Bei 130 ms war der Wechsel
+                                                // vollzogen, bevor der Finger oben war, und der
+                                                // zweite Tipp eines Doppeltipps beantwortete die
+                                                // nächste Frage gleich mit. Die Auswahl bekommt
+                                                // jetzt auch sichtbar Zeit (Farbübergang 140 ms).
+                                                window.setTimeout(weiter, 240)
                                             }}
                                         />
                                     )
@@ -1453,6 +1565,9 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     <Haken an={newsletter} setAn={setNewsletter} text={NEWSLETTER_TEXT} />
                 </div>
 
+                <p aria-live="polite" style={{ margin: hinweis ? "16px 0 0" : 0, fontSize: 14, lineHeight: 1.5, letterSpacing: "-0.01em", color: AKZENT_DUNKEL }}>
+                    {hinweis}
+                </p>
                 <div style={{ marginTop: 18, display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <Etikett auf="dunkel">Kostenlos</Etikett>
                     <Etikett auf="dunkel">Keine Verpflichtung</Etikett>
@@ -1462,7 +1577,20 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                 <div style={{ marginTop: 26, display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
                     <Zurueck />
                     <div style={{ marginLeft: "auto", flex: "1 1 220px", minWidth: 0 }}>
-                        <Pille auf="dunkel" onClick={absenden} aus={!kontaktVollstaendig} weit>
+                        <Pille
+                            auf="dunkel"
+                            weit
+                            onClick={() => {
+                                // Ein gesperrter Knopf sagt nicht, was fehlt. Lieber
+                                // bedienbar lassen und es benennen.
+                                if (!name.trim()) return meldeFehlt("Ihr Name fehlt noch.", "fw-name")
+                                if (!mailOk(mail)) return meldeFehlt("Die E-Mail-Adresse stimmt so nicht — dorthin gehen die Texte.", "fw-mail")
+                                if (!telOk(telefon)) return meldeFehlt("Die Telefonnummer stimmt so nicht.", "fw-tel")
+                                if (!einwilligung) return meldeFehlt("Ohne das erste Häkchen dürfen wir Ihnen nichts schicken.", "")
+                                setHinweis("")
+                                absenden()
+                            }}
+                        >
                             Anzeigen ansehen
                         </Pille>
                     </div>
@@ -1489,7 +1617,12 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                            radial-gradient(85% 70% at 12% 92%, rgba(255,90,31,0.1) 0%, rgba(255,90,31,0) 58%),
                            ${DUNKEL}`,
                     color: fertig ? TINTE : PAPIER,
-                    paddingBlock: fertig ? "clamp(56px, 7vw, 104px)" : "clamp(64px, 8vw, 128px)",
+                    // ▲ Der obere Rand muss größer sein als die feste Kopfleiste (76 px auf
+                    // dem Handy, 88 px am Schreibtisch). Stand einmal auf 64 px — das
+                    // Etikett „Kostenloses Werkzeug" lag damit unter 950 px Breite
+                    // vollständig hinter der Leiste und war auf jedem Handy unsichtbar.
+                    paddingTop: fertig ? "clamp(104px, 9vw, 128px)" : "clamp(104px, 10vw, 152px)",
+                    paddingBottom: fertig ? "clamp(56px, 7vw, 104px)" : "clamp(64px, 8vw, 128px)",
                     paddingLeft: RAND, paddingRight: RAND,
                     transition: "background 320ms ease",
                 }}
@@ -1505,7 +1638,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     <h1
                         style={{
                             margin: "26px 0 0", fontSize: "clamp(2.4rem, 7.4vw, 5.1rem)",
-                            lineHeight: 0.98, letterSpacing: "-0.055em", fontWeight: 500,
+                            lineHeight: 1.05, letterSpacing: "-0.055em", fontWeight: 500,
                             maxWidth: "17ch", textWrap: "balance" as any,
                             color: fertig ? TINTE : PAPIER,
                         }}
@@ -1515,8 +1648,16 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
 
                     <p
                         style={{
-                            margin: "26px 0 0", fontSize: 19, lineHeight: 1.5,
+                            margin: imTrichter && !fertig ? 0 : "26px 0 0",
+                            fontSize: 19, lineHeight: 1.5,
                             letterSpacing: "-0.012em", color: fertig ? T60 : P70, maxWidth: "50ch",
+                            // Im Trichter zusammenfalten: Die Einleitung hat ihre Arbeit
+                            // getan, und ihre fünf Zeilen drücken die Antworten auf dem
+                            // Handy unter die Bildkante.
+                            maxHeight: imTrichter && !fertig ? 0 : 400,
+                            opacity: imTrichter && !fertig ? 0 : 1,
+                            overflow: "hidden",
+                            transition: "max-height 260ms ease, opacity 180ms ease, margin 260ms ease",
                         }}
                     >
                         {fertig
@@ -1526,6 +1667,9 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
 
                     <div
                         ref={rahmen}
+                        // Die Marke sagt der Handlungsleiste, dass hier ein Formular steht,
+                        // damit sie nicht über dem Absende-Knopf klebt.
+                        data-fw-formular={!fertig ? "" : undefined}
                         className={imTrichter && !fertig ? "fw-sa-glas" : undefined}
                         style={{
                             marginTop: fertig ? 40 : 38,
@@ -1580,7 +1724,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                             {[
                                 { zahl: "3", label: "fertige Anzeigentexte", quelle: "zum Einstellen oder Ändern" },
                                 { zahl: "4", label: "Fragen für die Bewerbung", quelle: "damit Sie wissen, wen Sie zurückrufen" },
-                                { zahl: "0", label: "Euro, keine Anmeldung", quelle: "auch ohne Folgegespräch" },
+                                { zahl: "0", label: "Euro, kein Konto", quelle: "die Texte behalten Sie in jedem Fall" },
                             ].map((b) => (
                                 <div key={b.label} style={{ minWidth: 0 }}>
                                     <div style={{ fontSize: "clamp(2.2rem, 5vw, 3.5rem)", lineHeight: 0.92, fontWeight: 500, letterSpacing: "-0.055em", color: PAPIER, fontVariantNumeric: "tabular-nums" }}>
@@ -1613,6 +1757,21 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     <div style={{ marginTop: 36 }}>
                         <Blatt ergebnis={BEISPIEL} beispiel angeschnitten />
                     </div>
+                    <div style={{ marginTop: 26, paddingTop: 20, borderTop: `1px solid ${LINIE}`, display: "flex", gap: 18, alignItems: "baseline", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "clamp(1.9rem, 4vw, 2.6rem)", lineHeight: 1, fontWeight: 500, letterSpacing: "-0.05em", color: TINTE, fontVariantNumeric: "tabular-nums" }}>
+                            69
+                        </span>
+                        <span style={{ fontSize: 16, lineHeight: 1.62, letterSpacing: "-0.005em", color: T60, maxWidth: "46ch" }}>
+                            Bewerbungen kamen bei Patio in Oldenburg über zwei Kampagnen herein.
+                            Quelle: Auswertung des Kunden.{" "}
+                            <a href="/arbeiten/patio-oldenburg" style={{ color: AKZENT_HELL }}>
+                                Der Fall
+                            </a>
+                        </span>
+                    </div>
+                    <div style={{ marginTop: 30 }}>
+                        <Pille onClick={zumFeld}>Meine Anzeigen schreiben lassen</Pille>
+                    </div>
                 </Abschnitt>
             ) : null}
 
@@ -1629,10 +1788,8 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                         {WIEDERERKENNEN.map((w, i) => (
                             <div
                                 key={i}
-                                style={{
-                                    display: "flex", gap: 16, alignItems: "flex-start",
-                                    padding: "18px 0", borderTop: i === 0 ? "none" : `1px solid ${LINIE}`,
-                                }}
+                                className="fw-sa-satz"
+                                style={{ padding: "20px 0", borderTop: i === 0 ? "none" : `1px solid ${LINIE}` }}
                             >
                                 <Nummer n={i + 1} />
                                 <span style={{ fontSize: 17, lineHeight: 1.6, letterSpacing: "-0.008em", color: TINTE }}>{w}</span>
@@ -1673,9 +1830,9 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
             <Abschnitt grund={REIN}>
                 <Versal>Ablauf</Versal>
                 <div style={{ marginTop: 22 }}>
-                    <H2>Drei Schritte, keine Anmeldung</H2>
+                    <H2>Zwei Minuten, dann stehen die Texte</H2>
                 </div>
-                <div className="fw-sa-drei" style={{ marginTop: 44 }}>
+                <div className="fw-sa-drei" style={{ marginTop: 40 }}>
                     {ABLAUF.map((s, i) => (
                         <div key={s.titel} style={{ paddingTop: 20, borderTop: `1px solid ${LINIE}` }}>
                             <Nummer n={i + 1} />
@@ -1726,7 +1883,8 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     </Lead>
                 </div>
                 <div style={{ marginTop: 34, display: "flex", gap: 12, flexWrap: "wrap" }}>
-                    <Pille auf="dunkel" href={angebotLink}>Projekt besprechen</Pille>
+                    <Pille auf="dunkel" onClick={zumFeld}>Anzeigen schreiben lassen</Pille>
+                    <Pille auf="dunkel" art="linie" href={angebotLink}>Projekt besprechen</Pille>
                 </div>
             </Abschnitt>
         </div>

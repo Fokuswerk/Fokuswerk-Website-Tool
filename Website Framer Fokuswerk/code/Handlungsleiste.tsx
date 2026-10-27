@@ -87,8 +87,14 @@ export default function Handlungsleiste(props: HandlungsleisteProps) {
         }
 
         // Kein Knopf über einem Formular, das gerade ausgefüllt wird
+        // Die Leiste tritt zurück, solange der Besucher an einem Formular steht.
+        //
+        // ▲ Geprüft wurde nur auf `<form>`. Die Werkzeugseiten (/stellenanzeige,
+        // /seo-analyse) bauen ihren Trichter aus `div`s — dort lag die Leiste
+        // auf dem Handy 69 px unter dem Absende-Knopf und war heller als er.
+        // Deshalb zusätzlich die Marke `data-fw-formular`, die solche Trichter tragen.
         const formularImBild = () =>
-            Array.from(document.querySelectorAll("form")).some((f) => {
+            Array.from(document.querySelectorAll("form, [data-fw-formular]")).some((f) => {
                 const r = f.getBoundingClientRect()
                 return r.height > 2 && r.top < window.innerHeight && r.bottom > 0
             })
