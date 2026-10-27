@@ -24,7 +24,11 @@ const ERLAUBT = (process.env.ORIGINS ||
 const ABRUFE = new Map();
 const SPEICHER = new Map();
 const FENSTER = 10 * 60 * 1000;
-const PRO_FENSTER = 6;
+const PRO_FENSTER = 12; // ▲ Stand auf 6, bevor es den Vorlauf gab. Seitdem braucht
+// EIN Besucher zwei Aufrufe (Vorlauf + echter Abruf), und wer den Beruf einmal ändert,
+// drei. Mit der alten Zahl sperrte sich ein einzelner Betrieb nach zwei Durchläufen
+// selbst aus — und ein Handwerksbetrieb sitzt oft mit mehreren Leuten hinter derselben
+// Anschrift. Zwölf ist immer noch eine Bremse gegen Dauerfeuer.
 const HALTBAR = 24 * 60 * 60 * 1000;
 
 function zuOft(kennung) {
