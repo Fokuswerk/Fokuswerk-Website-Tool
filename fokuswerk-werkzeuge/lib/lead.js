@@ -16,8 +16,8 @@
 import { anzeigenMail, leadMail } from "./mail-vorlagen.js";
 
 // Verifiziert bei Resend ist email.fokuswerk.de (geprüft 26.10.2026) — nicht mail.fokuswerk.de.
-const ABSENDER = "Fokuswerk <werkzeug@email.fokuswerk.de>";
-const AN_UNS = "contact@fokuswerk.de";
+export const ABSENDER = "Fokuswerk <werkzeug@email.fokuswerk.de>";
+export const AN_UNS = "contact@fokuswerk.de";
 
 // Der Wortlaut, den der Besucher im letzten Schritt abhakt. Steht in `Stellenanzeiger.tsx`;
 // ändert er sich dort, gehört er auch hier geändert — am Datensatz soll stehen, wem der
@@ -89,7 +89,7 @@ export async function meldeAnFunnel(daten) {
 // 2. + 3. E-Mail
 // ---------------------------------------------------------------------------
 
-async function sendeMail({ an, betreff, text, html, antwortAn }) {
+export async function sendeMail({ an, betreff, text, html, antwortAn }) {
   const schluessel = process.env.MAIL_API_KEY;
   if (!schluessel) return { uebersprungen: "kein MAIL_API_KEY" };
   const antwort = await fetch("https://api.resend.com/emails", {
@@ -146,7 +146,7 @@ export async function schickeAnBetrieb(daten, ergebnis) {
 // Funktion wird nach `res.json()` eingefroren, und nichts davon lief je zu Ende (26.10.2026,
 // zwei Durchläufe ohne eine einzige Mail bei Resend).
 // Damit ein hängender Dienst die Anzeigen nicht aufhält, bricht `mitFrist` nach 8 Sekunden ab.
-function mitFrist(versprechen, ms, was) {
+export function mitFrist(versprechen, ms, was) {
   return Promise.race([
     versprechen,
     new Promise((_, ab) => setTimeout(() => ab(new Error(was + ": Frist von " + ms + " ms überschritten")), ms)),
