@@ -559,7 +559,7 @@ export function Kuechenraum({
               type="button"
               onClick={() => setZeigeGeraete((v) => !v)}
               aria-pressed={zeigeGeraete}
-              className={`flex items-center gap-2 rounded-[3px] px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+              className={`druck flex items-center gap-2 rounded-[3px] px-3.5 py-1.5 text-[13px] font-semibold ${
                 zeigeGeraete
                   ? "bg-kohle text-creme"
                   : "flaeche text-kohle-2 hover:!border-kohle-3"

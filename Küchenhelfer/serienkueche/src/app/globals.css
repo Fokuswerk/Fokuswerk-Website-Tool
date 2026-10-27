@@ -135,8 +135,37 @@ body {
   animation: laufen 1.1s linear infinite;
 }
 
+/* Reduzierte Bewegung heisst nicht: keine Rueckmeldung.
+   Hier stand ein pauschales Abschalten von allem. Damit verschwand auch,
+   was gar nichts bewegt — der Rand, der auf einen Druck antwortet, der
+   Grund, der sich beim Waehlen fuellt, das Aufblenden eines neuen
+   Schritts. Zurueck blieb eine Oberflaeche, die auf nichts mehr reagiert,
+   und das ist nicht das, worum gebeten wurde. Jetzt faellt die Bewegung
+   weg und das Ueberblenden bleibt. */
+@keyframes nurAufblenden { from { opacity: 0; } to { opacity: 1; } }
+
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
+  /* Alles, was einen Weg zuruecklegt, blendet nur noch auf. Die
+     Staffelung faellt mit weg — sie steht als Inline-Stil am Element,
+     deshalb hier mit Nachdruck. */
+  .rise, .warm-rein, .schritt-rein, .schritt-zurueck, .haken-rein {
+    animation-name: nurAufblenden;
+    animation-duration: .16s;
+    animation-timing-function: linear;
+    animation-delay: 0s !important;
+  }
+  /* Eine Schleife, die nie stehenbleibt, ist genau das, was stoert. */
+  .laufband::after { animation: none; }
+  /* Farbe, Rand, Deckkraft duerfen weiter antworten: sie bewegen nichts. */
+  *, *::before, *::after {
+    transition-property: color, background-color, border-color, outline-color,
+                         fill, stroke, opacity, box-shadow !important;
+    transition-duration: .14s !important;
+  }
+  /* Was sich unter dem Finger verformt, haelt still. */
+  .warm-wahl:active,
+  .druck:active,
+  .warm input[type="range"]:active::-webkit-slider-thumb { transform: none !important; }
 }
 
 /* ------- Weg fuer Privatkunden ------- */
@@ -276,6 +305,18 @@ body {
 }
 .schritt-rein { animation: schrittRein .34s cubic-bezier(.22,.8,.3,1) both; }
 
+/* Der Weg zurueck laeuft andersherum.
+   Vorher kam jeder Schritt von unten herein, vorwaerts wie rueckwaerts —
+   "Zurueck" sah also genauso aus wie "Weiter", und man musste die
+   Ueberschrift lesen, um zu merken, dass man umgedreht hat. Was nach unten
+   verschwindet, kommt von unten wieder; wer zurueckgeht, holt den Schritt
+   von oben zurueck. */
+@keyframes schrittZurueck {
+  from { opacity: 0; transform: translateY(-9px); }
+  to { opacity: 1; transform: none; }
+}
+.schritt-zurueck { animation: schrittZurueck .34s cubic-bezier(.22,.8,.3,1) both; }
+
 /* Der Haken auf der Quittung: kurz ueber die Zielgroesse hinaus, dann sitzt
    er. Das ist die einzige Stelle im Weg, an der etwas huepfen darf — sie
    quittiert sechs beantwortete Fragen. */
@@ -288,6 +329,21 @@ body {
 /* Auswahlflaechen antworten ruhig: Rand und Grund, kein Huepfen. */
 .warm-wahl { transition: border-color .16s ease, background-color .16s ease, color .16s ease; }
 .warm-wahl:active { transform: scale(.995); }
+
+/* Antwort auf den Druck, nicht auf das Loslassen.
+   Die kleinen Knoepfe — Marke, Ansicht, "Geraete benennen" — hatten gar
+   keine: sie wechselten die Farbe erst, wenn der Finger wieder weg war.
+   Dazwischen lag ein Moment, in dem nichts passiert ist, und genau da
+   faellt das Gefuehl von Unmittelbarkeit weg.
+   Der Einbruch ist in Pixeln gedacht, nicht in Prozent: 3 % sind an einer
+   40 px hohen Taste gut einen Pixel, an einer grossen Karte waeren es
+   zehn. Deshalb gilt diese Figur nur fuer kleine Flaechen — die grossen
+   behalten ihre ruhigere oben. */
+.druck {
+  transition: transform .1s ease-out, border-color .16s ease,
+              background-color .16s ease, color .16s ease;
+}
+.druck:active { transform: scale(.97); }
 
 /* Schieber einheitlich und schlank, in jedem Browser gleich.
    Das Element selbst ist 26 px hoch, damit der ganze Streifen getroffen

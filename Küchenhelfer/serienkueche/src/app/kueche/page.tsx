@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRef } from "react";
-import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, FileUp, PencilLine, Printer, RotateCcw, RotateCw, ScanLine } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, FileUp, Move, PencilLine, Printer, RotateCcw, RotateCw, ScanLine } from "lucide-react";
 import { modul } from "@/data/module";
 import { HOCH_H, OS_UK, rolleVon, ROLLE_NAME } from "@/lib/masse";
 import { ARTEN, FOTO_QUELLE, FOTOS_LIZENZIERT, GERAETEFOTO_HINWEIS, geraet, geraeteFuer, markenFuer, MWST, PREISSTAND_GERAETE, QUELLEN, type GeraeteArt } from "@/data/geraete";
@@ -20,7 +20,7 @@ import { herkunftVon, HERKUNFT_TEXT, schrittFolge, useFremdstand, useKueche, typ
 import { Kuechenbild, Raumbild } from "@/components/warm/Kuechenbild";
 import { Geraetebild, Schrankbild } from "@/components/warm/Geraetebild";
 
-import { GrosseWahl, GrosseZahl, Karte, Notiz, Schieber, WKnopf } from "@/components/warm/Kit";
+import { GrosseWahl, GrosseZahl, Karte, Notiz, Schieber, Wahlreihe, WKnopf } from "@/components/warm/Kit";
 import { Massleiste } from "@/components/warm/Massleiste";
 import { baueUnterlagen } from "@/lib/unterlagen";
 import { FOTOS, GERAETEFOTOS, fotoUrl } from "@/data/fotos";
@@ -332,6 +332,14 @@ export default function Kuechenplaner() {
 
   const folge = schrittFolge(raum, quelle);
   const pos = Math.max(0, folge.indexOf(schritt));
+  /* In welche Richtung der letzte Wechsel ging.
+     Nur bei einem echten Schrittwechsel neu bestimmt — wuerde das bei jedem
+     Rendern nachgerechnet, koennte die Richtung mitten in der Einblendung
+     umspringen und die Bewegung sichtbar neu anfangen. */
+  const richtung = useRef({ fuer: pos, rueck: false });
+  if (richtung.current.fuer !== pos) {
+    richtung.current = { fuer: pos, rueck: pos < richtung.current.fuer };
+  }
   const typ = useMemo(() => alsKuechentyp(raum), [raum]);
   const waende = kuechenwaende(raum);
   const brauchtPlan = schritt === "vorschlaege" || schritt === "ergebnis" || schritt === "unterlagen" || schritt === "start";
@@ -1024,7 +1032,7 @@ export default function Kuechenplaner() {
         {/* Der Schluessel ist der Schritt: damit baut React den Inhalt bei
             jedem Wechsel neu auf, und die Einblendung laeuft wirklich jedes
             Mal — nicht nur beim ersten Rendern. */}
-        <div key={schritt} className="schritt-rein">
+        <div key={schritt} className={richtung.current.rueck ? "schritt-zurueck" : "schritt-rein"}>
         {istStart && (
           <div className="warm-rein grid items-center gap-10 pt-2 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:pt-8">
             <div>
@@ -1506,19 +1514,12 @@ export default function Kuechenplaner() {
               {markenFuer(geraeteArt).length > 1 && (
                 <div className="mt-5 flex flex-wrap items-center gap-2">
                   <span className="mr-1 text-[13px] text-kohle-3">Marke</span>
-                  {[null, ...markenFuer(geraeteArt)].map((m) => (
-                    <button
-                      key={m ?? "alle"}
-                      type="button"
-                      onClick={() => setMarken((v) => ({ ...v, [geraeteArt]: m }))}
-                      aria-pressed={(marken[geraeteArt] ?? null) === m}
-                      className={`rounded-[3px] px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
-                        (marken[geraeteArt] ?? null) === m ? "bg-kohle text-creme" : "flaeche text-kohle-2 hover:!border-kohle-3"
-                      }`}
-                    >
-                      {m ?? "Alle"}
-                    </button>
-                  ))}
+                  <Wahlreihe<string>
+                    etikett="Marke"
+                    wert={marken[geraeteArt] ?? "alle"}
+                    setze={(m) => setMarken((v) => ({ ...v, [geraeteArt]: m === "alle" ? null : m }))}
+                    optionen={[{ id: "alle", titel: "Alle" }, ...markenFuer(geraeteArt).map((m) => ({ id: m, titel: m }))]}
+                  />
                 </div>
               )}
 
@@ -1539,7 +1540,11 @@ export default function Kuechenplaner() {
                         style={{ animationDelay: `${Math.min(i, 5) * 45}ms` }}
                         onClick={() => setzeGeraet(geraeteArt, g.id)}
                         aria-pressed={aktiv}
-                        className={`warm-wahl flaeche rise rounded-[3px] p-4 text-left ${
+                        /* Die Geraete bringen verschieden viele Datenzeilen mit
+                           (ein Kochfeld hat Kochzonen, ein anderes nicht). Die
+                           Karten waren damit verschieden hoch und die Reihe
+                           ausgefranst. Spalte mit Fuss unten: gleiche Hoehe. */
+                        className={`warm-wahl flaeche rise flex h-full flex-col rounded-[3px] p-4 text-left ${
                           aktiv ? "flaeche-hoch !border-kohle ring-1 ring-kohle" : "hover:!border-linie-stark"
                         }`}
                       >
@@ -1571,7 +1576,7 @@ export default function Kuechenplaner() {
                         </div>
 
                         {g.daten && g.daten.length > 0 && (
-                          <dl className="mt-3.5 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-linie-warm pt-3">
+                          <dl className="mt-3.5 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-linie-warm pb-3 pt-3">
                             {g.daten.map(([k, v]) => (
                               <div key={k} className="flex items-baseline justify-between gap-2 text-[12.5px]">
                                 <dt className="shrink-0 text-kohle-3">{k}</dt>
@@ -1581,9 +1586,11 @@ export default function Kuechenplaner() {
                           </dl>
                         )}
 
-                        <div className="ziffern mt-3 flex items-baseline justify-between gap-3 border-t border-linie-warm pt-3 text-[13px]">
+                        <div className="mt-auto flex items-baseline justify-between gap-3 border-t border-linie-warm pt-3 text-[13px]">
                           <span className="text-kohle-3">
-                            {g.richtpreis > 0 ? `Gerät ca. ${eur(g.richtpreis)}` : "kein Gerät"}
+                            {g.richtpreis > 0
+                              ? <>Gerät ca. <span className="ziffern">{eur(g.richtpreis)}</span></>
+                              : "kein Gerät"}
                           </span>
                           {(() => {
                             const w = geraeteWirkung?.get(g.id);
@@ -1597,7 +1604,9 @@ export default function Kuechenplaner() {
                             }
                             return (
                               <span className="font-semibold text-kohle">
-                                {w.delta === 0 ? "gleicher Preis" : `${w.delta > 0 ? "+" : "−"}${eur(Math.abs(w.delta))}`}
+                                {w.delta === 0
+                                  ? "gleicher Preis"
+                                  : <span className="ziffern">{w.delta > 0 ? "+" : "−"}{eur(Math.abs(w.delta))}</span>}
                               </span>
                             );
                           })()}
@@ -1760,23 +1769,20 @@ export default function Kuechenplaner() {
             <Karte className="mt-8 overflow-hidden flaeche-hoch">
               <div className="bg-creme-2/40 px-4 pb-5 pt-5 sm:px-7">
                 <div className="mb-5 flex justify-center">
-                  <div className="vertieft inline-flex rounded-full bg-creme-2 p-1">
-                    {([["raum", "Räumlich"], ["vorn", "Von vorn"], ["umstellen", "Umstellen"]] as const).map(([id, t]) => (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => { setAnsicht(id); setAngefasst(null); setTauschGrund(null); }}
-                        aria-pressed={ansicht === id}
-                        className={`rounded-[3px] px-3.5 py-1.5 text-[13px] font-semibold transition sm:px-4 sm:text-[13.5px] ${
-                          ansicht === id
-                            ? "bg-gradient-to-b from-white to-[#fbfaf7] text-kohle shadow-[0_1px_2px_rgba(21,20,15,.1),0_3px_8px_-3px_rgba(21,20,15,.22),inset_0_1px_0_#fff]"
-                            : "text-kohle-2 hover:text-kohle"
-                        }`}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
+                  <Wahlreihe<"raum" | "vorn" | "umstellen">
+                    etikett="Ansicht"
+                    wert={ansicht}
+                    setze={(id) => { setAnsicht(id); setAngefasst(null); setTauschGrund(null); }}
+                    optionen={[
+                      { id: "raum", titel: "Räumlich" },
+                      { id: "vorn", titel: "Von vorn" },
+                      {
+                        id: "umstellen",
+                        titel: "Umstellen",
+                        zusatz: <Move size={14} strokeWidth={2.2} className="shrink-0 opacity-70" />,
+                      },
+                    ]}
+                  />
                 </div>
 
                 {ansicht === "raum" && (

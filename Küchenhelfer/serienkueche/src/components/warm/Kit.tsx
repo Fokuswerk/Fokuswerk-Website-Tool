@@ -48,7 +48,7 @@ export function WKnopf({
     : art === "primaer"
       ? "bg-gradient-to-b from-[#3b382f] to-kohle text-creme shadow-[0_1px_2px_rgba(21,20,15,.2),0_10px_24px_-10px_rgba(21,20,15,.55),inset_0_1px_0_rgba(255,255,255,.14)] hover:from-[#474338] hover:to-[#211f18] active:translate-y-px"
       : art === "klar"
-        ? "text-kohle-2 hover:text-kohle"
+        ? "text-kohle-2 hover:text-kohle active:translate-y-px"
         : "flaeche text-kohle hover:border-kohle-3 active:translate-y-px";
   return (
     <button type={typ} onClick={aus ? undefined : onClick} disabled={aus} className={`${basis} ${stil}`}>
@@ -114,6 +114,52 @@ export function GrosseWahl<T extends string | number>({
                 {o.zusatz}
               </div>
             )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Eine Reihe gleichrangiger Wahlknöpfe.
+ *
+ * Es gab zwei davon im Planer, und sie sahen verschieden aus: der Markenfilter
+ * eine Reihe Knöpfe mit Haarlinie, der Ansichtswechsel eine Pille mit Schatten
+ * darin. Die Pille war obendrein kaputt — runder Behälter, eckige Chips, also
+ * stand der gewählte Chip oben links über den Rand hinaus. Und eine Pille gibt
+ * es in diesem Entwurf gar nicht: ein Radius, 3 px.
+ *
+ * Jetzt eine Figur für beide: gewählt ist ausgefüllt, der Rest trägt eine
+ * Haarlinie. 40 px hoch, damit der Daumen trifft.
+ */
+export function Wahlreihe<T extends string>({
+  wert,
+  setze,
+  optionen,
+  etikett,
+}: {
+  wert: T;
+  setze: (v: T) => void;
+  optionen: Array<{ id: T; titel: string; zusatz?: ReactNode }>;
+  etikett: string;
+}) {
+  return (
+    <div role="group" aria-label={etikett} className="flex flex-wrap items-center gap-2">
+      {optionen.map((o) => {
+        const aktiv = o.id === wert;
+        return (
+          <button
+            key={o.id}
+            type="button"
+            onClick={() => { if (!aktiv) setze(o.id); }}
+            aria-pressed={aktiv}
+            className={`druck flex h-10 items-center gap-2 rounded-[3px] px-4 text-[13.5px] font-semibold ${
+              aktiv ? "bg-kohle text-creme" : "flaeche text-kohle-2 hover:!border-kohle-3 hover:text-kohle"
+            }`}
+          >
+            {o.titel}
+            {o.zusatz}
           </button>
         );
       })}

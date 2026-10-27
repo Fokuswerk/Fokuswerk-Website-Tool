@@ -450,8 +450,9 @@ export function Raumbild({
   const zeichenId = useId();
   const svgRef = useRef<SVGSVGElement>(null);
   const [zieht, setZieht] = useState(false);
-  /** Wo der Finger aufgesetzt hat, und ob er die Schwelle schon ueberschritten hat. */
-  const start = useRef<{ x: number; y: number; los: boolean } | null>(null);
+  /** Wo der Finger aufgesetzt hat, ob er die Schwelle schon ueberschritten
+      hat, und an welcher Stelle des Stuecks er es angefasst hat. */
+  const start = useRef<{ x: number; y: number; los: boolean; versatz: number } | null>(null);
   const waende = kuechenwaende(raum);
   const WD = 110; // Wandstaerke in der Zeichnung
   const KT = 600; // Korpustiefe
@@ -514,9 +515,15 @@ export function Raumbild({
     : ziehen?.was === "tuer" ? raum.tuer.breite
     : 0;
 
+  /** Wo das angefasste Stueck gerade anfaengt. */
+  const greifVon = (): number =>
+    ziehen?.was === "fenster" ? raum.fenster?.von ?? 0
+    : ziehen?.was === "tuer" ? raum.tuer.von
+    : raum.wasser.von;
+
   /** Zeigerposition in Millimeter entlang der Wand. Rechnet die Verzerrung
       heraus, die entsteht, weil das Bild mittig eingepasst wird. */
-  const mmUnterZeiger = (e: React.PointerEvent): number | null => {
+  const laengsUnterZeiger = (e: React.PointerEvent): number | null => {
     const el = svgRef.current;
     if (!el || !greifWand) return null;
     const r = el.getBoundingClientRect();
@@ -528,18 +535,27 @@ export function Raumbild({
     const ux = -rand + (e.clientX - r.left - links) / faktor;
     const uy = -rand + (e.clientY - r.top - oben) / faktor;
     // Dieselbe Richtung wie die Zeichnung: zwei Waende laufen rueckwaerts.
-    const laengs =
-      greifWand === "haupt" ? ux
+    return greifWand === "haupt" ? ux
       : greifWand === "rechts" ? uy
       : greifWand === "gegenueber" ? breite - ux
       : tiefe - uy;
-    const max = Math.max(0, wandlaenge(raum, greifWand) - greifBreite);
-    return Math.round(Math.min(max, Math.max(0, laengs - greifBreite / 2)) / 10) * 10;
   };
 
+  /**
+   * Das Stueck bleibt da unter dem Finger, wo es angefasst wurde.
+   *
+   * Vorher rechnete der Schieber "Zeigerstelle minus halbe Breite" — die
+   * Mitte des Fensters sprang also unter den Finger, sobald man aufsetzte.
+   * Wer ein 160 cm breites Fenster an der linken Kante anfasste, sah es um
+   * 80 cm wegrutschen, bevor er ueberhaupt gezogen hatte. Jetzt wird der
+   * Versatz beim Aufsetzen gemerkt und die ganze Geste ueber gehalten.
+   */
   const schiebe = (e: React.PointerEvent) => {
-    const mm = mmUnterZeiger(e);
-    if (mm !== null) ziehen!.setze(mm);
+    const laengs = laengsUnterZeiger(e);
+    if (laengs === null || !greifWand) return;
+    const versatz = start.current?.versatz ?? greifBreite / 2;
+    const max = Math.max(0, wandlaenge(raum, greifWand) - greifBreite);
+    ziehen!.setze(Math.round(Math.min(max, Math.max(0, laengs - versatz)) / 10) * 10);
   };
 
   /** Zeigerposition in Planmassen — fuer die Frage, ob der Griff getroffen ist. */
@@ -563,10 +579,7 @@ export function Raumbild({
     if (!greifWand) return false;
     const z = planUnterZeiger(e);
     if (!z) return false;
-    const von =
-      ziehen!.was === "fenster" ? raum.fenster?.von ?? 0
-      : ziehen!.was === "tuer" ? raum.tuer.von
-      : raum.wasser.von;
+    const von = greifVon();
     const mitte = von + greifBreite / 2;
     const g = punktAufWand(greifWand, mitte, -330);
     if (Math.hypot(z.x - g.x, z.y - g.y) <= 560) return true;
@@ -607,7 +620,19 @@ export function Raumbild({
       onPointerDown={ziehen ? (e) => {
         if (!aufGriff(e)) return;
         (e.target as Element).setPointerCapture?.(e.pointerId);
-        start.current = { x: e.clientX, y: e.clientY, los: false };
+        /* Auf dem Griff ueber der Wand gibt es keinen sinnvollen Versatz: er
+           sitzt auf der Mitte und fuehrt deshalb die Mitte. Auf dem Stueck
+           selbst zaehlt die Stelle, an der angefasst wurde — geklemmt auf
+           das Stueck, denn der Fangbereich reicht ein Stueck darueber
+           hinaus. */
+        const laengs = laengsUnterZeiger(e);
+        const roh = laengs === null ? greifBreite / 2 : laengs - greifVon();
+        start.current = {
+          x: e.clientX,
+          y: e.clientY,
+          los: false,
+          versatz: Math.min(greifBreite, Math.max(0, roh)),
+        };
         setZieht(true);
       } : undefined}
       onPointerMove={ziehen && zieht ? (e) => {
