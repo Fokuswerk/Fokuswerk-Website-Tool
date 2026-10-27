@@ -570,7 +570,10 @@ export function Kuechenraum({
             </button>
           )}
           {unterzeile && (
-            <p className="text-[12.5px] text-kohle-3">
+            /* Die Bühne steht auf der Ergebnisseite auf dem dunklen
+               Abschnittsgrund; kohle-3 auf #292a2c liest niemand. Auf hellem
+               Grund bleibt es, wie es war. */
+            <p className="text-[12.5px] text-kohle-3 [.auf-dunkel_&]:text-creme/60">
               Gerechnet, nicht gezeichnet: jeder Schrank steht so, wie er geliefert wird.
             </p>
           )}

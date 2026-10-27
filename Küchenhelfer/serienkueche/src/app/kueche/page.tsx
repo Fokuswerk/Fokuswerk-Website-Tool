@@ -186,7 +186,7 @@ function Kopf({
 
 function VorschlagKarte({
   verzug = 0,
-  v, typ, aktiv, empfohlen, waehlen,
+  v, typ, aktiv, empfohlen, waehlen, vergleich,
 }: {
   v: Vorschlag;
   typ: ReturnType<typeof alsKuechentyp>;
@@ -195,17 +195,43 @@ function VorschlagKarte({
   waehlen: () => void;
   /** Millisekunden, die diese Karte spaeter hereinkommt als die erste. */
   verzug?: number;
+  /** Was diese Karte gegenüber dem Tipp kostet und bringt. Auf dem Tipp selbst
+      steht nichts. */
+  vergleich?: { preis: number; flaeche: number } | null;
 }) {
   const ersteZeile = typ.zeilen[0]?.id ?? "Z-haupt";
+  /**
+   * Woran man die Karten auseinanderhält.
+   *
+   * Vorher stand auf zwei von drei Karten dieselbe Zahl: "Viel Stauraum" und
+   * "Zum Kochen" kosteten gleich viel, und was man für das Geld anders bekam,
+   * stand nirgends. Der Unterschied steckt in den Schränken selbst —
+   * Türschrank, Auszug, Apothekerauszug, Mülltrenner —, und den kann man
+   * zählen. Geräteplätze und Passleisten bleiben draußen: die sind in jeder
+   * Karte gleich.
+   */
+  const mischung = (() => {
+    const zaehler = new Map<string, number>();
+    for (const id of Object.values(v.belegung).flat()) {
+      if (id.startsWith("PBX:")) continue;
+      const name = MODULKURZ[id];
+      if (!name) continue;
+      zaehler.set(name, (zaehler.get(name) ?? 0) + 1);
+    }
+    return [...zaehler.entries()].sort((a, b) => b[1] - a[1]);
+  })();
   return (
     <Karte
-      className={`rise overflow-hidden ${aktiv ? "flaeche-hoch !border-kohle ring-1 ring-kohle" : ""}`}
+      /* Die Karten tragen verschieden viele Zeilen — eine hat zwei
+         Differenzen zum Tipp, eine keine. Ohne gemeinsamen Fuss stehen die
+         drei Knoepfe auf drei Hoehen. */
+      className={`rise flex h-full flex-col overflow-hidden ${aktiv ? "flaeche-hoch !border-kohle ring-1 ring-kohle" : ""}`}
       style={{ animationDelay: `${verzug}ms` }}
     >
       <div className="bg-creme-2/60 px-4 pt-4">
         <Kuechenbild typ={typ} variante={v.variante} zeileId={ersteZeile} hoehe={150} />
       </div>
-      <div className="p-5">
+      <div className="flex flex-1 flex-col p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -229,7 +255,41 @@ function VorschlagKarte({
           </div>
           <div className="gross shrink-0 text-right text-[23px] font-bold leading-none text-kohle">{eur(brutto(v.preis))}</div>
         </div>
-        <ul className="mt-4 space-y-2 border-t border-linie-warm pt-4 text-[14px] leading-snug">
+        {/* Zwei Karten standen mit demselben Preis nebeneinander, und was man
+            für das Geld anders bekam, musste man selbst ausrechnen. Jetzt
+            steht die Differenz zum Tipp da — in Zahlen, neutral, ohne Rot
+            und Grün. */}
+        {vergleich && (vergleich.preis !== 0 || vergleich.flaeche !== 0) && (
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-linie-warm pt-3 text-[13px] text-kohle-2">
+            {vergleich.preis !== 0 && (
+              <span>
+                <span className="ziffern font-semibold text-kohle">
+                  {vergleich.preis > 0 ? "+" : "−"}{eur(Math.abs(vergleich.preis))}
+                </span>{" "}
+                gegenüber dem Tipp
+              </span>
+            )}
+            {vergleich.flaeche !== 0 && (
+              <span>
+                <span className="ziffern font-semibold text-kohle">
+                  {vergleich.flaeche > 0 ? "+" : "−"}{Math.abs(Math.round(vergleich.flaeche / 10))} cm
+                </span>{" "}
+                Arbeitsfläche
+              </span>
+            )}
+          </div>
+        )}
+        {mischung.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-linie-warm pt-3 text-[13px] text-kohle-2">
+            {mischung.map(([name, n]) => (
+              <span key={name} className="flex items-center gap-1.5">
+                <span className="ziffern font-semibold text-kohle">{n}</span>
+                {name}
+              </span>
+            ))}
+          </div>
+        )}
+        <ul className="mt-3 space-y-2 border-t border-linie-warm pt-3 text-[14px] leading-snug">
           {v.gutPunkte.slice(0, 2).map((g) => (
             <li key={g} className="flex gap-2.5 text-kohle-2">
               <Check size={15} strokeWidth={2.4} className="mt-[3px] shrink-0 text-salbei" />
@@ -243,7 +303,7 @@ function VorschlagKarte({
             </li>
           ))}
         </ul>
-        <div className="mt-5">
+        <div className="mt-auto pt-5">
           <WKnopf art={aktiv ? "still" : "primaer"} onClick={waehlen}>
             {aktiv ? <><Check size={15} strokeWidth={2.4} />Ausgewählt</> : "Die nehme ich"}
           </WKnopf>
@@ -897,7 +957,7 @@ export default function Kuechenplaner() {
   ) : null;
 
   const bildStreifen = (
-    <div className="sticky top-[57px] z-10 -mx-5 bg-creme/80 px-5 pb-3 pt-2.5 backdrop-blur-xl backdrop-saturate-150 sm:-mx-8 sm:px-8 lg:hidden">
+    <div className="sticky top-[57px] z-10 -mx-5 border-b border-linie-warm bg-creme px-5 pb-3 pt-2.5 sm:-mx-8 sm:px-8 lg:hidden">
       <div className="flaeche flex items-center gap-3 rounded-[3px] py-2 pl-2 pr-3">
         <div className="w-[96px] shrink-0">
           <Raumbild raum={raum} hervorhebung={hervor} hoehe={66} />
@@ -969,7 +1029,7 @@ export default function Kuechenplaner() {
 
   return (
     <div className="warm min-h-full">
-      <header className="sticky top-0 z-20 border-b border-black/[0.055] bg-creme/80 backdrop-blur-xl backdrop-saturate-150">
+      <header className="sticky top-0 z-20 border-b border-linie-stark bg-creme">
         {/* Enger Kopf auf kleinen Schirmen: bei 320 px teilen sich Zeichen,
             vier Stationsnamen, drei Haken und zwei Knoepfe eine Zeile. */}
         <div className="mx-auto flex h-[56px] max-w-[1180px] items-center gap-2.5 px-4 sm:gap-4 sm:px-8">
@@ -1778,6 +1838,9 @@ export default function Kuechenplaner() {
                   <VorschlagKarte
                     key={v.strategie}
                     verzug={i * 70}
+                    vergleich={empfehlung && empfehlung.strategie !== v.strategie
+                      ? { preis: brutto(v.preis) - brutto(empfehlung.preis), flaeche: v.arbeitsflaeche - empfehlung.arbeitsflaeche }
+                      : null}
                     v={v}
                     typ={typ}
                     // Nach dem Zusammenlegen zeigt die Seite unter einem
@@ -2026,189 +2089,6 @@ export default function Kuechenplaner() {
                   </button>
                 </div>
 
-                {umstellenAn && (
-                  <div className="mt-5 border-t border-creme/15 pt-5">
-                    <div className="mb-4 flex flex-wrap items-center justify-end gap-3">
-                      {eigen && Object.keys(eigen).length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => { setzeBelegung(eigenerSchluessel!, {}); setAngefasst(null); setTauschGrund(null); }}
-                          className="flex items-center gap-1.5 text-[13.5px] font-semibold text-kohle-2 transition-colors hover:text-kohle"
-                        >
-                          <RotateCcw size={13} strokeWidth={2.2} />
-                          Wieder wie vorgeschlagen
-                        </button>
-                      )}
-                    </div>
-
-{/* Die Buehne steht oben und bleibt beim Umschalten stehen. Hier
-                        stand bis eben eine ZWEITE Kuechenraum-Instanz mit einer
-                        anderen Hoehe: React baute dabei die ganze WebGL-Szene ab
-                        und neu auf, Kamerawinkel und Zoom waren weg, und die
-                        Karte sprang um 20 px. */}
-
-                    {/* Derselbe Weg mit der Tastatur. Im Raum laesst sich nur
-                        mit dem Zeiger tippen — ohne diese Liste waere das
-                        Herzstueck der Ergebnisseite fuer Tastatur und
-                        Vorlesesoftware gar nicht bedienbar. */}
-                    <div className="mt-4">
-                      <div className="vorzeile mb-2">Oder hier: Platz wählen, dann Ziel wählen</div>
-                      {typ.zeilen.map((z) => (
-                        <div key={z.id} className="mt-2">
-                          <div className="mb-1.5 text-[12.5px] text-kohle-3">{z.bezeichnung}</div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {(gewaehlterVorschlag.belegung[z.id] ?? []).map((id, i) => {
-                              const dran = angefasst?.zeile === z.id && angefasst?.index === i;
-                              const ziel = !!angefasst && !dran && zielMoeglich(z.id, i);
-                              const nr = nummerAb(z.id) + i;
-                              return (
-                                <button
-                                  key={i}
-                                  type="button"
-                                  onClick={() => antippen(z.id, i)}
-                                  aria-pressed={dran}
-                                  aria-label={`Platz ${nr}, ${modulName(id)}${dran ? ", angefasst" : ziel ? ", mögliches Ziel" : ""}`}
-                                  className={`flex min-h-11 items-center gap-1.5 rounded-[3px] px-3 text-[12.5px] transition-colors ${
-                                    dran
-                                      ? "bg-kohle text-creme"
-                                      : ziel
-                                        ? "border-2 border-butter bg-butter-soft text-kohle"
-                                        : "flaeche text-kohle-2 hover:!border-kohle-3"
-                                  }`}
-                                >
-                                  <span className="ziffern font-bold">{nr}</span>
-                                  {modulName(id)}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {angefasst && (() => {
-                      const jetzt = (gewaehlterVorschlag.belegung[angefasst.zeile] ?? [])[angefasst.index];
-                      if (!jetzt || !istStauraum(jetzt)) return null;
-                      const optionen = austauschbar(jetzt)
-                        .map((id) => {
-                          const plan = ersetzePlan(typ, gewaehlterVorschlag.belegung, angefasst, id);
-                          if ("grund" in plan) return null;
-                          const neu = ausBelegung(raum, typ, grundVorschlag!.strategie, {
-                            ...gewaehlterVorschlag.belegung, ...plan.belegung,
-                          });
-                          /* Brutto, wie jede andere Zahl im Privatkundenteil. Netto stand hier
-                             19 Prozent daneben: die Karte sagte "-129 Euro", der
-                             Gesamtpreis darueber fiel um 154. */
-                          return { id, belegung: plan.belegung, delta: brutto(neu.preis) - brutto(gewaehlterVorschlag.preis) };
-                        })
-                        .filter((x): x is { id: string; belegung: Record<string, string[]>; delta: number } => !!x);
-
-                      return (
-                        <Karte className="mt-5 px-5 py-5">
-                          <div className="flex flex-wrap items-baseline justify-between gap-2">
-                            <div className="text-[15px] font-semibold text-kohle">
-                              Hier steht: {modul(jetzt).bezeichnung}
-                            </div>
-                            <div className="text-[13px] text-kohle-3">
-                              <span className="ziffern">{Math.round((modul(jetzt).breite ?? 0) / 10)}</span> cm breit
-                            </div>
-                          </div>
-                          {optionen.length === 0 ? (
-                            <p className="mt-2 text-[14px] text-kohle-2">
-                              An dieser Stelle passt kein anderer Typ — die Zeile geht sonst nicht auf.
-                            </p>
-                          ) : (
-                            <>
-                              <p className="mt-1.5 text-[13.5px] text-kohle-2">
-                                Anderer Typ an dieselbe Stelle. Der Preis ist der Unterschied für die
-                                ganze Küche, Passleiste schon eingerechnet.
-                              </p>
-                              <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-                                {optionen.map((o) => (
-                                  <button
-                                    key={o.id}
-                                    type="button"
-                                    onClick={() => {
-                                      setzeBelegung(eigenerSchluessel!, { ...gewaehlterVorschlag.belegung, ...o.belegung });
-                                      setTauschGrund(null);
-                                    }}
-                                    className="warm-wahl flaeche rounded-[3px] p-3 text-left hover:!border-linie-stark"
-                                  >
-                                    <div className="vertieft mb-2.5 overflow-hidden rounded-[3px] bg-creme-2">
-                                      <Schrankbild id={o.id} />
-                                    </div>
-                                    <div className="text-[14px] font-semibold leading-tight text-kohle">
-                                      {modul(o.id).bezeichnung}
-                                    </div>
-                                    <div className="ziffern mt-1.5 flex items-baseline justify-between gap-2 text-[12.5px]">
-                                      <span className="text-kohle-3">{Math.round((modul(o.id).breite ?? 0) / 10)} cm</span>
-                                      <span className="font-semibold text-kohle">
-                                        {o.delta === 0 ? "gleicher Preis" : `${o.delta > 0 ? "+" : "−"}${eur(Math.abs(o.delta))}`}
-                                      </span>
-                                    </div>
-                                  </button>
-                                ))}
-                              </div>
-                            </>
-                          )}
-                        </Karte>
-                      );
-                    })()}
-
-                    {tauschGrund && (
-                      <div className="mt-4">
-                        <Notiz ton="achtung">{tauschGrund}</Notiz>
-                      </div>
-                    )}
-
-                    <div className="mt-6 space-y-4">
-                      {typ.zeilen.map((z) => {
-                        const hin = befundeZeile(raum, typ, z.id, gewaehlterVorschlag.belegung[z.id] ?? []).map((b) => b.text);
-                        return (
-                          <div key={z.id}>
-                            {typ.zeilen.length > 1 && (
-                              <div className="mb-1 text-[12.5px] font-semibold text-kohle-3">{z.bezeichnung}</div>
-                            )}
-                            <Kuechenbild
-                              typ={typ}
-                              variante={gewaehlterVorschlag.variante}
-                              zeileId={z.id}
-                              hoehe={typ.zeilen.length > 1 ? 230 : 300}
-                             
-                              nummernAb={nummerAb(z.id)}
-                              waehlbar
-                              gewaehlt={angefasst?.zeile === z.id ? angefasst.index : null}
-                              moeglich={angefasst ? (i) => zielMoeglich(z.id, i) : undefined}
-                              onWaehle={(i) => antippen(z.id, i)}
-                            />
-                            <Positionsliste ids={gewaehlterVorschlag.belegung[z.id] ?? []} ab={nummerAb(z.id)} />
-                            {hin.length > 0 && (
-                              <div className="mt-2 space-y-1.5">
-                                {hin.map((h) => <Notiz key={h} ton="achtung">{h}</Notiz>)}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {(() => {
-                      const quer = befundeGesamt(raum, typ, gewaehlterVorschlag.belegung);
-                      if (quer.length === 0) return null;
-                      return (
-                        <div className="mt-4 space-y-1.5">
-                          {quer.map((h) => <Notiz key={h} ton="achtung">{h}</Notiz>)}
-                        </div>
-                      );
-                    })()}
-
-                    <p className="mt-5 text-[12.5px] leading-relaxed text-kohle-3">
-                      Getauscht wird immer Platz gegen Platz — so bleibt die Summe der Breiten
-                      genau die Länge deiner Küchenzeile. Preis, Hängeschränke und Arbeitsfläche rechnen wir
-                      sofort neu, und wenn eine Regel kippt, steht es direkt darunter.
-                    </p>
-                  </div>
-                )}
               </div>
               <div className="grid gap-6 p-6 sm:grid-cols-[1fr_auto] sm:items-end sm:p-8">
                 <div>
@@ -2240,6 +2120,193 @@ export default function Kuechenplaner() {
                 </div>
               </div>
             </Karte>
+
+              {umstellenAn && (
+                <section className="mt-9">
+                  <div className="mb-4 flex flex-wrap items-center justify-end gap-3">
+                    {eigen && Object.keys(eigen).length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => { setzeBelegung(eigenerSchluessel!, {}); setAngefasst(null); setTauschGrund(null); }}
+                        className="flex items-center gap-1.5 text-[13.5px] font-semibold text-kohle-2 transition-colors hover:text-kohle"
+                      >
+                        <RotateCcw size={13} strokeWidth={2.2} />
+                        Wieder wie vorgeschlagen
+                      </button>
+                    )}
+                  </div>
+
+{/* Die Buehne steht oben und bleibt beim Umschalten stehen. Hier
+                      stand bis eben eine ZWEITE Kuechenraum-Instanz mit einer
+                      anderen Hoehe: React baute dabei die ganze WebGL-Szene ab
+                      und neu auf, Kamerawinkel und Zoom waren weg, und die
+                      Karte sprang um 20 px. */}
+
+                  {/* Derselbe Weg mit der Tastatur. Im Raum laesst sich nur
+                      mit dem Zeiger tippen — ohne diese Liste waere das
+                      Herzstueck der Ergebnisseite fuer Tastatur und
+                      Vorlesesoftware gar nicht bedienbar. */}
+                  <div className="mt-4">
+                    <div className="vorzeile mb-2">Oder hier: Platz wählen, dann Ziel wählen</div>
+                    {typ.zeilen.map((z) => (
+                      <div key={z.id} className="mt-2">
+                        <div className="mb-1.5 text-[12.5px] text-kohle-3">{z.bezeichnung}</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(gewaehlterVorschlag.belegung[z.id] ?? []).map((id, i) => {
+                            const dran = angefasst?.zeile === z.id && angefasst?.index === i;
+                            const ziel = !!angefasst && !dran && zielMoeglich(z.id, i);
+                            const nr = nummerAb(z.id) + i;
+                            return (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => antippen(z.id, i)}
+                                aria-pressed={dran}
+                                aria-label={`Platz ${nr}, ${modulName(id)}${dran ? ", angefasst" : ziel ? ", mögliches Ziel" : ""}`}
+                                className={`flex min-h-11 items-center gap-1.5 rounded-[3px] px-3 text-[12.5px] transition-colors ${
+                                  dran
+                                    ? "bg-kohle text-creme"
+                                    : ziel
+                                      ? "border-2 border-butter bg-butter-soft text-kohle"
+                                      : "flaeche text-kohle-2 hover:!border-kohle-3"
+                                }`}
+                              >
+                                <span className="ziffern font-bold">{nr}</span>
+                                {modulName(id)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {angefasst && (() => {
+                    const jetzt = (gewaehlterVorschlag.belegung[angefasst.zeile] ?? [])[angefasst.index];
+                    if (!jetzt || !istStauraum(jetzt)) return null;
+                    const optionen = austauschbar(jetzt)
+                      .map((id) => {
+                        const plan = ersetzePlan(typ, gewaehlterVorschlag.belegung, angefasst, id);
+                        if ("grund" in plan) return null;
+                        const neu = ausBelegung(raum, typ, grundVorschlag!.strategie, {
+                          ...gewaehlterVorschlag.belegung, ...plan.belegung,
+                        });
+                        /* Brutto, wie jede andere Zahl im Privatkundenteil. Netto stand hier
+                           19 Prozent daneben: die Karte sagte "-129 Euro", der
+                           Gesamtpreis darueber fiel um 154. */
+                        return { id, belegung: plan.belegung, delta: brutto(neu.preis) - brutto(gewaehlterVorschlag.preis) };
+                      })
+                      .filter((x): x is { id: string; belegung: Record<string, string[]>; delta: number } => !!x);
+
+                    return (
+                      <Karte className="mt-5 px-5 py-5">
+                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                          <div className="text-[15px] font-semibold text-kohle">
+                            Hier steht: {modul(jetzt).bezeichnung}
+                          </div>
+                          <div className="text-[13px] text-kohle-3">
+                            <span className="ziffern">{Math.round((modul(jetzt).breite ?? 0) / 10)}</span> cm breit
+                          </div>
+                        </div>
+                        {optionen.length === 0 ? (
+                          <p className="mt-2 text-[14px] text-kohle-2">
+                            An dieser Stelle passt kein anderer Typ — die Zeile geht sonst nicht auf.
+                          </p>
+                        ) : (
+                          <>
+                            <p className="mt-1.5 text-[13.5px] text-kohle-2">
+                              Anderer Typ an dieselbe Stelle. Der Preis ist der Unterschied für die
+                              ganze Küche, Passleiste schon eingerechnet.
+                            </p>
+                            <div className="mt-4 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                              {optionen.map((o) => (
+                                <button
+                                  key={o.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setzeBelegung(eigenerSchluessel!, { ...gewaehlterVorschlag.belegung, ...o.belegung });
+                                    setTauschGrund(null);
+                                  }}
+                                  className="warm-wahl flaeche rounded-[3px] p-3 text-left hover:!border-linie-stark"
+                                >
+                                  <div className="vertieft mb-2.5 overflow-hidden rounded-[3px] bg-creme-2">
+                                    <Schrankbild id={o.id} />
+                                  </div>
+                                  <div className="text-[14px] font-semibold leading-tight text-kohle">
+                                    {modul(o.id).bezeichnung}
+                                  </div>
+                                  <div className="ziffern mt-1.5 flex items-baseline justify-between gap-2 text-[12.5px]">
+                                    <span className="text-kohle-3">{Math.round((modul(o.id).breite ?? 0) / 10)} cm</span>
+                                    <span className="font-semibold text-kohle">
+                                      {o.delta === 0 ? "gleicher Preis" : `${o.delta > 0 ? "+" : "−"}${eur(Math.abs(o.delta))}`}
+                                    </span>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </Karte>
+                    );
+                  })()}
+
+                  {tauschGrund && (
+                    <div className="mt-4">
+                      <Notiz ton="achtung">{tauschGrund}</Notiz>
+                    </div>
+                  )}
+
+                  <div className="mt-6 space-y-4">
+                    {typ.zeilen.map((z) => {
+                      const hin = befundeZeile(raum, typ, z.id, gewaehlterVorschlag.belegung[z.id] ?? []).map((b) => b.text);
+                      return (
+                        <div key={z.id}>
+                          {typ.zeilen.length > 1 && (
+                            <div className="mb-1 text-[12.5px] font-semibold text-kohle-3">{z.bezeichnung}</div>
+                          )}
+                          <Kuechenbild
+                            typ={typ}
+                            variante={gewaehlterVorschlag.variante}
+                            zeileId={z.id}
+                            hoehe={typ.zeilen.length > 1 ? 230 : 300}
+                           
+                            nummernAb={nummerAb(z.id)}
+                            waehlbar
+                            gewaehlt={angefasst?.zeile === z.id ? angefasst.index : null}
+                            moeglich={angefasst ? (i) => zielMoeglich(z.id, i) : undefined}
+                            onWaehle={(i) => antippen(z.id, i)}
+                          />
+                          {/* Dieselbe Liste stand dreimal auf der Seite: als
+                              Legende auf der Bühne, als Knopfreihe darüber und
+                              noch einmal hier. Die Knopfreihe ist die
+                              bedienbare, die Nummern stehen in der Zeichnung. */}
+                          {hin.length > 0 && (
+                            <div className="mt-2 space-y-1.5">
+                              {hin.map((h) => <Notiz key={h} ton="achtung">{h}</Notiz>)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {(() => {
+                    const quer = befundeGesamt(raum, typ, gewaehlterVorschlag.belegung);
+                    if (quer.length === 0) return null;
+                    return (
+                      <div className="mt-4 space-y-1.5">
+                        {quer.map((h) => <Notiz key={h} ton="achtung">{h}</Notiz>)}
+                      </div>
+                    );
+                  })()}
+
+                  <p className="mt-5 text-[12.5px] leading-relaxed text-kohle-3">
+                    Getauscht wird immer Platz gegen Platz — so bleibt die Summe der Breiten
+                    genau die Länge deiner Küchenzeile. Preis, Hängeschränke und Arbeitsfläche rechnen wir
+                    sofort neu, und wenn eine Regel kippt, steht es direkt darunter.
+                  </p>
+              </section>
+          )}
 
             {/* ---------- Was geprüft wurde ----------
                 Die Sätze, die für den Plan sprechen, wurden auf dieser Seite
@@ -2871,7 +2938,7 @@ export default function Kuechenplaner() {
             {/* Auf dem Handy lag "Weiter" bei den Geraeteschritten knapp
                 anderthalb Bildschirme unter dem Falz. Dort laeuft die
                 Fusszeile jetzt mit; ab 1024 px steht sie wie gehabt am Ende. */}
-            <div className="nicht-drucken sticky bottom-0 z-20 -mx-5 mt-9 border-t border-black/[0.055] bg-creme/85 px-5 py-3 backdrop-blur-xl backdrop-saturate-150 sm:-mx-8 sm:px-8 lg:hidden">
+            <div className="nicht-drucken sticky bottom-0 z-20 -mx-5 mt-9 border-t border-linie-stark bg-creme px-5 py-3 sm:-mx-8 sm:px-8 lg:hidden">
               <div className="flex items-center justify-between gap-4">
                 {/* Auf dem Ergebnis steht hier der Preis statt "Zurueck": die
                     Rechnung macht die Seite laenger, und der Weg zum
