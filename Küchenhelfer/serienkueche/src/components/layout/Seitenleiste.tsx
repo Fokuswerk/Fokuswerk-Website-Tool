@@ -47,7 +47,7 @@ export function Seitenleiste({ schliessen }: { schliessen?: () => void }) {
             <span className="text-[15px] font-semibold tracking-[-0.015em] text-ink">Serienküche</span>
           </div>
         </Link>
-        <div className="pro-vertieft mt-4 rounded-[8px] border border-line bg-ground px-3 py-2.5">
+        <div className="pro-vertieft mt-4 rounded-md border border-line bg-ground px-3 py-2.5">
           <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-3">Projekt</div>
           <div className="mt-0.5 truncate text-[12.5px] font-medium text-ink">{PROJEKT.name}</div>
           <div className="num mt-0.5 text-[11px] text-ink-3">{PROJEKT.ort} · {PROJEKT.einheiten} WE</div>
@@ -64,7 +64,7 @@ export function Seitenleiste({ schliessen }: { schliessen?: () => void }) {
                 href={p.href}
                 onClick={schliessen}
                 aria-current={aktiv ? "page" : undefined}
-                className={`mb-[2px] flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-[13.5px] transition-colors ${
+                className={`mb-[2px] flex items-center gap-2.5 rounded-sm px-2.5 py-[9px] text-[13.5px] transition-colors ${
                   aktiv
                     ? "bg-ink font-medium text-paper shadow-[0_1px_2px_rgba(26,26,22,.2)]"
                     : "text-ink-2 hover:bg-ground hover:text-ink"

@@ -135,6 +135,44 @@ body {
   animation: laufen 1.1s linear infinite;
 }
 
+/* ------- Wege hinein und hinaus -------
+   Der Profibereich kannte nur den Weg hinein. Dialog und Meldung blendeten
+   auf und waren beim Schliessen von einem Bild aufs naechste weg — man sah
+   nicht, wohin sie verschwunden sind, und bei einem versehentlichen Klick
+   auch nicht, dass ueberhaupt etwas zugegangen ist.
+   Jetzt laeuft der Rueckweg die Eingangskurve rueckwaerts: dieselbe Kurve
+   an ihren Stuetzpunkten gespiegelt, (.22,.8,.3,1) wird zu (.7,0,.78,.2). */
+@keyframes dialogRein {
+  from { opacity: 0; transform: translateY(6px) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes dialogRaus {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(6px) scale(.985); }
+}
+.dialog-rein { animation: dialogRein .2s cubic-bezier(.22,.8,.3,1) both; }
+.dialog-raus { animation: dialogRaus .17s cubic-bezier(.7,0,.78,.2) both; }
+
+/* Der Schleier gehoert zum Dialog, nicht zum Hintergrund: er stand vorher
+   schlagartig da, bevor ueberhaupt etwas zu sehen war. */
+@keyframes schleierRein { from { opacity: 0; } to { opacity: 1; } }
+@keyframes schleierRaus { from { opacity: 1; } to { opacity: 0; } }
+.schleier-rein { animation: schleierRein .2s ease-out both; }
+.schleier-raus { animation: schleierRaus .17s ease-in both; }
+
+/* Eine Meldung steigt aus der unteren rechten Ecke auf — also sinkt sie
+   dorthin zurueck. */
+@keyframes toastRein {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes toastRaus {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(8px); }
+}
+.toast-rein { animation: toastRein .22s cubic-bezier(.22,.8,.3,1) both; }
+.toast-raus { animation: toastRaus .18s cubic-bezier(.7,0,.78,.2) both; }
+
 /* Reduzierte Bewegung heisst nicht: keine Rueckmeldung.
    Hier stand ein pauschales Abschalten von allem. Damit verschwand auch,
    was gar nichts bewegt — der Rand, der auf einen Druck antwortet, der
@@ -143,16 +181,24 @@ body {
    und das ist nicht das, worum gebeten wurde. Jetzt faellt die Bewegung
    weg und das Ueberblenden bleibt. */
 @keyframes nurAufblenden { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nurAusblenden { from { opacity: 1; } to { opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   /* Alles, was einen Weg zuruecklegt, blendet nur noch auf. Die
      Staffelung faellt mit weg — sie steht als Inline-Stil am Element,
      deshalb hier mit Nachdruck. */
-  .rise, .warm-rein, .schritt-rein, .schritt-zurueck, .haken-rein {
+  .rise, .warm-rein, .schritt-rein, .schritt-zurueck, .haken-rein,
+  .dialog-rein, .schleier-rein, .toast-rein {
     animation-name: nurAufblenden;
     animation-duration: .16s;
     animation-timing-function: linear;
     animation-delay: 0s !important;
+  }
+  /* Der Rueckweg bleibt ein Rueckweg — nur ohne Weg. */
+  .dialog-raus, .schleier-raus, .toast-raus {
+    animation-name: nurAusblenden;
+    animation-duration: .16s;
+    animation-timing-function: linear;
   }
   /* Eine Schleife, die nie stehenbleibt, ist genau das, was stoert. */
   .laufband::after { animation: none; }

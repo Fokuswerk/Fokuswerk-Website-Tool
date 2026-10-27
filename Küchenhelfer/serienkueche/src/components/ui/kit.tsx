@@ -109,7 +109,7 @@ export function Abschnitt({
 
 export function Flaeche({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`pro-flaeche rounded-[10px] ${className}`}>{children}</div>
+    <div className={`pro-flaeche rounded-md ${className}`}>{children}</div>
   );
 }
 
@@ -152,7 +152,7 @@ export function Knopf({
       einem Link. Das waren zwei Tabstopps fuer eine Handlung. */
   href?: string;
 }) {
-  const basis = `inline-flex items-center gap-1.5 rounded-sm font-medium transition-colors ${
+  const basis = `druck inline-flex items-center gap-1.5 rounded-sm font-medium ${
     gross ? "px-3.5 py-2 text-[13px]" : "px-2.5 py-1.5 text-[12.5px]"
   }`;
   const stil = deaktiviert
@@ -307,7 +307,7 @@ export function Hinweisband({
       ? "border-l-flag bg-flag-soft/70"
       : "border-l-ink-3 bg-ground";
   return (
-    <div className={`rounded-[10px] border-l-2 py-3.5 pl-4 pr-4 ${stil}`}>
+    <div className={`rounded-md border-l-2 py-3.5 pl-4 pr-4 ${stil}`}>
       <div className={`text-[10.5px] font-semibold uppercase tracking-[0.11em] ${art === "flag" ? "text-flag" : "text-ink-3"}`}>
         {titel}
       </div>
@@ -332,12 +332,16 @@ export function melde(text: string) {
 }
 
 export function Toasts() {
-  const [liste, setListe] = useState<Array<{ id: number; text: string }>>([]);
+  const [liste, setListe] = useState<Array<{ id: number; text: string; geht?: boolean }>>([]);
   useEffect(() => {
     melder = (text: string) => {
       const id = Date.now() + Math.random();
       setListe((l) => [...l, { id, text }]);
-      setTimeout(() => setListe((l) => l.filter((x) => x.id !== id)), 3600);
+      // Zwei Schritte: erst nach unten ausblenden — denselben Weg zurueck,
+      // den sie gekommen ist —, dann aus der Liste nehmen. Vorher war sie
+      // von einem Bild aufs naechste weg.
+      setTimeout(() => setListe((l) => l.map((x) => (x.id === id ? { ...x, geht: true } : x))), 3600);
+      setTimeout(() => setListe((l) => l.filter((x) => x.id !== id)), 3800);
     };
     return () => {
       melder = null;
@@ -354,7 +358,7 @@ export function Toasts() {
       className="pointer-events-none fixed bottom-5 right-5 z-50 flex flex-col gap-2"
     >
       {liste.map((t) => (
-        <div key={t.id} className="rise rounded-md border border-line bg-paper px-3.5 py-2.5 text-[12.5px] text-ink shadow-[0_6px_20px_rgba(27,30,35,0.08)]">
+        <div key={t.id} className={`${t.geht ? "toast-raus" : "toast-rein"} rounded-md border border-line bg-paper px-3.5 py-2.5 text-[12.5px] text-ink shadow-[0_6px_20px_rgba(27,30,35,0.08)]`}>
           {t.text}
         </div>
       ))}
@@ -426,16 +430,34 @@ export function Bestaetigung({
   knopf?: string;
 }) {
   const kasten = useOverlay(offen, abbrechen);
-  if (!offen) return null;
+  /* Er kam mit einem Aufblenden herein und war beim Schliessen von einem
+     Bild aufs naechste weg — der Weg hinaus war gar keiner. Jetzt bleibt er
+     so lange haengen, wie das Ausblenden dauert, und laeuft dabei die
+     Eingangskurve rueckwaerts. Der Schleier geht mit: vorher stand er
+     schlagartig da und verdeckte den Hintergrund, bevor der Dialog ueber-
+     haupt zu sehen war. */
+  const [da, setDa] = useState(offen);
+  /* Beides beim Rendern bestimmt, nicht in einem Effekt. Ein Effekt laeuft
+     erst, nachdem der Browser gemalt hat — es stand also noch ein ganzes
+     Einzelbild lang alles unveraendert da, obwohl schon geklickt war. Genau
+     dieses Loch zwischen Tun und Antwort soll es nicht geben. */
+  if (offen && !da) setDa(true);
+  const geht = da && !offen;
+  useEffect(() => {
+    if (!geht) return;
+    const uhr = setTimeout(() => setDa(false), 180);
+    return () => clearTimeout(uhr);
+  }, [geht]);
+  if (!da) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/20 px-4"
+      className={`${geht ? "schleier-raus" : "schleier-rein"} fixed inset-0 z-50 flex items-center justify-center bg-ink/20 px-4`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="dialog-titel"
       onClick={(e) => { if (e.target === e.currentTarget) abbrechen(); }}
     >
-      <div ref={kasten} className="rise w-full max-w-[460px] rounded-md border border-line bg-paper p-5 shadow-[0_18px_50px_rgba(27,30,35,0.16)]">
+      <div ref={kasten} className={`${geht ? "dialog-raus" : "dialog-rein"} w-full max-w-[460px] rounded-md border border-line bg-paper p-5 shadow-[0_18px_50px_rgba(27,30,35,0.16)]`}>
         <h3 id="dialog-titel" className="text-[15px] font-semibold text-ink">{titel}</h3>
         <div className="mt-2 text-[12.5px] leading-relaxed text-ink-2">{text}</div>
         <div className="mt-5 flex justify-end gap-2">

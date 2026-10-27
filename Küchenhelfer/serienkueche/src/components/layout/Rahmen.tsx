@@ -1,14 +1,20 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { Seitenleiste } from "./Seitenleiste";
+import { Schublade } from "./Schublade";
 import { Toasts, useOverlay } from "@/components/ui/kit";
 
 export function Rahmen({ children }: { children: ReactNode }) {
   const [offen, setOffen] = useState(false);
-  const schublade = useOverlay(offen, () => setOffen(false));
+  /* Fest verdrahtet, nicht bei jedem Rendern neu: useOverlay haengt daran
+     seinen Effekt. Mit einem frischen Pfeil lief der bei jedem Rendern
+     wieder los, setzte den Fokus erneut auf den ersten Punkt der Liste und
+     merkte sich als "wo kam ich her" die Schublade selbst. */
+  const zu = useCallback(() => setOffen(false), []);
+  const schublade = useOverlay(offen, zu);
   const pfad = usePathname();
   // Der Weg fuer eine einzelne Kueche laeuft ohne Profi-Navigation.
   const profi = pfad.startsWith("/dashboard") || pfad.startsWith("/projects");
@@ -44,7 +50,7 @@ export function Rahmen({ children }: { children: ReactNode }) {
             onClick={() => setOffen(true)}
             aria-label="Navigation öffnen"
             aria-expanded={offen}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-ink-2 hover:bg-ground"
+            className="druck flex h-11 w-11 shrink-0 items-center justify-center rounded-sm text-ink-2 hover:bg-ground"
           >
             <Menu size={18} strokeWidth={1.6} />
           </button>
@@ -53,21 +59,16 @@ export function Rahmen({ children }: { children: ReactNode }) {
             Prototyp
           </span>
         </div>
-        {offen && (
-          <div className="fixed inset-0 z-40 flex" role="dialog" aria-modal="true" aria-label="Navigation">
-            <div className="absolute inset-0 bg-ink/25" onClick={() => setOffen(false)} />
-            <div ref={schublade} className="rise relative h-full w-[272px] max-w-[84vw]">
-              <Seitenleiste schliessen={() => setOffen(false)} />
-              <button
-                onClick={() => setOffen(false)}
-                aria-label="Navigation schließen"
-                className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-sm text-ink-3 hover:bg-ground"
-              >
-                <X size={16} strokeWidth={1.6} />
-              </button>
-            </div>
-          </div>
-        )}
+        <Schublade offen={offen} schliessen={zu} kasten={schublade}>
+          <Seitenleiste schliessen={zu} />
+          <button
+            onClick={zu}
+            aria-label="Navigation schließen"
+            className="druck absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-sm text-ink-3 hover:bg-ground"
+          >
+            <X size={16} strokeWidth={1.6} />
+          </button>
+        </Schublade>
       </div>
 
       <main id="inhalt" className="min-w-0">{children}</main>
