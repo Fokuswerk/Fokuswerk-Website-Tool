@@ -110,6 +110,13 @@ export default async function handler(req, res) {
     },
   };
 
+  // Der Vorlauf: Die Seite ruft den Endpunkt ein erstes Mal auf, sobald Adresse und Beruf
+  // stehen, und laesst die Anzeigen schreiben, waehrend der Besucher die restlichen Fragen
+  // beantwortet. Zurueck kommt **nur** der Betriebsname — stuende hier das ganze Ergebnis,
+  // haette man es, bevor man seine Daten eingetragen hat. Und kein Lead: Zu diesem Zeitpunkt
+  // gibt es noch keine Kontaktdaten, eine Meldung an uns waere leer.
+  const nurVorlauf = req.query?.vorlauf === "1";
+
   const kennung =
     (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
     req.socket?.remoteAddress ||
@@ -120,6 +127,7 @@ export default async function handler(req, res) {
   const gemerkt = ausSpeicher(schluessel);
   if (gemerkt) {
     res.setHeader("X-Fokuswerk-Speicher", "treffer");
+    if (nurVorlauf) return res.status(200).json({ bereit: true, betrieb: gemerkt.betrieb });
     // Der Zwischenspeicher gilt den Anzeigen, nicht dem Lead: Wer das Formular ausfüllt, ist
     // auch dann ein Lead, wenn die Texte für diese Domain schon einmal geschrieben wurden.
     const bericht = await verarbeiteLead({ ...zusatz, betrieb: gemerkt.betrieb }, gemerkt);
@@ -169,6 +177,8 @@ export default async function handler(req, res) {
     betrieb: ergebnis.betrieb,
     seiten: betrieb.seiten,
   });
+
+  if (nurVorlauf) return res.status(200).json({ bereit: true, betrieb: ergebnis.betrieb });
 
   // Lead in die Datenbank, Meldung an uns, Zusendung an den Betrieb. Läuft nebenher.
   const bericht = await verarbeiteLead({ ...zusatz, betrieb: ergebnis.betrieb }, ergebnis);
