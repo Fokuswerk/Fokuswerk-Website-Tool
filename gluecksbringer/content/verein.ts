@@ -49,11 +49,21 @@ export const verein = {
   wunschbaumUrl: "http://wunschbaum-bz.de",
   wunschbaumLabel: "wunschbaum-bz.de",
 
+  /*
+    Bankverbindung, abgeglichen mit dem Spendenaufruf des Vereins und dem
+    Bankleitzahlenverzeichnis der Deutschen Bundesbank (Stand 07.09.2026):
+    Die Bankleitzahl in der IBAN (28061822) gehört zur Oldenburger Volksbank
+    eG, BIC GENODEF1EDE. Die zuvor hier eingetragene Kombination aus
+    "Raiffeisenbank Oldenburg" und "GENODEF 1OL2" gehört zu einem anderen
+    Institut (Bankleitzahl 28060228, im Verzeichnis als "-alt-" geführt) und
+    passte nicht zu dieser IBAN. Die IBAN selbst war richtig – ihre Prüfziffer
+    stimmt – nur die Gruppierung wich vom Spendenaufruf ab.
+  */
   spende: {
     kontoinhaber: "Glücksbringer am Meer e.V.",
-    iban: "DE63 2806 1822 1244 184800",
-    bic: "GENODEF 1OL2",
-    bank: "Raiffeisenbank Oldenburg",
+    iban: "DE63 2806 1822 1244 1848 00",
+    bic: "GENODEF1EDE",
+    bank: "Oldenburger Volksbank eG",
     verwendungszweck: "Wunschbaum am Meer",
     paypal: "https://www.paypal.com/paypalme/gluecksbringerammeer",
   },

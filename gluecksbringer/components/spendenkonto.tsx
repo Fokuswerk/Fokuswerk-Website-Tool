@@ -8,7 +8,8 @@ function Kopieren({ wert, label }: { wert: string; label: string }) {
 
   async function kopieren() {
     try {
-      await navigator.clipboard.writeText(wert);
+      // Ohne Leerzeichen: manche Online-Banking-Felder nehmen sie nicht an.
+      await navigator.clipboard.writeText(wert.replace(/\s+/g, ""));
       setKopiert(true);
       window.setTimeout(() => setKopiert(false), 2000);
     } catch {
