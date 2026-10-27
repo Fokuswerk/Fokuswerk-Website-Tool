@@ -65,6 +65,27 @@ export const MODULE: NeutralesModul[] = [
 
 const INDEX = new Map(MODULE.map((m) => [m.id, m]));
 
+/**
+ * Was im Plan an der Nummer steht.
+ *
+ * Die Positionsliste nannte jeden Unterschrank "Schrank" — bei einer Zeile
+ * aus sieben Teilen stand dort dreimal, viermal, fünfmal dasselbe Wort, und
+ * der Plan sah aus, als hätte niemand nachgedacht. Der Katalog weiß mehr als
+ * die Rolle: ein Apothekerauszug ist kein Türschrank, und der Mülltrenner
+ * neben der Spüle ist der Grund, warum er dort steht.
+ */
+export const MODULKURZ: Record<string, string> = {
+  US600: "Auszüge",
+  US450: "Auszüge",
+  US300: "Auszug schmal",
+  UT600: "Tür und Boden",
+  UT450: "Tür und Boden",
+  AZ600: "Apothekerauszug",
+  AZ300: "Apotheker schmal",
+  MU600: "Mülltrenner",
+  KS600: "Kühlschrank",
+};
+
 export function modul(id: string): NeutralesModul {
   // Passleiste mit frei zugeschnittener Breite: "PBX:<mm>".
   // Reale Kuechen schliessen den Rest einer Nische so, weil Wandlaengen

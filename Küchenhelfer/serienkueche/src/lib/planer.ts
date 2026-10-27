@@ -574,6 +574,15 @@ const RESTRIKTIV = ["HK600", "HB600", "KF600"];
 const SEITENABSTAND_KOCHFELD = 300;
 
 /**
+ * Zwischen Spüle und Herd gehört Arbeitsfläche.
+ *
+ * 600 mm ist das Maß, auf das ein Schneidbrett passt; ab 1200 mm wird es
+ * bequem, darüber bringt es nichts mehr und kostet nur Wand.
+ */
+const ABSTAND_MIN = 600;
+const ABSTAND_ZIEL = 1200;
+
+/**
  * Alle unterscheidbaren Reihenfolgen.
  *
  * Die alte Grenze von 20.000 Kandidaten schnitt nicht quer durch das Feld,
@@ -644,7 +653,21 @@ function bewerte(ids: string[], strategie: Strategie, wasserZiel: number | null)
   if (iSp >= 0 && iKf >= 0) {
     const a = Math.min(iSp, iKf), b = Math.max(iSp, iKf);
     const abstand = ids.slice(a + 1, b).reduce((s, m) => s + (modul(m).breite ?? 0), 0);
-    punkte += strategie === "arbeiten" ? abstand * 2 : -abstand;
+    /* Hier zog die Rechnung in zwei von drei Strategien in die falsche
+       Richtung: `-abstand` belohnte es, Spüle und Herd nebeneinanderzustellen.
+       Nachgemessen über 260 Räume standen sie bei "Viel Stauraum" in 100 %
+       der Fälle unter 60 cm auseinander und bei "Sparsam" in 77 % — und
+       derselbe Planer schrieb darunter "unpraktisch beim Kochen". Ein
+       Werkzeug, das seinen eigenen Vorschlag rügt, hat nicht gerechnet.
+
+       Die Untergrenze ist ein sehr hoher Abzug und keine harte Regel: in
+       einer kurzen Zeile, in der 60 cm nicht zwischen beide passen, bliebe
+       sonst gar kein Plan übrig. So fällt jede Anordnung, die es besser
+       kann, vor jede, die es nicht kann — und wo es keine gibt, sagt der
+       Befund darunter, was fehlt. */
+    if (abstand < ABSTAND_MIN) punkte -= 60_000;
+    const nutz = Math.min(abstand, ABSTAND_ZIEL);
+    punkte += strategie === "arbeiten" ? nutz * 2 : nutz * 0.7;
   }
   if (iSp >= 0 && wasserZiel !== null) {
     const l = lageIn(ids, iSp);
@@ -702,6 +725,39 @@ const ARBEITSGRENZE = 300_000;
 /** Wie oft die Suche zuletzt an ihre Grenze gestossen ist. Nur zum Messen. */
 export let suchlaeufeAbgeschnitten = 0;
 export function zaehlerZuruecksetzen() { suchlaeufeAbgeschnitten = 0; }
+
+/**
+ * Den neutralen Blöcken einen Zweck geben.
+ *
+ * Für die Geometrie ist jeder 600er Unterschrank wie der andere — die Suche
+ * behandelt sie deshalb zu Recht als austauschbar. Für eine Küche sind sie
+ * das nicht: neben die Spüle gehört der Mülltrenner, neben den Herd der
+ * Apothekerauszug mit Öl und Gewürzen. Beide sind genau 600 mm breit wie der
+ * Schrank, den sie ersetzen; die Zeilenlänge bleibt auf den Millimeter
+ * dieselbe und `pruefeBelegungen` geht weiter auf.
+ *
+ * Das ist zugleich das, was die drei Karten voneinander unterscheidet: vorher
+ * lag der Unterschied nur in der Kennung des Füllschranks, und die sieht man
+ * weder in der Zeichnung noch im Raum. Jetzt trägt jede Karte ein Teil, das
+ * zu ihrem Versprechen gehört — und es steht in der Stückliste und im Preis.
+ */
+const NEUTRAL_600 = ["US600", "UT600", "AZ600"];
+
+function veredle(ids: string[], strategie: Strategie): string[] {
+  const aus = [...ids];
+  const setzeNeben = (anker: string, neu: string) => {
+    const i = aus.indexOf(anker);
+    if (i < 0) return;
+    const nachbarn = [i - 1, i + 1].filter((j) => j >= 0 && j < aus.length);
+    // Steht es schon da, nichts tun — sonst stünde es zweimal.
+    if (nachbarn.some((j) => aus[j] === neu)) return;
+    const frei = nachbarn.find((j) => NEUTRAL_600.includes(aus[j]));
+    if (frei !== undefined) aus[frei] = neu;
+  };
+  if (strategie === "stauraum") setzeNeben("SP600", "MU600");
+  if (strategie === "arbeiten") setzeNeben("KF600", "AZ600");
+  return aus;
+}
 
 function besteAnordnung(
   module: string[],
@@ -885,7 +941,7 @@ function rechnePlan(a: Raumangaben, strategie: Strategie): Vorschlag {
     const ziel = z.id === wasserZeile ? a.wasser.von - z.start : null;
 
     const r = besteAnordnung(module, z.laenge, zone, strategie, ziel);
-    belegung[z.id] = r.ids;
+    belegung[z.id] = veredle(r.ids, strategie);
     if (!r.moeglich) fensterKonflikt = true;
 
     // Steht das Kochfeld jetzt nicht mehr am Rand, war ein Rücken nötig.

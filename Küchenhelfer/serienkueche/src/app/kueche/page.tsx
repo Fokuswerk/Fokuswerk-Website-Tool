@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRef } from "react";
 import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, FileUp, Move, PencilLine, Printer, RotateCcw, RotateCw, ScanLine } from "lucide-react";
-import { modul } from "@/data/module";
+import { modul, MODULKURZ, PREISSTAND, PREIS_GUELTIG_BIS } from "@/data/module";
 import { HOCH_H, OS_UK, rolleVon, ROLLE_NAME } from "@/lib/masse";
 import { ARTEN, FOTO_QUELLE, FOTOS_LIZENZIERT, GERAETEFOTO_HINWEIS, geraet, geraeteFuer, markenFuer, MWST, PREISSTAND_GERAETE, QUELLEN, type GeraeteArt } from "@/data/geraete";
-import { brutto, eur } from "@/lib/berechnung";
+import { brutto, eur, stauraum, zahl } from "@/lib/berechnung";
 import {
   alleVorschlaege, alsKuechentyp, angleichen, ausBelegung, befundeZeile, drehungen, drehungName, FORMEN, kuechenwaende,
   planeKueche,
   austauschbar, befundeGesamt, ersetzePlan, istStauraum, tauschMoeglich, tauschPlan,
-  pruefeAngaben, wandlaenge, WANDNAME, WANDNAME_DAT, zeilenBereich,
+  niveauFaktor, pruefeAngaben, wandlaenge, WANDNAME, WANDNAME_DAT, zeilenBereich,
   type Raumform, type Strategie, type Vorschlag, type WandId,
 } from "@/lib/planer";
 import { herkunftVon, HERKUNFT_TEXT, schrittFolge, useFremdstand, useKueche, type Feld, type Herkunft, type SchrittId } from "@/store/kueche";
@@ -29,6 +29,11 @@ import { BeispielPlan, Planauflage, RAHMEN_START, type Rahmen } from "@/componen
 import { melde } from "@/components/ui/kit";
 
 const ALLE_WAENDE: WandId[] = ["haupt", "links", "rechts", "gegenueber"];
+
+/** Eine Höhe für alle Ansichten der Ergebnisbühne. Vorher hatten die drei
+    Inhalte 420, 300 und 400 px — beim Umschalten rutschte alles darunter um
+    bis zu 200 px weg. */
+const BUEHNE = 420;
 
 /** Welche Rolle im Raum zu welcher Geräteart gehört — damit sich beim
     Aussuchen genau das Gerät im räumlichen Bild hervorheben lässt. */
@@ -71,19 +76,33 @@ function Mass({ mm, einheit = "cm" }: { mm: number; einheit?: string }) {
 
 /** Kurzer Name eines Moduls für die Positionsliste. */
 function modulName(id: string): string {
+  if (id.startsWith("PBX:") || modul(id).kategorie === "blende") return "Passleiste";
+  // Der eigene Name geht vor der Rolle: "Schrank" dreimal nebeneinander
+  // sagt nichts, "Mülltrenner · Auszüge · Apothekerauszug" schon.
+  const eigen = MODULKURZ[id];
+  if (eigen) return eigen;
   const r = ROLLE_NAME[rolleVon(id)];
   if (r) return r;
-  if (id.startsWith("PBX:") || modul(id).kategorie === "blende") return "Passleiste";
   return modul(id).bezeichnung;
 }
 
 /** Die Legende unter einer Zeichnung: Nummer und Name, alles auf einer Linie. */
-function Positionsliste({ ids, ab }: { ids: string[]; ab: number }) {
+function Positionsliste({ ids, ab, dunkel }: { ids: string[]; ab: number; dunkel?: boolean }) {
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[12.5px] leading-none text-kohle-2">
+    <div
+      className={`mt-2 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[12.5px] leading-none ${
+        dunkel ? "text-creme/70" : "text-kohle-2"
+      }`}
+    >
       {ids.map((id, i) => (
         <span key={i} className="flex items-center gap-1.5">
-          <span className="ziffern flex h-[18px] min-w-[18px] items-center justify-center rounded-full border border-linie-stark px-1 text-[10.5px] font-bold text-kohle">
+          {/* Ein Kreis war der einzige runde Rand der Strecke. Es gibt einen
+              Radius, 3 px — ein festes Quadrat trägt die Nummer genauso. */}
+          <span
+            className={`ziffern flex h-[18px] min-w-[18px] items-center justify-center rounded-[3px] border px-1 text-[10.5px] font-bold ${
+              dunkel ? "border-creme/35 text-creme" : "border-linie-stark text-kohle"
+            }`}
+          >
             {ab + i}
           </span>
           {modulName(id)}
@@ -300,7 +319,17 @@ export default function Kuechenplaner() {
   const { fremd: fremdstand, quittiere: quittiereFremdstand } = useFremdstand();
   const [details, setDetails] = useState(false);
   const [lauf, setLauf] = useState<number | null>(null);
-  const [ansicht, setAnsicht] = useState<"raum" | "vorn" | "umstellen">("raum");
+  const [ansicht, setAnsicht] = useState<"raum" | "vorn">("raum");
+  /**
+   * Umstellen war der dritte Reiter neben zwei Blickwinkeln — und damit die
+   * schwächste Form, eine Funktion anzubieten: man schaut auf das Werkstück,
+   * nicht auf die Reiterleiste. Figma, Notion, Linear und Trello haben keinen
+   * Umstellmodus; dort ist das Objekt der Auslöser. Hier bleibt ein Schalter,
+   * weil im Raumbild sonst nicht zu unterscheiden wäre, ob ein Tippen den
+   * Schrank meint oder die Kamera — aber er steht jetzt unter der Bühne, mit
+   * einem Verb, und jeder Schrank darunter schaltet ihn selbst ein.
+   */
+  const [umstellenAn, setUmstellenAn] = useState(false);
   /** Beim Umstellen angefasster Schrank: Zeile und Platz darin. */
   const [angefasst, setAngefasst] = useState<{ zeile: string; index: number } | null>(null);
   /** Warum der letzte Tausch nicht ging. */
@@ -328,6 +357,10 @@ export default function Kuechenplaner() {
     if (bildUrl.current) URL.revokeObjectURL(bildUrl.current);
   }, []);
   const [rahmen, setRahmen] = useState<Rahmen>(RAHMEN_START);
+  /** Das Rechenblatt auf der Ergebnisseite — dorthin springt "Wie kommt der
+      Preis zustande?", und daran haengt die eingeblendete Fussleiste. */
+  const rechenblatt = useRef<HTMLElement>(null);
+  const sanft = () => !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const feld = useRef<HTMLInputElement>(null);
 
   const folge = schrittFolge(raum, quelle);
@@ -481,6 +514,9 @@ export default function Kuechenplaner() {
 
   const antippen = (zeileId: string, index: number) => {
     if (!gewaehlterVorschlag) return;
+    // Wer einen Schrank antippt, will ihn umstellen — dafuer soll er nicht
+    // erst einen Schalter suchen muessen.
+    if (!umstellenAn) setUmstellenAn(true);
     const ziel = { zeile: zeileId, index };
     if (!angefasst) { setAngefasst(ziel); setTauschGrund(null); return; }
     if (angefasst.zeile === zeileId && angefasst.index === index) {
@@ -1757,40 +1793,184 @@ export default function Kuechenplaner() {
           </>
         )}
 
-        {istErgebnis && gewaehlterVorschlag && (
+        {istErgebnis && gewaehlterVorschlag && (() => {
+          const k = gewaehlterVorschlag.kosten;
+          const netto = k.gesamt;
+          /* Dieselbe Reihenfolge wie auf dem Unterlagenblatt: Netto plus
+             gerundete Steuer. Ein Euro Unterschied zwischen Schirm und Blatt
+             kostet mehr Vertrauen als hundert Euro Preisunterschied. */
+          const steuer = Math.round(netto * MWST);
+          const gesamt = netto + steuer;
+
+          const alleModule = Object.values(gewaehlterVorschlag.belegung).flat();
+          const KEIN_STAURAUM = ["GS600", "GS450", "KF600", "KS600", "HK600", "HB600"];
+          const stauLiter = Math.round(
+            alleModule
+              .filter((id) => !id.startsWith("PBX:") && modul(id).kategorie !== "blende" && !KEIN_STAURAUM.includes(id))
+              .reduce((x, id) => x + ((modul(id).breite ?? 0) * (modul(id).hoehe ?? 0) * 560) / 1e6, 0)
+            + gewaehlterVorschlag.haengeschraenke * ((600 * 700 * 350) / 1e6),
+          );
+          const schraenke = alleModule.filter((m) => modul(m).kategorie !== "blende");
+          const lfm = typ.zeilen.reduce((x, z) => x + z.laenge, 0) / 1000;
+          const stufe = raum.niveau === "gehoben" ? "gehoben" : raum.niveau === "einfach" ? "einfach" : "mittel";
+
+          const rechenzeilen: Array<{ op: string; name: string; dazu?: string; betrag: number }> = [
+            { op: "", name: "Schränke und Korpusse", dazu: `${schraenke.length} Stück`, betrag: k.korpusse },
+            ...(k.haenge > 0
+              ? [{ op: "+", name: "Hängeschränke", dazu: `${gewaehlterVorschlag.haengeschraenke} Stück`, betrag: k.haenge }]
+              : []),
+            { op: "+", name: "Arbeitsplatte, Spüle und Sockel", dazu: `${zahl(lfm, 2)} laufende Meter`, betrag: k.platte + k.spuele + k.sockel },
+            { op: "+", name: "Montage und Kleinteile", dazu: `${zahl(lfm, 2)} laufende Meter`, betrag: k.montage },
+            ...(k.zuschlag !== 0
+              ? [{
+                  op: k.zuschlag > 0 ? "+" : "−",
+                  name: `Ausstattung ${stufe}`,
+                  dazu: k.zuschlag > 0 ? "Fronten, Auszüge, Beschläge" : "einfachere Fronten und Beschläge",
+                  betrag: Math.abs(k.zuschlag),
+                }]
+              : []),
+            {
+              op: "+",
+              name: "Geräte",
+              dazu: `${(Object.keys(raum.geraete) as GeraeteArt[]).filter((x) => geraet(raum.geraete[x]).richtpreis > 0).length} Stück, recherchierte Straßenpreise`,
+              betrag: k.geraete,
+            },
+          ];
+
+          const masszeilen = [
+            {
+              name: "Arbeitsfläche zwischen Spüle und Herd",
+              wert: gewaehlterVorschlag.arbeitsflaeche,
+              zahl: Math.round(gewaehlterVorschlag.arbeitsflaeche / 10),
+              einheit: "cm",
+              schwelle: 900,
+              max: 1800,
+              gut: gewaehlterVorschlag.arbeitsflaeche >= 900,
+              satz: gewaehlterVorschlag.arbeitsflaeche >= 900
+                ? "Der Strich steht bei 90 cm — so viel empfiehlt ein Küchenbetrieb zum Vorbereiten."
+                : "Der Strich steht bei 90 cm. Darunter wird das Schneiden eng.",
+            },
+            {
+              name: "Weg zum vorhandenen Wasseranschluss",
+              wert: gewaehlterVorschlag.wegZumWasser,
+              zahl: Math.round(gewaehlterVorschlag.wegZumWasser / 10),
+              einheit: "cm",
+              schwelle: 600,
+              max: 2400,
+              gut: gewaehlterVorschlag.wegZumWasser <= 600,
+              satz: gewaehlterVorschlag.wegZumWasser <= 600
+                ? "Bis 60 cm bleibt die Spüle am Anschluss — kein Installateur nötig."
+                : "Über 60 cm muss der Anschluss verlegt werden. Das steht nicht im Preis.",
+            },
+            {
+              name: "Rest für die Passleiste",
+              wert: gewaehlterVorschlag.passblende,
+              zahl: Math.round(gewaehlterVorschlag.passblende / 10),
+              einheit: "cm",
+              schwelle: 150,
+              max: 400,
+              gut: gewaehlterVorschlag.passblende <= 150,
+              satz: gewaehlterVorschlag.passblende <= 150
+                ? "Bis 15 cm ist eine Passleiste normal und wird vor Ort zugeschnitten."
+                : "Mehr als 15 cm ist viel — ein Betrieb würde eher einen Schrank breiter wählen.",
+            },
+            {
+              name: "Schrankvolumen ohne die Geräteplätze",
+              wert: stauLiter,
+              zahl: stauLiter,
+              einheit: "Liter",
+              schwelle: 0,
+              max: 0,
+              gut: true,
+              /* stauraum() aus berechnung.ts zaehlt Geschirrspueler- und
+                 Kochfeldnische als Stauraum mit und nennt das Korpusvolumen
+                 "nutzbar". Beides stimmt nicht; hier wird gezaehlt, was
+                 wirklich Schrank ist. */
+              satz: "Korpusvolumen aller Schränke und Hängeschränke, aus Breite, Höhe und 56 cm Tiefe gerechnet. Geräteplätze zählen nicht mit.",
+            },
+          ];
+
+          const geraeteliste = (Object.keys(raum.geraete) as GeraeteArt[])
+            .map((art) => ({ ...geraet(raum.geraete[art]), art }))
+            .filter((g) => g.breite > 0 || g.richtpreis > 0);
+
+          const schrankliste = Object.entries(gewaehlterVorschlag.belegung).flatMap(([zid, ids]) =>
+            ids.map((id) => ({
+              name: modulName(id),
+              artikel: id.startsWith("PBX:") ? modul("PB150").artikel : modul(id).artikel,
+              breite: modul(id).breite ?? 0,
+              wand: typ.zeilen.find((z) => z.id === zid)?.bezeichnung ?? "",
+            })),
+          );
+
+          const stufenpreise = (["einfach", "mittel", "gehoben"] as const).map((n) => {
+            const nt = Math.round(k.moebel * niveauFaktor(n)) + k.geraete;
+            return { id: n, name: n === "einfach" ? "Einfach" : n === "mittel" ? "Mittel" : "Gehoben", betrag: nt + Math.round(nt * MWST) };
+          });
+
+          const nichtDrin = [
+            "Elektroarbeiten: Starkstrom für den Herd, zusätzliche Steckdosen",
+            ...(gewaehlterVorschlag.wegZumWasser > 600
+              ? ["Verlegen von Wasser- und Abwasseranschluss — nach diesem Plan nötig"]
+              : []),
+            "Abbau und Entsorgung der alten Küche",
+            "Lieferung und Anfahrt",
+            "Fliesenspiegel, Malerarbeiten, Beleuchtung",
+          ];
+
+          return (
           <div className="warm-rein">
             <div className="text-center">
               <h1 ref={ueberschrift} tabIndex={-1} className="gross gross-xl text-[36px] font-bold text-kohle outline-none sm:text-[52px]">Das ist deine Küche.</h1>
               <p className="mx-auto mt-4 max-w-[48ch] text-[16.5px] text-kohle-2">
-                {gewaehlterVorschlag.titel} · {FORMEN.find((f) => f.id === raum.form)!.titel}
+                {gewaehlterVorschlag.titel} · {FORMEN.find((f) => f.id === raum.form)!.titel} · Ausstattung {stufe}
               </p>
             </div>
 
             <Karte className="mt-8 overflow-hidden flaeche-hoch">
-              <div className="bg-creme-2/40 px-4 pb-5 pt-5 sm:px-7">
+              {/* Der eine dunkle Moment der ganzen Strecke. Gezählt standen
+                  zwanzig Schirme auf demselben #f3f4f6 — der Preisschirm sah
+                  aus wie die Frage nach der Raumtiefe. Das Entwurfssystem hat
+                  einen zweiten Abschnittsgrund, die Verbraucherstrecke hat ihn
+                  nie benutzt. Genau hier gehört er hin: das Ergebnis steht auf
+                  einer Bühne, alles darunter bleibt hell und nachrechenbar.
+                  Genau zweimal dunkel, nicht dreimal — sonst wird aus dem
+                  Werkzeug eine Werbeseite. */}
+              <div className="auf-dunkel bg-marke px-4 pb-5 pt-5 text-creme sm:px-7">
                 <div className="mb-5 flex justify-center">
-                  <Wahlreihe<"raum" | "vorn" | "umstellen">
+                  <Wahlreihe<"raum" | "vorn">
+                    dunkel
                     etikett="Ansicht"
                     wert={ansicht}
                     setze={(id) => { setAnsicht(id); setAngefasst(null); setTauschGrund(null); }}
                     optionen={[
                       { id: "raum", titel: "Räumlich" },
                       { id: "vorn", titel: "Von vorn" },
-                      {
-                        id: "umstellen",
-                        titel: "Umstellen",
-                        zusatz: <Move size={14} strokeWidth={2.2} className="shrink-0 opacity-70" />,
-                      },
                     ]}
                   />
                 </div>
 
                 {ansicht === "raum" && (
-                  <Kuechenraum typ={typ} variante={gewaehlterVorschlag.variante} hoehe={420} geraeteSchalter ofenGewaehlt={ofenDa} haubeGewaehlt={haubeDa} scrollen />
+                  <Kuechenraum
+                    typ={typ}
+                    variante={gewaehlterVorschlag.variante}
+                    hoehe={BUEHNE}
+                    geraeteSchalter={!umstellenAn}
+                    unterzeile={!umstellenAn}
+                    ofenGewaehlt={ofenDa}
+                    haubeGewaehlt={haubeDa}
+                    scrollen
+                    umstellen={umstellenAn ? {
+                      gewaehlt: angefasst,
+                      onWaehle: (zeileId, index) => antippen(zeileId, index),
+                      onLeer: () => { setAngefasst(null); setTauschGrund(null); },
+                      moeglich: zielMoeglich,
+                    } : undefined}
+                  />
                 )}
 
                 {ansicht === "vorn" && (
-                  <div className="space-y-2">
+                  <div className="flex min-h-[420px] flex-col justify-center gap-2">
                     {typ.zeilen.map((z) => (
                       <div key={z.id}>
                         {typ.zeilen.length > 1 && (
@@ -1810,14 +1990,45 @@ export default function Kuechenplaner() {
                   </div>
                 )}
 
-                {ansicht === "umstellen" && (
-                  <div>
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-[14px] text-kohle-2">
-                        {angefasst
+                {ansicht === "raum" && (
+                  <div className="mt-3 space-y-2 border-t border-creme/15 pt-3">
+                    {typ.zeilen.map((z) => (
+                      <div key={z.id}>
+                        {typ.zeilen.length > 1 && (
+                          <div className="text-[12.5px] font-semibold text-creme/60">{z.bezeichnung}</div>
+                        )}
+                        <Positionsliste ids={gewaehlterVorschlag.belegung[z.id] ?? []} ab={nummerAb(z.id)} dunkel />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <p className="min-w-0 flex-1 text-[14px] leading-snug text-creme/70">
+                    {umstellenAn
+                      ? (angefasst
                           ? "Jetzt auf den Platz tippen, an den er soll. Mögliche Plätze sind markiert."
-                          : "Tipp einen Schrank an — im Raum oder in der Ansicht — dann den Platz, an den er soll."}
-                      </p>
+                          : "Tipp einen Schrank an — im Raum oder in der Liste darunter — dann den Platz, an den er soll.")
+                      : "Du kannst jeden Schrank verschieben oder gegen einen anderen Typ tauschen. Preis, Hängeschränke und Arbeitsfläche rechnen sofort mit."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { setUmstellenAn(!umstellenAn); setAngefasst(null); setTauschGrund(null); }}
+                    aria-pressed={umstellenAn}
+                    className={`druck flex h-12 shrink-0 items-center gap-2 rounded-[3px] px-5 text-[14.5px] font-semibold ${
+                      umstellenAn
+                        ? "bg-creme text-kohle"
+                        : "border border-creme/30 text-creme hover:border-creme/60"
+                    }`}
+                  >
+                    {umstellenAn ? <Check size={16} strokeWidth={2.5} /> : <Move size={16} strokeWidth={2.2} />}
+                    {umstellenAn ? "Fertig" : "Schränke selbst umstellen"}
+                  </button>
+                </div>
+
+                {umstellenAn && (
+                  <div className="mt-5 border-t border-creme/15 pt-5">
+                    <div className="mb-4 flex flex-wrap items-center justify-end gap-3">
                       {eigen && Object.keys(eigen).length > 0 && (
                         <button
                           type="button"
@@ -1830,24 +2041,11 @@ export default function Kuechenplaner() {
                       )}
                     </div>
 
-                    <Kuechenraum
-                      typ={typ}
-                      variante={gewaehlterVorschlag.variante}
-                      hoehe={400}
-                      unterzeile={false}
-                      ofenGewaehlt={ofenDa} haubeGewaehlt={haubeDa}
-                      /* Ohne "scrollen" steht die Buehne auf touch-action:
-                         none und schluckt am Handy jede Wischgeste. Bei 400 px
-                         Hoehe heisst das: die Seite bleibt stehen, und unter
-                         dem Raumbild kommt man nicht weiter. */
-                      scrollen
-                      umstellen={{
-                        gewaehlt: angefasst,
-                        onWaehle: (zeileId, index) => antippen(zeileId, index),
-                        onLeer: () => { setAngefasst(null); setTauschGrund(null); },
-                        moeglich: zielMoeglich,
-                      }}
-                    />
+{/* Die Buehne steht oben und bleibt beim Umschalten stehen. Hier
+                        stand bis eben eine ZWEITE Kuechenraum-Instanz mit einer
+                        anderen Hoehe: React baute dabei die ganze WebGL-Szene ab
+                        und neu auf, Kamerawinkel und Zoom waren weg, und die
+                        Karte sprang um 20 px. */}
 
                     {/* Derselbe Weg mit der Tastatur. Im Raum laesst sich nur
                         mit dem Zeiger tippen — ohne diese Liste waere das
@@ -2029,126 +2227,257 @@ export default function Kuechenplaner() {
                     </Notiz>
                   </div>
                 )}
-                <div className="vorzeile">Komplett, mit Geräten und Montage, inkl. MwSt.</div>
-                  <div className="gross ziffern mt-2 text-[44px] font-bold leading-none tracking-[-0.04em] text-kohle">{eur(brutto(gewaehlterVorschlag.preis))}</div>
+                  <div className="vorzeile">Diese Küche kostet</div>
+                  <div className="gross mt-1.5 text-[26px] font-bold leading-none text-kohle">
+                    <span className="ziffern">{eur(brutto(gewaehlterVorschlag.preis))}</span>
+                  </div>
+                  <div className="mt-1.5 text-[13px] text-kohle-3">Die Rechnung dazu steht weiter unten.</div>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  {/* Beide Knoepfe fuehrten an dieselbe Stelle — nur der
-                      staerkere versprach mehr. Jetzt springt er wirklich ins
-                      Formular, der andere zeigt das Blatt. */}
-                  <WKnopf art="primaer" gross onClick={() => { geheZu("unterlagen"); setAnfrage(true); }}>
-                    Angebot anfordern
+                  <WKnopf onClick={() => rechenblatt.current?.scrollIntoView({ behavior: sanft() ? "smooth" : "auto", block: "start" })}>
+                    Wie kommt der Preis zustande?
                   </WKnopf>
-                  <WKnopf gross onClick={() => geheZu("unterlagen")}>Unterlagen ansehen</WKnopf>
                 </div>
               </div>
             </Karte>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-3">
-              {[
-                ["Schränke", String(Object.values(gewaehlterVorschlag.belegung).flat().filter((m) => modul(m).kategorie !== "blende").length)],
-                ["Hängeschränke", String(gewaehlterVorschlag.haengeschraenke)],
-                ["Arbeitsfläche", `${Math.round(gewaehlterVorschlag.arbeitsflaeche / 10)} cm`],
-              ].map(([a, b]) => (
-                <Karte key={a} className="px-5 py-4">
-                  <div className="vorzeile">{a}</div>
-                  <div className="gross ziffern mt-2 text-[26px] font-bold leading-none text-kohle">{b}</div>
-                </Karte>
-              ))}
-            </div>
-
-            <div className="mt-5">
-              <Karte className="px-5 py-5 sm:px-7">
-                <button onClick={() => setDetails(!details)} className="flex w-full items-center justify-between gap-3 text-left">
-                  <span className="gross text-[17px] font-bold text-kohle">Was alles drin ist</span>
-                  <ChevronDown size={18} strokeWidth={2.2} className={`shrink-0 text-kohle-3 transition-transform ${details ? "rotate-180" : ""}`} />
-                </button>
-                {details && (
-                  <div className="warm-rein mt-4 border-t border-linie-warm pt-4">
-                    <div className="mb-3 text-[13px] font-semibold uppercase tracking-[0.06em] text-kohle-3">Geräte</div>
-                    <ul className="space-y-2.5 text-[14.5px]">
-                      {(Object.keys(raum.geraete) as GeraeteArt[]).map((art) => {
-                        const g = geraet(raum.geraete[art]);
-                        return (
-                          <li key={art} className="flex items-center gap-3">
-                            {g.foto ? (
-                              <NextImage
-                                src={g.foto}
-                                alt=""
-                                width={200}
-                                height={200}
-                                className="vertieft h-11 w-11 shrink-0 rounded-[3px] bg-papier object-contain p-1"
-                                sizes="44px"
-                              />
-                            ) : (
-                              <span className="h-11 w-11 shrink-0 rounded-[3px] bg-creme-2" aria-hidden="true" />
-                            )}
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-kohle-2">{g.name}</span>
-                              {g.modell && (
-                                <span className="ziffern block truncate text-[12.5px] text-kohle-3">
-                                  {[g.marke, g.modell].filter(Boolean).join(" ")}
-                                </span>
-                              )}
-                            </span>
-                            {/* In einer Aufstellung gehoert der Preis des Geraets, nicht
-                                sein Abstand zum billigsten Modell derselben Art. */}
-                            <span className="ziffern shrink-0 text-kohle-3">
-                              {g.richtpreis > 0 ? eur(g.richtpreis) : "—"}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                    <div className="mb-3 mt-5 text-[13px] font-semibold uppercase tracking-[0.06em] text-kohle-3">Schränke</div>
-                    <ul className="space-y-2 text-[14.5px]">
-                      {Object.entries(gewaehlterVorschlag.belegung).flatMap(([zid, ids]) =>
-                        ids.map((id, i) => (
-                          <li key={`${zid}-${i}`} className="flex items-baseline justify-between gap-4">
-                            <span className="text-kohle-2">
-                              {modul(id).bezeichnung}
-                              {typ.zeilen.length > 1 && (
-                                <span className="ml-1.5 text-[12.5px] text-kohle-3">
-                                  {typ.zeilen.find((z) => z.id === zid)?.bezeichnung}
-                                </span>
-                              )}
-                            </span>
-                            {/* Millimeter gehoeren auf das Unterlagenblatt;
-                                hier daneben stehen ueberall Zentimeter. */}
-                            <span className="shrink-0 text-kohle-3">{Math.round((modul(id).breite ?? 0) / 10)} cm</span>
-                          </li>
-                        )),
-                      )}
-                      <li className="flex items-baseline justify-between gap-4 border-t border-linie-warm pt-2.5">
-                        <span className="text-kohle-2">Arbeitsplatte, Spüle, Sockel, Montage</span>
-                        <span className="shrink-0 text-kohle-3">enthalten</span>
-                      </li>
-                    </ul>
-                  </div>
-                )}
-              </Karte>
-            </div>
-
-            {gewaehlterVorschlag.achtungPunkte.length > 0 && (
-              <div className="mt-5 space-y-2">
-                {gewaehlterVorschlag.achtungPunkte.map((a) => <Notiz key={a} ton="achtung">{a}</Notiz>)}
+            {/* ---------- Was geprüft wurde ----------
+                Die Sätze, die für den Plan sprechen, wurden auf dieser Seite
+                nie gezeigt: gerendert wurden ausschließlich die Mängel, und
+                die standen hinter dem Kaufknopf. Die Seite hat damit gegen
+                sich selbst argumentiert. */}
+            <section className="mt-9">
+              <div className="vorzeile mb-3">
+                <span className="ziffern">{gewaehlterVorschlag.gutPunkte.length + gewaehlterVorschlag.achtungPunkte.length}</span>
+                {" "}Befunde aus der Prüfung
               </div>
-            )}
+              <div className="flaeche overflow-hidden rounded-[3px]">
+                {gewaehlterVorschlag.gutPunkte.map((g, i) => (
+                  <div key={g} className={`flex items-start gap-3 px-4 py-3 sm:px-5 ${i > 0 ? "border-t border-linie-warm" : ""}`}>
+                    <Check size={15} strokeWidth={2.8} className="mt-[3px] shrink-0 text-salbei" />
+                    <span className="text-[14.5px] leading-snug text-kohle-2">{g}</span>
+                  </div>
+                ))}
+                {gewaehlterVorschlag.achtungPunkte.map((x) => (
+                  <div key={x} className="flex items-start gap-3 border-t border-linie-warm bg-butter-soft px-4 py-3 sm:px-5">
+                    <span aria-hidden="true" className="mt-[5px] h-[11px] w-[2px] shrink-0 bg-butter" />
+                    <span className="text-[14.5px] leading-snug text-kohle-2">{x}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
 
-            <div className="mt-5">
-              <Notiz>
-                <strong className="font-semibold text-kohle">Bevor bestellt wird,</strong> misst jemand bei dir nach.
-                Wände sind nie ganz gerade, und auf den letzten Zentimetern entscheidet sich, ob alle Türen
-                schließen. Dein Plan bleibt — die Maße werden nur bestätigt.
-              </Notiz>
-            </div>
+            {/* ---------- Die Maße, gegen ihre Schwellen ---------- */}
+            <section className="mt-9">
+              <div className="vorzeile mb-3">Gemessen an deinem Raum</div>
+              <div className="flaeche rounded-[3px] px-4 py-4 sm:px-5">
+                {masszeilen.map((m, i) => (
+                  <div key={m.name} className={i > 0 ? "mt-4" : ""}>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-[14px] font-semibold text-kohle">{m.name}</span>
+                      <span className="shrink-0 text-[14px] text-kohle-2">
+                        <span className="ziffern">{m.zahl}</span> {m.einheit}
+                      </span>
+                    </div>
+                    {m.max > 0 && (
+                      <div className="relative mt-2 h-[7px]">
+                        <span className="absolute inset-x-0 top-[3px] block h-px bg-linie-stark" />
+                        <span
+                          className={`absolute left-0 top-[1px] block h-[5px] ${m.gut ? "bg-kohle" : "bg-butter"}`}
+                          style={{ width: `${Math.max(2, Math.min(100, (m.wert / m.max) * 100))}%` }}
+                        />
+                        {/* Maßhilfsstrich an der Schwelle, wie in der Zeichnung. */}
+                        <span
+                          className="absolute top-0 block h-[7px] w-px bg-kohle-2"
+                          style={{ left: `${Math.min(100, (m.schwelle / m.max) * 100)}%` }}
+                          aria-hidden="true"
+                        />
+                      </div>
+                    )}
+                    <div className="mt-1.5 text-[12.5px] leading-snug text-kohle-3">{m.satz}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
 
-            <div className="mt-7 flex flex-wrap justify-center gap-3">
+            {/* ---------- Was alles drin ist: offen, nicht weggeklappt ---------- */}
+            <section className="mt-9">
+              <div className="mb-3 flex items-baseline justify-between gap-3">
+                <div className="vorzeile">Was alles drin ist</div>
+                <button
+                  type="button"
+                  onClick={() => setDetails(!details)}
+                  className="flex items-center gap-1 text-[13px] text-kohle-2 underline underline-offset-2 hover:text-kohle"
+                >
+                  {details ? "Einklappen" : "Aufklappen"}
+                  <ChevronDown size={14} strokeWidth={2.2} className={`transition-transform ${details ? "rotate-180" : ""}`} />
+                </button>
+              </div>
+              {details && (
+                <Karte className="px-4 py-4 sm:px-5">
+                  <div className="vorzeile mb-2.5">
+                    Geräte <span className="ziffern">{geraeteliste.length}</span>
+                  </div>
+                  <ul className="space-y-2.5 text-[14.5px]">
+                    {geraeteliste.map((g) => (
+                      <li key={g.art} className="flex items-center gap-3">
+                        {g.foto ? (
+                          <NextImage
+                            src={g.foto}
+                            alt=""
+                            width={200}
+                            height={200}
+                            className="vertieft h-11 w-11 shrink-0 rounded-[3px] bg-papier object-contain p-1"
+                            sizes="44px"
+                          />
+                        ) : (
+                          <span className="h-11 w-11 shrink-0 rounded-[3px] bg-creme-2" aria-hidden="true" />
+                        )}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-kohle-2">{g.name}</span>
+                          {g.modell && (
+                            <span className="block truncate text-[12.5px] text-kohle-3">
+                              {g.marke} <span className="ziffern">{g.modell}</span>
+                            </span>
+                          )}
+                        </span>
+                        <span className="shrink-0 text-kohle-3">
+                          {g.richtpreis > 0 ? <span className="ziffern">{eur(g.richtpreis)}</span> : "—"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="vorzeile mb-2.5 mt-6">
+                    Schränke <span className="ziffern">{schrankliste.length}</span>
+                  </div>
+                  <ul className="space-y-1.5 text-[14.5px]">
+                    {schrankliste.map((z, i) => (
+                      <li key={i} className="flex items-baseline justify-between gap-4">
+                        <span className="min-w-0 text-kohle-2">
+                          {z.name}
+                          {typ.zeilen.length > 1 && <span className="ml-1.5 text-[12.5px] text-kohle-3">{z.wand}</span>}
+                        </span>
+                        <span className="shrink-0 text-[13px] text-kohle-3">
+                          <span className="ziffern">{z.artikel}</span>
+                          <span className="ziffern ml-3">{Math.round(z.breite / 10)}</span> cm
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </Karte>
+              )}
+            </section>
+
+            {/* ---------- Das Rechenblatt ---------- */}
+            <section ref={rechenblatt} className="mt-9 scroll-mt-[72px]">
+              <div className="vorzeile mb-3">So kommt der Preis zustande</div>
+              <Karte className="px-4 py-5 sm:px-7 sm:py-6">
+                <div className="grid grid-cols-[14px_1fr_auto] items-baseline gap-x-3 gap-y-3 text-[14.5px]">
+                  {rechenzeilen.map((z) => (
+                    <Fragment key={z.name}>
+                      <span className="ziffern text-right text-[13px] text-kohle-3" aria-hidden="true">{z.op}</span>
+                      <span className="min-w-0 text-kohle-2">
+                        {z.name}
+                        {z.dazu && <span className="block text-[12.5px] text-kohle-3">{z.dazu}</span>}
+                      </span>
+                      <span className="ziffern whitespace-nowrap text-right tabular-nums text-kohle">{eur(z.betrag)}</span>
+                    </Fragment>
+                  ))}
+
+                  <span />
+                  <span className="border-t border-linie-stark pt-3 text-kohle-2">Summe ohne Umsatzsteuer</span>
+                  <span className="ziffern whitespace-nowrap border-t border-linie-stark pt-3 text-right tabular-nums text-kohle">{eur(netto)}</span>
+
+                  <span className="ziffern text-right text-[13px] text-kohle-3" aria-hidden="true">+</span>
+                  <span className="text-kohle-2"><span className="ziffern">19</span> % Umsatzsteuer</span>
+                  <span className="ziffern whitespace-nowrap text-right tabular-nums text-kohle">{eur(steuer)}</span>
+                </div>
+
+                <div className="mt-5 border-t border-kohle pt-4">
+                  <div className="vorzeile">Gesamtpreis, so wie geplant</div>
+                  <div className="gross mt-2 text-[clamp(42px,12vw,68px)] font-bold leading-[0.95] tracking-[-0.04em] text-kohle">
+                    <span className="ziffern">{eur(gesamt)}</span>
+                  </div>
+                  <p className="mt-3 max-w-[52ch] text-[13px] leading-snug text-kohle-3">
+                    Möbel, Geräte, Arbeitsplatte, Spüle, Sockel und Montage. Modulpreise Stand{" "}
+                    <span className="ziffern">{PREISSTAND}</span>, gültig bis{" "}
+                    <span className="ziffern">{PREIS_GUELTIG_BIS}</span>; Gerätepreise sind recherchierte
+                    Straßenpreise Stand {PREISSTAND_GERAETE}.
+                  </p>
+                </div>
+              </Karte>
+            </section>
+
+            {/* ---------- Dieselbe Küche in drei Ausstattungen ----------
+                Die Stufe schlägt nur über einen Faktor auf die Möbel durch
+                (planer.ts, niveauFaktor), die Anordnung bleibt gleich. Die
+                beiden anderen Beträge lassen sich deshalb ausrechnen, statt
+                zwei weitere Pläne zu suchen. */}
+            <section className="mt-5">
+              <div className="vorzeile mb-2.5">Dieselbe Küche in drei Ausstattungen</div>
+              <div className="flaeche grid grid-cols-3 overflow-hidden rounded-[3px]">
+                {stufenpreise.map((st, i) => {
+                  const aktiv = st.id === raum.niveau;
+                  return (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => { if (!aktiv) setzeRaum({ niveau: st.id }); }}
+                      aria-pressed={aktiv}
+                      className={`px-3 py-3 text-left transition-colors ${i > 0 ? "border-l border-linie-warm" : ""} ${
+                        aktiv ? "bg-kohle" : "hover:bg-creme/70"
+                      }`}
+                    >
+                      <div className={`text-[12.5px] ${aktiv ? "text-creme/70" : "text-kohle-3"}`}>{st.name}</div>
+                      <div className={`ziffern mt-1 text-[15px] font-semibold ${aktiv ? "text-creme" : "text-kohle"}`}>
+                        {eur(st.betrag)}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-[12.5px] leading-snug text-kohle-3">
+                Die Stufe ändert Fronten, Auszüge und Beschläge — nicht die Geräte und nicht die Anordnung.
+              </p>
+            </section>
+
+            {/* ---------- Was nicht drin ist ---------- */}
+            <section className="mt-5">
+              <div className="rounded-[3px] border-l-2 border-butter bg-butter-soft py-3.5 pl-4 pr-4">
+                <div className="mb-2 text-[13.5px] font-semibold text-kohle">Was nicht drin ist</div>
+                <ul className="space-y-1 text-[13.5px] leading-snug text-kohle-2">
+                  {nichtDrin.map((x) => <li key={x}>{x}</li>)}
+                </ul>
+              </div>
+            </section>
+
+            {/* ---------- Die Entscheidung ---------- */}
+            <section className="mt-8">
+              <div className="flex flex-wrap gap-3">
+                <WKnopf art="primaer" gross onClick={() => { geheZu("unterlagen"); setAnfrage(true); }}>
+                  Angebot anfordern
+                </WKnopf>
+                <WKnopf gross onClick={() => geheZu("unterlagen")}>Stückliste und Zeichnung</WKnopf>
+              </div>
+              <div className="mt-5">
+                <Notiz>
+                  <strong className="font-semibold text-kohle">Bevor bestellt wird,</strong> misst jemand bei dir nach.
+                  Wände sind nie ganz gerade, und auf den letzten Zentimetern entscheidet sich, ob alle Türen
+                  schließen. Was sich dabei noch ändern kann, sind Schrankbreiten und die Passleiste — die
+                  Summe der Breiten muss exakt der Wandlänge entsprechen. Geräte, Ausstattungsstufe und
+                  Anordnung bleiben.
+                </Notiz>
+              </div>
+            </section>
+
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
               <WKnopf onClick={() => geheZu("vorschlaege")}>Andere Variante</WKnopf>
               <WKnopf art="klar" onClick={masseAendern}>Maße ändern</WKnopf>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {istUnterlagen && gewaehlterVorschlag && (() => {
           const u = baueUnterlagen(raum, typ, gewaehlterVorschlag);
@@ -2544,10 +2873,28 @@ export default function Kuechenplaner() {
                 Fusszeile jetzt mit; ab 1024 px steht sie wie gehabt am Ende. */}
             <div className="nicht-drucken sticky bottom-0 z-20 -mx-5 mt-9 border-t border-black/[0.055] bg-creme/85 px-5 py-3 backdrop-blur-xl backdrop-saturate-150 sm:-mx-8 sm:px-8 lg:hidden">
               <div className="flex items-center justify-between gap-4">
-                <WKnopf art="klar" onClick={zurueck}>
-                  <ArrowLeft size={16} strokeWidth={2.2} />
-                  Zurück
-                </WKnopf>
+                {/* Auf dem Ergebnis steht hier der Preis statt "Zurueck": die
+                    Rechnung macht die Seite laenger, und der Weg zum
+                    Handlungsaufruf darf dadurch nicht laenger werden. Zurueck
+                    fuehren die Masskette oben und "Andere Variante" unten. */}
+                {istErgebnis && gewaehlterVorschlag ? (
+                  <div className="min-w-0">
+                    <div className="vorzeile truncate">{gewaehlterVorschlag.titel}</div>
+                    <div className="ziffern gross text-[19px] font-bold leading-none text-kohle">
+                      {eur(brutto(gewaehlterVorschlag.preis))}
+                    </div>
+                  </div>
+                ) : (
+                  <WKnopf art="klar" onClick={zurueck}>
+                    <ArrowLeft size={16} strokeWidth={2.2} />
+                    Zurück
+                  </WKnopf>
+                )}
+                {istErgebnis && (
+                  <WKnopf art="primaer" onClick={() => { geheZu("unterlagen"); setAnfrage(true); }}>
+                    Angebot anfordern
+                  </WKnopf>
+                )}
                 {!istErgebnis && !istUnterlagen && (
                   <WKnopf art="primaer" onClick={weiterMitTipp} aus={istVorschlaege && moegliche.length === 0}>
                     {weiterText}

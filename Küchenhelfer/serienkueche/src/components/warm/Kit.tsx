@@ -138,11 +138,15 @@ export function Wahlreihe<T extends string>({
   setze,
   optionen,
   etikett,
+  dunkel,
 }: {
   wert: T;
   setze: (v: T) => void;
   optionen: Array<{ id: T; titel: string; zusatz?: ReactNode }>;
   etikett: string;
+  /** Steht die Reihe auf dem dunklen Abschnittsgrund? Dann kehrt sie sich um:
+      die gewählte Fläche ist hell, die anderen tragen eine helle Haarlinie. */
+  dunkel?: boolean;
 }) {
   return (
     <div role="group" aria-label={etikett} className="flex flex-wrap items-center gap-2">
@@ -155,7 +159,13 @@ export function Wahlreihe<T extends string>({
             onClick={() => { if (!aktiv) setze(o.id); }}
             aria-pressed={aktiv}
             className={`druck flex h-10 items-center gap-2 rounded-[3px] px-4 text-[13.5px] font-semibold ${
-              aktiv ? "bg-kohle text-creme" : "flaeche text-kohle-2 hover:!border-kohle-3 hover:text-kohle"
+              dunkel
+                ? aktiv
+                  ? "bg-creme text-kohle"
+                  : "border border-creme/25 text-creme/80 hover:border-creme/55 hover:text-creme"
+                : aktiv
+                  ? "bg-kohle text-creme"
+                  : "flaeche text-kohle-2 hover:!border-kohle-3 hover:text-kohle"
             }`}
           >
             {o.titel}

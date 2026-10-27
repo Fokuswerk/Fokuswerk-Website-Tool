@@ -351,8 +351,17 @@ export function pruefeBelegungen(): string[] {
  * Gerechnet wird netto — im Haus, gegenüber dem Lieferanten, im Angebot.
  * Was ein Verbraucher sieht, muss dagegen der Endpreis sein, also brutto.
  */
+/**
+ * Brutto wie auf einer Rechnung: Netto plus gerundete Steuer.
+ *
+ * Vorher wurde der Bruttobetrag in einem Zug gerundet, das Unterlagenblatt
+ * rechnete aber Netto + gerundete Steuer. Beide Wege liegen fast immer
+ * gleich und manchmal einen Euro auseinander — und genau dann steht auf dem
+ * Schirm eine andere Summe als auf dem Blatt, das man mitnimmt. Ein Euro
+ * Unterschied kostet mehr Vertrauen als hundert Euro Preisunterschied.
+ */
 export function brutto(netto: number): number {
-  return Math.round(netto * (1 + MWST));
+  return netto + Math.round(netto * MWST);
 }
 
 export function eur(wert: number): string {
