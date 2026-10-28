@@ -26,11 +26,20 @@ const ADLIB = "curious_coder~facebook-ads-library-scraper";
 // Wörter, die in keinem Betriebsnamen etwas unterscheiden. Ein Treffer auf eines davon
 // ist kein Treffer.
 const ALLERWELT = new Set([
-  "auto", "autos", "kfz", "car", "cars", "werkstatt", "service", "autoservice", "gmbh",
-  "ug", "kg", "ohg", "gbr", "mbh", "co", "und", "der", "die", "das", "haus", "autohaus",
+  "auto", "autos", "kfz", "car", "cars", "werkstatt", "werkstätten", "service", "autoservice",
+  "gmbh", "ug", "kg", "ohg", "gbr", "mbh", "co", "und", "der", "die", "das", "haus", "autohaus",
   "meister", "technik", "center", "zentrum", "team", "group", "deutschland", "online",
   "shop", "handel", "partner", "profi", "pro", "express", "bau", "gmbhcokg", "ek",
   "ihr", "ihre", "alle", "beste", "neu", "neue",
+  // Gattungswörter aus den Gewerken. Ohne sie wird aus „B&K KFZ und Lackier Service" das
+  // Kennwort „lackier", und jede Lackiererei Deutschlands gilt als derselbe Betrieb —
+  // am 28.10.2026 live passiert, gleich dreimal in einem Ort.
+  "lackier", "lackierung", "lackiererei", "lack", "karosserie", "karosseriebau",
+  "nutzfahrzeuge", "nutzfahrzeug", "fahrzeug", "fahrzeuge", "automobile", "automobil",
+  "mobile", "reifen", "motor", "motoren", "getriebe", "unfall", "abschlepp", "prüfstelle",
+  "pruefstelle", "ersatzteile", "teile", "dach", "dachdecker", "bedachung", "elektro",
+  "elektrik", "sanitaer", "sanitär", "heizung", "klima", "maler", "malerei", "tischler",
+  "tischlerei", "schreinerei", "garten", "landschaft", "bedachungen", "innenausbau",
 ]);
 
 function normal(text) {
@@ -43,8 +52,16 @@ function normal(text) {
 }
 
 // Die Wörter, an denen man genau diesen Betrieb erkennt — Eigennamen, keine Gattung.
-export function kennwoerter(name) {
-  return normal(name).split(" ").filter((w) => w.length >= 4 && !ALLERWELT.has(w));
+//
+// Der Ortsname gehört dazu ausgeschlossen, und zwar genau deshalb, weil er so oft im
+// Firmennamen steht: Innerhalb eines Ortes unterscheidet er nichts. „Auto Westerstede UG"
+// behielt ohne diesen Ausschluss nur „westerstede" als Kennwort — und wurde damit dem
+// „Grillwerk Westerstede" zugeordnet.
+export function kennwoerter(name, ort = "") {
+  const ortsworte = new Set(normal(ort).split(" ").filter(Boolean));
+  return normal(name)
+    .split(" ")
+    .filter((w) => w.length >= 4 && !ALLERWELT.has(w) && !ortsworte.has(w));
 }
 
 /**
@@ -60,24 +77,50 @@ export function kennwoerter(name) {
  * Im Zweifel „unsicher". Ein verpasster Werbetreibender kostet eine Beobachtung, ein
  * erfundener kostet den Termin.
  */
-export function zuordnen(betriebsname, pageName) {
-  const meine = kennwoerter(betriebsname);
-  if (!meine.length) return "nein";
+export function zuordnen(betriebsname, pageName, ort = "") {
   const fremd = normal(pageName);
   if (!fremd) return "nein";
 
-  const treffer = meine.filter((w) => fremd.includes(w));
-  if (!treffer.length) return "nein";
+  // Gleicher Name, fertig. Steht ganz vorn, weil der Rest der Prüfung Kennwörter
+  // braucht: „SBB Autoservice GmbH" besteht nur aus einem zu kurzen Kürzel und zwei
+  // Gattungswörtern und hat deshalb keines — obwohl Namensgleichheit der denkbar
+  // beste Beleg ist.
+  if (fremd === normal(betriebsname)) return "sicher";
 
-  // Vollständige Übereinstimmung der Kennwörter: eindeutig derselbe.
-  if (treffer.length === meine.length) return "sicher";
+  const meine = kennwoerter(betriebsname, ort);
+  // Bleibt nach Gattung und Ortsname nichts Unterscheidendes übrig — „Nutzfahrzeuge
+  // Service", „Auto Westerstede UG" —, dann ist über diesen Betrieb schlicht keine
+  // Aussage möglich. Lieber keine als eine falsche.
+  if (!meine.length) return "nein";
 
-  // Teiltreffer: Nur gültig, wenn der fremde Name nichts Wesentliches dazuerfindet.
-  // „H. Oeltjenbruns GmbH" gegen „Family Gifts D3" scheitert schon oben. Hier landet
-  // „EUROMASTER Westerstede" gegen „Euromaster France" — Marke trifft, Ort fehlt.
-  const seine = kennwoerter(pageName);
-  const zusatz = seine.filter((w) => !meine.includes(w));
-  return zusatz.length === 0 ? "sicher" : "unsicher";
+  // Geprüft wird in dieser Richtung: Steckt alles, was den FREMDEN Werbetreibenden
+  // ausmacht, in unserem Betriebsnamen? Umgekehrt zu fragen war falsch — ein Betrieb
+  // heißt „Freie Mehrmarkenwerkstatt Ralf Renken" und wirbt als „Ralf Renken", und
+  // dann fehlen zwei eigene Kennwörter, ohne dass irgendetwas dagegen spräche.
+  const seine = kennwoerter(pageName, ort);
+  if (!seine.length) return "nein";
+  const passt = (w) => meine.some((m) => m === w || m.includes(w) || w.includes(m));
+  // Gar keine Überschneidung heißt: ein fremder Betrieb, der zufällig im Suchergebnis
+  // stand. Das ist kein Zweifelsfall, sondern ein klares Nein — „Family Gifts D3" hat
+  // mit „Dieter Schulz" nichts zu tun und gehört nicht einmal in die Vermerkliste.
+  if (!seine.some(passt)) return "nein";
+  if (seine.some((w) => !passt(w))) return "unsicher";
+
+  // Trägt der eigene Name den Ort und der fremde nicht, wirbt mit hoher Wahrscheinlichkeit
+  // die Kette und nicht die Filiale. „EUROMASTER Westerstede PKW & LKW" gegen schlicht
+  // „Euromaster": Die Anzeige lief bundesweit, nicht für diesen Standort.
+  const ortImEigenen = normal(ort) && normal(betriebsname).includes(normal(ort));
+  const ortImFremden = normal(ort) && fremd.includes(normal(ort));
+  if (ortImEigenen && !ortImFremden) return "unsicher";
+
+  // Hängt alles an einem einzigen Wort, muss dieses Wort lang genug sein, um ein
+  // Eigenname zu sein. „Autohaus Spiegel" behält nur „spiegel" — und traf damit DER
+  // SPIEGEL, das Nachrichtenmagazin (live gesehen am 28.10.2026). „Oeltjenbruns" mit
+  // zwölf Zeichen trägt diese Last, „spiegel" mit sieben nicht. Zwei übereinstimmende
+  // Wörter reichen dagegen auch kurz: „Dieter Schulz" ist als Paar eindeutig genug.
+  if (seine.length === 1 && seine[0].length < 8) return "unsicher";
+
+  return "sicher";
 }
 
 async function apify(actor, input, { token, grenze = 120000, maxItems = null } = {}) {
@@ -148,17 +191,20 @@ export async function profileHolen({ gewerk, ort, hoechstens = 24, token }) {
  * Alle Suchen laufen in EINEM Actor-Aufruf. Einzeln wären es so viele Starts wie
  * Betriebe, und jeder Start kostet Zeit und Geld.
  */
-export async function anzeigenHolen(betriebe, { token, jeBetrieb = 6 } = {}) {
+export async function anzeigenHolen(betriebe, { token, ort = "", jeBetrieb = 6 } = {}) {
   const suchen = betriebe.map((b) => {
-    const begriff = kennwoerter(b.name).slice(0, 2).join(" ") || b.name;
+    // Gesucht wird mit den Kennwoertern OHNE Ortsnamen: „Auto Westerstede" findet jeden
+    // Werbetreibenden des Ortes, der Betriebsname ohne Ort findet den Betrieb.
+    const begriff = kennwoerter(b.name, ort).slice(0, 2).join(" ");
     return {
       betrieb: b.name,
       begriff,
-      url:
-        "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=DE" +
-        `&q=${encodeURIComponent('"' + begriff + '"')}&search_type=keyword_exact_phrase`,
+      url: begriff
+        ? "https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=DE" +
+          `&q=${encodeURIComponent('"' + begriff + '"')}&search_type=keyword_exact_phrase`
+        : null,
     };
-  });
+  }).filter((s) => s.url);
 
   let roh = [];
   try {
@@ -178,7 +224,7 @@ export async function anzeigenHolen(betriebe, { token, jeBetrieb = 6 } = {}) {
     return { verfuegbar: false, je: new Map(), unsicher: [] };
   }
 
-  const je = new Map(suchen.map((s) => [s.betrieb, []]));
+  const je = new Map(betriebe.map((b) => [b.name, []]));
   const unsicher = [];
 
   for (const a of Array.isArray(roh) ? roh : []) {
@@ -186,7 +232,7 @@ export async function anzeigenHolen(betriebe, { token, jeBetrieb = 6 } = {}) {
     const quelle = suchen.find((s) => s.url === a.url);
     if (!quelle) continue;
 
-    const urteil = zuordnen(quelle.betrieb, a.page_name);
+    const urteil = zuordnen(quelle.betrieb, a.page_name, ort);
     if (urteil === "nein") continue;
     if (urteil === "unsicher") {
       unsicher.push({ betrieb: quelle.betrieb, werbetreibender: a.page_name });
@@ -238,7 +284,7 @@ export async function sammle({ gewerk, ort, hoechstens = 24 }) {
   const kern = betriebe.filter((b) => b.kategorie === haeufigste);
   const liste = kern.length >= 3 ? kern : betriebe;
 
-  const anzeigen = await anzeigenHolen(liste, { token });
+  const anzeigen = await anzeigenHolen(liste, { token, ort });
 
   return {
     gewerk,
