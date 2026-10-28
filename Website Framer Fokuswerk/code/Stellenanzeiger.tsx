@@ -25,7 +25,8 @@ import { useEffect, useMemo, useRef, useState } from "react"
 //   POST /api/stellenanzeige[?vorlauf=1]
 //   { domain, beruf, dringlichkeit, stellen, erfahrung, staerken[], newsletter,
 //     kontakt: { name, email, telefon } }
-//   200 → { betrieb, anzeigen:[{titel,text}×3], fragen:[×4], budget }
+//   200 → { betrieb, kanaele:[{id,name,wofuer,stuecke:[{titel,felder:[{etikett,wert,
+//            grenze,grenzeArt}]}]}], fragen:[×4], budget }
 //   422 → { fehler: "seite_nicht_lesbar" | "beruf_unklar" | … }
 
 const SCHRIFT = "Inter, 'Inter Placeholder', system-ui, sans-serif"
@@ -67,8 +68,16 @@ const STIL = `
   .fw-sa-zahlen > *:first-child { padding-left: 0; border-left: none; }
 }
 
+/* Drei Karten in zwei Spalten lassen rechts unten ein Loch. Zweispaltig deshalb nur
+   im mittleren Bereich, und dort zieht sich die letzte Karte über beide Spalten, wenn
+   sie allein in ihrer Zeile stünde. Ab 1000 px stehen alle drei nebeneinander: Sie sind
+   drei Fassungen derselben Sache und gehören nebeneinander, nicht untereinander. */
 .fw-sa-karten { display: grid; gap: 14px; grid-template-columns: 1fr; }
 @media (min-width: 810px) { .fw-sa-karten { gap: 20px; grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 810px) and (max-width: 999.98px) {
+  .fw-sa-karten > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+@media (min-width: 1000px) { .fw-sa-karten { gap: 20px; grid-template-columns: repeat(3, 1fr); } }
 
 .fw-sa-drei { display: grid; gap: 28px; grid-template-columns: 1fr; }
 /* Erst ab 1000 px dreispaltig — bei 810 px waren die Spalten 214 px breit und
@@ -653,12 +662,17 @@ const EINWILLIGUNGSTEXT =
 const NEWSLETTER_TEXT =
     "Schickt mir außerdem, was bei anderen Betrieben funktioniert hat — ein paar Mal im Jahr, jederzeit abbestellbar. Freiwillig."
 
-// Die Antwort braucht rund 30 Sekunden. Läuft der Vorlauf, ist sie meist schon da.
+// Seit aus drei Anzeigen eine Mappe für drei Kanäle geworden ist, braucht die Antwort rund
+// 70 bis 80 Sekunden (gemessen am 27.10.2026). Läuft der Vorlauf, ist sie beim Absenden
+// meist schon fertig und es erscheint gar kein Ladetext. Die Marken müssen trotzdem zur
+// echten Dauer passen: „Gleich fertig" nach 16 Sekunden war eine Lüge.
 const LAUFTEXTE = [
     { ab: 0, text: "Wir lesen Ihre Website." },
-    { ab: 7, text: "Wir sehen nach, was Ihren Betrieb ausmacht." },
-    { ab: 16, text: "Wir schreiben die Anzeigen. Gleich fertig." },
-    { ab: 32, text: "Dauert heute etwas länger. Bitte bleiben Sie noch einen Moment." },
+    { ab: 8, text: "Wir sehen nach, was Ihren Betrieb ausmacht." },
+    { ab: 20, text: "Wir schreiben die Anzeige für Kleinanzeigen." },
+    { ab: 38, text: "Jetzt die Fassungen für Facebook und Instagram." },
+    { ab: 55, text: "Zuletzt Ihre Karriereseite, das Drehbuch und die Anleitung." },
+    { ab: 85, text: "Dauert heute etwas länger. Bitte bleiben Sie noch einen Moment." },
 ]
 
 const FEHLERTEXTE: Record<string, { titel: string; hinweis: string; zurueck: number }> = {
@@ -706,10 +720,37 @@ function fehlerText(code: string) {
     return FEHLERTEXTE[code] || FEHLERTEXTE.netz
 }
 
-interface Anzeige { titel: string; text: string }
+// Ein Feld ist eine Eingabe, die der Betrieb irgendwo einträgt — ein Titel, ein
+// Anzeigentext, ein Abschnitt seiner Karriereseite.
+//
+// grenzeArt "max"     — harte Grenze der Plattform. Darüber wird abgeschnitten.
+// grenzeArt "schnitt" — dort blendet die Plattform „… mehr" ein. Längeres geht nicht
+//                       verloren, es wird nur zunächst nicht gelesen.
+interface Feld { etikett: string; wert: string; grenze?: number; grenzeArt?: "max" | "schnitt"; ohneKopie?: boolean }
+interface Stueck { titel?: string | null; felder: Feld[] }
+interface Kanal { id: string; name: string; wofuer: string; stuecke: Stueck[] }
+
+interface Marktlage {
+    gebiet: string
+    stand: string
+    berufsgruppe: string
+    vakanzzeit: number
+    vakanzzeitWort: string
+    anteilDreiMonate: number | null
+    arbeitsloseJe100: number | null
+    knapp: boolean
+    quelle: { text: string; link: string }
+}
+
 interface Ergebnis {
     betrieb: string
-    anzeigen: Anzeige[]
+    // Amtliche Zahlen. Fehlt die Zuordnung zur Berufsgruppe, fehlt der ganze Block —
+    // lieber nichts als eine Zahl aus der falschen Gruppe.
+    marktlage?: Marktlage | null
+    kanaele: Kanal[]
+    // Anleitung, Drehbuch, Antworten, Wochenplan — gleiche Form wie ein Kanal, damit
+    // dieselbe Darstellung greift. Älteren Ergebnissen fehlt das Feld.
+    mappe?: Kanal[]
     fragen: string[]
     budget: string
 }
@@ -718,18 +759,83 @@ interface Ergebnis {
 // als Beispiel da — es ist nicht die Seite des Besuchers.
 const BEISPIEL: Ergebnis = {
     betrieb: "Knolle Garten- und Landschaftsbau",
-    anzeigen: [
+    kanaele: [
         {
-            titel: "Landschaftsgärtner (m/w/d) in Harpstedt",
-            text: "Wir bauen Gärten in Harpstedt und Umgebung.\nWas Sie bei uns finden: ein festes Team, Maschinen, die laufen, und Feierabend, wenn Feierabend ist.\nBewerbung in zwei Minuten, ohne Lebenslauf.",
+            id: "kleinanzeigen",
+            name: "Kleinanzeigen",
+            wofuer:
+                "Kostenlos inserieren auf kleinanzeigen.de. Dort suchen Leute, die gerade wirklich " +
+                "etwas Neues wollen — sachlich und vollständig geschrieben, nicht als Werbung.",
+            stuecke: [
+                {
+                    titel: null,
+                    felder: [
+                        { etikett: "Titel", wert: "Landschaftsgärtner (m/w/d) in Harpstedt, ab sofort", grenze: 65, grenzeArt: "max" },
+                        {
+                            etikett: "Anzeigentext",
+                            wert:
+                                "Knolle in Harpstedt sucht ab sofort zwei bis drei Landschaftsgärtner (m/w/d). Die Arbeit liegt schon da.\n\n" +
+                                "Gearbeitet wird im Großraum Bremen, Wildeshausen und Oldenburg: neue Privatgärten, Pflaster- und Natursteinarbeiten, Teich- und Schwimmteichbau.\n\n" +
+                                "Der Betrieb bietet einen unbefristeten Arbeitsplatz, Werkzeug und Maschinen auf Stand und einen geregelten Feierabend ohne Dauer-Überstunden.\n\n" +
+                                "[Bitte eintragen: Verdienst, z. B. \"ab 3.400 Euro brutto\"]\n\n" +
+                                "Bewerben geht ohne Mappe: vier kurze Fragen, etwa zwei Minuten.",
+                        },
+                    ],
+                },
+            ],
         },
         {
-            titel: "Kein Bock mehr auf Baustellen quer durch Niedersachsen?",
-            text: "Bei uns sind die Fahrten kurz. Unsere Baustellen liegen im Umkreis.\nEingespieltes Team, moderne Maschinen, Bezahlung über dem Üblichen.\nMelden Sie sich — wir rufen zurück.",
+            id: "meta",
+            name: "Facebook und Instagram",
+            wofuer:
+                "Bezahlte Anzeige. Hier scrollt jemand, der gar nicht sucht — deshalb drei Fassungen " +
+                "mit verschiedenen Aufhängern, die man gegeneinander laufen lässt.",
+            stuecke: [
+                {
+                    titel: "Was die Stelle bietet",
+                    felder: [
+                        { etikett: "Primärtext", grenze: 125, grenzeArt: "schnitt", wert: "Bezahlung über dem Üblichen, Maschinen auf Stand und ein geregelter Feierabend.\n\nKnolle in Harpstedt sucht ab sofort zwei bis drei Landschaftsgärtner.\n\nVier Fragen, zwei Minuten, keine Mappe: So bewirbst du dich." },
+                        { etikett: "Überschrift", wert: "Landschaftsgärtner in Harpstedt", grenze: 40, grenzeArt: "max" },
+                        { etikett: "Beschreibung", wert: "Ab sofort, 2–3 Stellen", grenze: 30, grenzeArt: "max" },
+                    ],
+                },
+                {
+                    titel: "Die Arbeit",
+                    felder: [
+                        { etikett: "Primärtext", grenze: 125, grenzeArt: "schnitt", wert: "Natursteinmauern, Pflasterwege, Holzterrassen, Schwimmteiche: Das ist dein Arbeitsalltag bei Knolle.\n\nIm Privatgarten planst du dein Stück selbst.\n\nBeantworte vier Fragen, zwei Minuten reichen." },
+                        { etikett: "Überschrift", wert: "Pflaster, Naturstein, Teichbau", grenze: 40, grenzeArt: "max" },
+                        { etikett: "Beschreibung", wert: "Knolle, Harpstedt", grenze: 30, grenzeArt: "max" },
+                    ],
+                },
+                {
+                    titel: "Der Betrieb",
+                    felder: [
+                        { etikett: "Primärtext", grenze: 125, grenzeArt: "schnitt", wert: "Vierte Generation, über 100 Jahre, und die Arbeit liegt schon da: Knolle in Harpstedt.\n\nFür zwei bis drei Landschaftsgärtner ist ab sofort Platz.\n\nVier Fragen beantworten, zwei Minuten, fertig." },
+                        { etikett: "Überschrift", wert: "Familienbetrieb in Harpstedt", grenze: 40, grenzeArt: "max" },
+                        { etikett: "Beschreibung", wert: "Seit über 100 Jahren", grenze: 30, grenzeArt: "max" },
+                    ],
+                },
+            ],
         },
         {
-            titel: "Landschaftsgärtner gesucht — Harpstedt",
-            text: "Festanstellung, unbefristet, ab sofort.\nWir suchen zwei bis drei Leute für unser Team.\nSchreiben Sie uns, worauf Sie Lust haben. Den Rest klären wir im Gespräch.",
+            id: "karriereseite",
+            name: "Ihre eigene Seite",
+            wofuer:
+                "Die vollständige Fassung für Ihre Website. Sie bleibt stehen, wird bei Google " +
+                "gefunden, und auf sie können alle anderen Kanäle verweisen.",
+            stuecke: [
+                {
+                    titel: null,
+                    felder: [
+                        { etikett: "Überschrift", wert: "Landschaftsgärtner (m/w/d) in Harpstedt" },
+                        { etikett: "Einleitung", wert: "Knolle in Harpstedt ist ein Familienbetrieb für Garten- und Landschaftsbau in vierter Generation. Gesucht werden ab sofort zwei bis drei Landschaftsgärtner (m/w/d)." },
+                        { etikett: "Das machst du", wert: "Neuanlage privater Gärten\nPflaster- und Natursteinarbeiten\nBau von Teichen und Schwimmteichen\nSelbstständige Abwicklung von Baustellen" },
+                        { etikett: "Das bringst du mit", wert: "Abgeschlossene Ausbildung in der Grünen Branche\nErfahrung in Pflaster- und Natursteinarbeiten\nFührerschein mindestens Klasse B/BE" },
+                        { etikett: "Das bieten wir", wert: "[Bitte eintragen: Verdienst, z. B. \"ab 3.400 Euro brutto\"]\nBezahlung über dem Üblichen\nWerkzeug und Maschinen auf Stand\nGeregelter Feierabend, keine Dauer-Überstunden" },
+                        { etikett: "So bewirbst du dich", wert: "Beantworte vier kurze Fragen zu deiner Tätigkeit, deiner Erfahrung, deinem Start und der Entfernung. Das dauert etwa zwei Minuten, eine Mappe brauchst du nicht." },
+                    ],
+                },
+            ],
         },
     ],
     fragen: [
@@ -752,8 +858,12 @@ const WIEDERERKENNEN = [
 
 const WAS_SIE_BEKOMMEN = [
     {
-        titel: "Drei Anzeigentexte",
-        text: "Drei verschiedene Anläufe auf dieselbe Stelle — einer sachlich, einer direkt, einer über das, was bei Ihnen anders ist. Sie können sie unverändert einstellen.",
+        titel: "Drei Kanäle, drei Fassungen",
+        text: "Dieselbe Stelle für Kleinanzeigen, für Facebook und Instagram und für Ihre eigene Seite — jeweils in dem Format, das dort verlangt wird. Mit Zeichenzahl, damit nichts abgeschnitten wird.",
+    },
+    {
+        titel: "Die Anleitung dazu",
+        text: "Zehn Schritte durch den Werbeanzeigenmanager, mit Ihrem Ort, Ihrem Umkreis und Ihrem Tagesbudget. Dazu ein Drehbuch für ein Handyvideo in zwanzig Minuten und die ersten drei Antworten an Bewerber.",
     },
     {
         titel: "Vier Fragen für die Bewerbung",
@@ -838,67 +948,314 @@ function Absaetze({ text, farbe }: { text: string; farbe: string }) {
     )
 }
 
-function Blatt({ ergebnis, beispiel = false, angeschnitten = false }: { ergebnis: Ergebnis; beispiel?: boolean; angeschnitten?: boolean }) {
-    const [kopiert, setKopiert] = useState<number | null>(null)
-    const anzeigen = angeschnitten ? ergebnis.anzeigen.slice(0, 2) : ergebnis.anzeigen
+// Der Teil eines Textes, den die Plattform ohne Klick zeigt. Statt „311 von 125 Zeichen —
+// zu lang" zu melden (was falsch wäre: nichts geht verloren), wird der sichtbare Anfang
+// dunkel und der Rest hell gesetzt. Man sieht dann sofort, ob der Aufhänger vorn steht.
+// Wo die Plattform abschneidet, liegt selten eine Wortgrenze. Hart bei Zeichen 125 zu
+// trennen las sich wie ein Tippfehler („Harpst … mehr edt"), deshalb zurück bis zum
+// letzten Leerzeichen — nur wenn eines in Reichweite ist, sonst bleibt es hart.
+function schnittstelle(text: string, grenze: number) {
+    if (text.length <= grenze) return grenze
+    const raum = text.lastIndexOf(" ", grenze)
+    return raum > grenze - 18 ? raum : grenze
+}
 
-    function kopieren(i: number, text: string) {
+function Angeschnitten({ text, grenze }: { text: string; grenze: number }) {
+    const voll = String(text || "")
+    const schnitt = schnittstelle(voll, grenze)
+    const absaetze = voll.split(/\n+/).filter(Boolean)
+    let gelesen = 0
+    return (
+        <div style={{ display: "grid", gap: 10 }}>
+            {absaetze.map((a, i) => {
+                const start = gelesen
+                gelesen += a.length + 1
+                const rest = schnitt - start
+                const sichtbar = rest <= 0 ? "" : a.slice(0, rest)
+                const verdeckt = rest <= 0 ? a : a.slice(rest)
+                return (
+                    <p key={i} style={{ margin: 0, fontSize: 16, lineHeight: 1.62, letterSpacing: "-0.005em" }}>
+                        {sichtbar ? <span style={{ color: TINTE }}>{sichtbar}</span> : null}
+                        {sichtbar && verdeckt ? (
+                            <span style={{ color: AKZENT_HELL, fontSize: 13, letterSpacing: "-0.01em" }}>{" … mehr "}</span>
+                        ) : null}
+                        {verdeckt ? <span style={{ color: T40 }}>{verdeckt}</span> : null}
+                    </p>
+                )
+            })}
+        </div>
+    )
+}
+
+// Ein Eingabefeld der Zielplattform: Beschriftung, Zeichenzahl, Kopierknopf, Inhalt.
+// Je Feld ein eigener Knopf, weil man sie drüben auch einzeln einträgt.
+function FeldBlock({ feld, kopieren, kopiert }: { feld: Feld; kopieren: (t: string) => void; kopiert: boolean }) {
+    const n = String(feld.wert || "").length
+    const drueber = !!feld.grenze && feld.grenzeArt === "max" && n > feld.grenze
+    const zaehler = !feld.grenze
+        ? null
+        : feld.grenzeArt === "max"
+          ? n + " von " + feld.grenze + " Zeichen"
+          : "sichtbar: die ersten " + feld.grenze + " Zeichen"
+
+    return (
+        <div style={{ display: "grid", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                <Versal farbe={T40}>{feld.etikett}</Versal>
+                {zaehler ? (
+                    <span style={{ fontSize: 12, letterSpacing: "-0.01em", color: drueber ? AKZENT_HELL : T40, fontVariantNumeric: "tabular-nums" }}>
+                        {drueber ? zaehler + " — bitte kürzen" : zaehler}
+                    </span>
+                ) : null}
+                {!feld.ohneKopie ? (
+                <button
+                    type="button"
+                    onClick={() => kopieren(feld.wert)}
+                    style={{
+                        marginLeft: "auto", font: "inherit", fontSize: 12, fontWeight: 500,
+                        letterSpacing: "-0.01em", color: kopiert ? AKZENT_HELL : T60,
+                        background: "transparent", border: `1px solid ${LINIE}`, borderRadius: 999,
+                        padding: "7px 13px", minHeight: 36, cursor: "pointer",
+                    }}
+                >
+                    {kopiert ? "Kopiert" : "Kopieren"}
+                </button>
+                ) : null}
+            </div>
+            {feld.grenzeArt === "schnitt" && feld.grenze ? (
+                <Angeschnitten text={feld.wert} grenze={feld.grenze} />
+            ) : (
+                <Absaetze text={feld.wert} farbe={TINTE} />
+            )}
+        </div>
+    )
+}
+
+// Ein Block — ein Kanal oder ein Teil der Mappe. Beide haben dieselbe Form, deshalb
+// dieselbe Darstellung: Name, wofür er da ist, darunter die Felder.
+// Die Marktlage eröffnet den Bericht. Dunkel wie der Auftakt der Seite: Das hier ist
+// keine Lieferung, sondern der Befund, gegen den die Lieferung antritt.
+//
+// Die Quellenzeile ist Pflicht, nicht Zierde: Die Statistik der BA erlaubt die Nutzung
+// ihrer Daten mit Quellenangabe und Verlinkung. Nie ohne sie ausliefern.
+function MarktlageKarte({ lage }: { lage: Marktlage }) {
+    const zahl = (w: number | null) =>
+        w === null || w === undefined ? "—" : String(w).replace(".", ",")
+
+    return (
+        <div
+            style={{
+                background: DUNKEL, borderRadius: RADIUS_KARTE,
+                padding: "clamp(24px, 4vw, 38px)", color: PAPIER,
+            }}
+        >
+            <Versal farbe={AKZENT_DUNKEL}>Die Lage in Ihrem Beruf</Versal>
+
+            <div style={{ marginTop: 22, display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
+                <span style={{ fontSize: "clamp(3.4rem, 11vw, 5.6rem)", lineHeight: 0.9, fontWeight: 500, letterSpacing: "-0.055em", fontVariantNumeric: "tabular-nums" }}>
+                    {lage.vakanzzeit}
+                </span>
+                <span style={{ fontSize: 19, lineHeight: 1.35, letterSpacing: "-0.03em", color: P70, maxWidth: "24ch" }}>
+                    Tage bleibt eine gemeldete Stelle in Ihrem Beruf im Schnitt offen
+                </span>
+            </div>
+
+            <p style={{ margin: "20px 0 0", fontSize: 17, lineHeight: 1.55, letterSpacing: "-0.03em", color: PAPIER, maxWidth: "52ch" }}>
+                Das sind {lage.vakanzzeitWort}. Wenn Sie seit Wochen suchen, liegt das nicht an
+                Ihnen{lage.knapp ? " — auf 100 offene Stellen kommen nicht einmal 150 Arbeitslose, die dafür infrage kommen." : "."}
+            </p>
+
+            <div style={{ marginTop: 26, display: "grid", gap: 14 }}>
+                {[
+                    lage.anteilDreiMonate !== null
+                        ? { wert: zahl(lage.anteilDreiMonate) + " %", text: "der gemeldeten Stellen stehen länger als drei Monate offen" }
+                        : null,
+                    lage.arbeitsloseJe100 !== null
+                        ? { wert: zahl(lage.arbeitsloseJe100), text: "Arbeitslose kommen auf 100 offene Stellen" }
+                        : null,
+                ]
+                    .filter(Boolean)
+                    .map((z: any, i) => (
+                        <div key={i} style={{ display: "flex", gap: 14, alignItems: "baseline", borderTop: `1px solid ${LINIE_D}`, paddingTop: 14 }}>
+                            <span style={{ fontSize: 22, fontWeight: 500, letterSpacing: "-0.04em", minWidth: "4.5em", fontVariantNumeric: "tabular-nums" }}>
+                                {z.wert}
+                            </span>
+                            <span style={{ fontSize: 15, lineHeight: 1.5, letterSpacing: "-0.02em", color: P70 }}>{z.text}</span>
+                        </div>
+                    ))}
+            </div>
+
+            <p style={{ margin: "24px 0 0", fontSize: 13, lineHeight: 1.55, letterSpacing: "-0.01em", color: P45 }}>
+                {lage.berufsgruppe} · {lage.gebiet} · gleitende Jahresergebnisse {lage.stand}
+                <br />
+                <a href={lage.quelle.link} target="_blank" rel="noopener noreferrer" style={{ color: P45, textDecoration: "underline" }}>
+                    {lage.quelle.text}
+                </a>
+                . Umrechnung in Monate von uns.
+            </p>
+        </div>
+    )
+}
+
+function KanalKarte({
+    kanal, nummer, kopiert, kopieren,
+}: {
+    kanal: Kanal
+    nummer: number | null
+    kopiert: string | null
+    kopieren: (schluessel: string, name: string, text: string) => void
+}) {
+    const mehrereStuecke = (kanal.stuecke || []).length > 1
+    return (
+        <div style={{ background: REIN, border: `1px solid ${LINIE}`, borderRadius: RADIUS_KARTE, padding: "clamp(20px, 3vw, 30px)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {nummer ? <Nummer n={nummer} /> : null}
+                <Versal farbe={T40}>{kanal.name}</Versal>
+            </div>
+            <p style={{ margin: "12px 0 0", fontSize: 15, lineHeight: 1.55, letterSpacing: "-0.02em", color: T60, maxWidth: "62ch" }}>
+                {kanal.wofuer}
+            </p>
+            <div style={{ marginTop: 22, display: "grid", gap: 22 }}>
+                {(kanal.stuecke || []).map((st, si) => (
+                    <div
+                        key={si}
+                        style={
+                            mehrereStuecke
+                                ? { borderTop: `1px solid ${LINIE}`, paddingTop: 20, display: "grid", gap: 18 }
+                                : { display: "grid", gap: 18 }
+                        }
+                    >
+                        {st.titel ? (
+                            <div style={{ fontSize: 17, lineHeight: 1.3, letterSpacing: "-0.03em", fontWeight: 500, color: TINTE }}>
+                                {String.fromCharCode(65 + si)} · {st.titel}
+                            </div>
+                        ) : null}
+                        {(st.felder || []).map((f, fi) => (
+                            <FeldBlock
+                                key={fi}
+                                feld={f}
+                                kopiert={kopiert === kanal.id + ":" + si + ":" + fi}
+                                kopieren={(t) => kopieren(kanal.id + ":" + si + ":" + fi, kanal.id, t)}
+                            />
+                        ))}
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+function Blatt({
+    ergebnis, beispiel = false, angeschnitten = false, endpunkt = "", beruf = "", domain = "",
+}: {
+    ergebnis: Ergebnis
+    beispiel?: boolean
+    angeschnitten?: boolean
+    endpunkt?: string
+    beruf?: string
+    domain?: string
+}) {
+    const [kopiert, setKopiert] = useState<string | null>(null)
+    const [pdfLage, setPdfLage] = useState<"ruhe" | "laeuft" | "fehler">("ruhe")
+
+    // Das PDF wird erst auf Klick gesetzt. Es in jede Antwort zu packen hieße, 41 KB an
+    // jeden zu schicken, auch an die vielen, die es nie öffnen.
+    async function pdfHolen() {
+        if (pdfLage === "laeuft" || !endpunkt) return
+        setPdfLage("laeuft")
+        try {
+            const antwort = await fetch(endpunkt + "-pdf", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ ergebnis, beruf, domain }),
+            })
+            if (!antwort.ok) throw new Error("Status " + antwort.status)
+            const blob = await antwort.blob()
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement("a")
+            a.href = url
+            a.download = "Stellenausschreibung.pdf"
+            document.body.appendChild(a)
+            a.click()
+            a.remove()
+            // Erst nach dem Klick freigeben, sonst bricht der Download in Safari ab.
+            window.setTimeout(() => URL.revokeObjectURL(url), 10000)
+            melde("pdf_geladen")
+            setPdfLage("ruhe")
+        } catch (e) {
+            setPdfLage("fehler")
+        }
+    }
+    // Auf der Werkzeugseite steht das Beispiel als Beleg, nicht als Lieferung: ein Kanal
+    // vollständig sagt mehr als von jedem ein Stück.
+    const kanaele = angeschnitten ? (ergebnis.kanaele || []).slice(0, 1) : ergebnis.kanaele || []
+    const mappe = angeschnitten ? [] : ergebnis.mappe || []
+
+    function kopieren(schluessel: string, name: string, text: string) {
         try {
             navigator.clipboard.writeText(text)
-            melde("anzeige_kopiert", { nummer: i + 1 })
-            setKopiert(i)
+            melde("feld_kopiert", { kanal: name })
+            setKopiert(schluessel)
             window.setTimeout(() => setKopiert(null), 2000)
         } catch (e) {
             // Ohne Zwischenablage bleibt der Text markierbar. Kein Grund für eine Meldung.
         }
     }
 
+    const karte = {
+        background: REIN, border: `1px solid ${LINIE}`, borderRadius: RADIUS_KARTE,
+        padding: "clamp(20px, 3vw, 30px)",
+    }
+
     return (
         <div>
-            <div className="fw-sa-karten">
-                {anzeigen.map((a, i) => (
-                    <div
-                        key={i}
-                        style={{
-                            background: REIN, border: `1px solid ${LINIE}`, borderRadius: RADIUS_KARTE,
-                            padding: "clamp(20px, 3vw, 28px)", display: "flex", flexDirection: "column", gap: 14,
-                        }}
-                    >
-                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <Nummer n={i + 1} />
-                            <Versal farbe={T40}>Anzeige</Versal>
+            {!angeschnitten && endpunkt ? (
+                <div
+                    style={{
+                        marginBottom: 14, background: REIN, border: `1px solid ${LINIE}`,
+                        borderRadius: RADIUS_KARTE, padding: "clamp(18px, 2.6vw, 24px)",
+                        display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap",
+                    }}
+                >
+                    <div style={{ flex: "1 1 240px", minWidth: 0 }}>
+                        <div style={{ fontSize: 17, lineHeight: 1.35, letterSpacing: "-0.03em", fontWeight: 500, color: TINTE }}>
+                            Alles als PDF
                         </div>
-                        <div style={{ fontSize: 19, lineHeight: 1.3, letterSpacing: "-0.035em", fontWeight: 500, color: TINTE }}>
-                            {a.titel}
+                        <div style={{ marginTop: 5, fontSize: 14, lineHeight: 1.5, letterSpacing: "-0.02em", color: T60 }}>
+                            {pdfLage === "fehler"
+                                ? "Das hat gerade nicht geklappt. Das PDF liegt auch in Ihrer Mail."
+                                : "Zum Ausdrucken oder Weiterleiten. Liegt auch in Ihrer Mail."}
                         </div>
-                        <div style={{ flex: "1 1 auto" }}>
-                            <Absaetze text={a.text} farbe={T60} />
-                        </div>
-                        {!angeschnitten ? (
-                            <div>
-                                <button
-                                    type="button"
-                                    onClick={() => kopieren(i, (a.titel ? a.titel + "\n\n" : "") + a.text)}
-                                    style={{
-                                        font: "inherit", fontSize: 12, fontWeight: 500, letterSpacing: "-0.01em",
-                                        color: kopiert === i ? AKZENT_HELL : T60, background: "transparent",
-                                        border: `1px solid ${LINIE}`, borderRadius: 999,
-                                        padding: "9px 14px", minHeight: 40, cursor: "pointer",
-                                    }}
-                                >
-                                    {kopiert === i ? "Kopiert" : "Text kopieren"}
-                                </button>
-                            </div>
-                        ) : null}
                     </div>
+                    <Pille onClick={pdfHolen}>
+                        {pdfLage === "laeuft" ? "Wird gesetzt …" : "PDF herunterladen"}
+                    </Pille>
+                </div>
+            ) : null}
+
+            {!angeschnitten && ergebnis.marktlage ? (
+                <div style={{ marginBottom: 14 }}>
+                    <MarktlageKarte lage={ergebnis.marktlage} />
+                </div>
+            ) : null}
+
+            <div style={{ display: "grid", gap: 14 }}>
+                {kanaele.map((k, ki) => (
+                    <KanalKarte key={k.id || ki} kanal={k} nummer={ki + 1} kopiert={kopiert} kopieren={kopieren} />
                 ))}
             </div>
 
             {!angeschnitten ? (
-                <div className="fw-sa-karten" style={{ marginTop: 14 }}>
-                    <div style={{ background: REIN, border: `1px solid ${LINIE}`, borderRadius: RADIUS_KARTE, padding: "clamp(20px, 3vw, 28px)" }}>
+                <>
+                    {/* Die vier Fragen gehören zu den Texten: Sie sind das, worauf die
+                        Anzeige zeigt. Deshalb hier und nicht am Ende. */}
+                    <div style={{ ...karte, marginTop: 14 }}>
                         <Versal farbe={T40}>Vier Fragen für die Bewerbung</Versal>
-                        <div style={{ marginTop: 16, display: "grid", gap: 12 }}>
+                        <p style={{ margin: "12px 0 0", fontSize: 15, lineHeight: 1.55, letterSpacing: "-0.02em", color: T60, maxWidth: "62ch" }}>
+                            Statt Lebenslauf und Anschreiben. Das ist der Grund, warum sich jemand meldet,
+                            der sich sonst nicht bewirbt.
+                        </p>
+                        <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
                             {(ergebnis.fragen || []).map((f, i) => (
                                 <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                                     <Nummer n={i + 1} />
@@ -907,17 +1264,34 @@ function Blatt({ ergebnis, beispiel = false, angeschnitten = false }: { ergebnis
                             ))}
                         </div>
                     </div>
-                    <div style={{ background: REIN, border: `1px solid ${LINIE}`, borderRadius: RADIUS_KARTE, padding: "clamp(20px, 3vw, 28px)" }}>
+
+                    {mappe.length ? (
+                        <div style={{ marginTop: "clamp(34px, 5vw, 56px)" }}>
+                            <Versal farbe={AKZENT_HELL}>Und so bringen Sie es an den Start</Versal>
+                            <p style={{ margin: "14px 0 0", fontSize: 17, lineHeight: 1.58, letterSpacing: "-0.03em", color: T60, maxWidth: "58ch" }}>
+                                Texte allein stellen niemanden ein. Ab hier steht, was damit zu tun ist —
+                                jeder Schritt einmal, mit Ihren Werten.
+                            </p>
+                            <div style={{ marginTop: 20, display: "grid", gap: 14 }}>
+                                {mappe.map((k, ki) => (
+                                    <KanalKarte key={k.id || ki} kanal={k} nummer={null} kopiert={kopiert} kopieren={kopieren} />
+                                ))}
+                            </div>
+                        </div>
+                    ) : null}
+
+                    <div style={{ ...karte, marginTop: 14 }}>
                         <Versal farbe={T40}>Budget</Versal>
                         <div style={{ marginTop: 16 }}>
                             <Absaetze text={ergebnis.budget || ""} farbe={TINTE} />
                         </div>
                         <p style={{ margin: "16px 0 0", fontSize: 14, lineHeight: 1.55, letterSpacing: "-0.02em", color: T40 }}>
                             Richtwert aus Ihren Angaben, keine Zusage. Was wirklich nötig ist, hängt an Ort,
-                            Beruf und Wettbewerb.
+                            Beruf und Wettbewerb. Nur der bezahlte Kanal kostet Geld — Kleinanzeigen und
+                            Ihre eigene Seite sind umsonst.
                         </p>
                     </div>
-                </div>
+                </>
             ) : null}
 
             {beispiel ? (
@@ -933,10 +1307,46 @@ function Blatt({ ergebnis, beispiel = false, angeschnitten = false }: { ergebnis
 // Die Komponente
 // ---------------------------------------------------------------------------
 
+// ── Übergabe an die Ergebnisseite ──────────────────────────────────────────────
+// Dieselbe Mechanik wie in SeoAnalyse, mit eigenem Schlüssel. Bewusst doppelt statt
+// geteilt: Zwei Framer-Code-Bausteine, die sich gegenseitig importieren, binden ihre
+// Veröffentlichung aneinander — ein Fehler im einen legt den anderen lahm.
+//
+// Warum überhaupt ein Seitenwechsel: Google Ads zählt einen Abschluss am
+// verlässlichsten über den Aufruf einer Seite, die man nur nach dem Absenden sieht.
+// Das Ergebnis reist im sessionStorage mit, nicht in der Adresse — dort stünden die
+// Anzeigentexte und die Mailadresse im Browserverlauf und in jedem Protokoll.
+const UEBERGABE = "fw-stellen-ergebnis"
+const UEBERGABE_FRIST = 30 * 60 * 1000
+
+function uebergabeSchreiben(nutzlast: Record<string, any>) {
+    try {
+        sessionStorage.setItem(UEBERGABE, JSON.stringify({ ...nutzlast, zeit: Date.now() }))
+        return true
+    } catch (e) {
+        return false
+    }
+}
+
+function uebergabeLesen(): Record<string, any> | null {
+    try {
+        const roh = sessionStorage.getItem(UEBERGABE)
+        if (!roh) return null
+        const d = JSON.parse(roh)
+        if (!d || typeof d.zeit !== "number" || Date.now() - d.zeit > UEBERGABE_FRIST) return null
+        return d
+    } catch (e) {
+        return null
+    }
+}
+
 interface StellenanzeigerProps {
     endpunkt?: string
     beispielZeigen?: boolean
     angebotLink?: string
+    rolle?: "trichter" | "ergebnis"
+    ergebnisSeite?: string
+    werkzeugSeite?: string
     style?: any
 }
 
@@ -945,10 +1355,19 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         endpunkt = "https://fokuswerk-werkzeuge.vercel.app/api/stellenanzeige",
         beispielZeigen = false,
         angebotLink = "/kontakt",
+        rolle = "trichter",
+        ergebnisSeite = "/stellenanzeige/ergebnis",
+        werkzeugSeite = "/stellenanzeige",
         style,
     } = props
 
-    const [lage, setLage] = useState<"formular" | "laeuft" | "fertig" | "fehler">("formular")
+    const aufErgebnisseite = rolle === "ergebnis"
+
+    const [lage, setLage] = useState<"formular" | "laeuft" | "fertig" | "fehler">(
+        // Auf der Ergebnisseite steht der Schlusszustand schon beim ersten Rendern, sonst
+        // blitzte dort für einen Moment die erste Trichterfrage auf.
+        rolle === "ergebnis" ? "fertig" : "formular",
+    )
     const [schritt, setSchritt] = useState(SCHRITT_ADRESSE)
     const [domain, setDomain] = useState("")
     const [antworten, setAntworten] = useState<Record<string, any>>({})
@@ -978,7 +1397,9 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
     const frage = schritt >= 1 && schritt <= FRAGEN.length ? FRAGEN[schritt - 1] : null
     const kontaktSchritt = schritt === SCHRITT_KONTAKT
     const imTrichter = lage === "formular" ? schritt > SCHRITT_ADRESSE : lage !== "fertig"
-    const fertig = lage === "fertig"
+    // Auf der Ergebnisseite ist der Schluss erreicht, auch bevor die Übergabe gelesen
+    // ist: Sonst stünden darunter für einen Moment die Werbeabschnitte des Werkzeugs.
+    const fertig = aufErgebnisseite || lage === "fertig"
     const kontaktVollstaendig = !!name.trim() && !!mail.trim() && !!telefon.trim() && einwilligung
     const laufText = LAUFTEXTE.filter((l) => sekunden >= l.ab).slice(-1)[0]?.text || LAUFTEXTE[0].text
 
@@ -1066,6 +1487,48 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
     // seine Daten eingetragen hat. Der zweite Aufruf trifft den Zwischenspeicher.
     const vorlaufLaeuft = useRef("")
 
+    // Zweite Stufe des Vorlaufs. Sie läuft nach der letzten Frage, wenn Dringlichkeit,
+    // Stellenzahl und Stärken feststehen — die gehen jetzt in die Anzeigen ein, und
+    // vorher geschriebene Texte wären die falschen. Geschrieben wird, während der
+    // Besucher Name, Mail und Nummer einträgt.
+    const vorlaufZweiLaeuft = useRef("")
+
+    function vorlaufZweiStarten() {
+        const d = domain.trim()
+        const b = String(antworten.beruf || "").trim()
+        if (!d || b.length < 2) return
+        const staerken = (antworten.staerken || []).filter((x: string) => x !== "nichts")
+        const schluessel = [
+            d.toLowerCase(), b.toLowerCase(),
+            antworten.dringlichkeit || "-", antworten.stellen || "-",
+            [...staerken].sort().join(",") || "-",
+        ].join("|")
+        if (vorlaufZweiLaeuft.current === schluessel) return
+        vorlaufZweiLaeuft.current = schluessel
+        fetch(endpunkt + "?vorlauf=2", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+                domain: d,
+                beruf: b,
+                dringlichkeit: antworten.dringlichkeit,
+                stellen: antworten.stellen,
+                erfahrung: antworten.erfahrung,
+                staerken,
+            }),
+        })
+            .then((a) => a.json())
+            .then((x) => {
+                if (x && x.betrieb) setBetriebName(x.betrieb)
+                if (x && x.fehler) setVorlaufFehler(String(x.fehler))
+            })
+            .catch(() => {
+                // Scheitert der Vorlauf, schreibt der Hauptaufruf die Anzeigen. Dann
+                // dauert es länger, kaputt ist nichts.
+                vorlaufZweiLaeuft.current = ""
+            })
+    }
+
     function vorlaufStarten() {
         const d = domain.trim()
         const b = String(antworten.beruf || "").trim()
@@ -1122,27 +1585,61 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                 setLage("fehler")
                 return
             }
-            setErgebnis(await antwort.json())
-            setLage("fertig")
+            const daten = await antwort.json()
             melde("trichter_abgeschlossen", {
                 beruf: String(antworten.beruf || ""),
                 dringlichkeit: antworten.dringlichkeit,
                 stellen: antworten.stellen,
                 herkunft: herkunft.current?.quelle || "direkt",
             })
+            zurErgebnisseite(daten, false)
         } catch (e) {
             // Hier landet nur, wer den Endpunkt gar nicht erreicht: keine Verbindung, oder
             // der Türsteher (ORIGINS) lässt den Browser wortlos abblitzen.
             if (beispielZeigen) {
-                setErgebnis({ ...BEISPIEL, betrieb: domain.trim() || BEISPIEL.betrieb })
-                setBeispiel(true)
-                setLage("fertig")
+                zurErgebnisseite({ ...BEISPIEL, betrieb: domain.trim() || BEISPIEL.betrieb }, true)
             } else {
                 setFehler("netz")
                 setLage("fehler")
             }
         }
     }
+
+    // Der Wechsel ist der Zweck. Scheitert die Übergabe — privates Fenster, gesperrter
+    // Speicher —, bleibt das Ergebnis hier stehen statt auf einer leeren Seite.
+    function zurErgebnisseite(daten: Ergebnis, istBeispiel: boolean) {
+        setErgebnis(daten)
+        setBeispiel(istBeispiel)
+        setLage("fertig")
+        if (aufErgebnisseite || !ergebnisSeite) return
+        if (
+            !uebergabeSchreiben({
+                ergebnis: daten,
+                beispiel: istBeispiel,
+                mail: mail.trim(),
+                // Für das PDF: Beruf und Adresse stehen im Deckblatt und in der Fußzeile.
+                beruf: String(antworten.beruf || ""),
+                domain: domain.trim(),
+            })
+        )
+            return
+        window.location.assign(ergebnisSeite)
+    }
+
+    // Auf der Ergebnisseite wird nichts geschrieben — die Anzeigen kommen aus der
+    // Übergabe. Das Ereignis feuert nur bei einer echten Übergabe, nicht wenn jemand
+    // die Adresse aus einem Lesezeichen aufruft: so ist es das genauere Signal.
+    useEffect(() => {
+        if (!aufErgebnisseite) return
+        const d = uebergabeLesen()
+        if (!d?.ergebnis) return
+        setErgebnis(d.ergebnis as Ergebnis)
+        setBeispiel(!!d.beispiel)
+        if (typeof d.mail === "string") setMail(d.mail)
+        if (typeof d.domain === "string") setDomain(d.domain)
+        if (typeof d.beruf === "string") setAntworten((a) => ({ ...a, beruf: d.beruf }))
+        melde("werkzeug_abschluss")
+    }, [aufErgebnisseite])
 
     function nochmal() {
         setLage("formular")
@@ -1152,6 +1649,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         setVorlaufFehler("")
         setBeispiel(false)
         vorlaufLaeuft.current = ""
+        vorlaufZweiLaeuft.current = ""
     }
 
     // Nur grob: Es geht darum, einen Tippfehler zu fangen, nicht darum, Adressen zu
@@ -1168,6 +1666,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         setHinweis("")
         setVorlaufFehler("")
         vorlaufLaeuft.current = ""
+        vorlaufZweiLaeuft.current = ""
         setSchritt(1)
     }
 
@@ -1339,8 +1838,9 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     {sekunden >= 35 ? (
                         <div style={{ marginTop: 20, paddingTop: 18, borderTop: `1px solid ${LINIE_D}` }}>
                             <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55, letterSpacing: "-0.01em", color: P70 }}>
-                                Das dauert heute länger. Die Anzeigen kommen auch per Mail — Sie können
-                                die Seite schließen.
+                                Das dauert heute länger als sonst. Bleiben Sie kurz hier, die Anzeigen
+                                erscheinen gleich auf dieser Seite. Zur Sicherheit schicken wir sie
+                                Ihnen zusätzlich per Mail.
                             </p>
                             <div style={{ marginTop: 14 }}>
                                 <Pille auf="dunkel" art="linie" onClick={() => { setLage("formular"); setSchritt(SCHRITT_KONTAKT) }}>
@@ -1376,6 +1876,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                 setSchritt(text.zurueck < 0 ? SCHRITT_KONTAKT : text.zurueck)
                                 if (text.zurueck === SCHRITT_ADRESSE || text.zurueck === 1) {
                                     vorlaufLaeuft.current = ""
+        vorlaufZweiLaeuft.current = ""
                                     setVorlaufFehler("")
                                     setBetriebName("")
                                 }
@@ -1435,6 +1936,8 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     setSchritt(schritt + 1)
                     return
                 }
+                // Letzte Frage: Jetzt stehen alle Antworten, jetzt lohnt das Schreiben.
+                if (frage.id === "staerken") vorlaufZweiStarten()
                 // Hat der Vorlauf schon gemeldet, dass Adresse oder Beruf nicht taugen,
                 // wird das hier gesagt — nicht erst nach dem Kontaktschritt.
                 if (vorlaufFehler) {
@@ -1629,7 +2132,11 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
             >
                 <div style={{ maxWidth: BREIT, margin: "0 auto", position: "relative" }}>
                     <Versal farbe={fertig ? AKZENT_HELL : AKZENT_DUNKEL}>
-                        {fertig ? "Ihre Anzeigen · gerade geschrieben" : "Kostenloses Werkzeug"}
+                        {ergebnis
+                            ? "Ihre Anzeigen · gerade geschrieben"
+                            : fertig
+                              ? "Ihre Anzeigen"
+                              : "Kostenloses Werkzeug"}
                     </Versal>
 
                     {/* Die H1 bleibt stehen, auch über dem Ergebnis: Im ausgelieferten HTML
@@ -1643,7 +2150,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                             color: fertig ? TINTE : PAPIER,
                         }}
                     >
-                        Ihre Stellenanzeige, fertig geschrieben
+                        Ihre Mitarbeitersuche, einmal komplett
                     </h1>
 
                     <p
@@ -1661,8 +2168,8 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                         }}
                     >
                         {fertig
-                            ? "Drei Texte, vier Fragen für die Bewerbung, eine Budgetzeile. Stellen Sie die Texte unverändert ein oder ändern Sie, was nicht passt."
-                            : "Wir lesen Ihre Website und schreiben daraus drei Anzeigentexte für Facebook und Instagram — dazu vier Fragen für die Bewerbung und eine Budgetzeile."}
+                            ? "Die Texte für drei Kanäle, die vier Bewerberfragen — und darunter die Anleitung: welche Einstellungen, welches Budget, welches Video, und was Sie antworten, wenn sich jemand meldet."
+                            : "Wir lesen Ihre Website und schreiben daraus die Ausschreibung für drei Kanäle. Dazu die Anleitung, wie Sie sie schalten: Einstellungen, Budget, ein Video-Drehbuch für zwanzig Minuten mit dem Handy und die ersten Antworten an Bewerber."}
                     </p>
 
                     <div
@@ -1699,15 +2206,44 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                         einmal versuchen.
                                     </div>
                                 ) : null}
-                                <Blatt ergebnis={ergebnis} beispiel={beispiel} />
+                                <Blatt
+                                    ergebnis={ergebnis}
+                                    beispiel={beispiel}
+                                    endpunkt={beispiel ? "" : endpunkt}
+                                    beruf={String(antworten.beruf || "")}
+                                    domain={domain.trim()}
+                                />
                                 {!beispiel ? <Rueckruf /> : null}
+                                {/* Wer hier steht, hat seine Texte. Ihm jetzt anzubieten, noch
+                                    eine Stelle schreiben zu lassen, ist das kleinere Geschäft —
+                                    und für ihn die kleinere Hilfe. Das Angebot heißt: Wir machen
+                                    die Arbeit, die nach den Texten kommt. */}
                                 <div style={{ marginTop: 26, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-                                    <Pille art="linie" onClick={nochmal}>Noch eine Stelle</Pille>
+                                    <Pille href={angebotLink}>Das übernehmen wir für Sie</Pille>
+                                    {aufErgebnisseite ? (
+                                        <Pille art="linie" href={werkzeugSeite}>Noch eine Stelle</Pille>
+                                    ) : (
+                                        <Pille art="linie" onClick={nochmal}>Noch eine Stelle</Pille>
+                                    )}
                                     {!beispiel ? (
                                         <span style={{ fontSize: 14, lineHeight: 1.5, letterSpacing: "-0.02em", color: T40 }}>
                                             Die Texte sind unterwegs an {mail.trim()}.
                                         </span>
                                     ) : null}
+                                </div>
+                            </div>
+                        ) : fertig ? (
+                            // Direkt aufgerufen, neues Fenster, abgelaufene Frist: Die Anzeigen
+                            // sind trotzdem verschickt — das ist die Auskunft, die hier zählt.
+                            <div>
+                                <p style={{ margin: 0, fontSize: 17, lineHeight: 1.58, letterSpacing: "-0.03em", color: T60, maxWidth: "46ch" }}>
+                                    Ihre Anzeigen sind fertig und an Ihre E-Mail-Adresse unterwegs.
+                                    Hier auf der Seite stehen sie nur, solange das Fenster offen
+                                    bleibt, in dem Sie sie angefordert haben.
+                                </p>
+                                <div style={{ marginTop: 26, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                                    <Pille href={angebotLink}>Über die Stelle sprechen</Pille>
+                                    <Pille art="linie" href={werkzeugSeite}>Noch eine Stelle</Pille>
                                 </div>
                             </div>
                         ) : (
@@ -1722,8 +2258,10 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     {!imTrichter && !fertig ? (
                         <div className="fw-sa-zahlen" style={{ marginTop: "clamp(40px, 6vw, 76px)" }}>
                             {[
-                                { zahl: "3", label: "fertige Anzeigentexte", quelle: "zum Einstellen oder Ändern" },
-                                { zahl: "4", label: "Fragen für die Bewerbung", quelle: "damit Sie wissen, wen Sie zurückrufen" },
+                                // Drei Spalten, drei Zahlen. Eine vierte stünde allein in
+                                // der zweiten Reihe — dasselbe Loch wie bei den Karten.
+                                { zahl: "3", label: "Kanäle, fertig formuliert", quelle: "Kleinanzeigen · Meta · Ihre Seite" },
+                                { zahl: "10", label: "Schritte bis zur Anzeige", quelle: "mit Ihrem Ort und Ihrem Budget" },
                                 { zahl: "0", label: "Euro, kein Konto", quelle: "die Texte behalten Sie in jedem Fall" },
                             ].map((b) => (
                                 <div key={b.label} style={{ minWidth: 0 }}>
@@ -1747,11 +2285,12 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                 <Abschnitt grund={PAPIER}>
                     <Versal>So sieht das Ergebnis aus</Versal>
                     <div style={{ marginTop: 22 }}>
-                        <H2>Zwei von drei Texten, aus einem echten Durchlauf</H2>
+                        <H2>Ein Kanal von dreien, aus einem echten Durchlauf</H2>
                         <Lead>
                             Das ist kein Entwurf für diese Seite, sondern das, was bei einem Betrieb
-                            herausgekommen ist. Der dritte Text, die vier Bewerberfragen und die
-                            Budgetzeile stehen in Ihrem eigenen Ergebnis.
+                            herausgekommen ist. Die Fassungen für Facebook und Instagram und für die
+                            eigene Seite, die vier Bewerberfragen und die Budgetzeile stehen in Ihrem
+                            eigenen Ergebnis.
                         </Lead>
                     </div>
                     <div style={{ marginTop: 36 }}>
@@ -1908,5 +2447,26 @@ addPropertyControls(Stellenanzeiger, {
         type: ControlType.String,
         title: "Abzweig",
         defaultValue: "/kontakt",
+    },
+    rolle: {
+        type: ControlType.Enum,
+        title: "Rolle",
+        options: ["trichter", "ergebnis"],
+        optionTitles: ["Werkzeug", "Ergebnisseite"],
+        defaultValue: "trichter",
+        description: "Auf der Ergebnisseite zeigt der Baustein nur das Ergebnis aus der Übergabe.",
+    },
+    ergebnisSeite: {
+        type: ControlType.String,
+        title: "Ziel danach",
+        defaultValue: "/stellenanzeige/ergebnis",
+        description: "Adresse, auf die nach dem Absenden gewechselt wird. Darauf zählt Google Ads.",
+        hidden: (p: any) => p.rolle === "ergebnis",
+    },
+    werkzeugSeite: {
+        type: ControlType.String,
+        title: "Zurück zum Werkzeug",
+        defaultValue: "/stellenanzeige",
+        hidden: (p: any) => p.rolle !== "ergebnis",
     },
 })

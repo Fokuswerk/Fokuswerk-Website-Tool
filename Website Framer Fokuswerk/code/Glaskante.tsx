@@ -121,8 +121,14 @@ export default function Glaskante(props: GlaskanteProps) {
         }
     }, [statisch, anpassen, grundfarbe])
 
-    // Am Seitenende blendet das Glas aus, damit die Fußzeile ganz unten lesbar bleibt; ganz oben
-    // ebenfalls, damit der Auftakt (Kennzahlen am unteren Rand) frei steht.
+    // Am Seitenende blendet das Glas aus, damit die Fußzeile ganz unten lesbar bleibt.
+    //
+    // Oben blendete es früher ebenfalls aus (erst ab 60 px Scrollweg, voll ab 280 px), damit
+    // die Kennzahlen im Auftakt der Startseite frei stehen. Am Schreibtisch wirkte das wie ein
+    // Fehler: Beim Laden ist unten keine Kante, und sie erscheint erst, wenn man scrollt.
+    // Jetzt steht sie sofort. Die Kennzahlen der Startseite liegen hoch genug im Auftakt, um
+    // davon nicht berührt zu werden — wenn doch, gehört dort der Abstand nach unten vergrößert
+    // und nicht das Glas abgeschaltet.
     useEffect(() => {
         if (statisch || typeof window === "undefined") return
         let raf = 0
@@ -134,11 +140,8 @@ export default function Glaskante(props: GlaskanteProps) {
             const rest = Math.max(doc.scrollHeight, document.body.scrollHeight) - (window.scrollY + window.innerHeight)
             const hoehe = Math.max(120, el.clientHeight || 200) * 1.4
             const x = Math.max(0, Math.min(1, rest / hoehe))
-            // ganz oben (Auftakt) noch kein Glas — es blendet erst beim Scrollen ein
-            const y = Math.max(0, Math.min(1, (window.scrollY - 60) / 220))
             const unten = x * x * (3 - 2 * x)
-            const oben = y * y * (3 - 2 * y)
-            el.style.opacity = (unten * oben).toFixed(3)
+            el.style.opacity = unten.toFixed(3)
         }
         const anstossen = () => {
             if (!raf) raf = requestAnimationFrame(pruefen)

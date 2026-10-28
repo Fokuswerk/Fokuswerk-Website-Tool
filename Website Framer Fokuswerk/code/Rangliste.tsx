@@ -880,7 +880,7 @@ function Messanzeige({ ort }: { ort: string }) {
             <Notenstrich note={anteil} hoehe={3} farbe={PAPIER} grund={LINIE_D} />
             <p style={{ margin: "14px 0 0", fontSize: 13, lineHeight: 1.55, color: P45 }}>
                 Wir lesen jedes Google-Profil in {ort || "Ihrem Ort"} einzeln — das dauert etwa eine
-                halbe Minute. Die Werbung prüfen wir danach, dafür müssen Sie nicht warten.
+                halbe Minute. Bleiben Sie solange hier, die Zahlen erscheinen direkt darunter.
             </p>
         </div>
     )
@@ -939,8 +939,8 @@ function Ergebnisblatt({ e }: any) {
                     </div>
 
                     <p style={{ margin: "40px 0 0", fontSize: 14, lineHeight: 1.6, color: P45, maxWidth: "62ch" }}>
-                        Die vollständige Auswertung ist unterwegs an Ihr Postfach — vier Seiten mit der
-                        Liste, den Befunden und allen Quellen zum Nachprüfen.
+                        Das hier ist die Kurzfassung. Die vollständige Auswertung ist schon unterwegs an
+                        Ihr Postfach.
                     </p>
                 </div>
             </section>
@@ -979,6 +979,34 @@ function Ergebnisblatt({ e }: any) {
                     {e.befunde.map((b: any) => <BefundKarte key={b.titel} b={b} />)}
                     {e.anzeigen ? <BefundKarte b={e.anzeigen.befund} /> : null}
                 </div>
+            </Abschnitt>
+
+            <Abschnitt geist="Per Mail" grund={DUNKEL} auf="dunkel">
+                <Versal farbe={AKZENT_DUNKEL}>Was jetzt passiert</Versal>
+                <div style={{ marginTop: 20 }}><H2 auf="dunkel">Die ganze Auswertung liegt in Ihrem Postfach</H2></div>
+                <Lead auf="dunkel" max={62}>
+                    Alles, was hinter Ihrem Platz steckt, haben wir als PDF an die Adresse geschickt, die
+                    Sie eben angegeben haben — zum Abheften und zum Weiterreichen an jeden, der mitredet.
+                </Lead>
+
+                <div className="fw-rl-karten" style={{ marginTop: 46 }}>
+                    {[
+                        { t: "Die ganze Liste", s: `Alle ${e.liste.length} ${e.gewerkPlural} in ${e.ort} mit Namen, Bewertungen, Fotos, Internetauftritt und Anzeigen.` },
+                        { t: "Die Befunde", s: "Woher Ihr Platz kommt — und welcher Hebel in Ihrem Ort gerade frei liegt." },
+                        { t: "Die Quellen", s: "Jede Zahl mit Herkunft und Datum, damit Sie alles selbst nachschlagen können." },
+                    ].map((k) => (
+                        <div key={k.t} style={{ background: "rgba(245,243,239,0.045)", border: `1px solid rgba(245,243,239,0.12)`, borderRadius: RADIUS_KARTE, padding: "26px 24px 28px" }}>
+                            <div style={{ fontSize: 20, fontWeight: 500, letterSpacing: "-0.035em", lineHeight: 1.22, color: PAPIER }}>{k.t}</div>
+                            <p style={{ margin: "12px 0 0", fontSize: 15, lineHeight: 1.6, letterSpacing: "-0.025em", color: P45 }}>{k.s}</p>
+                        </div>
+                    ))}
+                </div>
+
+                <p style={{ margin: "34px 0 0", fontSize: 14, lineHeight: 1.6, color: P45, maxWidth: "62ch" }}>
+                    Meist ist die Mail nach ein, zwei Minuten da. Wenn nicht, schauen Sie bitte einmal in
+                    den Spam-Ordner. Liegt sie auch dort nicht, schreiben Sie uns kurz — dann schicken wir
+                    sie von Hand.
+                </p>
             </Abschnitt>
         </>
     )
