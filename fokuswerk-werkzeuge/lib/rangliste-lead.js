@@ -7,6 +7,7 @@
 // Platz und Gesamtzahl — das ist der Gesprächseinstieg am Telefon.
 
 import { sendeMail, mitFrist, AN_UNS } from "./lead.js";
+import { escape, huelle, karte, etikett, WEISS, TINTE, LEISE, LINIE, AKZENT, SCHRIFT } from "./mail-vorlagen.js";
 import { ranglistePdf } from "./rangliste-pdf.js";
 import { plural } from "./rangliste-urteil.js";
 
@@ -100,35 +101,105 @@ export function meldungAnUns(daten, e) {
   };
 }
 
+// Dieselbe Huelle und dieselben Karten wie bei der SEO-Analyse: Tabellenlayout, Stile
+// inline, keine Webschriften, keine Bilder. In Betrieben wird beides blockiert.
+//
+// Oben EIN gestalteter Block mit dem Platz, danach ein ganz normaler Brief. Die erste
+// Fassung ging als nackter Text mit eingerueckten Aufzaehlungen raus und sah aus wie ein
+// Serverprotokoll. Die Gegenrichtung ist aber genauso falsch: Wer die ganze Mail baut —
+// Karten, Etiketten, Befundlisten —, schreibt ein Prospekt, und ein Prospekt mag niemand.
 export function auswertungMail(daten, e) {
-  const anrede = daten?.kontakt?.name ? `Moin ${daten.kontakt.name},` : "Moin,";
+  const name = String(daten?.kontakt?.name || "").trim();
+  const anrede = name ? "Guten Tag " + name : "Guten Tag";
   const schwer = (e.befunde || []).filter((b) => b.art === "mangel");
+  const gesamt = e.liste.length;
 
-  // Die Mail ist das Begleitschreiben zum PDF: Aufhänger und Inhaltsliste, mehr nicht.
-  // Wer die Befunde hier ausbreitet, macht den Anhang überflüssig und die Mail lang.
+  const auftakt = karte(`
+    ${etikett("Ihre Rangliste")}
+    <p style="margin:0 0 4px;font:500 20px/1.25 ${SCHRIFT};color:${TINTE};">${escape(e.betrieb)}</p>
+    <p style="margin:0 0 20px;font:400 13px/1.5 ${SCHRIFT};color:${LEISE};">${escape(plural(e.gewerk))} in ${escape(e.ort)} · gemessen am ${escape(e.geprueft || "")}</p>
+    <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+      <td style="font:500 44px/1 ${SCHRIFT};color:${TINTE};">${e.eigen.platz}</td>
+      <td style="padding-left:8px;font:400 13px/1 ${SCHRIFT};color:${LEISE};">von ${gesamt}</td>
+    </tr></table>
+    ${e.einordnung ? `<p style="margin:14px 0 0;font:400 15px/1.6 ${SCHRIFT};color:${TINTE};">${escape(e.einordnung.satz)}</p>` : ""}`);
+
+  const absatz = (t) => `<p style="margin:0 0 16px;font:400 16px/1.7 ${SCHRIFT};color:${TINTE};">${t}</p>`;
+
+  // Befundtitel sind ganze Saetze („Kein einziges Foto in Ihrem Profil"). Mit „und"
+  // verbunden ergibt das Kauderwelsch, deshalb stehen sie untereinander. Zwei Zeilen
+  // Aufzaehlung sind noch kein Prospekt.
+  const liste = (b) => b.map((x) => `<li style="margin:0 0 6px;">${escape(x.titel)}</li>`).join("");
+  const zuerstHtml = schwer.length
+    ? `<p style="margin:0 0 10px;font:400 16px/1.7 ${SCHRIFT};color:${TINTE};">` +
+      (schwer.length === 1 ? "Ein Punkt kostet Sie dabei Plätze:" : `${["", "Ein", "Zwei", "Drei", "Vier", "Fünf"][schwer.length] || schwer.length} Punkte kosten Sie dabei Plätze:`) +
+      `</p><ul style="margin:0 0 16px;padding-left:20px;font:400 16px/1.6 ${SCHRIFT};color:${TINTE};">${liste(schwer)}</ul>`
+    : `<p style="margin:0 0 16px;font:400 16px/1.7 ${SCHRIFT};color:${TINTE};">An Ihrem Profil selbst ist nichts zu beanstanden — das ist seltener, als Sie denken.</p>`;
+  const zuerstText = schwer.length
+    ? [(schwer.length === 1 ? "Ein Punkt kostet Sie dabei Plätze:" : `${["", "Ein", "Zwei", "Drei", "Vier", "Fünf"][schwer.length] || schwer.length} Punkte kosten Sie dabei Plätze:`),
+       ...schwer.map((b) => "  - " + b.titel)].join("\n")
+    : "An Ihrem Profil selbst ist nichts zu beanstanden — das ist seltener, als Sie denken.";
+
+  const ZAHLWORT = ["", "Einer", "Zwei", "Drei", "Vier", "Fünf", "Sechs", "Sieben", "Acht", "Neun", "Zehn"];
+  const wieViele = ZAHLWORT[e.markt.umKunden] || String(e.markt.umKunden);
+  const anzeigenSatz =
+    e.markt.umKunden === 0
+      ? `Und eine Sache, die uns aufgefallen ist: In ${escape(e.ort)} wirbt bei Facebook und Instagram niemand um Kunden. Nicht ein einziger der ${gesamt} Betriebe.`
+      : e.markt.umKunden === 1
+        ? `Und eine Sache, die uns aufgefallen ist: Von den ${gesamt} Betrieben wirbt genau einer bei Facebook und Instagram um Kunden. Wer das ist, steht im PDF.`
+        : `${wieViele} der ${gesamt} Betriebe werben bei Facebook und Instagram um Kunden. Wer das ist, steht im PDF.`;
+
+  const brief = `<tr><td style="padding:26px 4px 0;">
+    ${absatz(escape(anrede) + ",")}
+    ${absatz(`im Anhang finden Sie Ihre Auswertung als PDF. Darin steht die vollständige Liste
+      aller ${gesamt} ${escape(plural(e.gewerk))} in ${escape(e.ort)} — mit Namen, Bewertungen, Fotos
+      und der Frage, wer von ihnen gerade wirbt.`)}
+    ${zuerstHtml}
+    ${absatz(anzeigenSatz)}
+    ${absatz(`Alle Zahlen stammen aus den öffentlichen Google-Profilen und aus Metas
+      Werbebibliothek, abgerufen heute. Jede steht mit Quelle im Dokument, Sie können also
+      alles nachschlagen — auch bei Ihren Nachbarn.`)}
+    ${absatz(`Wenn etwas unklar ist, melden Sie sich gerne. Einfach auf diese Mail antworten
+      oder anrufen: <a href="tel:+4917663307587" style="color:${TINTE};">0176 63307587</a>.`)}
+    <p style="margin:26px 0 0;font:400 16px/1.7 ${SCHRIFT};color:${TINTE};">
+      Viele Grüße<br>Thees Bodenstab
+    </p>
+  </td></tr>`;
+
+  const roh = (t) => String(t).replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+
   const text = [
-    anrede,
+    `Ihre Rangliste für ${e.betrieb}: Platz ${e.eigen.platz} von ${gesamt} in ${e.ort}`,
+    e.einordnung ? roh(e.einordnung.satz) : "",
     "",
-    `hier ist Ihre Auswertung. Kurz vorweg das Wichtigste: Unter den ${e.liste.length} ` +
-      `${plural(e.gewerk)}, die Google in ${e.ort} führt, stehen Sie auf Platz ${e.eigen.platz}.`,
+    anrede + ",",
     "",
-    "Im PDF finden Sie:",
-    `  · die vollständige Liste aller ${e.liste.length} Betriebe mit Namen und Zahlen`,
-    `  · woher Ihr Platz kommt — ${schwer.length ? schwer.length + " Punkte, die Plätze kosten" : "die Befunde im Einzelnen"}`,
-    "  · wer in Ihrem Ort bei Meta wirbt, und worum",
-    "  · drei Schritte, die Sie selbst gehen können",
+    roh(`im Anhang finden Sie Ihre Auswertung als PDF. Darin steht die vollständige Liste aller ${gesamt} ${plural(e.gewerk)} in ${e.ort} — mit Namen, Bewertungen, Fotos und der Frage, wer von ihnen gerade wirbt.`),
     "",
-    "Die Zahlen stammen aus den öffentlichen Google-Profilen und der Meta-Werbebibliothek, " +
-      "abgerufen heute. Jede steht mit Quelle im Anhang — Sie können alles nachprüfen.",
+    zuerstText,
     "",
-    "Wenn etwas unklar ist, antworten Sie einfach auf diese Mail.",
+    roh(anzeigenSatz),
     "",
-    "Beste Grüße",
+    "Alle Zahlen stammen aus den öffentlichen Google-Profilen und aus Metas Werbebibliothek,",
+    "abgerufen heute. Jede steht mit Quelle im Dokument, Sie können also alles nachschlagen —",
+    "auch bei Ihren Nachbarn.",
+    "",
+    "Wenn etwas unklar ist, melden Sie sich gerne. Einfach auf diese Mail antworten oder",
+    "anrufen: 0176 63307587.",
+    "",
+    "Viele Grüße",
     "Thees Bodenstab",
-    "Fokuswerk",
+    "",
+    "Fokuswerk — Abt & Bodenstab GbR · Schramperweg 90 · 26129 Oldenburg",
+    "0176 63307587 · contact@fokuswerk.de · USt-IdNr. DE456629159",
   ].join("\n");
 
-  return { betreff: `Ihre Rangliste: Platz ${e.eigen.platz} von ${e.liste.length} in ${e.ort}`, text };
+  return {
+    betreff: `Ihre Rangliste: Platz ${e.eigen.platz} von ${gesamt} in ${e.ort}`,
+    html: huelle(`<tr><td style="padding:0 4px;">${auftakt}</td></tr>` + brief,
+      `Platz ${e.eigen.platz} von ${gesamt} in ${e.ort}`),
+    text,
+  };
 }
 
 export async function verarbeiteRanglisteLead(daten, e) {
@@ -153,7 +224,7 @@ export async function verarbeiteRanglisteLead(daten, e) {
         anhaenge = undefined;
       }
       const m = auswertungMail(daten, e);
-      return mitFrist(sendeMail({ an: k.email, betreff: m.betreff, text: m.text, anhaenge }), 15000, "Zusendung");
+      return mitFrist(sendeMail({ an: k.email, betreff: m.betreff, text: m.text, html: m.html, anhaenge }), 15000, "Zusendung");
     })(),
   ]);
 
