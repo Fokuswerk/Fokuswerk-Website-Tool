@@ -2,7 +2,7 @@
 // Betrieb. Drei Wege, keiner reißt einen anderen mit — wer seine Auswertung bekommen
 // hat, soll sie behalten, auch wenn die Übergabe klemmt.
 //
-// Gebaut wie `seo-analyse-lead.js`, mit einem Unterschied: Hier hängt die Rangliste am
+// Gebaut wie `seo-analyse-lead.js`, mit einem Unterschied: Hier hängt der Vergleich am
 // Ort, nicht an der Domain. Im Funnel steht deshalb der Ort, und die Antworten tragen
 // Platz und Gesamtzahl — das ist der Gesprächseinstieg am Telefon.
 
@@ -11,7 +11,7 @@ import { escape, huelle, karte, etikett, WEISS, TINTE, LEISE, LINIE, AKZENT, SCH
 import { ranglistePdf } from "./rangliste-pdf.js";
 import { plural } from "./rangliste-urteil.js";
 
-const FREEBIE = "Ortsrangliste";
+const FREEBIE = "Wettbewerb";
 
 // Der Wortlaut, den der Besucher im letzten Schritt abhakt. Er steht in `Rangliste.tsx`;
 // ändert er sich dort, gehört er auch hier geändert — am Datensatz soll stehen, wem der
@@ -25,7 +25,7 @@ const NEWSLETTER_EINWILLIGUNG =
   "jederzeit abbestellbar.";
 
 const dateiname = (e) =>
-  `Rangliste-${String(e.betrieb || "Betrieb").replace(/[^\wÄÖÜäöüß-]+/g, "-").slice(0, 40)}.pdf`;
+  `Wettbewerb-${String(e.betrieb || "Betrieb").replace(/[^\wÄÖÜäöüß-]+/g, "-").slice(0, 40)}.pdf`;
 
 export async function meldeAnFunnel(daten, e) {
   const ziel = process.env.FUNNEL_ZIEL || "https://fokuswerk-outreach.vercel.app/api/funnel";
@@ -96,7 +96,7 @@ export function meldungAnUns(daten, e) {
     daten?.newsletter === true ? "Newsletter: ja" : "Newsletter: nein",
   ];
   return {
-    betreff: `Rangliste: ${e.betrieb} (Platz ${e.eigen?.platz}/${e.liste?.length}, ${e.ort})`,
+    betreff: `Wettbewerb: ${e.betrieb} (Platz ${e.eigen?.platz}/${e.liste?.length}, ${e.ort})`,
     text: zeilen.join("\n"),
   };
 }
@@ -115,7 +115,7 @@ export function auswertungMail(daten, e) {
   const gesamt = e.liste.length;
 
   const auftakt = karte(`
-    ${etikett("Ihre Rangliste")}
+    ${etikett("Ihr Platz im Wettbewerb")}
     <p style="margin:0 0 4px;font:500 20px/1.25 ${SCHRIFT};color:${TINTE};">${escape(e.betrieb)}</p>
     <p style="margin:0 0 20px;font:400 13px/1.5 ${SCHRIFT};color:${LEISE};">${escape(plural(e.gewerk))} in ${escape(e.ort)} · gemessen am ${escape(e.geprueft || "")}</p>
     <table role="presentation" cellpadding="0" cellspacing="0"><tr>
@@ -169,7 +169,7 @@ export function auswertungMail(daten, e) {
   const roh = (t) => String(t).replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 
   const text = [
-    `Ihre Rangliste für ${e.betrieb}: Platz ${e.eigen.platz} von ${gesamt} in ${e.ort}`,
+    `Ihr Platz im Wettbewerb: ${e.betrieb} steht auf Platz ${e.eigen.platz} von ${gesamt} in ${e.ort}`,
     e.einordnung ? roh(e.einordnung.satz) : "",
     "",
     anrede + ",",
@@ -195,7 +195,7 @@ export function auswertungMail(daten, e) {
   ].join("\n");
 
   return {
-    betreff: `Ihre Rangliste: Platz ${e.eigen.platz} von ${gesamt} in ${e.ort}`,
+    betreff: `Ihr Platz in ${e.ort}: ${e.eigen.platz} von ${gesamt}`,
     html: huelle(`<tr><td style="padding:0 4px;">${auftakt}</td></tr>` + brief,
       `Platz ${e.eigen.platz} von ${gesamt} in ${e.ort}`),
     text,
@@ -308,7 +308,7 @@ export function pdfDaten(e) {
             titel: "Anzeigenlage nicht gemessen",
             messwert: "Der Abruf der Meta-Werbebibliothek ist gescheitert.",
             klartext:
-              "Dieser Teil fehlt in Ihrer Auswertung. Die Rangliste oben ist davon nicht betroffen.",
+              "Dieser Teil fehlt in Ihrer Auswertung. Die Liste oben ist davon nicht betroffen.",
             folge: "Auf Nachfrage reichen wir ihn nach.",
           },
         },
@@ -324,7 +324,7 @@ export function pdfDaten(e) {
           `Abgerufen am ${kurz} über die Kartensuche nach ${plural(e.gewerk)} in ${e.ort}. Erfasst: ` +
           "Bewertungszahl, Schnitt, Zahl der Profilfotos, Eintrag im Feld Website, Kategorie und ob " +
           "das Profil übernommen ist. Betriebe anderer Kategorien aus demselben Abruf sind nicht " +
-          "Teil dieser Rangliste.",
+          "Teil dieses Vergleichs.",
       },
       {
         titel: "Meta-Werbebibliothek",
@@ -375,7 +375,7 @@ function schritte(e) {
             "Leute, die heute gar nicht suchen."
           : `${e.markt.umKunden} von ${e.markt.anzahl} Betrieben in ${e.ort} werben bereits um ` +
             "Kunden und erreichen damit Leute, die gerade gar nicht suchen. Das ist der Teil des " +
-            "Marktes, den eine Rangliste nicht abbildet.",
+            "Marktes, den diese Liste nicht abbildet.",
     },
   ];
 }

@@ -2,7 +2,7 @@ import { addPropertyControls, ControlType } from "framer"
 import { motion } from "framer-motion"
 import { useEffect, useMemo, useRef, useState } from "react"
 
-// Die Ortsrangliste — das Werkzeug auf /wettbewerb.
+// Der Wettbewerbsvergleich — das Werkzeug auf /wettbewerb.
 //
 // Der Endpunkt heisst weiter /api/rangliste: Die Adresse der Seite ist eine Frage der
 // Ansprache, der Name der Schnittstelle nicht, und die Zieladresse haengt als eingefrorene
@@ -182,7 +182,7 @@ const FAQ = [
     {
         frage: "Warum steht mein Wettbewerber mit Namen drin?",
         antwort:
-            "Weil die Liste sonst nichts wert wäre. Eine anonyme Rangliste kann niemand nachprüfen. Es stehen nur Zahlen daneben, die jeder selbst nachschlagen kann — und kein Urteil über fremde Betriebe. Bewertet wird ausschließlich Ihr eigener Eintrag.",
+            "Weil die Liste sonst nichts wert wäre. Eine anonyme Liste kann niemand nachprüfen. Es stehen nur Zahlen daneben, die jeder selbst nachschlagen kann — und kein Urteil über fremde Betriebe. Bewertet wird ausschließlich Ihr eigener Eintrag.",
     },
     {
         frage: "Was kostet das?",
@@ -471,7 +471,7 @@ function BefundKarte({ b }: any) {
 
 // --- Die Komponente ----------------------------------------------------------------------
 
-export default function Rangliste(props: any) {
+export default function Wettbewerb(props: any) {
     const {
         endpunkt = "https://fokuswerk-werkzeuge.vercel.app/api/rangliste",
         style,
@@ -672,7 +672,7 @@ function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, kannWeiter, tease
                         Zwei Angaben, dann sehen Sie die Zahlen Ihres Ortes. Erst danach fragen wir,
                         welcher der Betriebe Sie sind.
                     </p>
-                    <Pille auf="dunkel" onClick={() => setSchritt(1)}>Rangliste ansehen</Pille>
+                    <Pille auf="dunkel" onClick={() => setSchritt(1)}>Meinen Platz finden</Pille>
                 </>
             ) : null}
 
@@ -884,7 +884,7 @@ function Ergebnisblatt({ e }: any) {
     )
 }
 
-addPropertyControls(Rangliste, {
+addPropertyControls(Wettbewerb, {
     endpunkt: {
         type: ControlType.String,
         title: "Endpunkt",

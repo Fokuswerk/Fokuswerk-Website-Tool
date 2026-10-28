@@ -1,11 +1,11 @@
-// Die Ortsrangliste als PDF.
+// Der Wettbewerbsvergleich als PDF.
 //
 // Gleiche Bauart wie seo-analyse-pdf.js: dunkles Deckblatt, Inter als eingebettete
 // TTF, Fußzeile über bufferPages. Was hier anders ist, ist der Gegenstand — dort wird
 // eine Website gemessen, hier ein Markt. Jede Zahl in diesem Dokument stammt aus einem
 // Abruf, der im Quellenblock am Ende mit Datum steht. Steht ein Wert nicht dort, darf
 // er nicht ins PDF: Der Betrieb prüft seine Nachbarn gegen, und ein falscher Wert in
-// der Rangliste kostet nicht den Termin, sondern die Glaubwürdigkeit aller anderen.
+// der Liste kostet nicht den Termin, sondern die Glaubwürdigkeit aller anderen.
 //
 // Keine Emojis in Texten, die hierher kommen. Inter hat keine, pdfkit setzt dann leere
 // Kästchen. Fremde Anzeigentexte laufen durch ohneEmoji().
@@ -81,7 +81,7 @@ function linie(d, farbe = LINIE) {
   d.y = y + 1;
 }
 
-// ── Die Rangliste ───────────────────────────────────────────────────────────
+// ── Die Liste ───────────────────────────────────────────────────────────
 // Spaltenraster einmal festgelegt, damit Kopf und Zeilen nicht auseinanderlaufen.
 const SPALTEN = [
   { x: 0, b: 26, t: "", rechts: false },
@@ -264,7 +264,7 @@ export function ranglistePdf(e) {
         bufferPages: true,
         margins: { top: RAND, bottom: FUSS, left: RAND, right: RAND },
         info: {
-          Title: "Ortsrangliste — " + e.betrieb,
+          Title: "Wettbewerb — " + e.betrieb,
           Author: "Fokuswerk — Abt & Bodenstab GbR",
           Subject: e.gewerk + " in " + e.ort,
           Creator: "fokuswerk.de/wettbewerb",
@@ -359,9 +359,9 @@ export function ranglistePdf(e) {
           .text(k.text, x, yFeld + 19, { width: spalte - 10, lineBreak: false });
       });
 
-      // ══ Seite 2 — die Rangliste ═══════════════════════════════════════════
+      // ══ Seite 2 — die Liste ═══════════════════════════════════════════
       neueSeite(d, zustand);
-      versal(d, "Die Rangliste", AKZENT);
+      versal(d, "Der Wettbewerb", AKZENT);
       d.font(SCHRIFT.mittel).fontSize(19).fillColor(TINTE)
         .text(e.gewerkPlural + " in " + e.ort, RAND, d.y, { width: BREITE });
       d.moveDown(0.5);
