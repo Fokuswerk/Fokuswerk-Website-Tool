@@ -20,6 +20,7 @@
 
 import { sammle, anzeigenErgaenzen } from "../lib/rangliste-messen.js";
 import { bewerte, plural } from "../lib/rangliste-urteil.js";
+import { ausVorrat } from "../lib/rangliste-vorrat.js";
 import { verarbeiteRanglisteLead } from "../lib/rangliste-lead.js";
 
 const DIAGNOSE = "fw-probe-2610";
@@ -142,7 +143,18 @@ export default async function handler(req, res) {
     }
   }
 
+  // Erst der Vorrat: vorgerechnete Messungen liegen als Datei im Deployment und sind
+  // sofort da. Das ist der Unterschied zwischen einer Sekunde und 35 — und 35 Sekunden
+  // stummes Warten war in allen fuenf Pruefungen die staerkste Abbruchstelle der Seite.
   let messung = ausSpeicher(schluessel);
+  if (!messung) {
+    const vorgerechnet = ausVorrat(gewerk, ort);
+    if (vorgerechnet) {
+      messung = vorgerechnet;
+      inSpeicher(schluessel, messung);
+      res.setHeader("X-Fokuswerk-Vorrat", String(vorgerechnet.alterTage) + "d");
+    }
+  }
   if (messung) {
     res.setHeader("X-Fokuswerk-Speicher", "treffer");
   } else {

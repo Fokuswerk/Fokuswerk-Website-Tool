@@ -573,12 +573,20 @@ export default function Wettbewerb(props: any) {
             setTeaser(d)
             setSchritt(3)
         } catch (f: any) {
+            // Je Ursache ein eigener Satz. Vorher stand bei jedem Fehler „Versuchen Sie es
+            // noch einmal" — bei einem Tippfehler im Ort fuehrt derselbe Versuch zum
+            // selben Fehler, und wenn es an uns liegt, sucht der Besucher den Fehler bei
+            // sich. Beides kostet ihn genau an der Stelle, an der er schon gewartet hat.
             setFehler(
                 f.message === "zu_wenige_betriebe"
-                    ? `In ${ort} führt Google zu wenige ${gewerk}-Betriebe für einen Vergleich. Versuchen Sie den nächstgrößeren Ort.`
-                    : f.message === "zu_viele_abrufe"
-                        ? "Gerade sind viele Abrufe unterwegs. Versuchen Sie es in ein paar Minuten noch einmal."
-                        : "Die Messung ist nicht durchgelaufen. Versuchen Sie es bitte noch einmal.",
+                    ? `In ${ort} führt Google zu wenige Betriebe unter „${gewerk}" für einen Vergleich. Stimmt die Schreibweise? Sonst wählen Sie oben ein Gewerk aus der Liste.`
+                    : f.message === "profile_nicht_lesbar"
+                        ? `Wir konnten die Betriebe in ${ort} gerade nicht abrufen. Prüfen Sie bitte die Schreibweise des Ortes — wenn die stimmt, liegt es an uns. Schreiben Sie uns kurz, dann schicken wir Ihnen die Zahlen von Hand.`
+                        : f.message === "gewerk_oder_ort_fehlt"
+                            ? "Da fehlt noch eine Angabe. Gehen Sie einen Schritt zurück."
+                            : f.message === "zu_viele_abrufe"
+                                ? "Gerade sind viele Abrufe unterwegs. Versuchen Sie es in ein paar Minuten noch einmal."
+                                : "Die Messung ist nicht durchgelaufen. Das liegt an uns, nicht an Ihrer Eingabe — versuchen Sie es gleich noch einmal.",
             )
         } finally {
             setLaeuft(false)
