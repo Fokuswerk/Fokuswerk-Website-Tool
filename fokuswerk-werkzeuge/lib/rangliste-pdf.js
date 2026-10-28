@@ -267,7 +267,7 @@ export function ranglistePdf(e) {
           Title: "Ortsrangliste — " + e.betrieb,
           Author: "Fokuswerk — Abt & Bodenstab GbR",
           Subject: e.gewerk + " in " + e.ort,
-          Creator: "fokuswerk.de/rangliste",
+          Creator: "fokuswerk.de/wettbewerb",
         },
       });
       d.registerFont("n", PFADE.normal);

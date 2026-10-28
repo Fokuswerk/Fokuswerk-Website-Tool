@@ -52,7 +52,7 @@ export async function meldeAnFunnel(daten, e) {
       quelle: daten?.herkunft?.quelle || "funnel",
       kampagne: daten?.herkunft?.kampagne || null,
       anzeige: daten?.herkunft?.anzeige || null,
-      seite: "/rangliste",
+      seite: "/wettbewerb",
       // Was der Vertrieb vor dem Anruf wissen muss. Platz und Gesamtzahl sind der
       // Einstiegssatz, die Mängel sind der Gesprächsstoff.
       antworten: {

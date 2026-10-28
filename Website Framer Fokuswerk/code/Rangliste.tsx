@@ -2,7 +2,11 @@ import { addPropertyControls, ControlType } from "framer"
 import { motion } from "framer-motion"
 import { useEffect, useMemo, useRef, useState } from "react"
 
-// Die Ortsrangliste — das Werkzeug auf /rangliste.
+// Die Ortsrangliste — das Werkzeug auf /wettbewerb.
+//
+// Der Endpunkt heisst weiter /api/rangliste: Die Adresse der Seite ist eine Frage der
+// Ansprache, der Name der Schnittstelle nicht, und die Zieladresse haengt als eingefrorene
+// Eigenschaft an der platzierten Instanz.
 //
 // Zielgruppe ist der Betrieb, der Neukunden will. Anders als bei /seo-analyse geht es
 // nicht um seine Website, sondern um seinen Markt: Wie viele Betriebe seiner Art gibt es
