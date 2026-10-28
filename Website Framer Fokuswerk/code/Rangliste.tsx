@@ -69,6 +69,10 @@ const MANGEL_D = "#FF8A6B"
 const BREIT = 1240
 const RAND = "clamp(20px, 4vw, 32px)"
 const LUFT = "clamp(80px, 10vw, 150px)"
+// Hoehe der fixen Kopfleiste des Hauses, am 28.10.2026 live gemessen (76 px).
+// Sie steht an zwei Stellen im Weg: beim oberen Polster des Auftakts und bei der
+// Scrollkorrektur nach jedem Trichterschritt.
+const KOPFLEISTE = 76
 const RADIUS_FELD = 12
 const RADIUS_KARTE = 16
 
@@ -136,7 +140,8 @@ const STIL = `
 
 .fw-trichter { display: flex; flex-direction: column; }
 @media (max-width: 809.98px) {
-  .fw-trichter { min-height: min(62vh, 560px); padding-bottom: calc(var(--fw-ew-platz, 0px) + 8px); }
+  .fw-trichter { padding-bottom: calc(var(--fw-ew-platz, 0px) + 8px); }
+  .fw-trichter.fw-laeuft { min-height: min(62vh, 560px); }
 }
 
 .fw-rl input::placeholder { color: rgba(245,243,239,0.4); }
@@ -500,7 +505,7 @@ export default function Wettbewerb(props: any) {
         if (schritt === 0) return
         const ziel = anker.current
         if (!ziel) return
-        const y = ziel.getBoundingClientRect().top + window.scrollY - 72
+        const y = ziel.getBoundingClientRect().top + window.scrollY - (KOPFLEISTE + 20)
         window.scrollTo({ top: y, behavior: "smooth" })
     }, [schritt])
 
@@ -571,7 +576,15 @@ export default function Wettbewerb(props: any) {
             <style>{STIL}</style>
 
             {/* ── Auftakt, dunkel mit Lichtschweif ───────────────────────────────── */}
-            <section style={{ background: DUNKEL, position: "relative", overflow: "hidden", paddingBlock: "clamp(80px, 11vw, 140px)", paddingLeft: RAND, paddingRight: RAND }}>
+            <section style={{
+                background: DUNKEL, position: "relative", overflow: "hidden",
+                // Die Kopfleiste der Seite liegt mit position:fixed und 76 px Hoehe ueber
+                // dem Auftakt. Ohne diesen Aufschlag bleiben vom oberen Polster vier Pixel
+                // uebrig und das Etikett klebt an der Leiste.
+                paddingTop: `calc(${KOPFLEISTE}px + clamp(36px, 7vw, 80px))`,
+                paddingBottom: "clamp(80px, 11vw, 140px)",
+                paddingLeft: RAND, paddingRight: RAND,
+            }}>
                 <div aria-hidden style={{ position: "absolute", top: "-30%", right: "-10%", width: "70vw", height: "70vw", maxWidth: 760, maxHeight: 760, borderRadius: "50%", background: `radial-gradient(circle, ${SIGNAL}22 0%, transparent 62%)`, pointerEvents: "none" }} />
                 <div style={{ maxWidth: BREIT, margin: "0 auto", position: "relative" }}>
                     <Versal farbe={AKZENT_DUNKEL}>Kostenlos · In zwei Minuten</Versal>
@@ -660,7 +673,7 @@ function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, kannWeiter, tease
     if (ergebnis) return null
 
     return (
-        <div className="fw-karte-dunkel fw-trichter" style={{ borderRadius: 20, padding: "clamp(22px, 4vw, 34px)", maxWidth: 680, background: "rgba(245,243,239,0.03)" }}>
+        <div className={"fw-karte-dunkel fw-trichter" + (schritt > 0 ? " fw-laeuft" : "")} style={{ borderRadius: 20, padding: "clamp(22px, 4vw, 34px)", maxWidth: 680, background: "rgba(245,243,239,0.03)" }}>
             {schritt > 0 && schritt < 5 ? <div style={{ marginBottom: 26 }}><Fortschritt schritt={schritt} /></div> : null}
 
             {schritt === 0 ? (
