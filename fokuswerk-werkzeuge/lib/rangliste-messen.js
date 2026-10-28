@@ -162,13 +162,16 @@ export async function profileHolen({ gewerk, ort, hoechstens = 24, token }) {
       maxCrawledPlacesPerSearch: hoechstens,
       language: "de",
       countryCode: "de",
-      skipClosedPlaces: true,
+      // ▲ KEIN skipClosedPlaces. Das ist bei Apify ein kostenpflichtiger Filter und kostet
+      // 0,001 USD je Profil zusaetzlich — bei 24 Profilen also 2,4 Cent, ein Fuenftel der
+      // gesamten Profilkosten. Die Felder `permanentlyClosed` und `temporarilyClosed`
+      // kommen ohnehin in jeder Antwort mit, also sortieren wir unten selbst aus. Gratis.
     },
     { token, grenze: 150000 },
   );
 
   return (Array.isArray(roh) ? roh : [])
-    .filter((p) => p?.title)
+    .filter((p) => p?.title && !p.permanentlyClosed && !p.temporarilyClosed)
     .map((p) => ({
       name: String(p.title).trim(),
       kategorie: p.categoryName || null,

@@ -537,16 +537,29 @@ export default function Wettbewerb(props: any) {
         if (!teaser || anzeigen || teaser.anzeigenGemessen) return
         let abgebrochen = false
         ;(async () => {
-            try {
-                const antwort = await fetch(endpunkt + "?anzeigen=1", {
-                    method: "POST",
-                    headers: { "content-type": "application/json" },
-                    body: JSON.stringify({ gewerk, ort }),
-                })
-                const d = await antwort.json()
-                if (!abgebrochen && d?.bereit) setAnzeigen(d)
-            } catch {
-                // Still scheitern: Die Rangliste steht auch ohne die Anzeigenzeile.
+            // Mehrere Anlaeufe, weil der Endpunkt die Messung im Arbeitsspeicher der
+            // Serverless-Instanz haelt. Trifft dieser Aufruf eine andere Instanz als der
+            // Vorlauf, findet er nichts und meldet "keine_messung" — dann waere die
+            // Anzeigenpruefung erst beim Absenden faellig, also genau dann, wenn der
+            // Besucher gerade seine Kontaktdaten abgeschickt hat. Ein zweiter und dritter
+            // Versuch kostet nichts (kein Apify-Lauf) und trifft oft die richtige Instanz.
+            for (const warten of [0, 2500, 6000]) {
+                if (abgebrochen) return
+                if (warten) await new Promise((f) => setTimeout(f, warten))
+                try {
+                    const antwort = await fetch(endpunkt + "?anzeigen=1", {
+                        method: "POST",
+                        headers: { "content-type": "application/json" },
+                        body: JSON.stringify({ gewerk, ort }),
+                    })
+                    const d = await antwort.json()
+                    if (abgebrochen) return
+                    if (d?.bereit) { setAnzeigen(d); return }
+                    if (d?.grund !== "keine_messung") return
+                } catch {
+                    // Still scheitern: Die Rangliste steht auch ohne die Anzeigenzeile.
+                    return
+                }
             }
         })()
         return () => { abgebrochen = true }
