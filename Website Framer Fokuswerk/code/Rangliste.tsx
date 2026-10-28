@@ -489,8 +489,12 @@ function BefundKarte({ b }: any) {
 export default function Wettbewerb(props: any) {
     const {
         endpunkt = "https://fokuswerk-werkzeuge.vercel.app/api/rangliste",
+        rolle = "trichter",
+        ergebnisSeite = "/wettbewerb/ergebnis",
+        zurueckZumWerkzeug = "/wettbewerb",
         style,
     } = props
+    const aufErgebnisseite = rolle === "ergebnis"
 
     const [schritt, setSchritt] = useState(0)
     const [gewerk, setGewerk] = useState("")
@@ -511,6 +515,16 @@ export default function Wettbewerb(props: any) {
 
     const anker = useRef<HTMLDivElement>(null)
     const karte = useRef<HTMLDivElement>(null)
+
+    // Auf der Ergebnisseite steht kein Trichter, sondern das, was der Trichter übergeben hat.
+    useEffect(() => {
+        if (!aufErgebnisseite) return
+        const d = uebergabeLesen()
+        if (d?.ergebnis) {
+            setErgebnis(d.ergebnis)
+            setSchritt(5)
+        }
+    }, [aufErgebnisseite])
 
     // Nach jedem Schritt die TRICHTERKARTE unter die Kopfleiste holen.
     //
@@ -618,6 +632,12 @@ export default function Wettbewerb(props: any) {
             }, false)
             setErgebnis(d)
             setSchritt(5)
+            // Der Wechsel ist der Zweck: Erst der Aufruf der Ergebnisseite zaehlt als
+            // Conversion. Scheitert die Uebergabe (privates Fenster), bleibt das Ergebnis
+            // hier stehen — angezeigt wird es so oder so.
+            if (!aufErgebnisseite && ergebnisSeite && uebergabeSchreiben({ ergebnis: d })) {
+                window.location.assign(ergebnisSeite)
+            }
         } catch (f: any) {
             setFehler(
                 f.message === "betrieb_unbekannt"
@@ -668,7 +688,7 @@ export default function Wettbewerb(props: any) {
                             laeuft={laeuft} fehler={fehler} kannWeiter={kannWeiter}
                             teaser={teaser} ergebnis={ergebnis}
                             werte={{ gewerk, setGewerk, ort, setOrt, betrieb, setBetrieb, name, setName, email, setEmail, telefon, setTelefon, einwilligung, setEinwilligung, newsletter, setNewsletter }}
-                            teaserHolen={teaserHolen} absenden={absenden} karte={karte}
+                            teaserHolen={teaserHolen} absenden={absenden} karte={karte} aufErgebnisseite={aufErgebnisseite}
                         />
                     </div>
                 </div>
@@ -677,8 +697,27 @@ export default function Wettbewerb(props: any) {
             {/* ── Das Ergebnis, sobald es da ist ─────────────────────────────────── */}
             {ergebnis ? <Ergebnisblatt e={ergebnis} /> : null}
 
+            {/* Ergebnisseite ohne Uebergabe: aus dem Verlauf aufgerufen, neues Fenster oder
+                abgelaufene Frist. Die Auswertung ist trotzdem per Mail unterwegs — das ist
+                die Auskunft, die hier zaehlt. Keinen Trichter zeigen, der verwirrt nur. */}
+            {aufErgebnisseite && !ergebnis ? (
+                <Abschnitt grund={PAPIER}>
+                    <Versal>Ihre Auswertung</Versal>
+                    <div style={{ marginTop: 20 }}><H2>Unterwegs an Ihr Postfach</H2></div>
+                    <Lead max={52}>
+                        Hier auf der Seite steht sie nur, solange das Fenster offen bleibt, in dem
+                        Sie sie angefordert haben. Als PDF liegt sie gleich in Ihrer Mail — mit der
+                        vollständigen Liste und allen Quellen zum Nachprüfen.
+                    </Lead>
+                    <div style={{ marginTop: 28, display: "flex", gap: 12, flexWrap: "wrap" }}>
+                        <Pille href={zurueckZumWerkzeug}>Noch einen Ort ansehen</Pille>
+                        <Pille art="linie" href="/kontakt">Lieber direkt sprechen</Pille>
+                    </div>
+                </Abschnitt>
+            ) : null}
+
             {/* ── Was man bekommt ────────────────────────────────────────────────── */}
-            {!ergebnis ? (
+            {!ergebnis && !aufErgebnisseite ? (
                 <Abschnitt geist="Dabei" grund={PAPIER}>
                     <Versal>Was Sie bekommen</Versal>
                     <div style={{ marginTop: 20 }}><H2>Eine Liste, auf der Ihre Nachbarn mit Namen stehen</H2></div>
@@ -695,7 +734,7 @@ export default function Wettbewerb(props: any) {
             ) : null}
 
             {/* ── Fragen ─────────────────────────────────────────────────────────── */}
-            {!ergebnis ? (
+            {!ergebnis && !aufErgebnisseite ? (
                 <Abschnitt geist="Fragen" grund={REIN}>
                     <Versal>Bevor Sie anfangen</Versal>
                     <div style={{ marginTop: 20 }}><H2>Vier Fragen, die wir oft hören</H2></div>
@@ -715,6 +754,44 @@ export default function Wettbewerb(props: any) {
     )
 }
 
+// ── Übergabe an die Ergebnisseite ──────────────────────────────────────────────
+//
+// Nach dem Absenden wechselt der Trichter auf eine eigene Adresse. Das ist keine Zierde:
+// Google Ads zählt den Abschluss über den Aufruf einer Seite, die man nur nach dem
+// Absenden zu sehen bekommt. Ohne diesen Wechsel sieht Ads keinen einzigen Lead —
+// /wettbewerb/ergebnis gab am 28.10.2026 noch 404, und damit war jede Anzeige blind.
+//
+// Der Befund reist im sessionStorage mit, nicht in der Adresse: Dort stünden Messwerte
+// und Mailadresse im Verlauf des Browsers, im Verweis-Kopf jeder weiteren Anfrage und in
+// jedem Server-Protokoll.
+const UEBERGABE = "fw-wettbewerb-ergebnis"
+// Wer die Adresse später aus dem Verlauf aufruft, soll nicht das Ergebnis von gestern
+// sehen, als wäre es gerade gemessen worden.
+const UEBERGABE_FRIST = 30 * 60 * 1000
+
+function uebergabeSchreiben(nutzlast: Record<string, any>) {
+    try {
+        sessionStorage.setItem(UEBERGABE, JSON.stringify({ ...nutzlast, zeit: Date.now() }))
+        return true
+    } catch {
+        // Privates Fenster, gesperrter Speicher: Dann bleibt das Ergebnis dort stehen, wo
+        // es entstanden ist. Eine leere Ergebnisseite wäre schlechter.
+        return false
+    }
+}
+
+function uebergabeLesen(): Record<string, any> | null {
+    try {
+        const roh = sessionStorage.getItem(UEBERGABE)
+        if (!roh) return null
+        const d = JSON.parse(roh)
+        if (!d || typeof d.zeit !== "number" || Date.now() - d.zeit > UEBERGABE_FRIST) return null
+        return d
+    } catch {
+        return null
+    }
+}
+
 // Herkunft aus der Adresse, fuer die Zuordnung im Funnel. Faellt still aus, wenn es
 // nichts zu lesen gibt — ein Werkzeug darf daran nicht haengen.
 function herkunftLesen() {
@@ -732,10 +809,10 @@ function herkunftLesen() {
 
 // --- Der Trichter --------------------------------------------------------------------
 
-function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, kannWeiter, teaser, ergebnis, werte, teaserHolen, absenden, karte }: any) {
+function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, kannWeiter, teaser, ergebnis, werte, teaserHolen, absenden, karte, aufErgebnisseite }: any) {
     const w = werte
 
-    if (ergebnis) return null
+    if (ergebnis || aufErgebnisseite) return null
 
     return (
         <div ref={karte} className={"fw-karte-dunkel fw-trichter" + (schritt > 0 ? " fw-laeuft" : "")} style={{ borderRadius: 20, padding: "clamp(22px, 4vw, 34px)", maxWidth: 680, background: "rgba(245,243,239,0.03)" }}>
@@ -1034,6 +1111,26 @@ function Ergebnisblatt({ e }: any) {
 }
 
 addPropertyControls(Wettbewerb, {
+    rolle: {
+        type: ControlType.Enum,
+        title: "Rolle",
+        options: ["trichter", "ergebnis"],
+        optionTitles: ["Werkzeug", "Ergebnisseite"],
+        defaultValue: "trichter",
+        description: "Auf der Ergebnisseite zeigt der Baustein nur das Ergebnis aus der Übergabe.",
+    },
+    ergebnisSeite: {
+        type: ControlType.String,
+        title: "Ziel danach",
+        defaultValue: "/wettbewerb/ergebnis",
+        description: "Adresse, auf die nach dem Absenden gewechselt wird. Darauf zählt Google Ads.",
+    },
+    zurueckZumWerkzeug: {
+        type: ControlType.String,
+        title: "Zurück zum Werkzeug",
+        defaultValue: "/wettbewerb",
+        description: "Wohin, wenn jemand die Ergebnisseite ohne Ergebnis aufruft.",
+    },
     endpunkt: {
         type: ControlType.String,
         title: "Endpunkt",
