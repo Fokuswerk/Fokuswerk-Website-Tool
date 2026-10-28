@@ -20,7 +20,16 @@ type Block =
   | { typ: "ueberschrift"; text: string }
   | { typ: "hinweis"; text: string }
   | { typ: "liste"; punkte: string[] }
-  | { typ: "bild"; bild: { src: string; width: number; height: number }; alt: string; unterschrift?: string };
+  // Gespeichert wird nur der Pfad im Bildordner, nicht die ganze Adresse:
+  // so bleiben die Beiträge auch heil, wenn das Projekt einmal umzieht.
+  | {
+      typ: "bild";
+      pfad: string;
+      breite: number;
+      hoehe: number;
+      alt: string;
+      unterschrift?: string;
+    };
 
 type Beitrag = {
   id?: string;
@@ -114,10 +123,14 @@ function Formular({ client }: { client: SupabaseClient }) {
         setzen({ bild_pfad: pfad, bild_breite: fertig.breite, bild_hoehe: fertig.hoehe });
       } else {
         const neu = [...beitrag.inhalt];
+        const vorher = neu[ziel] as { alt?: string; unterschrift?: string };
         neu[ziel] = {
           typ: "bild",
-          bild: { src: bildAdresse(pfad), width: fertig.breite, height: fertig.hoehe },
-          alt: (neu[ziel] as { alt?: string }).alt ?? "",
+          pfad,
+          breite: fertig.breite,
+          hoehe: fertig.hoehe,
+          alt: vorher.alt ?? "",
+          unterschrift: vorher.unterschrift,
         };
         bloeckeSetzen(neu);
       }
@@ -137,6 +150,33 @@ function Formular({ client }: { client: SupabaseClient }) {
     if (!slug) return setFehler("Bitte eine Adresse eingeben.");
     if (!beitrag.bild_pfad) return setFehler("Bitte ein Aufmacherbild hochladen.");
 
+    // Halb fertige Bausteine fliegen raus. Ein Bildblock ohne Bild würde die
+    // Beitragsseite sonst zerlegen.
+    const bloecke = beitrag.inhalt
+      .map((block) =>
+        block.typ === "liste"
+          ? { ...block, punkte: block.punkte.map((p) => p.trim()).filter(Boolean) }
+          : block,
+      )
+      .filter((block) => {
+        if (block.typ === "bild") return Boolean(block.pfad);
+        if (block.typ === "liste") return block.punkte.length > 0;
+        return block.text.trim().length > 0;
+      });
+
+    // Die Website soll barrierefrei bleiben. Als Entwurf darf eine
+    // Beschreibung noch fehlen, veröffentlicht wird aber nur mit.
+    if (beitrag.veroeffentlicht) {
+      if (!beitrag.bild_alt.trim())
+        return setFehler(
+          "Bitte beschreiben, was auf dem Aufmacherbild zu sehen ist. Ohne Beschreibung lässt sich der Beitrag nicht veröffentlichen.",
+        );
+      if (bloecke.some((block) => block.typ === "bild" && !block.alt.trim()))
+        return setFehler(
+          "Bitte jedes Bild im Text beschreiben. Ohne Beschreibung lässt sich der Beitrag nicht veröffentlichen.",
+        );
+    }
+
     setSpeichert(true);
     const datensatz = {
       slug,
@@ -148,9 +188,7 @@ function Formular({ client }: { client: SupabaseClient }) {
       bild_breite: beitrag.bild_breite,
       bild_hoehe: beitrag.bild_hoehe,
       bild_alt: beitrag.bild_alt.trim(),
-      inhalt: beitrag.inhalt.filter(
-        (block) => !("text" in block) || block.text.trim().length > 0,
-      ),
+      inhalt: bloecke,
       veroeffentlicht: beitrag.veroeffentlicht,
     };
 
@@ -275,15 +313,17 @@ function Formular({ client }: { client: SupabaseClient }) {
           </p>
         )}
 
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            const datei = e.target.files?.[0];
-            if (datei) bildHochladen(datei, "aufmacher");
-          }}
-          className="block w-full text-[0.9375rem] text-ink-70 file:mr-4 file:rounded-full file:border-0 file:bg-ink file:px-5 file:py-3 file:text-[0.9375rem] file:font-semibold file:text-paper hover:file:bg-ink/85"
-        />
+        <Feld beschriftung="Bilddatei" hinweis="Große Handyfotos werden beim Hochladen verkleinert.">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const datei = e.target.files?.[0];
+              if (datei) bildHochladen(datei, "aufmacher");
+            }}
+            className="block w-full text-[0.9375rem] text-ink-70 file:mr-4 file:rounded-full file:border-0 file:bg-ink file:px-5 file:py-3 file:text-[0.9375rem] file:font-semibold file:text-paper hover:file:bg-ink/85"
+          />
+        </Feld>
 
         <Feld
           beschriftung="Bildbeschreibung"
@@ -345,11 +385,7 @@ function Formular({ client }: { client: SupabaseClient }) {
                   typ === "liste"
                     ? { typ: "liste", punkte: [""] }
                     : typ === "bild"
-                      ? {
-                          typ: "bild",
-                          bild: { src: "", width: 0, height: 0 },
-                          alt: "",
-                        }
+                      ? { typ: "bild", pfad: "", breite: 0, hoehe: 0, alt: "" }
                       : { typ, text: "" },
                 ])
               }
@@ -431,12 +467,17 @@ function BlockZeile({
           {NAMEN[block.typ]}
         </span>
         <div className="flex gap-1">
-          <KleinKnopf onClick={() => verschieben(-1)} deaktiviert={index === 0}>
+          <KleinKnopf
+            onClick={() => verschieben(-1)}
+            deaktiviert={index === 0}
+            name={`${NAMEN[block.typ]} nach oben`}
+          >
             ↑
           </KleinKnopf>
           <KleinKnopf
             onClick={() => verschieben(1)}
             deaktiviert={index === anzahl - 1}
+            name={`${NAMEN[block.typ]} nach unten`}
           >
             ↓
           </KleinKnopf>
@@ -450,6 +491,7 @@ function BlockZeile({
             <input
               key={i}
               value={punkt}
+              aria-label={`Punkt ${i + 1}`}
               onChange={(e) => {
                 const punkte = [...block.punkte];
                 punkte[i] = e.target.value;
@@ -468,42 +510,50 @@ function BlockZeile({
         </div>
       ) : block.typ === "bild" ? (
         <div className="space-y-4">
-          {block.bild.src ? (
+          {block.pfad ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={block.bild.src}
+              src={bildAdresse(block.pfad)}
               alt=""
               className="max-h-64 w-full rounded-lg bg-sand-100 object-contain"
             />
           ) : null}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const datei = e.target.files?.[0];
-              if (datei) bildWaehlen(datei);
-            }}
-            className="block w-full text-[0.9375rem] text-ink-70 file:mr-4 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:text-sm file:font-semibold file:text-paper"
-          />
-          <input
-            placeholder="Bildbeschreibung"
-            value={block.alt}
-            onChange={(e) => aendern({ ...block, alt: e.target.value })}
-            className={eingabeStil}
-          />
-          <input
-            placeholder="Bildunterschrift (kann leer bleiben)"
-            value={block.unterschrift ?? ""}
-            onChange={(e) =>
-              aendern({ ...block, unterschrift: e.target.value || undefined })
-            }
-            className={eingabeStil}
-          />
+          <Feld beschriftung="Bilddatei">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const datei = e.target.files?.[0];
+                if (datei) bildWaehlen(datei);
+              }}
+              className="block w-full text-[0.9375rem] text-ink-70 file:mr-4 file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:text-sm file:font-semibold file:text-paper"
+            />
+          </Feld>
+          <Feld
+            beschriftung="Bildbeschreibung"
+            hinweis="Für blinde Besucher: Was ist auf dem Bild zu sehen?"
+          >
+            <input
+              value={block.alt}
+              onChange={(e) => aendern({ ...block, alt: e.target.value })}
+              className={eingabeStil}
+            />
+          </Feld>
+          <Feld beschriftung="Bildunterschrift" hinweis="Kann leer bleiben.">
+            <input
+              value={block.unterschrift ?? ""}
+              onChange={(e) =>
+                aendern({ ...block, unterschrift: e.target.value || undefined })
+              }
+              className={eingabeStil}
+            />
+          </Feld>
         </div>
       ) : (
         <textarea
           rows={block.typ === "absatz" ? 4 : 2}
           value={block.text}
+          aria-label={`${NAMEN[block.typ]}, Baustein ${index + 1}`}
           onChange={(e) => aendern({ ...block, text: e.target.value })}
           className={`${eingabeStil} resize-y leading-relaxed`}
         />
@@ -516,16 +566,20 @@ function KleinKnopf({
   children,
   onClick,
   deaktiviert,
+  name,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   deaktiviert?: boolean;
+  /** Vorlesbarer Name – nötig, wenn im Knopf nur ein Pfeil steht. */
+  name?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={deaktiviert}
+      aria-label={name}
       className="rounded-full border border-sand-300 px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:border-ink/40 disabled:opacity-35"
     >
       {children}

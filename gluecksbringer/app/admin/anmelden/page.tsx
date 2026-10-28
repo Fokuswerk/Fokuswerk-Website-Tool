@@ -38,7 +38,10 @@ export default function Anmelden() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-sand-50 px-6 py-16">
+    <main
+      id="inhalt"
+      className="flex min-h-dvh items-center justify-center bg-sand-50 px-6 py-16"
+    >
       <div className="w-full max-w-sm rounded-2xl border border-sand-200 bg-paper p-8 sm:p-10">
         <h1 className="text-h3 text-ink">Inhalte pflegen</h1>
         <p className="mt-3 text-[0.9375rem] leading-relaxed text-ink-70">
@@ -79,7 +82,14 @@ export default function Anmelden() {
             {laeuft ? "Einen Moment …" : "Anmelden"}
           </button>
         </form>
+
+        {/* Kein Selbstbedienungs-Zurücksetzen: in einem kleinen Verein ist der
+            kurze Weg über die betreuende Person der verlässlichere. */}
+        <p className="mt-7 border-t border-sand-200 pt-5 text-sm leading-relaxed text-ink-50">
+          Passwort vergessen? Dann hilft die Person weiter, die die Website
+          betreut – sie kann ein neues vergeben.
+        </p>
       </div>
-    </div>
+    </main>
   );
 }

@@ -8,6 +8,10 @@
  * Bildschirmbreiten, Tastaturbedienung, sichtbarer Fokus, Dauerbewegung,
  * Vergrößerung, erhöhte Textabstände und das Verhalten des Mobilmenüs.
  *
+ * Die Inhaltsverwaltung unter /admin wird mitgeprüft, sobald ein Zugang
+ * mitgegeben wird – sie gehört zur Seite und muss genauso bedienbar sein:
+ *   ADMIN_MAIL=… ADMIN_PASSWORT=… B=http://localhost:3000 node qa/a11y.mjs
+ *
  * Braucht playwright und @axe-core/playwright als Entwicklungsabhängigkeit.
  */
 import { chromium } from 'playwright';
@@ -16,8 +20,14 @@ import AxeBuilder from '@axe-core/playwright';
 const B = process.env.B || 'http://localhost:3000';
 const SEITEN = [
   '/', '/ueber-uns', '/aktuelles', '/aktuelles/wunschbaum-am-meer-2025',
-  '/galerie', '/unterstuetzen', '/kontakt', '/impressum', '/datenschutz', '/gibtsnicht',
+  '/galerie', '/unterstuetzen', '/kontakt', '/impressum', '/datenschutz',
+  '/barrierefreiheit', '/admin/anmelden', '/gibtsnicht',
 ];
+
+/** Seiten der Inhaltsverwaltung – nur mit Zugang erreichbar. */
+const VERWALTUNG = ['/admin', '/admin/beitraege', '/admin/beitraege/neu', '/admin/galerie'];
+const ADMIN_MAIL = process.env.ADMIN_MAIL;
+const ADMIN_PASSWORT = process.env.ADMIN_PASSWORT;
 
 const befunde = [];
 const browser = await chromium.launch();
@@ -43,6 +53,40 @@ for (const breite of [1440, 402]) {
     }
   }
   await ctx.close();
+}
+
+// ------------------------------------------- axe in der Verwaltung ----------
+if (ADMIN_MAIL && ADMIN_PASSWORT) {
+  const vctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const vp = await vctx.newPage();
+  await vp.goto(B + '/admin/anmelden', { waitUntil: 'load' });
+  await vp.getByLabel('E-Mail').fill(ADMIN_MAIL);
+  await vp.getByLabel('Passwort').fill(ADMIN_PASSWORT);
+  await vp.getByRole('button', { name: 'Anmelden' }).click();
+  await vp.waitForURL('**/admin', { timeout: 15000 }).catch(() => {});
+
+  for (const pfad of VERWALTUNG) {
+    await vp.goto(B + pfad, { waitUntil: 'load' });
+    await vp.waitForTimeout(1200);
+    // Im Editor alle Bausteinarten öffnen – jede bringt eigene Felder mit.
+    if (pfad.endsWith('/neu')) {
+      for (const knopf of await vp.getByRole('button', { name: /^\+ / }).all()) {
+        await knopf.click();
+      }
+      await vp.waitForTimeout(400);
+    }
+    const { violations } = await new AxeBuilder({ page: vp })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'])
+      .analyze();
+    for (const v of violations) {
+      for (const node of v.nodes.slice(0, 3)) {
+        befunde.push(`Verwaltung ${pfad}: [${v.impact}] ${v.id} – ${node.target.join(' ')}`);
+      }
+    }
+  }
+  await vctx.close();
+} else {
+  console.log('Hinweis: ohne ADMIN_MAIL und ADMIN_PASSWORT bleibt die Inhaltsverwaltung ungeprüft.');
 }
 
 // --------------------------------------------- Tastatur und Zustände --------

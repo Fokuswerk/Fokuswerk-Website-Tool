@@ -57,6 +57,47 @@ function bild(pfad: string, breite: number | null, hoehe: number | null) {
   return { src: bildAdresse(pfad), width: breite ?? 1600, height: hoehe ?? 1200 };
 }
 
+/**
+ * Die Bausteine eines Beitrags in die Form bringen, die die Beitragsseite
+ * erwartet. Bilder stehen in der Datenbank nur als Pfad – die vollständige
+ * Adresse entsteht erst hier, damit ein Umzug des Projekts die Beiträge
+ * nicht zerreißt. Unvollständige Bausteine lassen wir weg: ein Bildblock
+ * ohne Bild würde die Seite sonst mit einem Fehler abbrechen.
+ */
+function bloecke(rohdaten: unknown): Beitrag["inhalt"] {
+  if (!Array.isArray(rohdaten)) return [];
+  const fertig: Beitrag["inhalt"] = [];
+
+  for (const roh of rohdaten) {
+    if (!roh || typeof roh !== "object") continue;
+    const block = roh as Record<string, unknown>;
+
+    if (block.typ === "bild") {
+      const pfad = typeof block.pfad === "string" ? block.pfad : "";
+      if (!pfad) continue;
+      const unterschrift =
+        typeof block.unterschrift === "string" && block.unterschrift.trim()
+          ? block.unterschrift
+          : undefined;
+      fertig.push({
+        typ: "bild",
+        bild: bild(pfad, Number(block.breite) || null, Number(block.hoehe) || null),
+        alt: typeof block.alt === "string" ? block.alt : "",
+        unterschrift,
+      });
+      continue;
+    }
+
+    // Bausteine mit Liste würden die Seite abbrechen, wenn die Liste fehlt.
+    if (block.typ === "liste" && !Array.isArray(block.punkte)) continue;
+    if (block.typ === "schritte" && !Array.isArray(block.eintraege)) continue;
+
+    fertig.push(block as unknown as Beitrag["inhalt"][number]);
+  }
+
+  return fertig;
+}
+
 async function zeilenHolen<T>(tabelle: string, aufbereiten: (rohdaten: unknown[]) => T) {
   try {
     const client = lesenClient();
@@ -89,7 +130,7 @@ export async function beitraegeLaden(): Promise<Beitrag[]> {
         teaser: zeile.teaser,
         bild: bild(zeile.bild_pfad!, zeile.bild_breite, zeile.bild_hoehe),
         bildAlt: zeile.bild_alt,
-        inhalt: Array.isArray(zeile.inhalt) ? (zeile.inhalt as Beitrag["inhalt"]) : [],
+        inhalt: bloecke(zeile.inhalt),
       })),
   );
 
@@ -108,6 +149,10 @@ export async function galerieLaden(): Promise<GalerieJahr[]> {
   const ausVerwaltung = await zeilenHolen("galerie_bilder", (rohdaten) =>
     (rohdaten as GalerieZeile[])
       .slice()
+      // Dieselbe Regel wie bei den Beiträgen: ohne Bildbeschreibung geht
+      // nichts auf die Website. In der Verwaltung steht das Bild mit einem
+      // deutlichen Hinweis, bis jemand beschreibt, was zu sehen ist.
+      .filter((zeile) => zeile.alt.trim().length > 0)
       .sort((a, b) => a.sortierung - b.sortierung)
       .map((zeile) => ({
         jahr: zeile.jahr,

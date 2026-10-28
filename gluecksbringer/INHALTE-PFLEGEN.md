@@ -22,12 +22,16 @@ und pflegen alles direkt im Browser:
    - **Bildunterschrift** – steht sichtbar unter dem Foto, darf leer bleiben.
    - **Bildbeschreibung** – was auf dem Bild zu sehen ist. Blinde Menschen
      bekommen diesen Text vorgelesen, und Suchmaschinen lesen ihn mit.
-     Bitte immer ausfüllen.
 5. Das Häkchen **„Ganz zeigen statt zuschneiden"** ist für Plakate und
    Zeichnungen gedacht, die man vollständig sehen muss.
 
 Was Sie eintippen, wird gespeichert, sobald Sie das Feld verlassen. Ein
 Speichern-Knopf ist nicht nötig.
+
+**Ein Foto erscheint erst mit Bildbeschreibung in der Galerie.** Solange die
+fehlt, steht in der Verwaltung ein roter Hinweis am Bild. Das ist Absicht: die
+Seite ist barrierefrei gebaut, und ein Foto, zu dem niemand sagt, was darauf
+ist, wäre für blinde Besucher einfach eine Lücke. Ein Satz reicht völlig.
 
 ### Einen Beitrag schreiben
 
@@ -46,6 +50,13 @@ Ohne das Häkchen bleibt der Beitrag ein Entwurf – Sie können also in Ruhe
 daran arbeiten und ihn später freischalten. In der Liste steht bei Entwürfen
 ein entsprechender Hinweis.
 
+**Bildbeschreibungen sind Pflicht.** Veröffentlichen lässt sich ein Beitrag
+nur, wenn jedes Bild beschrieben ist. Das ist keine Schikane: blinde Besucher
+bekommen diesen Satz vorgelesen, und die Seite ist ausdrücklich barrierefrei
+gebaut. Ein Satz genügt – „Drei Kinder hängen Wunschkarten an den
+geschmückten Tannenbaum" sagt mehr als „Foto vom Wunschbaum". Als Entwurf
+dürfen die Beschreibungen noch fehlen.
+
 Gespeicherte Änderungen sind sofort auf der Website zu sehen.
 
 ### Zugang einrichten
@@ -56,14 +67,31 @@ Einmalig, am besten durch die Person, die die Website betreut:
    (Region Frankfurt wählen).
 2. Im **SQL Editor** die Datei `supabase/01_schema.sql` aus diesem Ordner
    einfügen und ausführen. Damit entstehen die Tabellen und der Bildordner.
-3. Unter **Project Settings → API** die beiden Werte kopieren und bei Vercel
+3. Im **SQL Editor** eintragen, wer Inhalte pflegen darf – eine Zeile je
+   Person, mit genau der Mailadresse, die später zum Anmelden benutzt wird:
+
+   ```sql
+   insert into public.redakteure (email, name) values
+     ('vorname.nachname@example.de', 'Vorname Nachname')
+   on conflict (email) do nothing;
+   ```
+
+4. Unter **Project Settings → API** die beiden Werte kopieren und bei Vercel
    als Umgebungsvariablen eintragen:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Unter **Authentication → Users → Add user** die Zugänge für den Verein
-   anlegen (E-Mail und Passwort, Haken bei „Auto Confirm User"). Eine
-   öffentliche Registrierung gibt es bewusst nicht.
-5. Einmal neu ausrollen.
+5. Unter **Authentication → Users → Add user** die Zugänge anlegen – dieselben
+   Mailadressen wie in Schritt 3, mit Haken bei „Auto Confirm User".
+6. Unter **Authentication → Sign In / Providers** die Selbstregistrierung
+   ausschalten („Allow new users to sign up"). Doppelt gesichert: selbst wenn
+   dieser Schalter einmal umgelegt wird, kommt ein fremdes Konto nicht an die
+   Inhalte, solange seine Mailadresse nicht in `redakteure` steht.
+7. Einmal neu ausrollen.
+
+Eine weitere Person später dazunehmen: Schritt 3 und 5 für sie wiederholen.
+Jemandem den Zugang entziehen: ihre Zeile aus `redakteure` löschen
+(`delete from public.redakteure where email = '…';`) und den Zugang unter
+**Authentication → Users** entfernen.
 
 Solange diese beiden Werte fehlen, funktioniert die Website ganz normal – sie
 zeigt dann ausschließlich die Inhalte aus dem Ordner `content/`.

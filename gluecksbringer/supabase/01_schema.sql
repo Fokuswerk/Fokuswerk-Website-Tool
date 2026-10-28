@@ -3,10 +3,15 @@
 --
 --  Einmal im SQL-Editor des Supabase-Projekts ausführen. Legt zwei Tabellen
 --  und einen Speicherordner für Bilder an und setzt die Zugriffsregeln:
---  Lesen darf jeder, Schreiben nur, wer angemeldet ist.
+--  Lesen darf jeder, Schreiben nur die eingetragene Redaktion.
 --
---  Danach unter Authentication → Users die Zugänge für den Verein anlegen.
---  Eine öffentliche Registrierung gibt es bewusst nicht.
+--  Danach die Mailadressen der Redaktion unten in `redakteure` eintragen
+--  und unter Authentication → Users die passenden Zugänge anlegen.
+--
+--  Wichtig: Schreiben darf ausdrücklich nur, wessen Mailadresse in
+--  `redakteure` steht. Der öffentliche Schlüssel der Website steht im
+--  Browser für jeden lesbar – würde allein das Angemeldetsein genügen,
+--  käme jeder mit einem selbst angelegten Konto an die Inhalte.
 -- ============================================================================
 
 -- --------------------------------------------------------------- Beiträge ---
@@ -73,6 +78,36 @@ create trigger beitraege_geaendert_am
   before update on public.beitraege
   for each row execute function public.setze_geaendert_am();
 
+-- -------------------------------------------------------- Redaktion --------
+-- Wer die Inhalte pflegen darf. Nur über den SQL-Editor zu ändern, nicht
+-- über die Website: die Tabelle hat bewusst keine einzige Zugriffsregel.
+create table if not exists public.redakteure (
+  email       text primary key,
+  name        text,
+  angelegt_am timestamptz not null default now()
+);
+
+comment on table public.redakteure is
+  'Mailadressen, die Inhalte pflegen dürfen. Ohne Eintrag hier geht nichts.';
+
+alter table public.redakteure enable row level security;
+
+-- Läuft mit den Rechten des Eigentümers, kommt also an die Tabelle oben
+-- heran, obwohl sie für alle anderen gesperrt ist.
+create or replace function public.ist_redaktion()
+returns boolean
+language sql
+security definer
+set search_path = ''
+stable
+as $$
+  select exists (
+    select 1
+    from public.redakteure r
+    where lower(r.email) = lower(nullif(auth.jwt() ->> 'email', ''))
+  );
+$$;
+
 -- ------------------------------------------------------------ Zugriff -------
 alter table public.beitraege      enable row level security;
 alter table public.galerie_bilder enable row level security;
@@ -82,7 +117,7 @@ drop policy if exists "Beiträge öffentlich lesen" on public.beitraege;
 create policy "Beiträge öffentlich lesen"
   on public.beitraege for select
   to anon, authenticated
-  using (veroeffentlicht = true or auth.role() = 'authenticated');
+  using (veroeffentlicht = true or public.ist_redaktion());
 
 drop policy if exists "Galerie öffentlich lesen" on public.galerie_bilder;
 create policy "Galerie öffentlich lesen"
@@ -90,18 +125,18 @@ create policy "Galerie öffentlich lesen"
   to anon, authenticated
   using (true);
 
--- Schreiben: nur angemeldete Personen.
+-- Schreiben: nur, wer in `redakteure` steht.
 drop policy if exists "Beiträge pflegen" on public.beitraege;
 create policy "Beiträge pflegen"
   on public.beitraege for all
   to authenticated
-  using (true) with check (true);
+  using (public.ist_redaktion()) with check (public.ist_redaktion());
 
 drop policy if exists "Galerie pflegen" on public.galerie_bilder;
 create policy "Galerie pflegen"
   on public.galerie_bilder for all
   to authenticated
-  using (true) with check (true);
+  using (public.ist_redaktion()) with check (public.ist_redaktion());
 
 -- ------------------------------------------------------------ Bildablage ----
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -124,16 +159,24 @@ drop policy if exists "Bilder hochladen" on storage.objects;
 create policy "Bilder hochladen"
   on storage.objects for insert
   to authenticated
-  with check (bucket_id = 'bilder');
+  with check (bucket_id = 'bilder' and public.ist_redaktion());
 
 drop policy if exists "Bilder ersetzen" on storage.objects;
 create policy "Bilder ersetzen"
   on storage.objects for update
   to authenticated
-  using (bucket_id = 'bilder');
+  using (bucket_id = 'bilder' and public.ist_redaktion());
 
 drop policy if exists "Bilder löschen" on storage.objects;
 create policy "Bilder löschen"
   on storage.objects for delete
   to authenticated
-  using (bucket_id = 'bilder');
+  using (bucket_id = 'bilder' and public.ist_redaktion());
+
+-- ------------------------------------------------------- Redaktion füllen ---
+-- Hier die Mailadressen eintragen, die Inhalte pflegen dürfen – dieselben
+-- Adressen, für die unter Authentication → Users ein Zugang angelegt wird.
+--
+--   insert into public.redakteure (email, name) values
+--     ('vorname.nachname@example.de', 'Vorname Nachname')
+--   on conflict (email) do nothing;

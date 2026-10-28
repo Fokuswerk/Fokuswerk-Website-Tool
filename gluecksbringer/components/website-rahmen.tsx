@@ -12,3 +12,14 @@ export function NurWebsite({ children }: { children: ReactNode }) {
   if (pfad?.startsWith("/admin")) return null;
   return <>{children}</>;
 }
+
+/**
+ * Der Hauptbereich der Website. Die Inhaltsverwaltung bringt ihren eigenen
+ * mit – lägen zwei davon ineinander, wüsste eine Vorlesesoftware nicht, zu
+ * welchem die Sprungmarke führt.
+ */
+export function Hauptbereich({ children }: { children: ReactNode }) {
+  const pfad = usePathname();
+  if (pfad?.startsWith("/admin")) return <>{children}</>;
+  return <main id="inhalt">{children}</main>;
+}

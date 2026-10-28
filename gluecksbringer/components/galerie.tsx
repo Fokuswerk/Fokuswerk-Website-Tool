@@ -261,6 +261,13 @@ export function Galerie({ jahre }: { jahre: GalerieJahr[] }) {
                     <button
                       type="button"
                       onClick={() => oeffnen(index)}
+                      // Der Name des Knopfes hing bisher allein am Bildtext.
+                      // Fehlt der einmal, stünde hier ein namenloser Knopf.
+                      aria-label={
+                        eintrag.alt.trim()
+                          ? `${eintrag.alt.trim()} – größer ansehen`
+                          : `Bild ${index + 1} größer ansehen`
+                      }
                       className={`group block w-full overflow-hidden rounded-xl ${
                         eintrag.einpassen
                           ? "flex items-center justify-center bg-sand-50 p-4"

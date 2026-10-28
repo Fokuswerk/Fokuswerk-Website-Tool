@@ -62,10 +62,14 @@ export function BeitragKarte({ beitrag }: { beitrag: Beitrag }) {
 
 /** Füllt die dritte Spalte, solange es nur wenige Beiträge gibt.
  *  Gleicher Aufbau wie eine Beitragskarte – Bildfläche oben, dann Text –
- *  damit die Reihe nicht aus dem Takt gerät. */
+ *  damit die Reihe nicht aus dem Takt gerät.
+ *
+ *  Bewusst ein schlichtes div: die Karte steht als eine von mehreren in
+ *  der Reihe, sie ist keine Randspalte. Als <aside> meldete sie sich bei
+ *  Vorlesesoftware als eigener Bereich innerhalb des Hauptbereichs. */
 export function FolgenKarte() {
   return (
-    <aside className="flex h-full flex-col">
+    <div className="flex h-full flex-col">
       <div className="flex aspect-[3/2] w-full items-center justify-center overflow-hidden rounded-xl bg-ink">
         <Kleeblatt className="size-14 text-glow-hell" />
       </div>
@@ -101,6 +105,6 @@ export function FolgenKarte() {
           Instagram
         </a>
       </div>
-    </aside>
+    </div>
   );
 }

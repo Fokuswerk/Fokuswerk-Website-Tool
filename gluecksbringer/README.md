@@ -118,6 +118,16 @@ npm run build && npm run start   # und in einem zweiten Fenster:
 node qa/a11y.mjs                 # axe über alle Seiten, zwei Engines, zwei Breiten
 ```
 
+Die Inhaltsverwaltung gehört dazu. Sie liegt hinter der Anmeldung, deshalb
+braucht die Prüfung dafür einen Zugang:
+
+```bash
+ADMIN_MAIL=… ADMIN_PASSWORT=… node qa/a11y.mjs
+```
+
+Ohne diese beiden Angaben läuft die Prüfung normal durch und sagt am Anfang,
+dass die Verwaltung ausgelassen wurde.
+
 Was die automatische Prüfung nicht abdeckt und deshalb von Hand geprüft wird:
 Bedienung nur mit der Tastatur, sichtbarer Fokus, Vergrößerung auf 200 %,
 erhöhte Textabstände, Verhalten bei „Bewegung reduzieren" und ob die
@@ -130,6 +140,12 @@ Zwei Dinge, die beim Weiterbauen leicht kaputtgehen:
   deshalb auf zwei Durchläufe begrenzt.
 - **Sichtbarer Text muss im zugänglichen Namen vorkommen** (WCAG 2.5.3). Ein
   `aria-label` darf den sichtbaren Text ergänzen, nicht ersetzen.
+- **Nur ein `main` je Seite.** Das Grundgerüst setzt es für die Website,
+  die Inhaltsverwaltung bringt ihr eigenes mit (`components/website-rahmen.tsx`).
+  Zwei ineinander, und die Sprungmarke zeigt ins Leere.
+- **Bilder aus der Verwaltung brauchen eine Beschreibung.** Veröffentlichen
+  lässt sich ein Beitrag erst, wenn jedes Bild eine hat – sonst wäre die
+  Barrierefreiheit bei der ersten selbst geschriebenen Nachricht wieder dahin.
 
 ## Performance
 

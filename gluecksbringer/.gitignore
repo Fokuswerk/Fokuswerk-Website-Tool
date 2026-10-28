@@ -10,3 +10,8 @@ npm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 *.tsbuildinfo
+
+# Versions-Zwischenspeicher der Supabase-CLI, gehört nicht ins Projekt
+/supabase/.temp/
+# örtliche Werkzeugeinstellungen
+/.claude/

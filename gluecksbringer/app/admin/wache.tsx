@@ -66,6 +66,13 @@ export function Wache({
 
   return (
     <div className="min-h-dvh bg-sand-50">
+      <a
+        href="#inhalt"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-10 focus:rounded-full focus:bg-ink focus:px-5 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-paper"
+      >
+        Zum Inhalt springen
+      </a>
+
       <header className="border-b border-sand-200 bg-paper">
         <div className="shell flex flex-wrap items-center justify-between gap-4 py-4">
           <div className="flex items-center gap-6">
@@ -114,7 +121,7 @@ export function Wache({
         </div>
       </header>
 
-      <main className="shell py-10 sm:py-14">
+      <main id="inhalt" className="shell py-10 sm:py-14">
         <h1 className="text-h2 text-ink">{titel}</h1>
         <div className="mt-8">{children(client)}</div>
       </main>
@@ -124,11 +131,13 @@ export function Wache({
 
 export function Hinweis({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-sand-50 px-6">
+    // Eigener Hauptbereich: das Grundgerüst setzt unter /admin keinen,
+    // damit die Verwaltung nicht zwei ineinander hat.
+    <main id="inhalt" className="flex min-h-dvh items-center justify-center bg-sand-50 px-6">
       <p className="max-w-md text-center text-[1.0625rem] leading-relaxed text-ink-70">
         {children}
       </p>
-    </div>
+    </main>
   );
 }
 

@@ -139,7 +139,7 @@ function Inhalt({ client }: { client: SupabaseClient }) {
             />
           </Feld>
 
-          <div>
+          <Feld beschriftung="Fotos" hinweis="Mehrere Bilder auf einmal sind möglich.">
             <input
               ref={dateiFeld}
               type="file"
@@ -148,7 +148,7 @@ function Inhalt({ client }: { client: SupabaseClient }) {
               onChange={(e) => hochladen(e.target.files)}
               className="block w-full text-[0.9375rem] text-ink-70 file:mr-4 file:rounded-full file:border-0 file:bg-ink file:px-5 file:py-3 file:text-[0.9375rem] file:font-semibold file:text-paper hover:file:bg-ink/85"
             />
-          </div>
+          </Feld>
         </div>
 
         {fortschritt ? (
@@ -189,6 +189,17 @@ function Inhalt({ client }: { client: SupabaseClient }) {
                       className="aspect-[4/3] w-full bg-sand-100 object-cover"
                     />
                     <div className="space-y-4 p-5">
+                      {!eintrag.alt.trim() ? (
+                        <p className="rounded-lg bg-alarm-soft px-3 py-2 text-sm text-alarm">
+                          <strong className="font-semibold">
+                            Steht noch nicht auf der Website.
+                          </strong>{" "}
+                          Bitte unten beschreiben, was zu sehen ist – blinde
+                          Besucher bekommen genau diesen Satz vorgelesen.
+                          Danach erscheint das Bild in der Galerie.
+                        </p>
+                      ) : null}
+
                       <Feld
                         beschriftung="Bildunterschrift"
                         hinweis="Steht sichtbar unter dem Foto. Kann leer bleiben."
@@ -238,6 +249,9 @@ function Inhalt({ client }: { client: SupabaseClient }) {
                         className={`${knopfLeiseStil} w-full`}
                       >
                         Bild entfernen
+                        <span className="sr-only">
+                          {eintrag.alt.trim() ? `: ${eintrag.alt.trim()}` : ""}
+                        </span>
                       </button>
                     </div>
                   </article>
