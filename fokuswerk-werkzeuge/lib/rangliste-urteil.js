@@ -12,27 +12,68 @@
 //      der Liste, weil die Namen den Beweis tragen; bewertet wird nur, wer das Werkzeug
 //      selbst benutzt hat.
 
+// Pluralformen lassen sich im Deutschen nicht aus Endungen ableiten. Der Versuch ergab
+// live „15 Sanitäre", und im Freitextfeld entstanden „Autohause", „Karosseriebaue",
+// „Reifenhandele" und „Physiotherapiee" — auf der Seite wie im PDF. Was hier nicht
+// drinsteht, bekommt deshalb die neutrale Form „Betriebe": lieber allgemein als falsch.
 const PLURAL = {
-  Autowerkstatt: "Autowerkstätten",
-  Kfzwerkstatt: "Kfz-Werkstätten",
-  Dachdecker: "Dachdecker",
-  Elektriker: "Elektriker",
-  Maler: "Maler",
-  Tischlerei: "Tischlereien",
-  Zahnarzt: "Zahnarztpraxen",
-  Friseur: "Friseure",
-  Steinmetz: "Steinmetzbetriebe",
-  Gartenbau: "Gartenbaubetriebe",
-  Sanitaer: "Sanitärbetriebe",
+  autowerkstatt: "Autowerkstätten",
+  kfzwerkstatt: "Kfz-Werkstätten",
+  kfzreparatur: "Kfz-Werkstätten",
+  autohaus: "Autohäuser",
+  autohandel: "Autohändler",
+  karosseriebau: "Karosseriebaubetriebe",
+  lackiererei: "Lackierereien",
+  reifenhandel: "Reifenhändler",
+  dachdecker: "Dachdecker",
+  bedachung: "Dachdeckerbetriebe",
+  elektriker: "Elektriker",
+  elektrotechnik: "Elektrobetriebe",
+  maler: "Maler",
+  malerei: "Malerbetriebe",
+  tischlerei: "Tischlereien",
+  schreinerei: "Schreinereien",
+  sanitaer: "Sanitärbetriebe",
+  heizung: "Heizungsbauer",
+  shk: "SHK-Betriebe",
+  klempnerei: "Klempnereien",
+  zahnarzt: "Zahnarztpraxen",
+  arzt: "Arztpraxen",
+  physiotherapie: "Physiotherapiepraxen",
+  friseur: "Friseure",
+  kosmetik: "Kosmetikstudios",
+  steinmetz: "Steinmetzbetriebe",
+  gartenbau: "Gartenbaubetriebe",
+  galabau: "Galabaubetriebe",
+  fliesenleger: "Fliesenleger",
+  zimmerei: "Zimmereien",
+  bauunternehmen: "Bauunternehmen",
+  baeckerei: "Bäckereien",
+  metzgerei: "Metzgereien",
+  optiker: "Optiker",
+  hoerakustik: "Hörakustiker",
+  apotheke: "Apotheken",
 };
 
+/**
+ * Der Plural eines Gewerks — oder „Betriebe", wenn wir ihn nicht sicher kennen.
+ *
+ * Geraten wird hier nichts mehr. „15 Betriebe in Westerstede" ist allgemeiner als
+ * „15 Karosseriebaue", aber es ist richtig, und falsch wiegt auf dieser Seite schwerer:
+ * Wer einen Grammatikfehler in der Überschrift sieht, glaubt den Zahlen darunter weniger.
+ */
 export function plural(gewerk) {
   if (!gewerk) return "Betriebe";
-  const treffer = PLURAL[gewerk.replace(/[^A-Za-zÄÖÜäöüß]/g, "")];
-  if (treffer) return treffer;
-  if (/(ei|ung)$/i.test(gewerk)) return gewerk + "en";
-  if (/er$/i.test(gewerk)) return gewerk;
-  return gewerk + "e";
+  const schluessel = String(gewerk)
+    .toLowerCase()
+    .replace(/[äÄ]/g, "ae").replace(/[öÖ]/g, "oe").replace(/[üÜ]/g, "ue").replace(/ß/g, "ss")
+    .replace(/[^a-z]/g, "");
+  if (PLURAL[schluessel]) return PLURAL[schluessel];
+  // Auch ein Teiltreffer hilft: „Kfz-Werkstatt Meier" trägt „kfzwerkstatt" in sich.
+  for (const [k, v] of Object.entries(PLURAL)) {
+    if (schluessel.includes(k) && k.length >= 6) return v;
+  }
+  return "Betriebe";
 }
 
 function median(werte) {

@@ -263,7 +263,7 @@ export async function anzeigenHolen(betriebe, { token, ort = "", jeBetrieb = 6 }
  * `rangliste-urteil.js`, damit sich an der Bewertung etwas ändern lässt, ohne neu
  * zu messen (und zu bezahlen).
  */
-export async function sammle({ gewerk, ort, hoechstens = 24 }) {
+export async function sammle({ gewerk, ort, hoechstens = 24, ohneAnzeigen = false }) {
   const token = process.env.APIFY_TOKEN;
   if (!token) return { fehler: "kein_apify_token" };
   if (!gewerk || !ort) return { fehler: "gewerk_oder_ort_fehlt" };
@@ -284,17 +284,37 @@ export async function sammle({ gewerk, ort, hoechstens = 24 }) {
   const kern = betriebe.filter((b) => b.kategorie === haeufigste);
   const liste = kern.length >= 3 ? kern : betriebe;
 
-  const anzeigen = await anzeigenHolen(liste, { token, ort });
-
-  return {
+  const grund = {
     gewerk,
     ort,
     kategorie: haeufigste,
     gemessenAm: new Date().toISOString(),
     aussortiert: betriebe.length - liste.length,
+    betriebe: liste.map((b) => ({ ...b, anzeigen: [] })),
+  };
+
+  // Die Anzeigenprüfung dauert so lange wie die Profile selbst — am 28.10.2026 gemessen:
+  // 28,4 s für die Profile, 29,4 s für die Anzeigen. Wer beides in einem Zug abwartet,
+  // sitzt eine Minute vor einem grauen Knopf, und genau dort bricht der Trichter ab.
+  // Deshalb kann der Aufrufer die Profile allein holen und die Anzeigen nachreichen.
+  if (ohneAnzeigen) return { ...grund, anzeigenVerfuegbar: null, anzeigenUnsicher: [] };
+
+  return { ...grund, ...(await anzeigenErgaenzen(grund, token)) };
+}
+
+/**
+ * Die Anzeigenlage zu einer fertigen Profilmessung nachholen.
+ *
+ * Getrennt von `sammle`, damit die Seite den Markt schon zeigen kann, während das hier
+ * noch läuft. Gibt nur die Felder zurück, die sich ändern — der Aufrufer legt sie über
+ * seine vorhandene Messung.
+ */
+export async function anzeigenErgaenzen(messung, token = process.env.APIFY_TOKEN) {
+  const anzeigen = await anzeigenHolen(messung.betriebe, { token, ort: messung.ort });
+  return {
     anzeigenVerfuegbar: anzeigen.verfuegbar,
     anzeigenUnsicher: anzeigen.unsicher,
-    betriebe: liste.map((b) => ({ ...b, anzeigen: anzeigen.je.get(b.name) || [] })),
+    betriebe: messung.betriebe.map((b) => ({ ...b, anzeigen: anzeigen.je.get(b.name) || [] })),
   };
 }
 

@@ -52,11 +52,15 @@ const AKZENT_HELL = "#B84116"
 const AKZENT_DUNKEL = "#FF7341"
 
 const T60 = "rgba(14, 15, 18, 0.6)"
-const T40 = "rgba(14, 15, 18, 0.42)"
+// Nachgerechnet am 28.10.2026: Die Hauswerte 0.42 auf Papier und 0.45 auf Dunkel ergeben
+// 2,77:1 und 4,16:1 — das erste reicht nicht einmal fuer Grosstext. Hier tragen sie
+// Fussnoten, Tabellenkoepfe und die Schrittanzeige, also echten Lesetext. Angehoben auf
+// 4,88:1 und 6,49:1. Das weicht bewusst vom Rest des Hauses ab; lesbar schlaegt gleich.
+const T40 = "rgba(14, 15, 18, 0.6)"
 const LINIE = "rgba(14, 15, 18, 0.1)"
 const LINIE_FEST = "rgba(14, 15, 18, 0.16)"
 const P70 = "rgba(245, 243, 239, 0.7)"
-const P45 = "rgba(245, 243, 239, 0.45)"
+const P45 = "rgba(245, 243, 239, 0.6)"
 const LINIE_D = "rgba(245, 243, 239, 0.1)"
 
 const GUT = "#1F6B4A"
@@ -144,7 +148,7 @@ const STIL = `
   .fw-trichter.fw-laeuft { min-height: min(62vh, 560px); }
 }
 
-.fw-rl input::placeholder { color: rgba(245,243,239,0.4); }
+.fw-rl input::placeholder { color: rgba(245,243,239,0.55); }
 .fw-rl *:focus-visible { outline: 2px solid ${SIGNAL}; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   .fw-rl *, .fw-rl *::before, .fw-rl *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
@@ -152,6 +156,12 @@ const STIL = `
 `
 
 // --- Inhalte ---------------------------------------------------------------------------
+
+// Kleine Zahlen als Wort: „Acht haben keinen Internetauftritt" liest sich wie ein Satz,
+// „8 haben …" wie ein Datenbankauszug. Ab zwoelf wieder Ziffern.
+// Beide Stellen stehen hinter einem Punkt, also Grossschreibung.
+const ZAHLWORT = ["", "Ein", "Zwei", "Drei", "Vier", "Fünf", "Sechs", "Sieben", "Acht",
+    "Neun", "Zehn", "Elf"]
 
 const GEWERKE = [
     "Autowerkstatt", "Dachdecker", "Elektriker", "Maler", "Sanitär", "Tischlerei",
@@ -493,21 +503,54 @@ export default function Wettbewerb(props: any) {
     const [newsletter, setNewsletter] = useState(false)
 
     const [teaser, setTeaser] = useState<any>(null)
+    // Die Anzeigenlage kommt in einem zweiten Zug nach. Siehe den Effekt weiter unten.
+    const [anzeigen, setAnzeigen] = useState<any>(null)
     const [laeuft, setLaeuft] = useState(false)
     const [fehler, setFehler] = useState<string | null>(null)
     const [ergebnis, setErgebnis] = useState<any>(null)
 
     const anker = useRef<HTMLDivElement>(null)
+    const karte = useRef<HTMLDivElement>(null)
 
-    // Nach jedem Schritt an den Anfang des ABSCHNITTS, nicht der Karte: Sonst klebt die
-    // Frage unter der Kopfleiste und Ueberschrift, Einleitung und Fortschritt sind weg.
+    // Nach jedem Schritt die TRICHTERKARTE unter die Kopfleiste holen.
+    //
+    // Vorher hing das am aeussersten Element der Komponente. Das sitzt bei Dokument-y = 0,
+    // das Ziel wurde negativ und auf 0 geklemmt — die Seite sprang also an den Anfang
+    // zurueck, der ganze Vorspann stand wieder da, und der Weiter-Knopf lag bei 815 px auf
+    // einem 812-px-Bildschirm, also unter dem Falz. Gemessen am 28.10.2026.
     useEffect(() => {
         if (schritt === 0) return
-        const ziel = anker.current
+        const ziel = karte.current
         if (!ziel) return
-        const y = ziel.getBoundingClientRect().top + window.scrollY - (KOPFLEISTE + 20)
+        const y = Math.max(0, ziel.getBoundingClientRect().top + window.scrollY - (KOPFLEISTE + 16))
         window.scrollTo({ top: y, behavior: "smooth" })
     }, [schritt])
+
+    // Sobald der Markt auf dem Schirm steht, die Anzeigenlage nachholen.
+    //
+    // Die beiden Messungen dauern zusammen knapp eine Minute (28 s Profile, 29 s
+    // Anzeigen, gemessen am 28.10.2026). Nacheinander abgewartet sitzt der Besucher eine
+    // Minute vor einem grauen Knopf — die Stelle, an der der Trichter am staerksten
+    // abbricht. Jetzt sieht er den Markt nach der halben Zeit, und der Rest laeuft,
+    // waehrend er seinen Betrieb aus der Liste sucht.
+    useEffect(() => {
+        if (!teaser || anzeigen || teaser.anzeigenGemessen) return
+        let abgebrochen = false
+        ;(async () => {
+            try {
+                const antwort = await fetch(endpunkt + "?anzeigen=1", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ gewerk, ort }),
+                })
+                const d = await antwort.json()
+                if (!abgebrochen && d?.bereit) setAnzeigen(d)
+            } catch {
+                // Still scheitern: Die Rangliste steht auch ohne die Anzeigenzeile.
+            }
+        })()
+        return () => { abgebrochen = true }
+    }, [teaser])
 
     const abrufen = async (nutzlast: any, vorlauf: boolean) => {
         const u = endpunkt + (vorlauf ? "?vorlauf=1" : "")
@@ -524,6 +567,7 @@ export default function Wettbewerb(props: any) {
     const teaserHolen = async () => {
         setLaeuft(true)
         setFehler(null)
+        setAnzeigen(null)
         try {
             const d = await abrufen({ gewerk, ort }, true)
             setTeaser(d)
@@ -603,7 +647,7 @@ export default function Wettbewerb(props: any) {
                             laeuft={laeuft} fehler={fehler} kannWeiter={kannWeiter}
                             teaser={teaser} ergebnis={ergebnis}
                             werte={{ gewerk, setGewerk, ort, setOrt, betrieb, setBetrieb, name, setName, email, setEmail, telefon, setTelefon, einwilligung, setEinwilligung, newsletter, setNewsletter }}
-                            teaserHolen={teaserHolen} absenden={absenden}
+                            teaserHolen={teaserHolen} absenden={absenden} karte={karte}
                         />
                     </div>
                 </div>
@@ -667,23 +711,23 @@ function herkunftLesen() {
 
 // --- Der Trichter --------------------------------------------------------------------
 
-function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, kannWeiter, teaser, ergebnis, werte, teaserHolen, absenden }: any) {
+function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, kannWeiter, teaser, ergebnis, werte, teaserHolen, absenden, karte }: any) {
     const w = werte
 
     if (ergebnis) return null
 
     return (
-        <div className={"fw-karte-dunkel fw-trichter" + (schritt > 0 ? " fw-laeuft" : "")} style={{ borderRadius: 20, padding: "clamp(22px, 4vw, 34px)", maxWidth: 680, background: "rgba(245,243,239,0.03)" }}>
+        <div ref={karte} className={"fw-karte-dunkel fw-trichter" + (schritt > 0 ? " fw-laeuft" : "")} style={{ borderRadius: 20, padding: "clamp(22px, 4vw, 34px)", maxWidth: 680, background: "rgba(245,243,239,0.03)" }}>
             {schritt > 0 && schritt < 5 ? <div style={{ marginBottom: 26 }}><Fortschritt schritt={schritt} /></div> : null}
 
             {schritt === 0 ? (
                 <>
                     <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: "-0.035em", color: PAPIER, lineHeight: 1.3 }}>
-                        Wir haben die Betriebe in Ihrem Ort schon gezählt.
+                        Wir zählen die Betriebe in Ihrem Ort durch. Live.
                     </div>
                     <p style={{ margin: "14px 0 26px", fontSize: 15, lineHeight: 1.6, letterSpacing: "-0.025em", color: P70 }}>
-                        Zwei Angaben, dann sehen Sie die Zahlen Ihres Ortes. Erst danach fragen wir,
-                        welcher der Betriebe Sie sind.
+                        Zwei Angaben, dann sehen Sie die Zahlen Ihres Ortes — Bewertungen, Fotos,
+                        Internetauftritt. Erst danach fragen wir, welcher der Betriebe Sie sind.
                     </p>
                     <Pille auf="dunkel" onClick={() => setSchritt(1)}>Meinen Platz finden</Pille>
                 </>
@@ -720,12 +764,7 @@ function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, kannWeiter, tease
                         vorschlaege={ORTE} weiter={teaserHolen} />
                     <Fussleiste zurueck={() => setSchritt(1)} weiter={teaserHolen} aus={!kannWeiter || laeuft}
                         wort={laeuft ? "Wird gezählt …" : "Zahlen ansehen"} />
-                    {laeuft ? (
-                        <p style={{ margin: "16px 0 0", fontSize: 13, lineHeight: 1.55, color: P45 }}>
-                            Wir rufen gerade die Google-Profile aller Betriebe in {w.ort || "Ihrem Ort"} ab
-                            und prüfen für jeden, ob er bei Meta wirbt. Das dauert einen Moment.
-                        </p>
-                    ) : null}
+                    {laeuft ? <Messanzeige ort={w.ort} /> : null}
                 </>
             ) : null}
 
@@ -738,12 +777,23 @@ function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, kannWeiter, tease
                         </div>
                         <p style={{ margin: "10px 0 0", fontSize: 15, lineHeight: 1.6, letterSpacing: "-0.025em", color: P70 }}>
                             Der mit den meisten hat {teaser.hoechste}, der mit den wenigsten {teaser.niedrigste}.
-                            {teaser.ohneWebsite > 0 ? ` ${teaser.ohneWebsite} haben keinen Internetauftritt im Profil.` : ""}
-                            {teaser.anzeigenGemessen
-                                ? teaser.werbendeUmKunden === 0
-                                    ? " Um Kunden wirbt hier keiner."
-                                    : ` ${teaser.werbendeUmKunden} werben um Kunden.`
+                            {teaser.ohneWebsite > 0
+                                ? teaser.ohneWebsite === 1
+                                    ? " Einer hat keinen Internetauftritt im Profil."
+                                    : ` ${ZAHLWORT[teaser.ohneWebsite] || teaser.ohneWebsite} haben keinen Internetauftritt im Profil.`
                                 : ""}
+                            {(() => {
+                                // Entweder lag die Anzeigenlage schon im Speicher, oder sie
+                                // kam gerade nach. Vorher steht hier nichts — eine Zeile, die
+                                // sich spaeter aendert, ist schlimmer als eine, die erscheint.
+                                const q = teaser.anzeigenGemessen ? teaser : anzeigen?.anzeigenGemessen ? anzeigen : null
+                                if (!q) return ""
+                                return q.werbendeUmKunden === 0
+                                    ? " Um Kunden wirbt hier keiner."
+                                    : q.werbendeUmKunden === 1
+                                        ? " Genau einer wirbt um Kunden."
+                                        : ` ${ZAHLWORT[q.werbendeUmKunden] || q.werbendeUmKunden} werben um Kunden.`
+                            })()}
                         </p>
                     </div>
 
@@ -795,6 +845,43 @@ function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, kannWeiter, tease
                     {fehler}
                 </div>
             ) : null}
+        </div>
+    )
+}
+
+const MESSSTUFEN = [
+    { ab: 0, text: "Verbindung zu Google wird aufgebaut" },
+    { ab: 6, text: "Betriebe in Ihrem Ort werden gesucht" },
+    { ab: 14, text: "Profile werden einzeln gelesen" },
+    { ab: 24, text: "Bewertungen und Fotos werden gezählt" },
+    { ab: 34, text: "Gleich fertig" },
+]
+
+function Messanzeige({ ort }: { ort: string }) {
+    const [sekunden, setSekunden] = useState(0)
+    useEffect(() => {
+        const uhr = window.setInterval(() => setSekunden((s) => s + 1), 1000)
+        return () => window.clearInterval(uhr)
+    }, [])
+    const stufe = [...MESSSTUFEN].reverse().find((s) => sekunden >= s.ab) || MESSSTUFEN[0]
+    // Der Balken laeuft auf 95 % zu und bleibt dort stehen, bis die Antwort da ist.
+    // Ein Balken, der 100 % erreicht und dann weiterwartet, ist schlimmer als keiner.
+    const anteil = Math.min(95, Math.round((1 - Math.exp(-sekunden / 14)) * 100))
+    return (
+        <div style={{ marginTop: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, gap: 12 }}>
+                <span style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.02em", color: PAPIER }}>
+                    {stufe.text} …
+                </span>
+                <span style={{ fontSize: 13, color: P45, fontVariantNumeric: "tabular-nums", flex: "0 0 auto" }}>
+                    {sekunden} s
+                </span>
+            </div>
+            <Notenstrich note={anteil} hoehe={3} farbe={PAPIER} grund={LINIE_D} />
+            <p style={{ margin: "14px 0 0", fontSize: 13, lineHeight: 1.55, color: P45 }}>
+                Wir lesen jedes Google-Profil in {ort || "Ihrem Ort"} einzeln — das dauert etwa eine
+                halbe Minute. Die Werbung prüfen wir danach, dafür müssen Sie nicht warten.
+            </p>
         </div>
     )
 }

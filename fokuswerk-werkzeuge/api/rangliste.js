@@ -18,7 +18,7 @@
 // Messung sofort und kostenlos — das Werkzeug wird mit jedem Abruf schneller und
 // billiger statt teurer.
 
-import { sammle } from "../lib/rangliste-messen.js";
+import { sammle, anzeigenErgaenzen } from "../lib/rangliste-messen.js";
 import { bewerte, plural } from "../lib/rangliste-urteil.js";
 import { verarbeiteRanglisteLead } from "../lib/rangliste-lead.js";
 
@@ -75,6 +75,16 @@ const text = (w, max) => {
 const MAILMUSTER = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 const hatKontakt = (k) => MAILMUSTER.test(String(k?.email || "").trim());
 
+// Was die Seite nach dem Nachholen braucht, um die Anzeigenzeile im Teaser zu ergaenzen.
+function anzeigenZahlen(messung) {
+  const werbende = messung.betriebe.filter((b) => b.anzeigen.length > 0);
+  return {
+    anzeigenGemessen: messung.anzeigenVerfuegbar === true,
+    werbendeUmKunden: werbende.filter((b) => b.anzeigen.some((a) => !a.personal)).length,
+    werbendeGesamt: werbende.length,
+  };
+}
+
 const trockenlauf = (req) => req.query?.trocken === "1" && req.query?.diagnose === DIAGNOSE;
 
 export default async function handler(req, res) {
@@ -111,13 +121,48 @@ export default async function handler(req, res) {
   // einem Aufruf an der Oberfläche vorbei.
   const istVorlauf = req.query?.vorlauf === "1" || !hatKontakt(koerper?.kontakt);
 
+  // ── Die Anzeigenlage nachholen (?anzeigen=1) ─────────────────────────────
+  // Ein eigener Aufruf, den die Seite abschickt, sobald der Besucher den Teaser sieht.
+  // Er laeuft, waehrend derjenige seinen Betrieb aus der Liste sucht — und ist fertig,
+  // bevor er die Kontaktdaten eingetragen hat. Nichts davon haelt ihn auf.
+  if (req.query?.anzeigen === "1") {
+    const vorhanden = ausSpeicher(schluessel);
+    if (!vorhanden) return res.status(200).json({ bereit: false, grund: "keine_messung" });
+    if (vorhanden.anzeigenVerfuegbar !== null) {
+      return res.status(200).json({ bereit: true, schon_da: true, ...anzeigenZahlen(vorhanden) });
+    }
+    try {
+      const ergaenzt = { ...vorhanden, ...(await anzeigenErgaenzen(vorhanden)) };
+      inSpeicher(schluessel, ergaenzt);
+      return res.status(200).json({ bereit: true, ...anzeigenZahlen(ergaenzt) });
+    } catch (fehler) {
+      console.error("Anzeigen nachholen gescheitert:", fehler?.message);
+      inSpeicher(schluessel, { ...vorhanden, anzeigenVerfuegbar: false });
+      return res.status(200).json({ bereit: false, grund: "nicht_messbar" });
+    }
+  }
+
   let messung = ausSpeicher(schluessel);
   if (messung) {
     res.setHeader("X-Fokuswerk-Speicher", "treffer");
   } else {
-    messung = await sammle({ gewerk, ort });
+    // Der Vorlauf holt nur die Profile. Die Anzeigenpruefung dauert noch einmal so lange
+    // und wird nachgereicht — sonst wartet der Besucher knapp eine Minute auf den Teaser.
+    messung = await sammle({ gewerk, ort, ohneAnzeigen: istVorlauf });
     if (messung.fehler) return res.status(422).json({ fehler: messung.fehler });
     inSpeicher(schluessel, messung);
+  }
+
+  // Beim vollen Aufruf duerfen die Anzeigen nicht fehlen: Dann hat der Nachhol-Aufruf
+  // eine andere Instanz getroffen oder der Besucher war schneller als die Messung.
+  if (!istVorlauf && messung.anzeigenVerfuegbar === null) {
+    try {
+      messung = { ...messung, ...(await anzeigenErgaenzen(messung)) };
+      inSpeicher(schluessel, messung);
+    } catch (fehler) {
+      console.error("Anzeigen beim vollen Aufruf gescheitert:", fehler?.message);
+      messung = { ...messung, anzeigenVerfuegbar: false };
+    }
   }
 
   // ---------------------------------------------------------------------
