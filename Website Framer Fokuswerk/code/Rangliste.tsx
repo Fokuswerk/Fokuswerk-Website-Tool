@@ -117,11 +117,14 @@ const STIL = `
 
 /* Die Rangtabelle. Auf dem Handy fallen Schnitt und Fotos weg — sie tragen den Befund
    nicht, und sechs Spalten auf 375 px sind unlesbar. */
+/* Die letzte Spalte traegt seit dem 30.10.2026 den Kanal („Meta + Google") statt eines
+   blossen „ja" und braucht dafuer Platz — auf dem Handy mehr, weil dort Schnitt, Fotos
+   und Website ohnehin wegfallen. */
 .fw-rl-zeile { display: grid; align-items: center; gap: 10px;
-  grid-template-columns: 26px 1fr 58px 64px; }
+  grid-template-columns: 26px 1fr 52px 92px; }
 .fw-rl-nurbreit { display: none; }
 @media (min-width: 810px) {
-  .fw-rl-zeile { grid-template-columns: 30px 1fr 64px 54px 50px 70px 74px; gap: 12px; }
+  .fw-rl-zeile { grid-template-columns: 30px 1fr 64px 54px 50px 66px 104px; gap: 12px; }
   .fw-rl-nurbreit { display: block; }
 }
 
@@ -489,6 +492,10 @@ function Kopfzelle({ children, rechts, nurBreit }: any) {
 }
 
 function Rangzeile({ b, eigen }: any) {
+    const kanal = [
+        b.anzeigen?.length ? (b.anzeigen.every((a: any) => a.personal) ? "Stellen" : "Meta") : null,
+        b.googleAnzeigen?.length ? "Google" : null,
+    ].filter(Boolean).join(" + ")
     const stift = eigen ? 600 : 500
     const tinte = eigen ? TINTE : "rgba(14,15,18,0.78)"
     return (
@@ -507,8 +514,12 @@ function Rangzeile({ b, eigen }: any) {
             </div>
             <div className="fw-rl-nurbreit" style={{ fontSize: 14, color: b.fotos === 0 ? MANGEL : T60, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{b.fotos}</div>
             <div className="fw-rl-nurbreit" style={{ fontSize: 13, color: b.website ? GUT : MANGEL, textAlign: "right" }}>{b.website ? "ja" : "fehlt"}</div>
-            <div style={{ fontSize: 13, color: b.anzeigen?.length ? GUT : T40, textAlign: "right" }}>
-                {b.anzeigen?.length ? (b.anzeigen.every((a: any) => a.personal) ? "Stellen" : "ja") : "keine"}
+            {/* Welcher Kanal, nicht nur ob — wie im PDF. „keine" steht nur, wenn beide
+                Quellen auch geantwortet haben: Ein Betrieb, der seine eigene Anzeige
+                gerade bezahlt und hier „keine" liest, glaubt auch den Spalten daneben
+                nicht mehr (gemeldet am 30.10.2026 aus der eigenen Zeile). */}
+            <div style={{ fontSize: 13, color: kanal ? GUT : T40, textAlign: "right", whiteSpace: "nowrap" }}>
+                {kanal || (b.googleUngemessen ? "—" : "keine")}
             </div>
         </div>
     )
@@ -1381,8 +1392,12 @@ function Ergebnisblatt({ e }: any) {
                 <p style={{ margin: "26px 0 0", fontSize: 13, lineHeight: 1.6, color: T40, maxWidth: "80ch" }}>
                     Bewertungen und Schnitt sind die von Google ausgewiesenen Werte, Fotos die Zahl der
                     im Profil hinterlegten Bilder. „Website: fehlt" heißt, dass im Google-Profil kein
-                    Internetauftritt eingetragen ist — nicht, dass es keinen gibt. Die Anzeigenspalte ist
-                    über die Meta-Werbebibliothek geprüft, aktive und vergangene Anzeigen.
+                    Internetauftritt eingetragen ist — nicht, dass es keinen gibt. Die Anzeigenspalte
+                    nennt den Kanal: „Meta" aus Metas Werbebibliothek (aktive und vergangene Anzeigen),
+                    „Google" aus Googles Ads Transparency Center (geprüft wird die im Profil hinterlegte
+                    Domain), „Stellen", wenn dort nur Personalanzeigen laufen. Ein Strich heißt, dass
+                    eine der beiden Quellen zu diesem Betrieb nicht geantwortet hat — das ist etwas
+                    anderes als „keine".
                 </p>
             </Abschnitt>
 
