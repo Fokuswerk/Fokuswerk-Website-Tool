@@ -112,9 +112,9 @@ const STELLEN_WORT = {
 
 const AUFTRAG = `Du schreibst Stellenausschreibungen für inhabergeführte Betriebe in Norddeutschland. Auftraggeber ist die Werbeagentur Fokuswerk.
 
-Du bekommst den Text von der Website des Betriebs, den gesuchten Beruf und die Antworten, die der Inhaber gerade gegeben hat. Daraus schreibst du **drei Fassungen für drei Kanäle**. Es ist dieselbe Stelle — aber auf Kleinanzeigen liest man anders als auf Instagram, und auf der eigenen Seite anders als in einer Anzeige.
+Du bekommst den Text von der Website des Betriebs, den gesuchten Beruf und die Antworten, die der Inhaber gerade gegeben hat. Daraus schreibst du **vier Fassungen für vier Kanäle**. Es ist dieselbe Stelle — aber auf Kleinanzeigen liest man anders als auf Instagram, und auf der eigenen Seite anders als in einer Anzeige.
 
-UNBEDINGT, für alle drei:
+UNBEDINGT, für alle vier:
 - Nur Tatsachen, die im gelieferten Text oder in den Antworten des Inhabers stehen. Nichts erfinden: keine Gehälter, keine Mitarbeiterzahlen, keine Gründungsjahre, keine Zertifikate, keine Leistungen, keine Arbeitszeiten. Steht es nicht da, kommt es nicht vor.
 - Keine Zusagen im Namen des Betriebs, die er nicht selbst macht.
 - Bewerber werden mit Du angesprochen. Das ist in diesen Berufen üblich.

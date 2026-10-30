@@ -128,6 +128,23 @@ die `vercel.app`-Adresse.
 
 `.vercelignore` hält `.env`, den Ordner `test` und die Textdateien aus dem Paket heraus.
 
+## 30.10.2026 — drei Kanäle, vier Kanäle: die Zählung lief auseinander
+
+Die Seite warb mit „vier Kanäle — zwei davon kosten nichts", die Kacheln darunter zeigten
+dreimal „kostenlos". Richtig sind drei kostenlose (Kleinanzeigen, Jobbörse, eigene Seite),
+bezahlt ist nur Meta. Die Zeile heißt jetzt „nur einer davon kostet Geld" — dieselbe
+Tatsache, stärker formuliert.
+
+**Die ernstere Hälfte stand im Systemprompt.** `lib/modell.js` verlangt im JSON-Schema vier
+Blöcke (`kleinanzeigen`, `meta`, `karriereseite`, `jobboerse`), aber der Auftragstext darüber
+sagte seit der Ergänzung von Kanal 4 unverändert „drei Fassungen für drei Kanäle" und
+„UNBEDINGT, für alle drei". Ein Modell, das dem Kopf folgt statt dem Schema, hätte die
+Jobbörse stillschweigend weggelassen — und die wäre im PDF als leerer Abschnitt gelandet.
+Auch der Mailbetreff in `lib/lead.js` versprach noch drei Kanäle.
+
+**Regel:** Wer einen Kanal ergänzt, sucht hinterher nach der Zahl — im Auftragstext, im
+Betreff, in der Landingpage. Das Schema allein hält die Zählung nicht zusammen.
+
 ## 30.10.2026 — die Meta-Suche fragte nach einer Phrase, die es nicht gibt
 
 Zweiter Befund aus derselben Runde, gemeldet an SEOschmiede: „hat schon viel geworben,

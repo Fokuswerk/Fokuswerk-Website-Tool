@@ -2332,7 +2332,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     >
                         {fertig
                             ? "Die Texte für vier Kanäle, die vier Bewerberfragen — und darunter die Anleitung: welche Einstellungen, welches Budget, welches Video, und was Sie antworten, wenn sich jemand meldet."
-                            : "Wir lesen Ihre Website und schreiben daraus die Ausschreibung für vier Kanäle — zwei davon kosten nichts. Dazu die Anleitung, wie Sie sie schalten: Einstellungen, Budget, ein Video-Drehbuch für zwanzig Minuten mit dem Handy und die ersten Antworten an Bewerber."}
+                            : "Wir lesen Ihre Website und schreiben daraus die Ausschreibung für vier Kanäle — nur einer davon kostet Geld. Dazu die Anleitung, wie Sie sie schalten: Einstellungen, Budget, ein Video-Drehbuch für zwanzig Minuten mit dem Handy und die ersten Antworten an Bewerber."}
                     </p>
 
                     <div

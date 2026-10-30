@@ -160,7 +160,7 @@ export async function schickeAnBetrieb(daten, ergebnis, pdf = null) {
     betreff:
       "Ihre Stellenausschreibung für " +
       (daten.beruf || "die offene Stelle") +
-      " — drei Kanäle und die Anleitung",
+      " — vier Kanäle und die Anleitung",
     html,
     text,
     antwortAn: AN_UNS,
