@@ -34,6 +34,14 @@ const ALLERWELT = new Set([
   "meister", "technik", "center", "zentrum", "team", "group", "deutschland", "online",
   "shop", "handel", "partner", "profi", "pro", "express", "bau", "gmbhcokg", "ek",
   "ihr", "ihre", "alle", "beste", "neu", "neue",
+  // Nachtrag 30.10.2026, aus dem Lauf über die Oldenburger Agenturen: Diese Wörter
+  // standen in fast jedem zweiten Namen und wurden dadurch zum Suchbegriff — „marketing"
+  // für „Henry Dallek", „werbeagentur" für „MarketingDogs", „handwerksbetriebe" für
+  // „Flatland". Gesucht wird nach dem, was einen Betrieb unterscheidet.
+  "marketing", "werbeagentur", "werbung", "agentur", "agenturen", "media", "medien",
+  "social", "digital", "digitale", "werbe", "kommunikation", "design", "studio",
+  "consulting", "beratung", "solutions", "systems", "personal", "aufträge", "auftraege",
+  "handwerk", "handwerksbetriebe", "betriebe", "betrieb", "kunden", "mitarbeiter",
   // Gattungswörter aus den Gewerken. Ohne sie wird aus „B&K KFZ und Lackier Service" das
   // Kennwort „lackier", und jede Lackiererei Deutschlands gilt als derselbe Betrieb —
   // am 28.10.2026 live passiert, gleich dreimal in einem Ort.
@@ -121,7 +129,7 @@ export function kennwoerter(name, ort = "") {
  * Im Zweifel „unsicher". Ein verpasster Werbetreibender kostet eine Beobachtung, ein
  * erfundener kostet den Termin.
  */
-export function zuordnen(betriebsname, pageName, ort = "", gewerk = "") {
+export function zuordnen(betriebsname, pageName, ort = "", gewerk = "", { eigen = false } = {}) {
   const fremd = normal(pageName);
   if (!fremd) return "nein";
 
@@ -192,7 +200,26 @@ export function zuordnen(betriebsname, pageName, ort = "", gewerk = "") {
   // „Euromaster": Die Anzeige lief bundesweit, nicht für diesen Standort.
   const ortImEigenen = normal(ort) && normal(betriebsname).includes(normal(ort));
   const ortImFremden = normal(ort) && fremd.includes(normal(ort));
-  if (ortImEigenen && !ortImFremden) return "unsicher";
+  // ▲ Nicht beim eigenen Betrieb.
+  //
+  // „SEOschmiede | SEO Agentur Oldenburg" wirbt als Seite „SEO-Schmiede" — der Ort steht
+  // im Google-Profilnamen, weil das bei Google hilft, nicht weil es eine Filiale wäre.
+  // Die Kettenregel warf den Treffer deshalb heraus, und im Bericht stand, der Betrieb
+  // habe nie geworben. Bei dem Betrieb, der sich selbst gesucht hat, wissen wir, wer er
+  // ist; über fremde Betriebe bleibt die Regel scharf, denn dort kostet eine falsche
+  // Behauptung mehr als eine verpasste.
+  // Und nur beim Filialmuster: Marke, dann Ort — „EUROMASTER Westerstede PKW & LKW".
+  //
+  // Steht der Ort weiter hinten oder hinter einem Gattungswort, ist er kein Filialzusatz,
+  // sondern Suchmaschinenpflege: „SEOschmiede | SEO Agentur Oldenburg", „PrimeSocial |
+  // Social Media Agentur in Oldenburg", „Werbeagentur Oldenburg I MarketingDogs". Die
+  // alte Fassung warf alle drei heraus, und im Bericht stand, sie hätten nie geworben —
+  // bei SEOschmiede liegen zehn Anzeigen in der Bibliothek (30.10.2026).
+  const worte = normal(betriebsname).split(" ").filter(Boolean);
+  const ortWorte = new Set(normal(ort).split(" ").filter(Boolean));
+  const ortPos = worte.findIndex((w) => ortWorte.has(w));
+  const filialmuster = ortPos === 1 && worte[0].length >= 4 && !ALLERWELT.has(worte[0]);
+  if (filialmuster && !ortImFremden && !eigen) return "unsicher";
 
   // Hängt alles an einem einzigen Wort, muss dieses Wort lang genug sein, um ein
   // Eigenname zu sein. „Autohaus Spiegel" behält nur „spiegel" — und traf damit DER
@@ -346,11 +373,22 @@ export async function betriebSuchen({ betrieb, ort, token = process.env.APIFY_TO
  * Alle Suchen laufen in EINEM Actor-Aufruf. Einzeln wären es so viele Starts wie
  * Betriebe, und jeder Start kostet Zeit und Geld.
  */
-export async function anzeigenHolen(betriebe, { token, ort = "", gewerk = "", jeBetrieb = 6 } = {}) {
+export async function anzeigenHolen(betriebe, { token, ort = "", gewerk = "", jeBetrieb = 6, eigenerName = "" } = {}) {
   const suchen = betriebe.map((b) => {
-    // Gesucht wird mit den Kennwoertern OHNE Ortsnamen: „Auto Westerstede" findet jeden
-    // Werbetreibenden des Ortes, der Betriebsname ohne Ort findet den Betrieb.
-    const begriff = kennwoerter(b.name, ort).slice(0, 2).join(" ");
+    // Gesucht wird mit EINEM Kennwort ohne Ortsnamen, dem längsten.
+    //
+    // ▲ Vorher waren es die ersten zwei, verbunden zu einer exakten Phrase. Die steht in
+    // keiner Anzeige: „SEOschmiede | SEO Agentur Oldenburg" wurde zu „seoschmiede
+    // agentur", „Werbeagentur Oldenburg I MarketingDogs" zu „werbeagentur
+    // marketingdogs". Beide Suchen gingen ins Leere, und im Bericht stand, der Betrieb
+    // habe nie geworben — bei einem, der nachweislich viel geworben hat, nur gerade
+    // nicht. Gemeldet am 30.10.2026. Das längste Kennwort ist das unterscheidende
+    // („seoschmiede", „marketingdogs"), und was es an Fremdtreffern mitbringt, wirft
+    // `zuordnen` danach ohnehin heraus.
+    // Das erste Kennwort, nicht das längste: Der Name steht am Anfang, der Zusatz
+    // dahinter („SEOschmiede | SEO Agentur Oldenburg", „Flatland: Personal und Aufträge").
+    const kw = kennwoerter(b.name, ort);
+    const begriff = kw[0] || "";
     return {
       betrieb: b.name,
       begriff,
@@ -359,14 +397,19 @@ export async function anzeigenHolen(betriebe, { token, ort = "", gewerk = "", je
           `&q=${encodeURIComponent('"' + begriff + '"')}&search_type=keyword_exact_phrase`
         : null,
     };
-  }).filter((s) => s.url);
+  });
+  // Wer keinen unterscheidenden Namensteil hat („WW Solutions"), kann über die Suche
+  // nicht geprüft werden. Das ist keine Aussage über seine Werbung — und darf im Bericht
+  // auch nicht wie eine aussehen.
+  const ohneBegriff = new Set(suchen.filter((x) => !x.url).map((x) => x.betrieb));
+  const suchbar = suchen.filter((x) => x.url);
 
   let roh = [];
   try {
     roh = await apify(
       ADLIB,
       {
-        urls: suchen.map((s) => ({ url: s.url })),
+        urls: suchbar.map((s) => ({ url: s.url })),
         limitPerSource: jeBetrieb,
         scrapeAdDetails: false,
       },
@@ -376,7 +419,12 @@ export async function anzeigenHolen(betriebe, { token, ort = "", gewerk = "", je
     // Die Werbebibliothek ist der fragilere der beiden Abrufe. Fällt sie aus, bleibt die
     // Rangliste trotzdem stehen — sie ist das Herz, die Anzeigenlage die Zugabe.
     console.error("Anzeigenlage gescheitert:", fehler?.message);
-    return { verfuegbar: false, je: new Map(), unsicher: [] };
+    return {
+      verfuegbar: false,
+      je: new Map(),
+      unsicher: [],
+      nichtGemessen: new Set(betriebe.map((b) => b.name)),
+    };
   }
 
   const je = new Map(betriebe.map((b) => [b.name, []]));
@@ -384,10 +432,10 @@ export async function anzeigenHolen(betriebe, { token, ort = "", gewerk = "", je
 
   for (const a of Array.isArray(roh) ? roh : []) {
     if (!a?.page_name) continue; // Leerzeile einer Suche ohne Treffer.
-    const quelle = suchen.find((s) => s.url === a.url);
+    const quelle = suchbar.find((s) => s.url === a.url);
     if (!quelle) continue;
 
-    const urteil = zuordnen(quelle.betrieb, a.page_name, ort, gewerk);
+    const urteil = zuordnen(quelle.betrieb, a.page_name, ort, gewerk, { eigen: !!eigenerName && quelle.betrieb === eigenerName });
     if (urteil === "nein") continue;
     if (urteil === "unsicher") {
       unsicher.push({ betrieb: quelle.betrieb, werbetreibender: a.page_name });
@@ -410,7 +458,7 @@ export async function anzeigenHolen(betriebe, { token, ort = "", gewerk = "", je
     });
   }
 
-  return { verfuegbar: true, je, unsicher };
+  return { verfuegbar: true, je, unsicher, nichtGemessen: ohneBegriff };
 }
 
 /**
@@ -467,16 +515,16 @@ export async function sammle({ gewerk, ort, hoechstens = 24, ohneAnzeigen = fals
  * noch läuft. Gibt nur die Felder zurück, die sich ändern — der Aufrufer legt sie über
  * seine vorhandene Messung.
  */
-export async function anzeigenErgaenzen(messung, token = process.env.APIFY_TOKEN, { eigeneDomain = null } = {}) {
+export async function anzeigenErgaenzen(messung, token = process.env.APIFY_TOKEN, { eigeneDomain = null, eigenerName = "" } = {}) {
   // Nacheinander, nicht nebeneinander.
   //
   // Parallel lief es schneller, aber die beiden Apify-Actors teilen sich dasselbe Konto
   // und dessen Arbeitsspeicher. Der zweite Lauf bekam regelmäßig ein 502 — und ein
   // Fehlschlag sieht in der Tabelle aus wie „wirbt nicht". Lieber eine Minute mehr in
   // einem Aufruf, der ohnehin im Hintergrund läuft, während der Besucher den Teaser liest.
-  const meta = await anzeigenHolen(messung.betriebe, { token, ort: messung.ort, gewerk: messung.gewerk });
+  const meta = await anzeigenHolen(messung.betriebe, { token, ort: messung.ort, gewerk: messung.gewerk, eigenerName });
   const google = await googleAnzeigenHolen(messung.betriebe, {
-    token, ort: messung.ort, gewerk: messung.gewerk, zuerst: eigeneDomain,
+    token, ort: messung.ort, gewerk: messung.gewerk, zuerst: eigeneDomain, eigenerName,
   });
   return {
     anzeigenVerfuegbar: meta.verfuegbar,
@@ -487,6 +535,7 @@ export async function anzeigenErgaenzen(messung, token = process.env.APIFY_TOKEN
     betriebe: messung.betriebe.map((b) => ({
       ...b,
       anzeigen: meta.je.get(b.name) || [],
+      metaUngemessen: (meta.nichtGemessen || new Set()).has(b.name),
       googleAnzeigen: google.je.get(b.name) || [],
       // Bei dieser Domain hat die Quelle nicht geantwortet — das ist etwas anderes als
       // „wirbt nicht", und die Tabelle muss es unterscheiden können.
@@ -535,7 +584,7 @@ function reineDomain(url) {
 // Anzeige des Betriebs, der sich die Auswertung angesehen hat.
 const GOOGLE_GRUPPE = 5;
 
-export async function googleAnzeigenHolen(betriebe, { token, ort = "", gewerk = "", zuerst = null } = {}) {
+export async function googleAnzeigenHolen(betriebe, { token, ort = "", gewerk = "", zuerst = null, eigenerName = "" } = {}) {
   const mitDomain = betriebe.filter((b) => b.domain);
   if (!mitDomain.length) return { verfuegbar: true, je: new Map(), unsicher: [], nichtGemessen: new Set(), spur: { domains: 0 } };
 
@@ -630,7 +679,7 @@ export async function googleAnzeigenHolen(betriebe, { token, ort = "", gewerk = 
     let urteil = "nein";
     let werber = namen[0] || "";
     for (const kandidat of namen) {
-      const u = zuordnen(betrieb.name, kandidat, ort, gewerk);
+      const u = zuordnen(betrieb.name, kandidat, ort, gewerk, { eigen: !!eigenerName && betrieb.name === eigenerName });
       if (u === "sicher") { urteil = "sicher"; werber = kandidat; break; }
       if (u === "unsicher" && urteil === "nein") { urteil = "unsicher"; werber = kandidat; }
     }

@@ -165,7 +165,7 @@ function tabellenzeile(d, b, eigen) {
   // „keine" nur, wenn beide Quellen auch wirklich geantwortet haben. Fiel eine aus, steht
   // hier ein Strich: Ein Betrieb, der seine eigene Anzeige gerade bezahlt und in seiner
   // Zeile „keine" liest, glaubt auch den Spalten daneben nicht mehr (30.10.2026).
-  const gemessen = b.gemessen !== false && !b.googleUngemessen;
+  const gemessen = b.gemessen !== false && !b.googleUngemessen && !b.metaUngemessen;
   d.font(SCHRIFT.normal).fontSize(8.5).fillColor(kanal ? GUT : STILL)
     .text(kanal || (gemessen ? "keine" : "—"), RAND + 418, y + 0.5, {
       width: 69, align: "right", lineBreak: false,

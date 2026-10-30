@@ -138,6 +138,8 @@ export function bewerte(messung, { eigenerName } = {}) {
   // juengste in Westerstede endete am 17.02.2026. Die Seite sagte trotzdem „Genau einer
   // wirbt um Kunden". Ein Westersteder, der den Betrieb kennt, widerlegt das in zehn
   // Sekunden — und damit auch alle anderen Zahlen.
+  // Betriebe ohne unterscheidenden Namensteil sind nicht geprüft, nicht „ohne Werbung".
+  const metaPruefbar = liste.filter((b) => !b.metaUngemessen).length;
   const werbende = liste.filter((b) => b.anzeigen.length > 0);
   const umKunden = werbende.filter((b) => b.anzeigen.some((a) => !a.personal));
   const umKundenAktiv = werbende.filter((b) => b.anzeigen.some((a) => !a.personal && a.aktiv));
@@ -160,6 +162,7 @@ export function bewerte(messung, { eigenerName } = {}) {
   const markt = {
     anzahl: n,
     googlePruefbar,
+    metaPruefbar,
     googleGemessen: messung.googleVerfuegbar === true,
     beiGoogle: beiGoogle.length,
     bewertungenGesamt: summe,

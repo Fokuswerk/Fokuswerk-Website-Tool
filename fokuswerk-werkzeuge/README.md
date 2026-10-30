@@ -128,6 +128,37 @@ die `vercel.app`-Adresse.
 
 `.vercelignore` hält `.env`, den Ordner `test` und die Textdateien aus dem Paket heraus.
 
+## 30.10.2026 — die Meta-Suche fragte nach einer Phrase, die es nicht gibt
+
+Zweiter Befund aus derselben Runde, gemeldet an SEOschmiede: „hat schon viel geworben,
+nur nicht gerade jetzt" — im Bericht stand, der Betrieb habe nie geworben. In der
+Werbebibliothek liegen 21 Anzeigen.
+
+**Der Suchbegriff.** Gesucht wurde mit den ersten zwei Kennwörtern, verbunden zu einer
+exakten Phrase: aus „SEOschmiede | SEO Agentur Oldenburg" wurde `"seoschmiede agentur"`,
+aus „Werbeagentur Oldenburg I MarketingDogs" wurde `"werbeagentur marketingdogs"`. Solche
+Phrasen stehen in keiner Anzeige. Jetzt ist es **ein** Kennwort, das erste — der Name
+steht am Anfang, der Zusatz dahinter. Dazu stehen „marketing", „agentur", „werbeagentur",
+„social", „media", „personal" und ein Dutzend weitere jetzt in `ALLERWELT`: Sie standen in
+fast jedem zweiten Namen und wurden dadurch zum Suchbegriff.
+
+**Die Kettenregel.** `zuordnen()` verwarf jeden Treffer, bei dem der eigene Name den Ort
+trug und der Name des Werbetreibenden nicht — gedacht gegen „EUROMASTER Westerstede" vs.
+die bundesweite Anzeige von „Euromaster". Bei Dienstleistern ist der Ort im Profilnamen
+aber die Regel, nicht die Ausnahme. Jetzt greift die Regel nur beim Filialmuster: Marke,
+dann Ort, und das erste Wort ist kein Gattungswort. „EUROMASTER Westerstede PKW & LKW"
+bleibt unsicher, „SEOschmiede | SEO Agentur Oldenburg" und „PrimeSocial | Social Media
+Agentur in Oldenburg" sind sicher. Beim Betrieb, der sich selbst gesucht hat, entfällt die
+Regel ganz — über ihn wissen wir, wer er ist.
+
+**Und wer gar nicht geprüft werden kann**, weil sein Name nur aus Gattungswörtern besteht
+(„WW Solutions"), trägt jetzt `metaUngemessen`. In der Tabelle steht dafür ein Strich, und
+`metaPruefbar` zählt ihn nicht mit. Dieselbe Regel wie bei Google: Ein Fehlschlag ist kein
+Messergebnis.
+
+Gegengeprüft, Oldenburg: vorher 1 Betrieb mit Anzeigenhistorie, jetzt 2 — darunter
+SEOschmiede mit 21 Anzeigen, zuletzt 02.04.2026, keine davon aktiv.
+
 ## 30.10.2026 — „keine Werbung" bei einem Betrieb, der gerade Google Ads bezahlt
 
 Gemeldet aus der eigenen Rangliste: In der Zeile von Fokuswerk stand „keine", während die

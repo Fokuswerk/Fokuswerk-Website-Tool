@@ -234,7 +234,10 @@ export default async function handler(req, res) {
       const eigene = wessen
         ? (vorhanden.betriebe || []).find((b) => nameGleich(b.name, wessen))?.domain || null
         : null;
-      const ergaenzt = { ...vorhanden, ...(await anzeigenErgaenzen(vorhanden, undefined, { eigeneDomain: eigene })) };
+      const eigenerName = wessen
+        ? (vorhanden.betriebe || []).find((b) => nameGleich(b.name, wessen))?.name || ""
+        : "";
+      const ergaenzt = { ...vorhanden, ...(await anzeigenErgaenzen(vorhanden, undefined, { eigeneDomain: eigene, eigenerName })) };
       inSpeicher(schluessel, ergaenzt);
       return res.status(200).json({ bereit: true, ...anzeigenZahlen(ergaenzt) });
     } catch (fehler) {
@@ -282,7 +285,8 @@ export default async function handler(req, res) {
     try {
       // Die eigene Domain zuerst messen: Seine Zeile liest der Betrieb als erste.
       const eigeneDomain = (messung.betriebe || []).find((b) => nameGleich(b.name, gesuchterName))?.domain || null;
-      messung = { ...messung, ...(await anzeigenErgaenzen(messung, undefined, { eigeneDomain })) };
+      const eigenerName = (messung.betriebe || []).find((b) => nameGleich(b.name, gesuchterName))?.name || "";
+      messung = { ...messung, ...(await anzeigenErgaenzen(messung, undefined, { eigeneDomain, eigenerName })) };
       inSpeicher(schluessel, messung);
     } catch (fehler) {
       console.error("Anzeigen beim vollen Aufruf gescheitert:", fehler?.message);

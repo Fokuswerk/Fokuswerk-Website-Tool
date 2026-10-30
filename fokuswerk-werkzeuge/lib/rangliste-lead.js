@@ -473,6 +473,7 @@ export function pdfDaten(e) {
       anzeigenWort: b.anzeigen.length && b.anzeigen.every((a) => a.personal) ? "Stellen" : "Meta",
       google: (b.googleAnzeigen || []).length > 0,
       googleUngemessen: !!b.googleUngemessen,
+      metaUngemessen: !!b.metaUngemessen,
       eigen: b.name === e.betrieb,
     })),
     googleGemessen: e.googleGemessen !== false && e.markt?.googleGemessen !== false,

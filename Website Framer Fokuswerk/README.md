@@ -1,5 +1,25 @@
 # Fokuswerk — neue Website (Framer-Projekt „FW neu")
 
+## 30.10.2026 — der Wettbewerbs-Trichter wartet nicht mehr stumm
+
+Nach dem Absenden stand der Knopf zweieinhalb Minuten auf „Wird gerechnet …", das
+ausgefüllte Formular daneben. „Psychologisch nicht gut, man denkt, das hängt." Stimmt —
+und die Rechenzeit ist durch die gründlichere Google-Prüfung eher länger geworden.
+
+Jetzt wechselt die Karte sofort: Überschrift „Wir zählen in <Ort> durch", die ehrliche
+Dauer (zwei bis vier Minuten, mit dem Grund: jedes Profil einzeln, danach zwei
+Werbeverzeichnisse), eine Stufenanzeige mit Sekundenzähler und ein Balken, der auf 96 %
+zuläuft und dort wartet. Darunter der Satz, der den Druck herausnimmt: Die vollständige
+Auswertung geht als PDF an die angegebene Adresse — wer bleibt, sieht sie zusätzlich hier.
+
+Das Formular verschwindet dabei. Ein stehengebliebenes Formular neben einem grauen Knopf
+sieht aus, als sei etwas kaputt. Bei einem Fehler geht es zurück auf den Kontaktschritt,
+wo die Meldung im Zusammenhang steht.
+
+Dazu nennt die Rangtabelle jetzt den Kanal statt eines blossen „ja" — „Meta", „Google",
+„Meta + Google", „Stellen" —, und ein Strich steht da, wo eine der beiden Quellen zu
+diesem Betrieb nicht geantwortet hat.
+
 ## 29.10.2026 — Stellenanzeigen-Werkzeug: vier gemeldete Fehler, und was man bekommt
 
 Gemeldet nach einem eigenen Durchlauf, alles am selben Tag behoben und live.

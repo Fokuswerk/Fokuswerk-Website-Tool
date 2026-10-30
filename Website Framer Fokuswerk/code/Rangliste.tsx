@@ -519,7 +519,7 @@ function Rangzeile({ b, eigen }: any) {
                 gerade bezahlt und hier „keine" liest, glaubt auch den Spalten daneben
                 nicht mehr (gemeldet am 30.10.2026 aus der eigenen Zeile). */}
             <div style={{ fontSize: 13, color: kanal ? GUT : T40, textAlign: "right", whiteSpace: "nowrap" }}>
-                {kanal || (b.googleUngemessen ? "—" : "keine")}
+                {kanal || (b.googleUngemessen || b.metaUngemessen ? "—" : "keine")}
             </div>
         </div>
     )
@@ -766,6 +766,13 @@ export default function Wettbewerb(props: any) {
     const absenden = async () => {
         setLaeuft(true)
         setFehler(null)
+        // Sofort in die Warteansicht, nicht erst wenn die Antwort da ist.
+        //
+        // Vorher stand der Knopf zweieinhalb Minuten auf „Wird gerechnet …", und das
+        // Formular blieb daneben stehen. Das liest sich nicht als Arbeit, sondern als
+        // Hänger — „man denkt, das hängt" (30.10.2026). Jetzt wechselt die Karte, sagt,
+        // was gerade läuft, und nennt die Mail als zweiten Weg.
+        setSchritt(5)
         try {
             const d = await abrufen({
                 gewerk, ort, betrieb,
@@ -782,6 +789,9 @@ export default function Wettbewerb(props: any) {
                 window.location.assign(ergebnisSeite)
             }
         } catch (f: any) {
+            // Zurück zum Kontaktschritt: Dort steht die Meldung im Zusammenhang, und von
+            // dort kann er es noch einmal auslösen.
+            setSchritt(4)
             setFehler(
                 f.message === "betrieb_unbekannt"
                     // Seit der Namenssuche wird hier nichts mehr ausgewählt — der Satz schickte
@@ -1239,6 +1249,11 @@ function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, vormerken, endpun
                 </>
             ) : null}
 
+            {/* Schritt 5 ohne Ergebnis: Es rechnet. Der Fortschritt steht in der Karte,
+                das Formular ist weg — ein stehengebliebenes Formular neben einem grauen
+                Knopf sieht aus, als sei etwas kaputt. */}
+            {schritt === 5 && !ergebnis ? <Rechenanzeige ort={w.ort} email={w.email} /> : null}
+
             {schritt === 4 ? (
                 <>
                     <Frage text="Wohin dürfen wir die Auswertung schicken?"
@@ -1305,6 +1320,69 @@ function Messanzeige({ ort }: { ort: string }) {
                 halbe Minute. Bleiben Sie solange hier, die Zahlen erscheinen direkt darunter.
             </p>
         </div>
+    )
+}
+
+// Die Stufen der Schlussrechnung. Anders als beim Teaser dauert sie Minuten, nicht
+// Sekunden: Profile, dann Metas Werbebibliothek, dann Googles Verzeichnis — und Google
+// wird in Gruppen zu fünf abgefragt, weil die Quelle bei längeren Listen stillschweigend
+// Treffer verschluckt (siehe lib/rangliste-messen.js).
+const RECHENSTUFEN = [
+    { ab: 0, text: "Ihre Branche wird im Ort durchgezählt" },
+    { ab: 25, text: "Profile werden einzeln gelesen" },
+    { ab: 55, text: "Bewertungen und Fotos werden gezählt" },
+    { ab: 85, text: "Metas Werbebibliothek wird geprüft" },
+    { ab: 130, text: "Googles Verzeichnis der Werbetreibenden wird geprüft" },
+    { ab: 200, text: "Die Auswertung wird zusammengestellt" },
+]
+
+function Rechenanzeige({ ort, email }: { ort: string; email: string }) {
+    const [sekunden, setSekunden] = useState(0)
+    useEffect(() => {
+        const uhr = window.setInterval(() => setSekunden((s) => s + 1), 1000)
+        return () => window.clearInterval(uhr)
+    }, [])
+    const stufe = [...RECHENSTUFEN].reverse().find((s) => sekunden >= s.ab) || RECHENSTUFEN[0]
+    // Auf 96 % zulaufen und dort stehen bleiben: Ein Balken, der 100 % erreicht und dann
+    // weiterwartet, ist schlimmer als keiner.
+    const anteil = Math.min(96, Math.round((1 - Math.exp(-sekunden / 70)) * 100))
+    const minuten = Math.floor(sekunden / 60)
+    const zeit = minuten ? `${minuten}:${String(sekunden % 60).padStart(2, "0")} min` : `${sekunden} s`
+    return (
+        <>
+            <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: "-0.035em", lineHeight: 1.26, color: PAPIER }}>
+                Wir zählen {ort ? "in " + ort : "in Ihrem Ort"} durch.
+            </div>
+            <p style={{ margin: "12px 0 0", fontSize: 15, lineHeight: 1.6, letterSpacing: "-0.025em", color: P70 }}>
+                Das dauert zwei bis vier Minuten. Wir lesen jedes Profil einzeln und fragen
+                danach zwei Werbeverzeichnisse ab — das ist der Teil, den kein Werkzeug in
+                Sekunden erledigt.
+            </p>
+            <div style={{ marginTop: 26 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, gap: 12 }}>
+                    <span style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.02em", color: PAPIER }}>
+                        {stufe.text} …
+                    </span>
+                    <span style={{ fontSize: 13, color: P45, fontVariantNumeric: "tabular-nums", flex: "0 0 auto" }}>
+                        {zeit}
+                    </span>
+                </div>
+                <Notenstrich note={anteil} hoehe={3} farbe={PAPIER} grund={LINIE_D} />
+            </div>
+            <div style={{
+                marginTop: 24, padding: "15px 17px", borderRadius: RADIUS_FELD,
+                background: "rgba(245,243,239,0.05)", border: `1px solid ${LINIE_D}`,
+            }}>
+                <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.02em", color: PAPIER }}>
+                    Sie müssen nicht zusehen
+                </div>
+                <p style={{ margin: "6px 0 0", fontSize: 14, lineHeight: 1.55, letterSpacing: "-0.02em", color: P70 }}>
+                    Die vollständige Auswertung mit allen Betrieben geht als PDF an
+                    {email ? " " + email : " Ihre Adresse"}. Bleiben Sie hier, erscheint sie
+                    gleich auch auf der Seite.
+                </p>
+            </div>
+        </>
     )
 }
 
