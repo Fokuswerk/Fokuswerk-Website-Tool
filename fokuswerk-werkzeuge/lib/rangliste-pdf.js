@@ -162,8 +162,12 @@ function tabellenzeile(d, b, eigen) {
   const kanal = [b.anzeigen ? b.anzeigenWort || "Meta" : null, b.google ? "Google" : null]
     .filter(Boolean)
     .join(" + ");
+  // „keine" nur, wenn beide Quellen auch wirklich geantwortet haben. Fiel eine aus, steht
+  // hier ein Strich: Ein Betrieb, der seine eigene Anzeige gerade bezahlt und in seiner
+  // Zeile „keine" liest, glaubt auch den Spalten daneben nicht mehr (30.10.2026).
+  const gemessen = b.gemessen !== false && !b.googleUngemessen;
   d.font(SCHRIFT.normal).fontSize(8.5).fillColor(kanal ? GUT : STILL)
-    .text(kanal || "keine", RAND + 418, y + 0.5, {
+    .text(kanal || (gemessen ? "keine" : "—"), RAND + 418, y + 0.5, {
       width: 69, align: "right", lineBreak: false,
     });
 
@@ -395,7 +399,8 @@ export function ranglistePdf(e) {
       d.moveDown(1.2);
 
       tabellenkopf(d);
-      e.liste.forEach((b) => tabellenzeile(d, b, b.eigen));
+      const beideGemessen = e.googleGemessen !== false && e.anzeigenGemessen !== false;
+      e.liste.forEach((b) => tabellenzeile(d, { ...b, gemessen: beideGemessen }, b.eigen));
 
       d.moveDown(0.8);
       d.font(SCHRIFT.normal).fontSize(8).fillColor(STILL)

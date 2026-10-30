@@ -159,7 +159,7 @@ function marktsatz(e) {
         ? `${m.umKundenAktiv} ${m.umKundenAktiv === 1 ? "wirbt" : "werben"} GERADE bei Meta`
         : `${m.umKunden} ${m.umKunden === 1 ? "hat" : "haben"} bei Meta je geworben, aktiv keiner`,
   );
-  if (m.googlePruefbar) {
+  if (m.googlePruefbar && m.googleGemessen !== false) {
     teile.push(`${m.beiGoogle} von ${m.googlePruefbar} werben bei Google`);
   }
   teile.push(`${m.ohneWebsite} ohne Website im Profil`);
@@ -472,8 +472,11 @@ export function pdfDaten(e) {
       anzeigen: b.anzeigen.length > 0,
       anzeigenWort: b.anzeigen.length && b.anzeigen.every((a) => a.personal) ? "Stellen" : "Meta",
       google: (b.googleAnzeigen || []).length > 0,
+      googleUngemessen: !!b.googleUngemessen,
       eigen: b.name === e.betrieb,
     })),
+    googleGemessen: e.googleGemessen !== false && e.markt?.googleGemessen !== false,
+    anzeigenGemessen: e.anzeigenGemessen !== false,
     einordnung: e.einordnung,
     kennzahlen: [
       { wert: String(e.markt.anzahl), text: `${plural(e.gewerk)} mit Google-Profil im Ort` },
@@ -487,7 +490,7 @@ export function pdfDaten(e) {
       // Google Ads, seit 29.10.2026. Bezugsgroesse ist die Zahl der Betriebe MIT Domain,
       // nicht die Gesamtzahl: Wer keine eigene Website hat, kann dort nicht geprueft werden,
       // und „0 von 15" waere eine Behauptung ueber sieben Betriebe, die wir nicht geprueft haben.
-      ...(e.markt.googlePruefbar
+      ...(e.markt.googlePruefbar && e.markt.googleGemessen !== false
         ? [{
             wert: `${e.markt.beiGoogle} von ${e.markt.googlePruefbar}`,
             // Kurz halten: Die Beschriftung steht einzeilig unter der Zahl. Dass nur
@@ -566,11 +569,15 @@ export function pdfDaten(e) {
       {
         titel: "Google Ads Transparency",
         text:
-          `Abgerufen am ${kurz}, Region Deutschland, Suche je Website. Googles eigenes ` +
-          "öffentliches Verzeichnis der Werbetreibenden. Geprüft werden konnten nur die " +
-          `${e.markt.googlePruefbar ?? 0} Betriebe mit eigener Website im Profil; ` +
-          "Werbetreibende, die auf eine fremde Seite werben — Hersteller, Agenturen, " +
-          "Vermittler — zählen nicht als Werbung des Betriebs.",
+          e.markt.googleGemessen === false
+            ? `Am ${kurz} nicht erreichbar: Googles Verzeichnis hat den Abruf nicht beantwortet. ` +
+              "In der Spalte steht deshalb ein Strich und keine Aussage — gemessen ist das hier " +
+              "nicht, und eine ausgefallene Messung ist kein Ergebnis."
+            : `Abgerufen am ${kurz}, Region Deutschland, Suche je Website. Googles eigenes ` +
+              "öffentliches Verzeichnis der Werbetreibenden. Geprüft werden konnten nur die " +
+              `${e.markt.googlePruefbar ?? 0} Betriebe mit eigener Website im Profil; ` +
+              "Werbetreibende, die auf eine fremde Seite werben — Hersteller, Agenturen, " +
+              "Vermittler — zählen nicht als Werbung des Betriebs.",
       },
       {
         titel: "Was hier nicht gemessen wurde",

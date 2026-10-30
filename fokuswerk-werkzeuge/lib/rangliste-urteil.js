@@ -153,12 +153,14 @@ export function bewerte(messung, { eigenerName } = {}) {
   // zwei Kanaele mit zwei Entscheidungen dahinter, und wer bei Google wirbt, wirbt in aller
   // Regel nicht bei Meta. Geprueft werden kann nur, wer eine eigene Domain hat — `googlePruefbar`
   // sagt, auf wie viele Betriebe sich die Zahl ueberhaupt bezieht.
-  const googlePruefbar = liste.filter((b) => b.domain).length;
+  // Geprüft ist nur, wer eine Domain hat UND bei wem die Quelle geantwortet hat.
+  const googlePruefbar = liste.filter((b) => b.domain && !b.googleUngemessen).length;
   const beiGoogle = liste.filter((b) => (b.googleAnzeigen || []).length > 0);
 
   const markt = {
     anzahl: n,
     googlePruefbar,
+    googleGemessen: messung.googleVerfuegbar === true,
     beiGoogle: beiGoogle.length,
     bewertungenGesamt: summe,
     medianBewertungen,
@@ -429,7 +431,14 @@ function anzeigenlageBefund(messung, markt, eigen, n) {
   // regelmaessig die unangenehmere.
   const pruefbar = markt.googlePruefbar || 0;
   const eigenerBeiGoogle = eigen && (eigen.googleAnzeigen || []).length > 0;
-  const googleBefund = !pruefbar
+  // ▲ Ohne gelungene Messung gibt es keinen Google-Befund.
+  //
+  // Vorher stand bei einem Fehlschlag der Quelle „Bei Google wirbt in Oldenburg niemand"
+  // — und in der Tabelle bei jedem Betrieb „keine". Gemeldet am 30.10.2026 von dem
+  // Betrieb, dessen eigene Anzeige in dem Moment lief. Eine ausgefallene Messung ist
+  // kein Messergebnis.
+  const googleGemessen = messung.googleVerfuegbar === true;
+  const googleBefund = !pruefbar || !googleGemessen
     ? null
     : markt.beiGoogle === 0
       ? {

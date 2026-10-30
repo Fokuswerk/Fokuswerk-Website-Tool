@@ -204,28 +204,47 @@ export function zuordnen(betriebsname, pageName, ort = "", gewerk = "") {
   return "sicher";
 }
 
-async function apify(actor, input, { token, grenze = 120000, maxItems = null } = {}) {
+async function apify(actor, input, { token, grenze = 120000, maxItems = null, versuche = 2 } = {}) {
   if (!token) throw new Error("APIFY_TOKEN fehlt");
   const u = new URL(`${APIFY}/${actor}/run-sync-get-dataset-items`);
   u.searchParams.set("token", token);
   if (maxItems) u.searchParams.set("maxItems", String(maxItems));
 
-  const abbruch = new AbortController();
-  const uhr = setTimeout(() => abbruch.abort(), grenze);
-  try {
-    const antwort = await fetch(u, {
-      method: "POST",
-      signal: abbruch.signal,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(input),
-    });
-    if (!antwort.ok) {
-      throw new Error(`${actor} antwortete ${antwort.status}: ${(await antwort.text()).slice(0, 200)}`);
+  // ▲ Ein zweiter Versuch bei 429 und 5xx.
+  //
+  // Der Google-Scraper antwortete am 30.10.2026 aus der Serverless-Funktion heraus mit
+  // „502 Bad Gateway", während derselbe Aufruf vom Rechner aus durchlief. Die Folge stand
+  // in der Rangliste: Bei jedem Betrieb „keine Werbung", auch bei dem, der seine Anzeige
+  // gerade selbst bezahlt. Ein Fehlschlag der Quelle darf nicht wie ein Messergebnis
+  // aussehen — deshalb hier der zweite Anlauf und weiter unten der Strich statt „keine".
+  let letzter = null;
+  for (let versuch = 1; versuch <= versuche; versuch++) {
+    const abbruch = new AbortController();
+    const uhr = setTimeout(() => abbruch.abort(), grenze);
+    try {
+      const antwort = await fetch(u, {
+        method: "POST",
+        signal: abbruch.signal,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      if (antwort.ok) return await antwort.json();
+      const text = (await antwort.text()).slice(0, 200);
+      letzter = new Error(`${actor} antwortete ${antwort.status}: ${text}`);
+      const nochmal = antwort.status === 429 || antwort.status >= 500;
+      if (!nochmal || versuch === versuche) throw letzter;
+      await new Promise((r) => setTimeout(r, 4000));
+    } catch (fehler) {
+      letzter = fehler;
+      // Ein Abbruch wegen Zeitüberschreitung bleibt ein Abbruch; zweimal zu warten
+      // verdoppelt nur die Wartezeit des Besuchers.
+      if (fehler?.name === "AbortError" || versuch === versuche) throw fehler;
+      await new Promise((r) => setTimeout(r, 4000));
+    } finally {
+      clearTimeout(uhr);
     }
-    return await antwort.json();
-  } finally {
-    clearTimeout(uhr);
   }
+  throw letzter || new Error(`${actor} ohne Antwort`);
 }
 
 /**
@@ -448,22 +467,30 @@ export async function sammle({ gewerk, ort, hoechstens = 24, ohneAnzeigen = fals
  * noch läuft. Gibt nur die Felder zurück, die sich ändern — der Aufrufer legt sie über
  * seine vorhandene Messung.
  */
-export async function anzeigenErgaenzen(messung, token = process.env.APIFY_TOKEN) {
-  // Beide Kanaele nebeneinander. Nacheinander waeren es zwei Minuten; und keiner darf den
-  // anderen mitreissen — faellt Google aus, steht die Meta-Zahl trotzdem im Bericht.
-  const [meta, google] = await Promise.all([
-    anzeigenHolen(messung.betriebe, { token, ort: messung.ort, gewerk: messung.gewerk }),
-    googleAnzeigenHolen(messung.betriebe, { token, ort: messung.ort, gewerk: messung.gewerk }),
-  ]);
+export async function anzeigenErgaenzen(messung, token = process.env.APIFY_TOKEN, { eigeneDomain = null } = {}) {
+  // Nacheinander, nicht nebeneinander.
+  //
+  // Parallel lief es schneller, aber die beiden Apify-Actors teilen sich dasselbe Konto
+  // und dessen Arbeitsspeicher. Der zweite Lauf bekam regelmäßig ein 502 — und ein
+  // Fehlschlag sieht in der Tabelle aus wie „wirbt nicht". Lieber eine Minute mehr in
+  // einem Aufruf, der ohnehin im Hintergrund läuft, während der Besucher den Teaser liest.
+  const meta = await anzeigenHolen(messung.betriebe, { token, ort: messung.ort, gewerk: messung.gewerk });
+  const google = await googleAnzeigenHolen(messung.betriebe, {
+    token, ort: messung.ort, gewerk: messung.gewerk, zuerst: eigeneDomain,
+  });
   return {
     anzeigenVerfuegbar: meta.verfuegbar,
     anzeigenUnsicher: meta.unsicher,
     googleVerfuegbar: google.verfuegbar,
     googleUnsicher: google.unsicher,
+    googleSpur: google.spur || null,
     betriebe: messung.betriebe.map((b) => ({
       ...b,
       anzeigen: meta.je.get(b.name) || [],
       googleAnzeigen: google.je.get(b.name) || [],
+      // Bei dieser Domain hat die Quelle nicht geantwortet — das ist etwas anderes als
+      // „wirbt nicht", und die Tabelle muss es unterscheiden können.
+      googleUngemessen: b.domain ? (google.nichtGemessen || new Set()).has(b.domain) : true,
     })),
   };
 }
@@ -499,35 +526,114 @@ function reineDomain(url) {
  * in Westerstede gemeldet, die es nicht gibt. Deshalb laeuft jede Zeile durch dieselbe
  * Zuordnung wie bei Meta.
  */
-export async function googleAnzeigenHolen(betriebe, { token, ort = "", gewerk = "" } = {}) {
+// Wie viele Domains in einen Abruf dürfen.
+//
+// Gemessen am 30.10.2026: Fünf Domains am Stück findet die Quelle zuverlässig (42 s,
+// Treffer dabei). Zwölf bis fünfzehn in einem Lauf liefern reihenweise Leermeldungen —
+// Google drosselt innerhalb derselben Sitzung, und der Scraper meldet die Lücke nicht als
+// Lücke, sondern gibt die Domain einfach nicht zurück. Genau so verschwand die laufende
+// Anzeige des Betriebs, der sich die Auswertung angesehen hat.
+const GOOGLE_GRUPPE = 5;
+
+export async function googleAnzeigenHolen(betriebe, { token, ort = "", gewerk = "", zuerst = null } = {}) {
   const mitDomain = betriebe.filter((b) => b.domain);
-  if (!mitDomain.length) return { verfuegbar: true, je: new Map(), unsicher: [] };
+  if (!mitDomain.length) return { verfuegbar: true, je: new Map(), unsicher: [], nichtGemessen: new Set(), spur: { domains: 0 } };
+
+  // ▲ Zweiter Anlauf für die Domains, die leer zurückkamen.
+  //
+  // Das Transparency Center antwortet nicht verlässlich: Derselbe Abruf über dieselben
+  // 15 Domains brachte einmal einen Treffer und wenige Minuten später fünf — darunter
+  // fokuswerk.de, das beim ersten Mal fehlte. Gemeldet am 30.10.2026, und zwar von dem
+  // Betrieb, der seine eigene Google-Anzeige gerade selbst bezahlt: In seiner Zeile stand
+  // „keine". Wer das liest, glaubt auch den anderen Spalten nicht mehr.
+  //
+  // Ein Nachschlag über die stillen Domains kostet einen weiteren Lauf, läuft aber im
+  // Nachhol-Aufruf (?anzeigen=1), während der Besucher den Teaser liest.
+  const abfragen = async (domains, grenze) =>
+    apify(
+      GOOGLE_ADS,
+      { domains, resultType: "advertisers", region: "DE" },
+      { token, grenze, maxItems: domains.length * 8 },
+    );
+
+  let alleDomains = [...new Set(mitDomain.map((b) => b.domain))];
+  // Die eigene Domain in die erste Gruppe. Wenn die Zeit knapp wird, stimmt wenigstens
+  // die Zeile, die der Betrieb zuerst liest — seine eigene.
+  if (zuerst && alleDomains.includes(zuerst)) {
+    alleDomains = [zuerst, ...alleDomains.filter((dom) => dom !== zuerst)];
+  }
+
+  const gruppen = [];
+  // Die eigene Domain bekommt einen Lauf für sich. Ein Abruf über eine einzelne Domain
+  // trifft zuverlässig (gemessen: 15 s, Treffer dabei) — und das ist die Zeile, an der
+  // der Betrieb die ganze Auswertung misst.
+  let rest = alleDomains;
+  if (zuerst && alleDomains.includes(zuerst)) {
+    gruppen.push([zuerst]);
+    rest = alleDomains.filter((dom) => dom !== zuerst);
+  }
+  for (let i = 0; i < rest.length; i += GOOGLE_GRUPPE) {
+    gruppen.push(rest.slice(i, i + GOOGLE_GRUPPE));
+  }
 
   let roh = [];
-  try {
-    roh = await apify(
-      GOOGLE_ADS,
-      {
-        domains: [...new Set(mitDomain.map((b) => b.domain))],
-        resultType: "advertisers",
-        region: "DE",
-      },
-      { token, grenze: 150000, maxItems: mitDomain.length * 8 },
-    );
-  } catch (fehler) {
-    // Wie bei Meta: Faellt der Abruf aus, bleibt die Rangliste stehen.
-    console.error("Google-Anzeigenlage gescheitert:", fehler?.message);
-    return { verfuegbar: false, je: new Map(), unsicher: [] };
+  const nichtGemessen = new Set();
+  const spur = { domains: alleDomains.length, gruppen: gruppen.length, gelungen: 0, zeilen: 0, fehler: [], abgebrochen: 0 };
+  // Zeitbudget. Die Serverless-Funktion endet nach 300 Sekunden, und davor liegen schon
+  // die Profile und die Meta-Prüfung. Lieber die letzten Gruppen ehrlich als ungemessen
+  // ausweisen als die ganze Antwort verlieren — dann stünde gar nichts da.
+  const beginn = Date.now();
+  const budget = 160000;
+  for (let i = 0; i < gruppen.length; i++) {
+    const gruppe = gruppen[i];
+    if (Date.now() - beginn > budget) {
+      for (const dom of gruppe) nichtGemessen.add(dom);
+      spur.abgebrochen += 1;
+      continue;
+    }
+    // Luft zwischen den Läufen: Drei Abrufe unmittelbar hintereinander brachten zusammen
+    // weniger Treffer als ein einzelner — die Quelle drosselt über die Läufe hinweg.
+    if (i > 0) await new Promise((r) => setTimeout(r, 4000));
+    try {
+      const teil = await abfragen(gruppe, 110000);
+      if (Array.isArray(teil)) roh = roh.concat(teil);
+      spur.gelungen += 1;
+    } catch (fehler) {
+      // Eine Gruppe, die ausfällt, nimmt nur ihre eigenen Domains mit. Die werden als
+      // ungemessen vermerkt statt als „wirbt nicht" ausgegeben.
+      for (const dom of gruppe) nichtGemessen.add(dom);
+      spur.fehler.push(String(fehler?.message || fehler).slice(0, 90));
+      console.error("Google-Gruppe gescheitert:", fehler?.message);
+    }
+  }
+  spur.zeilen = roh.length;
+  if (!spur.gelungen) {
+    return { verfuegbar: false, je: new Map(), unsicher: [], nichtGemessen, spur };
   }
 
   const je = new Map();
   const unsicher = [];
+  const gesehen = new Set();
   for (const zeile of Array.isArray(roh) ? roh : []) {
+    // Aus zwei Läufen kann derselbe Werbetreibende zweimal kommen.
+    const kennung = String(zeile?.advertiserId || "") + "|" + String(zeile?.matchedDomain || "");
+    if (gesehen.has(kennung)) continue;
+    gesehen.add(kennung);
     const domain = String(zeile?.matchedDomain || zeile?.matchedQuery || "").toLowerCase();
     const betrieb = mitDomain.find((b) => b.domain === domain);
     if (!betrieb) continue;
-    const werber = zeile?.legalName || zeile?.name || "";
-    const urteil = zuordnen(betrieb.name, werber, ort, gewerk);
+    // Beide Namen prüfen: Google führt den Anzeigenamen (`name`) und den bestätigten
+    // Rechtsträger (`legalName`) getrennt, und mal passt der eine zum Google-Profil, mal
+    // der andere. Nur den Rechtsträger zu nehmen, verwirft den Betrieb, der als „Müller
+    // GmbH" wirbt und bei Google „Autohaus Müller" heißt — und umgekehrt.
+    const namen = [...new Set([zeile?.name, zeile?.legalName].map((x) => String(x || "").trim()).filter(Boolean))];
+    let urteil = "nein";
+    let werber = namen[0] || "";
+    for (const kandidat of namen) {
+      const u = zuordnen(betrieb.name, kandidat, ort, gewerk);
+      if (u === "sicher") { urteil = "sicher"; werber = kandidat; break; }
+      if (u === "unsicher" && urteil === "nein") { urteil = "unsicher"; werber = kandidat; }
+    }
     if (urteil !== "sicher") {
       if (urteil === "unsicher") unsicher.push({ betrieb: betrieb.name, werber, domain });
       continue;
@@ -542,7 +648,10 @@ export async function googleAnzeigenHolen(betriebe, { token, ort = "", gewerk = 
     });
     je.set(betrieb.name, bisher);
   }
-  return { verfuegbar: true, je, unsicher };
+  spur.treffer = je.size;
+  spur.unsicher = unsicher.length;
+  spur.ungemessen = nichtGemessen.size;
+  return { verfuegbar: true, je, unsicher, nichtGemessen, spur };
 }
 
 function mehrheitskategorie(betriebe) {

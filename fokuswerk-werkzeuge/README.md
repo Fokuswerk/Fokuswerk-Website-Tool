@@ -128,6 +128,35 @@ die `vercel.app`-Adresse.
 
 `.vercelignore` hält `.env`, den Ordner `test` und die Textdateien aus dem Paket heraus.
 
+## 30.10.2026 — „keine Werbung" bei einem Betrieb, der gerade Google Ads bezahlt
+
+Gemeldet aus der eigenen Rangliste: In der Zeile von Fokuswerk stand „keine", während die
+eigene Google-Anzeige lief — und zwar für genau dieses Werkzeug. Wer das liest, glaubt auch
+den Spalten daneben nicht mehr. Drei Ursachen, alle behoben:
+
+**1. Die Quelle drosselt nach Listengröße.** Der Transparency-Scraper bekam alle Domains
+des Ortes in einem Abruf. Gemessen: fünf Domains am Stück → Treffer dabei, 42 s. Fünfzehn
+in einem Lauf → reihenweise Leermeldungen, darunter fokuswerk.de. Der Scraper meldet die
+Lücke nicht als Lücke, er gibt die Domain einfach nicht zurück. Jetzt laufen Gruppen zu
+fünf mit vier Sekunden Abstand, und **die eigene Domain bekommt einen Lauf für sich,
+zuerst** — das ist die Zeile, an der der Betrieb die ganze Auswertung misst. Ergebnis
+desselben Ortes vorher/nachher: 1 erkannter Werbetreibender → **4**.
+
+**2. 502 aus der Serverless-Funktion.** Meta- und Google-Lauf starteten gleichzeitig und
+teilen sich dasselbe Apify-Konto; der zweite bekam „502 Bad Gateway", während derselbe
+Aufruf vom Rechner aus durchlief. Sie laufen jetzt nacheinander, und `apify()` wiederholt
+einmal bei 429 und 5xx.
+
+**3. Ein Fehlschlag sah aus wie ein Messergebnis.** Fiel die Prüfung aus, stand in der
+Tabelle „keine" und im Bericht „Bei Google wirbt in Oldenburg niemand". Jetzt trägt jeder
+Betrieb `googleUngemessen`, die Tabelle zeigt dafür einen Strich, `googlePruefbar` zählt
+nur geantwortete Domains, und der Google-Befund entfällt ganz, wenn nicht gemessen wurde.
+Die Quellenangabe sagt es dann ebenfalls.
+
+Dazu ein Zeitbudget von 160 s für den Google-Teil: Was danach käme, wird als ungemessen
+ausgewiesen, statt die ganze Antwort in den Funktionszeitablauf laufen zu lassen. Mit
+`?diagnose=` liefert der Endpunkt `_google` mit Gruppen, Treffern und Fehlern.
+
 ## 30.10.2026 — Zeichen der Kanäle im PDF, und ein Abbruch kurz vor dem Ziel
 
 **Die Kanäle tragen jetzt ihre Zeichen.** Auf dem Deckblatt als Kachelreihe unter dem

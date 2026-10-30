@@ -230,7 +230,11 @@ export default async function handler(req, res) {
       return res.status(200).json({ bereit: true, schon_da: true, ...anzeigenZahlen(vorhanden) });
     }
     try {
-      const ergaenzt = { ...vorhanden, ...(await anzeigenErgaenzen(vorhanden)) };
+      const wessen = text(koerper?.betrieb, 80);
+      const eigene = wessen
+        ? (vorhanden.betriebe || []).find((b) => nameGleich(b.name, wessen))?.domain || null
+        : null;
+      const ergaenzt = { ...vorhanden, ...(await anzeigenErgaenzen(vorhanden, undefined, { eigeneDomain: eigene })) };
       inSpeicher(schluessel, ergaenzt);
       return res.status(200).json({ bereit: true, ...anzeigenZahlen(ergaenzt) });
     } catch (fehler) {
@@ -257,7 +261,10 @@ export default async function handler(req, res) {
   } else {
     // Der Vorlauf holt nur die Profile. Die Anzeigenpruefung dauert noch einmal so lange
     // und wird nachgereicht — sonst wartet der Besucher knapp eine Minute auf den Teaser.
-    messung = await sammle({ gewerk, ort, ohneAnzeigen: istVorlauf });
+    // Immer erst die Profile, die Anzeigen danach — auch beim vollen Aufruf. Erst nach
+    // dem Messen steht fest, welche Domain dem anfragenden Betrieb gehört, und genau die
+    // gehört in den ersten Google-Abruf.
+    messung = await sammle({ gewerk, ort, ohneAnzeigen: true });
     if (messung.fehler) return res.status(422).json({ fehler: messung.fehler });
     inSpeicher(schluessel, messung);
   }
@@ -273,7 +280,9 @@ export default async function handler(req, res) {
   // eine andere Instanz getroffen oder der Besucher war schneller als die Messung.
   if (!istVorlauf && messung.anzeigenVerfuegbar === null) {
     try {
-      messung = { ...messung, ...(await anzeigenErgaenzen(messung)) };
+      // Die eigene Domain zuerst messen: Seine Zeile liest der Betrieb als erste.
+      const eigeneDomain = (messung.betriebe || []).find((b) => nameGleich(b.name, gesuchterName))?.domain || null;
+      messung = { ...messung, ...(await anzeigenErgaenzen(messung, undefined, { eigeneDomain })) };
       inSpeicher(schluessel, messung);
     } catch (fehler) {
       console.error("Anzeigen beim vollen Aufruf gescheitert:", fehler?.message);
@@ -328,6 +337,10 @@ export default async function handler(req, res) {
     geprueft: new Date().toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" }),
     einordnung: urteil.einordnung,
     raenge: urteil.raenge,
+    // Ob die Google-Prüfung überhaupt durchlief. Ohne diese Angabe steht in der Tabelle
+    // „keine" — auch wenn gar nicht gemessen wurde, und das ist etwas anderes.
+    googleGemessen: messung.googleVerfuegbar === true,
+    anzeigenGemessen: messung.anzeigenVerfuegbar === true,
     markt: urteil.markt,
     eigen: urteil.eigen,
     liste: urteil.liste,
@@ -356,6 +369,8 @@ export default async function handler(req, res) {
     : await verarbeiteRanglisteLead(daten, ergebnis);
 
   return res.status(200).json(
-    req.query?.diagnose === DIAGNOSE ? { ...ergebnis, _versand: bericht } : ergebnis,
+    req.query?.diagnose === DIAGNOSE
+      ? { ...ergebnis, _versand: bericht, _google: messung.googleSpur || null }
+      : ergebnis,
   );
 }
