@@ -1,5 +1,57 @@
 # Fokuswerk — neue Website (Framer-Projekt „FW neu")
 
+## 30.10.2026 — `/stellenanzeige` am Handy durchgemessen
+
+Gemessen wurde auf 375 × 667 (iPhone SE, das kleinste Gerät, das noch zählt), nicht nach
+Augenmaß. Drei Zahlen beschreiben die Runde:
+
+| | vorher | jetzt |
+|---|---|---|
+| Haupt-Knopf im Auftakt | Unterkante 677 px — unter der Bildkante | 563 px |
+| Absende-Knopf im Kontaktschritt | 397 px unter der Bildkante | immer erreichbar |
+| größter Scrollweg ohne Handlungsaufruf (Seitenmitte) | 5.510 px | 1.733 px |
+
+**Der Haltegriff.** Der Kontaktschritt ist auf diesem Gerät 1.031 px hoch, die Frage nach
+den Stärken 1.149 px — beide Knöpfe lagen außerhalb. Das ist der Schritt, der den Lead
+erzeugt. Jetzt klebt derselbe Knopf unten am Bildrand, solange der echte darunter liegt,
+und löst dieselbe Prüfung aus („Ihr Name fehlt noch.", Fokus ins Feld). Bei der
+Einfachauswahl erscheint er nicht: dort schaltet ein Tipp selbst weiter.
+
+**Drei verworfene Wege dorthin — und das ist der eigentliche Fund.** Auf dieser Seite läuft
+Lenis als Smooth-Scroll-Baustein, und der bewegt die Seite über eine Transformation:
+
+- `window.addEventListener("scroll", …)` feuert **gar nicht**. 1.200 px gescrollt, null
+  Ereignisse. `window.scrollY` stimmt dabei die ganze Zeit.
+- Der `IntersectionObserver` meldet beim Anmelden richtig, danach keinen einzigen Übertritt.
+  Die Karte war 2.400 px aus dem Bild, der Griff klebte weiter.
+- `requestAnimationFrame` steht still, sobald die Seite nicht gezeichnet wird.
+
+Geblieben ist ein `setInterval` mit 200 ms, das nur läuft, solange ein Griff überhaupt in
+Frage kommt, und nur rechnet, wenn `window.scrollY` sich geändert hat.
+
+**Offen und absichtlich nicht angefasst:** `Handlungsleiste.tsx` hängt am selben
+`scroll`-Ereignis. Die mobile Leiste erscheint deshalb auf **keiner** Seite dieses Auftritts.
+Der Fix wäre derselbe Takt — aber er macht eine Leiste sichtbar, die der ganze Auftritt
+bisher nie gezeigt hat. Das ist eine Gestaltungsentscheidung, keine Reparatur im Vorbeigehen.
+
+**Was sonst geändert wurde:**
+
+- Der Einleitungssatz im Auftakt stand achtzeilig über dem Eingabefeld und wiederholte
+  wörtlich, was 200 px darunter noch einmal steht. Jetzt drei Zeilen.
+- Die mittlere Kennzahl hieß „10 Schritte bis zur Anzeige" — eine Aufwandszahl an der
+  Stelle, an der jemand wissen will, was ihn das kostet. Jetzt „2 Minuten, dann stehen die
+  Texte".
+- Vier Handlungsaufrufe in die Mitte: nach den Wiedererkennungssätzen, nach der
+  Inhaltsliste, am Ende des Ablaufs, nach den Fragen und Antworten.
+- Der Ablauf verschwieg den Schritt, an dem es wirklich hakt. Er heißt jetzt „Name, Mail,
+  Nummer" und zählt fünf Fragen — so viele, wie der Trichter auch anzeigt.
+- **69 Bewerbungen, Patio Oldenburg, 2025** stehen jetzt im Abzweig. Der einzige belegte
+  Nachweis, dass die Ausspielung Bewerbungen bringt (`Bestand.md`, Case Study). Die Branche
+  wird genannt, nicht verschwiegen: Gastronomie statt Handwerk.
+- Die Lauftexte endeten bei Sekunde 85, der Balken stand nach elf Sekunden auf 96 %. Ein
+  Durchlauf ohne Vorlauf dauert gemessen **114 Sekunden**. Jetzt acht Marken bis Sekunde 125,
+  und der Balken nähert sich dem Ende, ohne es zu erreichen (nach einer Minute 64 %).
+
 ## 30.10.2026 — der Wettbewerbs-Trichter wartet nicht mehr stumm
 
 Nach dem Absenden stand der Knopf zweieinhalb Minuten auf „Wird gerechnet …", das

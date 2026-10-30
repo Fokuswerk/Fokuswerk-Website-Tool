@@ -129,6 +129,10 @@ const STIL = `
 @keyframes fw-sa-taub { from { pointer-events: none } to { pointer-events: auto } }
 .fw-sa-schritt { animation: fw-sa-auf 220ms cubic-bezier(.16,1,.3,1) both, fw-sa-taub 320ms step-end both; }
 
+/* Der Haltegriff schiebt sich von unten herein, statt einfach dazustehen. */
+@keyframes fw-sa-griff-auf { from { opacity: 0; transform: translate3d(0, 14px, 0) } to { opacity: 1; transform: none } }
+.fw-sa-griff { animation: fw-sa-griff-auf 200ms cubic-bezier(.16,1,.3,1) both; }
+
 /* Durchscheinendes Glas braucht einen Rückfall, sonst steht Text auf dem Verlauf. */
 @media (prefers-reduced-transparency: reduce) {
   .fw-sa-glas { background: rgba(23,22,27,0.96) !important; backdrop-filter: none !important; }
@@ -140,6 +144,7 @@ const STIL = `
 @media (prefers-reduced-motion: reduce) {
   .fw-sa *, .fw-sa *::before, .fw-sa *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
   .fw-sa-schritt { animation: none; }
+  .fw-sa-griff { animation: none; }
 }
 `
 
@@ -663,17 +668,20 @@ const EINWILLIGUNGSTEXT =
 const NEWSLETTER_TEXT =
     "Schickt mir außerdem, was bei anderen Betrieben funktioniert hat — ein paar Mal im Jahr, jederzeit abbestellbar. Freiwillig."
 
-// Seit aus drei Anzeigen eine Mappe für vier Kanäle geworden ist, braucht die Antwort rund
-// 70 bis 80 Sekunden (gemessen am 27.10.2026). Läuft der Vorlauf, ist sie beim Absenden
-// meist schon fertig und es erscheint gar kein Ladetext. Die Marken müssen trotzdem zur
-// echten Dauer passen: „Gleich fertig" nach 16 Sekunden war eine Lüge.
+// Ein Durchlauf ohne Vorlauf wurde am 30.10.2026 mit 114 Sekunden gemessen (vorher 70 bis
+// 80, seit die Jobbörse als vierter Kanal wirklich mitgeschrieben wird). Läuft der Vorlauf,
+// ist die Antwort beim Absenden meist schon fertig und es erscheint gar kein Ladetext.
+// Die Marken müssen trotzdem zur echten Dauer passen — „Gleich fertig" nach 16 Sekunden war
+// eine Lüge, und ein Text, der ab Sekunde 85 stehen bleibt, ist dieselbe Lüge in langsam.
 const LAUFTEXTE = [
     { ab: 0, text: "Wir lesen Ihre Website." },
     { ab: 8, text: "Wir sehen nach, was Ihren Betrieb ausmacht." },
     { ab: 20, text: "Wir schreiben die Anzeige für Kleinanzeigen." },
     { ab: 38, text: "Jetzt die Fassungen für Facebook und Instagram." },
-    { ab: 55, text: "Zuletzt Ihre Karriereseite, das Drehbuch und die Anleitung." },
-    { ab: 85, text: "Dauert heute etwas länger. Bitte bleiben Sie noch einen Moment." },
+    { ab: 58, text: "Die Fassung für die Jobbörse der Arbeitsagentur." },
+    { ab: 78, text: "Zuletzt Ihre Karriereseite, das Drehbuch und die Anleitung." },
+    { ab: 100, text: "Die vier Bewerberfragen und die Budgetzeile." },
+    { ab: 125, text: "Dauert heute länger als sonst. Es läuft noch." },
 ]
 
 const FEHLERTEXTE: Record<string, { titel: string; hinweis: string; zurueck: number }> = {
@@ -935,9 +943,9 @@ const WAS_SIE_BEKOMMEN = [
 ]
 
 const ABLAUF = [
-    { titel: "Adresse und Beruf", text: "Zwei Angaben. Während Sie die restlichen Fragen beantworten, liest das Werkzeug schon Ihre Seite." },
-    { titel: "Vier Fragen", text: "Dringlichkeit, Zahl der Stellen, bisherige Erfahrung, Stärken der Stelle. Alles zum Antippen." },
-    { titel: "Ergebnis", text: "Die Anzeigen stehen hier auf der Seite und kommen zusätzlich per Mail. Danach melden wir uns einmal — sagen Sie nein, war es das." },
+    { titel: "Die Adresse Ihrer Website", text: "Eine Angabe. Während Sie die Fragen beantworten, liest das Werkzeug schon Ihre Seite." },
+    { titel: "Fünf Fragen", text: "Wen Sie suchen, wie eilig es ist, wie viele Stellen offen sind, Ihre Erfahrung mit Anzeigen und was bei Ihnen für die Stelle spricht. Bis auf die erste alles zum Antippen." },
+    { titel: "Name, Mail, Nummer", text: "Dahin gehen die Texte. Die Anzeigen stehen sofort hier auf der Seite und kommen zusätzlich per Mail. Danach melden wir uns einmal — sagen Sie nein, war es das." },
 ]
 
 const FAQ = [
@@ -1632,6 +1640,64 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         return () => window.clearTimeout(t)
     }, [schritt, lage])
 
+    // ----- Der Haltegriff ---------------------------------------------------
+    //
+    // Gemessen am 30.10.2026 auf 375 x 667 (iPhone SE): Der Kontaktschritt ist 1031 px
+    // hoch, sein Absende-Knopf lag damit 397 px unter der Bildkante; bei der Frage nach
+    // den Stärken waren es 578 px. Beide Schritte brauchen einen Knopf, den man nicht
+    // erst suchen muss — der letzte Schritt des Trichters ist der, der den Lead erzeugt.
+    //
+    // Gezeigt wird er nur, wenn der echte Knopf wirklich unter dem Bild liegt. Bei der
+    // Einfachauswahl gibt es keinen: Dort schaltet ein Tipp selbst weiter.
+    const [griff, setGriff] = useState(false)
+    const fussMarke = useRef<HTMLSpanElement | null>(null)
+    const griffMoeglich = lage === "formular" && (kontaktSchritt || (!!frage && frage.art !== "eine"))
+    useEffect(() => {
+        if (!griffMoeglich) {
+            setGriff(false)
+            return
+        }
+        const karte = rahmen.current
+        const fuss = fussMarke.current
+        if (!karte || !fuss) return
+        // Gemessen wird immer frisch; die Beobachter sind nur der Auslöser. Mit
+        // gemerkten Flags hing das Ergebnis daran, welcher von beiden zuerst meldet.
+        const pruefen = () => {
+            const kr = karte.getBoundingClientRect()
+            const fr = fuss.getBoundingClientRect()
+            const karteImBild = kr.top < window.innerHeight && kr.bottom > 0
+            const knopfUnterKante = fr.top > window.innerHeight - 4
+            setGriff(karteImBild && knopfUnterKante)
+        }
+        pruefen()
+        // Nach dem Schrittwechsel wächst die Karte erst, und auf dem iPhone schiebt die
+        // Tastatur das Bild noch einmal.
+        const nach = [60, 420].map((ms) => window.setTimeout(pruefen, ms))
+        window.addEventListener("resize", pruefen)
+        // ▲ Drei Wege wurden gemessen und verworfen (30.10.2026). Lenis bewegt die Seite
+        // über eine Transformation, deshalb bleibt das `scroll`-Ereignis am `window` aus
+        // — 1.200 px gescrollt, null Ereignisse. Der IntersectionObserver meldet beim
+        // Anmelden richtig, danach keinen einzigen Übertritt: Die Karte war 2.400 px aus
+        // dem Bild, der Griff klebte weiter. Und `requestAnimationFrame` steht still,
+        // sobald die Seite nicht gezeichnet wird.
+        //
+        // `window.scrollY` stimmt dagegen immer. Also ein eigener Takt, der nur läuft,
+        // solange ein Griff überhaupt in Frage kommt, und nur rechnet, wenn sich etwas
+        // bewegt hat. Fünfmal in der Sekunde reicht für einen Knopf, der ein- und
+        // ausblendet.
+        let letzterY = -1
+        const takt = window.setInterval(() => {
+            if (window.scrollY === letzterY) return
+            letzterY = window.scrollY
+            pruefen()
+        }, 200)
+        return () => {
+            window.clearInterval(takt)
+            nach.forEach((x) => window.clearTimeout(x))
+            window.removeEventListener("resize", pruefen)
+        }
+    }, [griffMoeglich, schritt, lage, antworten, name, mail, telefon, einwilligung, hinweis])
+
     // ----- Zähler für die Lauftexte -----------------------------------------
     useEffect(() => {
         if (lage !== "laeuft") return
@@ -1846,6 +1912,38 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         if (feld) document.getElementById(feld)?.focus()
     }
 
+    // Eine Frage weiter. Steht auf Komponentenebene, weil der Haltegriff am unteren
+    // Bildrand dieselbe Taste drückt wie der Knopf in der Karte.
+    function weiterVonFrage() {
+        if (!frage) return
+        if (frage.id === "beruf") {
+            setVorlaufFehler("")
+            vorlaufStarten()
+            setSchritt(schritt + 1)
+            return
+        }
+        // Letzte Frage: Jetzt stehen alle Antworten, jetzt lohnt das Schreiben.
+        if (frage.id === "staerken") vorlaufZweiStarten()
+        // Hat der Vorlauf schon gemeldet, dass Adresse oder Beruf nicht taugen,
+        // wird das hier gesagt — nicht erst nach dem Kontaktschritt.
+        if (vorlaufFehler) {
+            setFehler(vorlaufFehler)
+            setLage("fehler")
+            return
+        }
+        setSchritt(schritt + 1)
+    }
+
+    // Ein gesperrter Knopf sagt nicht, was fehlt. Lieber bedienbar lassen und es benennen.
+    function absendenPruefen() {
+        if (!name.trim()) return meldeFehlt("Ihr Name fehlt noch.", "fw-name")
+        if (!mailOk(mail)) return meldeFehlt("Die E-Mail-Adresse stimmt so nicht — dorthin gehen die Texte.", "fw-mail")
+        if (!telOk(telefon)) return meldeFehlt("Die Telefonnummer stimmt so nicht.", "fw-tel")
+        if (!einwilligung) return meldeFehlt("Ohne das erste Häkchen dürfen wir Ihnen nichts schicken.", "")
+        setHinweis("")
+        absenden()
+    }
+
     function Zurueck({ auf = "dunkel" }: { auf?: "hell" | "dunkel" }) {
         return (
             <button
@@ -1989,19 +2087,27 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                         {laufText}
                     </div>
                     <div style={{ marginTop: 22 }}>
-                        <Notenstrich note={Math.min(96, 16 + sekunden * 7)} hoehe={3} farbe={SIGNAL} grund={LINIE_D} />
+                        {/* 16 + 7 je Sekunde war in elf Sekunden am Anschlag und stand
+                            danach anderthalb Minuten still. Jetzt nähert er sich dem Ende,
+                            ohne es zu erreichen: nach einer Minute gut 60 %, nach zwei
+                            Minuten knapp 85 %. */}
+                        <Notenstrich note={Math.round(96 - 84 * Math.exp(-sekunden / 62))} hoehe={3} farbe={SIGNAL} grund={LINIE_D} />
                     </div>
                     <div style={{ marginTop: 16, fontSize: 14, lineHeight: 1.5, letterSpacing: "-0.02em", color: P45 }}>
                         {betriebName
                             ? "Geschrieben wird für: " + betriebName
                             : "Wir rufen Ihre Website ab. Das dauert einen Moment."}
                     </div>
-                    {sekunden >= 35 ? (
+                    {/* Ab 40 Sekunden, nicht ab 35: Der Satz nimmt die Sorge, dass man
+                        umsonst wartet. „Dauert heute länger als sonst" stand hier, solange
+                        achtzig Sekunden die Ausnahme waren — bei zwei Minuten Regel wäre
+                        das eine Ausrede. */}
+                    {sekunden >= 40 ? (
                         <div style={{ marginTop: 20, paddingTop: 18, borderTop: `1px solid ${LINIE_D}` }}>
                             <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55, letterSpacing: "-0.01em", color: P70 }}>
-                                Das dauert heute länger als sonst. Bleiben Sie kurz hier, die Anzeigen
-                                erscheinen gleich auf dieser Seite. Zur Sicherheit schicken wir sie
-                                Ihnen zusätzlich per Mail.
+                                Vier Fassungen zu schreiben dauert ein bis zwei Minuten. Bleiben Sie
+                                hier, die Anzeigen erscheinen gleich auf dieser Seite — und zur
+                                Sicherheit schicken wir sie Ihnen zusätzlich per Mail.
                             </p>
                             <div style={{ marginTop: 14 }}>
                                 <Pille auf="dunkel" art="linie" onClick={() => { setLage("formular"); setSchritt(SCHRITT_KONTAKT) }}>
@@ -2092,24 +2198,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         if (frage) {
             const wert = antworten[frage.id]
             const mehrfachGewaehlt: string[] = Array.isArray(wert) ? wert : []
-            const weiter = () => {
-                if (frage.id === "beruf") {
-                    setVorlaufFehler("")
-                    vorlaufStarten()
-                    setSchritt(schritt + 1)
-                    return
-                }
-                // Letzte Frage: Jetzt stehen alle Antworten, jetzt lohnt das Schreiben.
-                if (frage.id === "staerken") vorlaufZweiStarten()
-                // Hat der Vorlauf schon gemeldet, dass Adresse oder Beruf nicht taugen,
-                // wird das hier gesagt — nicht erst nach dem Kontaktschritt.
-                if (vorlaufFehler) {
-                    setFehler(vorlaufFehler)
-                    setLage("fehler")
-                    return
-                }
-                setSchritt(schritt + 1)
-            }
+            const weiter = weiterVonFrage
             const kannWeiter =
                 frage.art === "text"
                     ? String(wert || "").trim().length >= 2
@@ -2246,16 +2335,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                         <Pille
                             auf="dunkel"
                             weit
-                            onClick={() => {
-                                // Ein gesperrter Knopf sagt nicht, was fehlt. Lieber
-                                // bedienbar lassen und es benennen.
-                                if (!name.trim()) return meldeFehlt("Ihr Name fehlt noch.", "fw-name")
-                                if (!mailOk(mail)) return meldeFehlt("Die E-Mail-Adresse stimmt so nicht — dorthin gehen die Texte.", "fw-mail")
-                                if (!telOk(telefon)) return meldeFehlt("Die Telefonnummer stimmt so nicht.", "fw-tel")
-                                if (!einwilligung) return meldeFehlt("Ohne das erste Häkchen dürfen wir Ihnen nichts schicken.", "")
-                                setHinweis("")
-                                absenden()
-                            }}
+                            onClick={absendenPruefen}
                         >
                             Anzeigen ansehen
                         </Pille>
@@ -2332,7 +2412,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     >
                         {fertig
                             ? "Die Texte für vier Kanäle, die vier Bewerberfragen — und darunter die Anleitung: welche Einstellungen, welches Budget, welches Video, und was Sie antworten, wenn sich jemand meldet."
-                            : "Wir lesen Ihre Website und schreiben daraus die Ausschreibung für vier Kanäle — nur einer davon kostet Geld. Dazu die Anleitung, wie Sie sie schalten: Einstellungen, Budget, ein Video-Drehbuch für zwanzig Minuten mit dem Handy und die ersten Antworten an Bewerber."}
+                            : "Wir lesen Ihre Website und schreiben daraus die fertige Ausschreibung für vier Kanäle — nur einer davon kostet Geld."}
                     </p>
 
                     <div
@@ -2411,8 +2491,17 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                 </div>
                             </div>
                         ) : (
-                            <div className="fw-sa-schritt" key={lage + ":" + schritt}>
-                                {trichter()}
+                            <div>
+                                <div className="fw-sa-schritt" key={lage + ":" + schritt}>
+                                    {trichter()}
+                                </div>
+                                {/* Sitzt unmittelbar unter dem letzten Knopf. Ist sie im
+                                    Bild, braucht es keinen Griff. Der Platzhalter dahinter
+                                    hält die Höhe des Griffs frei, ohne die Marke selbst zu
+                                    verschieben — sonst schöbe der Griff sich seine eigene
+                                    Bedingung weg. */}
+                                <span ref={fussMarke} aria-hidden style={{ display: "block", height: 1 }} />
+                                {griff ? <div aria-hidden style={{ height: 84 }} /> : null}
                             </div>
                         )}
                     </div>
@@ -2479,7 +2568,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                 // Die Kanäle stehen jetzt als Marken darüber — hier stünde
                                 // sonst zweimal dasselbe.
                                 { zahl: "0", label: "Euro, kein Konto", quelle: "die Texte behalten Sie in jedem Fall" },
-                                { zahl: "10", label: "Schritte bis zur Anzeige", quelle: "mit Ihrem Ort und Ihrem Budget" },
+                                { zahl: "2", label: "Minuten, dann stehen die Texte", quelle: "fünf Fragen, das meiste zum Antippen" },
                                 { zahl: "4", label: "Bewerberfragen", quelle: "statt Lebenslauf und Anschreiben" },
                             ].map((b) => (
                                 <div key={b.label} style={{ minWidth: 0 }}>
@@ -2560,6 +2649,11 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                 <span style={{ fontSize: 17, lineHeight: 1.6, letterSpacing: "-0.008em", color: TINTE }}>{w}</span>
                             </div>
                         ))}
+                        {/* Direkt nach dem Wiedererkennen, nicht erst sechs Bildschirme
+                            später: Hier ist der Satz gerade eingeschlagen. */}
+                        <div style={{ marginTop: 26, paddingTop: 24, borderTop: `1px solid ${LINIE}` }}>
+                            <Pille onClick={zumFeld}>Dann Anzeigen schreiben lassen</Pille>
+                        </div>
                     </div>
                 </div>
             </Abschnitt>
@@ -2589,6 +2683,9 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                         </div>
                     ))}
                 </div>
+                <div style={{ marginTop: 34 }}>
+                    <Pille onClick={zumFeld}>Das für meinen Betrieb schreiben lassen</Pille>
+                </div>
             </Abschnitt>
 
             {/* ── 5 Ablauf ───────────────────────────────────────────────────────── */}
@@ -2609,6 +2706,9 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                             </p>
                         </div>
                     ))}
+                </div>
+                <div style={{ marginTop: 34 }}>
+                    <Pille onClick={zumFeld}>Mit der Adresse anfangen</Pille>
                 </div>
             </Abschnitt>
 
@@ -2632,6 +2732,9 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                 </p>
                             </div>
                         ))}
+                        <div style={{ marginTop: 26, paddingTop: 24, borderTop: `1px solid ${LINIE}` }}>
+                            <Pille onClick={zumFeld}>Anzeigen schreiben lassen</Pille>
+                        </div>
                     </div>
                 </div>
             </Abschnitt>
@@ -2647,11 +2750,47 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                         Nordwesten. Die Texte oben bekommen Sie so oder so.
                     </Lead>
                 </div>
+                {/* Der einzige belegte Beweis, dass die Ausspielung Bewerbungen bringt —
+                    aus der eigenen Fallstudie. Die Branche wird genannt, nicht verschwiegen:
+                    Eine Zahl aus der Gastronomie als Handwerkszahl auszugeben, fliegt beim
+                    ersten Nachfragen auf. */}
+                <div style={{ marginTop: 34, paddingTop: 24, borderTop: `1px solid ${LINIE_D}`, display: "flex", gap: 18, alignItems: "baseline", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "clamp(1.9rem, 4vw, 2.6rem)", lineHeight: 1, fontWeight: 500, letterSpacing: "-0.05em", color: PAPIER, fontVariantNumeric: "tabular-nums" }}>
+                        69
+                    </span>
+                    <span style={{ fontSize: 16, lineHeight: 1.62, letterSpacing: "-0.005em", color: P70, maxWidth: "46ch" }}>
+                        Bewerbungen kamen 2025 auf eine Stelle, die wir für die Bar Patio in
+                        Oldenburg ausgespielt haben. Gastronomie statt Handwerk — der Weg ist
+                        derselbe: ein Text, der ankommt, und eine Ausspielung, die die Richtigen
+                        erreicht.
+                    </span>
+                </div>
                 <div style={{ marginTop: 34, display: "flex", gap: 12, flexWrap: "wrap" }}>
                     <Pille auf="dunkel" onClick={zumFeld}>Anzeigen schreiben lassen</Pille>
                     <Pille auf="dunkel" art="linie" href={angebotLink}>Projekt besprechen</Pille>
                 </div>
             </Abschnitt>
+
+            {/* Der Haltegriff. Derselbe Knopf wie unten in der Karte, nur dort, wo der
+                Daumen ohnehin liegt. Der Verlauf nach oben verhindert die harte Kante
+                über dem Text, der darunter weiterläuft. */}
+            {griff ? (
+                <div
+                    className="fw-sa-griff"
+                    style={{
+                        position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 40,
+                        padding: "18px " + RAND + " calc(16px + env(safe-area-inset-bottom))",
+                        background: `linear-gradient(to top, ${DUNKEL} 0%, ${DUNKEL} 62%, rgba(23,22,27,0) 100%)`,
+                        pointerEvents: "none",
+                    }}
+                >
+                    <div style={{ maxWidth: 640, margin: "0 auto", pointerEvents: "auto" }}>
+                        <Pille auf="dunkel" weit onClick={kontaktSchritt ? absendenPruefen : weiterVonFrage}>
+                            {kontaktSchritt ? "Anzeigen ansehen" : "Weiter"}
+                        </Pille>
+                    </div>
+                </div>
+            ) : null}
         </div>
     )
 }

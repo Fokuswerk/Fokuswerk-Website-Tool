@@ -128,6 +128,34 @@ die `vercel.app`-Adresse.
 
 `.vercelignore` hält `.env`, den Ordner `test` und die Textdateien aus dem Paket heraus.
 
+## 30.10.2026 — der Betriebsname war die Leistungszeile aus dem Seitentitel
+
+`titelAus()` in `lib/seite-lesen.js` nahm aus dem `<title>` den Teil **hinter** dem Trenner.
+Bei `wav-wst.de` lautet der Titel „WAV Werkstatt Westerstede | Kfz-Reparatur, TÜV & Autoglas"
+— der Betrieb hieß im Trichter damit **„Kfz-Reparatur, TÜV & Autoglas"**. Die Annahme stimmt
+nur bei der Hälfte der Seiten; „Garten- & Landschaftsbau Bremen — Knolle Harpstedt" ist
+herum, „Marke | Leistungen" ist es nicht.
+
+Entschieden wird jetzt in fünf Stufen, vom härtesten Hinweis zum weichsten:
+
+1. `og:site_name` — was die Seite selbst als ihren Namen angibt.
+2. Der Teil mit einer Rechtsform (GmbH, GbR, e. K. …). Die steht nie in der Leistungszeile.
+3. Der Teil, der ein Wort der Domain enthält: „wav-wst.de" steckt in „WAV Werkstatt
+   Westerstede", nicht in „Kfz-Reparatur, TÜV & Autoglas".
+4. Der Teil ohne Aufzählung (Komma, `&`, „und"). Eine Leistungszeile zählt auf.
+5. Bleibt es unentschieden, gilt die alte Annahme.
+
+Sechs echte Titel aus eigenen Projekten gehen durch, darunter die beiden gegenläufigen Fälle.
+
+**Warum das mehr war als Kosmetik:** Der Name geht als `betrieb` ins Modell und steht damit
+in den Anzeigen. Gerettet hat es bisher nur, dass das Modell den Namen aus dem Seitentext
+noch einmal prüft — der Vorlauf (`?vorlauf=1`) tut das nicht, und dessen Wert steht dem
+Besucher während der Fragen vor der Nase: „Ihre Seite ist gelesen: …".
+
+**Nebenbei gemessen:** Ein vollständiger Durchlauf ohne Vorlauf braucht jetzt **114 Sekunden**
+(vorher 70 bis 80). Die Jobbörse als vierter Kanal wird seit der Prompt-Korrektur von heute
+wirklich mitgeschrieben. Die Lauftexte im Trichter reichen deshalb bis Sekunde 125.
+
 ## 30.10.2026 — drei Kanäle, vier Kanäle: die Zählung lief auseinander
 
 Die Seite warb mit „vier Kanäle — zwei davon kosten nichts", die Kacheln darunter zeigten

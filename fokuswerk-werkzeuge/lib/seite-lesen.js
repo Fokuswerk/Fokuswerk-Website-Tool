@@ -209,14 +209,61 @@ export function textAus(html) {
     .replace(/\n{3,}/g, "\n\n");
 }
 
-function titelAus(html) {
+const RECHTSFORM = /\b(gmbh|mbh|ug|ohg|kg|gbr|ag|e\.?\s?k\.?|e\.?\s?v\.?|se|inh\.|inhaber|& ?s(o|ö)hne|& ?sohn|& ?co)\b/i;
+
+// Der Firmenname aus dem Seitentitel.
+//
+// Die Annahme „hinter dem Trenner steht der Name" trifft nur die Hälfte der Fälle. Bei
+// `wav-wst.de` lautet der Titel „WAV Werkstatt Westerstede | Kfz-Reparatur, TÜV & Autoglas"
+// — die alte Regel nahm davon „Kfz-Reparatur, TÜV & Autoglas" und setzte das als Namen des
+// Betriebs in den Trichter (gemessen am 30.10.2026). Entschieden wird deshalb der Reihe
+// nach, vom härtesten Hinweis zum weichsten.
+function titelAus(html, domain = "") {
+  // 1. Was die Seite selbst als ihren Namen angibt, ist die beste Auskunft.
+  const eigen = html.match(
+    /<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']{2,80})["']/i,
+  ) || html.match(
+    /<meta[^>]+content=["']([^"']{2,80})["'][^>]+property=["']og:site_name["']/i,
+  );
+  if (eigen) {
+    const wert = textAus(eigen[1]).trim();
+    if (wert) return wert.slice(0, 80);
+  }
+
   const titel = html.match(/<title[^>]*>([\s\S]{1,200}?)<\/title>/i);
   if (!titel) return null;
-  // „Garten- & Landschaftsbau Bremen — Knolle Harpstedt" → der Teil hinter dem Trenner ist
-  // fast immer der Name, der Teil davor die Suchmaschinenbeschreibung.
-  const teile = textAus(titel[1]).split(/\s[|–—-]\s/).map((t) => t.trim()).filter(Boolean);
+  const teile = textAus(titel[1]).split(/\s[|–—·-]\s/).map((t) => t.trim()).filter(Boolean);
   if (!teile.length) return null;
-  return (teile.length > 1 ? teile[teile.length - 1] : teile[0]).slice(0, 80);
+  if (teile.length === 1) return teile[0].slice(0, 80);
+
+  // 2. Eine Rechtsform steht nie in der Leistungszeile.
+  const mitForm = teile.filter((x) => RECHTSFORM.test(x));
+  if (mitForm.length === 1) return mitForm[0].slice(0, 80);
+
+  // 3. Die Domain ist aus dem Namen gebildet, nicht aus den Leistungen: „wav-wst.de"
+  //    steckt in „WAV Werkstatt Westerstede", nicht in „Kfz-Reparatur, TÜV & Autoglas".
+  const marken = (domain || "")
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .split("/")[0]
+    .split(".")[0]
+    .split("-")
+    .filter((w) => w.length >= 3)
+    .map((w) => w.toLowerCase());
+  if (marken.length) {
+    const passend = teile.filter((x) => {
+      const klein = x.toLowerCase().replace(/[^a-zäöüß0-9]+/g, "");
+      return marken.some((m) => klein.indexOf(m) >= 0);
+    });
+    if (passend.length === 1) return passend[0].slice(0, 80);
+  }
+
+  // 4. Eine Leistungszeile zählt auf, ein Name tut das nicht.
+  const ohneListe = teile.filter((x) => !/[,·]|\s&\s|\bund\b/i.test(x));
+  if (ohneListe.length === 1) return ohneListe[0].slice(0, 80);
+
+  // 5. Bleibt es unentschieden, gilt die alte Annahme weiter.
+  return teile[teile.length - 1].slice(0, 80);
 }
 
 // Startseite plus bis zu vier aussagekräftige Unterseiten, als ein Text.
@@ -278,7 +325,7 @@ export async function liesBetrieb(domain, { maxUnterseiten = 4 } = {}) {
 
   return {
     basis,
-    titel: titelAus(start.inhalt),
+    titel: titelAus(start.inhalt, start.adresse),
     seiten: seiten.map((s) => s.adresse),
     text: gesamt.trim(),
   };
