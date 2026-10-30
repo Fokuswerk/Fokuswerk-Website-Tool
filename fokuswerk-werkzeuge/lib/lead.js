@@ -18,10 +18,11 @@ import { ausschreibungPdf } from "./stellen-pdf.js";
 
 // Verifiziert bei Resend ist email.fokuswerk.de (geprüft 26.10.2026) — nicht mail.fokuswerk.de.
 export const ABSENDER = "Fokuswerk <werkzeug@email.fokuswerk.de>";
-// ⚠ Solange die Werkzeuge im Aufbau sind, gehen alle Meldungen an die persönliche
-// Adresse statt ins gemeinsame Postfach — Probeläufe sollen dort niemanden stören.
-// VOR DEM LIVEGANG zurück auf contact@fokuswerk.de stellen (oder MAIL_AN_UNS setzen).
-export const AN_UNS = process.env.MAIL_AN_UNS || "bodenstab@fokuswerk.de";
+// Hierhin gehen alle Meldungen aus allen Werkzeugen — ein gemeinsames Postfach, damit
+// kein Lead an einer einzelnen Person hängt. Während des Aufbaus stand hier eine Weile
+// die persönliche Adresse; wer Probeläufe umleiten will, setzt MAIL_AN_UNS, statt diese
+// Zeile zu ändern (sonst geht das Zurückstellen beim nächsten Mal wieder vergessen).
+export const AN_UNS = process.env.MAIL_AN_UNS || "contact@fokuswerk.de";
 
 // Der Wortlaut, den der Besucher im letzten Schritt abhakt. Steht in `Stellenanzeiger.tsx`;
 // ändert er sich dort, gehört er auch hier geändert — am Datensatz soll stehen, wem der

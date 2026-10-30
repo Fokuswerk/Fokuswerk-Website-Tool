@@ -7,13 +7,11 @@
 // Warum ein eigener Endpunkt und kein Feld am großen: Der große schreibt Anzeigen und
 // braucht dafür eine halbe Minute. Ein Rückrufwunsch darf nicht dahinter warten.
 
-import { sendeMail } from "../lib/lead.js";
+import { sendeMail, AN_UNS } from "../lib/lead.js";
 
 const ERLAUBT = (process.env.ORIGINS ||
   "https://fokuswerk.de,https://www.fokuswerk.de,https://frank-site-485713.framer.app")
   .split(",").map((h) => h.trim()).filter(Boolean);
-
-const AN_UNS = "contact@fokuswerk.de";
 
 // Derselbe Schlüssel wie in api/rangliste.js. Damit lässt sich prüfen, ob ein Zeitfenster
 // angenommen wird, OHNE eine Mail auszulösen.
@@ -98,7 +96,9 @@ export default async function handler(req, res) {
   ].filter((z) => z !== null);
 
   if (trockenlauf(req)) {
-    return res.status(200).json({ ok: true, gemeldet: false, trockenlauf: fenster });
+    // `meldungGinge` nennt die Empfängeradresse aus lib/lead.js — so lässt sich am
+    // laufenden Dienst prüfen, wohin Meldungen gehen, ohne eine Mail zu verschicken.
+    return res.status(200).json({ ok: true, gemeldet: false, trockenlauf: fenster, meldungGinge: AN_UNS });
   }
 
   try {
