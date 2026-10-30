@@ -289,7 +289,7 @@ export function MetaAnzeige(props: { los: boolean; akzent: string; beispiel: boo
     const { los, akzent, beispiel } = props
     const [ref, m] = useMass<HTMLDivElement>()
     const eng = m.b > 0 && m.b < 420
-    const lage = [{ x: -0.95, y: 0.2, d: 0 }, { x: 0.95, y: 0.5, d: 0.4 }, { x: -0.95, y: 0.8, d: 0.8 }]
+    const lage = [{ x: -0.78, y: 0.18, d: 0 }, { x: 0.78, y: 0.42, d: 0.4 }, { x: -0.78, y: 0.66, d: 0.8 }]
     const chips: ChipDaten[] = (props.chips ?? [
         { l: "Reichweite", w: "48.200" },
         { l: "Klickrate", w: "2,1 %" },
@@ -298,13 +298,28 @@ export function MetaAnzeige(props: { los: boolean; akzent: string; beispiel: boo
     const absender = props.absender ?? "Dachtechnik Freese"
     const konto = absender.toLowerCase().replace(/[^a-zäöüß0-9]+/g, "")
     const schlagzeile = props.schlagzeile ?? "Neues Dach vor dem Winter?"
-    // Der Post darf nie höher werden als die Kachel — sonst schiebt er sich über deren Kopf.
-    // Kopfzeile, Handlungsbalken und Aktionsleiste brauchen zusammen rund 190 px; der Rest
-    // bleibt dem Motiv, und daraus ergibt sich die Breite. Auf dem Handy ist es quadratisch,
-    // auf breiten Flächen das hochkante 4:5.
-    const verhaeltnis = eng ? 1 : 1.25
-    const ausHoehe = m.h > 0 ? (m.h - 208) / verhaeltnis : 9999
-    const postB = Math.round(Math.max(200, Math.min(eng ? (m.b || 320) : 330, ausHoehe)))
+    // Der Beitrag wird in fester Entwurfsgröße gebaut (300 breit, Motiv quadratisch) und als
+    // Ganzes auf die Kachel skaliert. Zwei frühere Versuche scheiterten: feste 4:5 schnitten
+    // unten ab, ein mitwachsendes Motiv quetschte es zum Streifen. Skalieren hält die
+    // Proportion und passt immer.
+    const postB = 300
+    // Die eigene Höhe wird gemessen, nicht geschätzt: eine zu kleine Schätzung schnitt den
+    // Beitrag unten ab. offsetHeight ist die Layouthöhe und bleibt von der Skalierung unberührt.
+    const postRef = useRef<HTMLDivElement>(null)
+    const [eigenH, setEigenH] = useState(470)
+    useEffect(() => {
+        const el = postRef.current
+        if (!el) return
+        const messen = () => setEigenH(el.offsetHeight || 470)
+        messen()
+        if (typeof ResizeObserver === "undefined") return
+        const ro = new ResizeObserver(messen)
+        ro.observe(el)
+        return () => ro.disconnect()
+    }, [])
+    const platzB = m.b || postB
+    const platzH = m.h || eigenH
+    const skala = Math.min(1, platzB / postB, platzH / eigenH)
 
     const TINTE_IG = "rgb(28, 28, 30)"
     const GRAU_IG = "rgba(28, 28, 30, 0.55)"
@@ -315,6 +330,7 @@ export function MetaAnzeige(props: { los: boolean; akzent: string; beispiel: boo
             <Kopf art="performance" titel={props.titel ?? "So sieht Ihre Anzeige bei Instagram aus"} firma={props.firma ?? "Dachtechnik Freese: 48.200 Menschen erreicht, 36 Anfragen."} beispiel={beispiel} akzent={akzent} />
             <div ref={ref} style={{ position: "relative", flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 0, overflow: "hidden" }}>
                 <motion.div
+                    ref={postRef}
                     initial={{ y: 22, opacity: 0 }}
                     animate={los ? { y: 0, opacity: 1 } : {}}
                     transition={{ duration: 1, ease: KURVE }}
@@ -322,6 +338,10 @@ export function MetaAnzeige(props: { los: boolean; akzent: string; beispiel: boo
                         position: "relative",
                         width: postB,
                         maxWidth: "100%",
+                        transform: `scale(${skala})`,
+                        transformOrigin: "center center",
+                        display: "flex",
+                        flexDirection: "column",
                         background: "rgb(255, 255, 255)",
                         borderRadius: 14,
                         overflow: "hidden",
@@ -346,8 +366,8 @@ export function MetaAnzeige(props: { los: boolean; akzent: string; beispiel: boo
                             ))}
                         </svg>
                     </div>
-                    {/* Motiv im Hochformat 4:5 */}
-                    <div style={{ position: "relative", width: "100%", aspectRatio: eng ? "1 / 1" : "4 / 5", background: "#eee" }}>
+                    {/* Motiv nimmt die verbleibende Höhe */}
+                    <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "#eee" }}>
                         <img src={props.bild ?? BILD("photo-1691571026798-1c5819901996")} alt="Beispielmotiv" loading="lazy" decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                     </div>
                     {/* Handlungsbalken */}
@@ -368,7 +388,7 @@ export function MetaAnzeige(props: { los: boolean; akzent: string; beispiel: boo
                             <IGIcon art="merken" farbe={TINTE_IG} />
                         </div>
                         <span style={text(13, TINTE_IG, 600)}>Gefällt 1.248 Mal</span>
-                        <span style={{ ...text(13, TINTE_IG, 400), lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, overflow: "hidden" }}>
+                        <span style={{ ...text(13, TINTE_IG, 400), lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" as any, overflow: "hidden" }}>
                             <span style={text(13, TINTE_IG, 600)}>{konto}</span> {schlagzeile}
                         </span>
                     </div>
@@ -381,7 +401,7 @@ export function MetaAnzeige(props: { los: boolean; akzent: string; beispiel: boo
                         transition={{ opacity: { delay: 0.6 + c.d, duration: 0.6 }, scale: { delay: 0.6 + c.d, duration: 0.6 }, y: { duration: 4 + i, repeat: Infinity, ease: "easeInOut", delay: c.d } }}
                         style={{
                             position: "absolute",
-                            left: `calc(50% + ${c.x * 185}px)`,
+                            left: `calc(50% + ${(c.x * postB * skala) / 2}px)`,
                             top: `${c.y * 100}%`,
                             transform: "translate(-50%, -50%)",
                             padding: "9px 12px",
@@ -466,14 +486,13 @@ export function Trichter(props: { los: boolean; akzent: string; beispiel: boolea
     const [ref, m] = useMass<HTMLDivElement>()
     const eng = m.b > 0 && m.b < 420
     const stufen: { l: string; w: number; anteil: number; q?: string }[] = props.stufen ?? [
-        { l: "Impressionen", w: 184300, anteil: 1 },
-        { l: "Klicks", w: 5120, anteil: 0.62, q: "2,8 %" },
-        { l: "Anfragen", w: 212, anteil: 0.36, q: "4,1 %" },
-        { l: "Aufträge", w: 61, anteil: 0.2, q: "28,8 %" },
+        { l: "Impressionen", w: 215321, anteil: 1 },
+        { l: "Klicks", w: 7051, anteil: 0.58, q: "3,3 %" },
+        { l: "Kontakte", w: 439, anteil: 0.3, q: "6,2 %" },
     ]
     return (
         <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 16 }}>
-            <Kopf art="performance" titel={props.titel ?? "Von der Anzeige bis zum Auftrag"} firma={props.firma ?? "Praxis Lindenhof: Wie viele Menschen die Anzeige sahen, klickten, anfragten — und Patient wurden."} beispiel={beispiel} akzent={akzent} />
+            <Kopf art="performance" titel={props.titel ?? "Von der Anzeige bis zur Anfrage"} firma={props.firma ?? "WAV Westerstede: Wie viele Menschen die Anzeige sahen, klickten und sich gemeldet haben. Google Ads, Mai bis Oktober 2026."} beispiel={beispiel} akzent={akzent} />
             <div ref={ref} style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: eng ? 12 : 14 }}>
                 {stufen.map((s, i) => (
                     <div key={i} style={eng ? { display: "grid", gap: 5 } : { display: "grid", gridTemplateColumns: "clamp(70px, 22%, 96px) 1fr 48px", alignItems: "center", gap: 10 }}>
@@ -511,64 +530,75 @@ export function Trichter(props: { los: boolean; akzent: string; beispiel: boolea
 
 // ---------- Performance: Kosten je Anfrage ----------
 
-function KostenBalken(props: { los: boolean; akzent: string; beispiel: boolean }) {
-    const { los, akzent, beispiel } = props
-    const monate = [["Apr", 64], ["Mai", 48], ["Jun", 37], ["Jul", 29], ["Aug", 24], ["Sep", 21]] as const
-    return (
-        <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 14 }}>
-            <Kopf art="performance" titel="Jede Anfrage wird günstiger" firma="Optik am Wall: Weil wir jeden Monat nachsteuern, sinken die Kosten pro Anfrage." beispiel={beispiel} akzent={akzent} />
-            <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-                <span style={{ ...text(40, akzent), fontVariantNumeric: "tabular-nums" }}>
-                    <Zaehler bis={67} vor="−" nach=" %" los={los} />
-                </span>
-                <span style={text(12.5, GRAU)}>in sechs Monaten</span>
-            </div>
-            <div style={{ flex: 1, display: "flex", alignItems: "flex-end", gap: 8, minHeight: 110 }}>
-                {monate.map(([m, v], i) => (
-                    <div key={m} style={{ flex: 1, height: "100%", display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", gap: 7 }}>
-                        <motion.span initial={{ opacity: 0 }} animate={{ opacity: los ? 1 : 0 }} transition={{ delay: 0.6 + i * 0.08 }} style={{ ...text(11, i === 5 ? akzent : GRAU), fontVariantNumeric: "tabular-nums" }}>
-                            {v} €
-                        </motion.span>
-                        <motion.div
-                            initial={{ height: "0%" }}
-                            animate={{ height: los ? `${(v / 64) * 78}%` : "0%" }}
-                            transition={{ duration: 1.1, ease: KURVE, delay: i * 0.08 }}
-                            style={{ width: "100%", borderRadius: 7, background: i === 5 ? akzent : `rgba(245,243,239,${0.1 + i * 0.02})` }}
-                        />
-                        <span style={text(11, GRAU)}>{m}</span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    )
+interface Zahlenwert {
+    w: number
+    s: number
+    n: string
+    v?: string
+    l: string
+    q: string
 }
 
-// ---------- Performance: Recruiting ----------
-
-function Recruiting(props: { los: boolean; akzent: string; beispiel: boolean }) {
-    const { los, akzent, beispiel } = props
-    const tage = [0, 2, 3, 6, 8, 9, 12, 14, 17, 19, 21, 24, 26, 27, 29, 31, 32, 34, 35, 36, 37]
-    const b = 200
-    const h = 56
-    const pts = tage.map((v, i): [number, number] => [(i / (tage.length - 1)) * b, h - (v / 37) * h])
-    return (
-        <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 10 }}>
-            <Kopf art="performance" titel="Neue Mitarbeiter über Instagram" firma="Autohaus Meinen: Stellenanzeige dort, wo Mechatroniker scrollen." beispiel={beispiel} akzent={akzent} />
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <span style={{ ...text(11.5, PAPIER), padding: "6px 10px", borderRadius: 99, background: "rgba(245,243,239,0.06)", boxShadow: `inset 0 0 0 1px ${LINIE}` }}>Kfz-Mechatroniker (m/w/d)</span>
-                <span style={{ ...text(11.5, GRAU), padding: "6px 10px", borderRadius: 99, boxShadow: `inset 0 0 0 1px ${LINIE}` }}>14,60 € je Bewerbung</span>
-                <span style={{ ...text(11.5, GRAU), padding: "6px 10px", borderRadius: 99, boxShadow: `inset 0 0 0 1px ${LINIE}` }}>21.400 erreicht</span>
+function Recruiting(props: { los: boolean; akzent: string; beispiel: boolean; schmal: boolean; titel?: string; firma?: string; werte?: Zahlenwert[]; art?: Art }) {
+    const { los, akzent, schmal } = props
+    // Zwei belegte Zahlen aus der Auswertung des Kunden. Die 290.000 Aufrufe standen hier auch
+    // einmal — raus am 15.10.2026: „die 290.000 sind jetzt auch nicht die mega Zahl". Stimmt,
+    // neben 69 Bewerbungen und +632 % ist eine Reichweitenzahl die schwächste der drei.
+    const zahlen: Zahlenwert[] = props.werte ?? [
+        { w: 69, s: 0, n: "", l: "Bewerbungen aus zwei Kampagnen", q: "Kampagnenauswertung des Kunden" },
+        { w: 632, s: 0, n: " %", v: "+", l: "mehr Interaktionen", q: "Kanalauswertung des Kunden" },
+    ]
+    // Raster statt gestapelter Spalten: Zahl, Label und Quelle liegen so in jeder Spalte auf
+    // derselben Höhe, auch wenn ein Label zweizeilig umbricht. Vorher rutschte die Quelle unter
+    // dem längeren Label nach unten und die Reihe wirkte schief.
+    const zellen: ReactNode[] = []
+    zahlen.forEach((z, i) => {
+        const zahl = (
+            <div style={{ ...text(schmal ? 38 : 44, i === 0 ? akzent : PAPIER), fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
+                {z.v ?? ""}
+                <Zaehler bis={z.w} stellen={z.s} nach={z.n} los={los} verzug={0.15 * i} />
             </div>
-            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, marginTop: "auto" }}>
-                <div>
-                    <div style={{ ...text(46), fontVariantNumeric: "tabular-nums" }}>
-                        <Zaehler bis={37} los={los} dauer={2} />
-                    </div>
-                    <div style={text(12.5, GRAU)}>Bewerbungen in 21 Tagen</div>
+        )
+        if (schmal) {
+            zellen.push(
+                <div key={"s" + i} style={{ paddingTop: i > 0 ? 18 : 0, borderTop: i > 0 ? `1px solid ${LINIE}` : "none" }}>
+                    {zahl}
+                    <div style={{ ...text(13, PAPIER), paddingTop: 8 }}>{z.l}</div>
+                    <div style={{ ...text(11.5, GRAU), paddingTop: 6 }}>{z.q}</div>
                 </div>
-                <svg width="46%" viewBox={`0 0 ${b} ${h + 4}`} style={{ overflow: "visible" }}>
-                    <motion.path d={kurve(pts)} fill="none" stroke={akzent} strokeWidth={2.2} strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: los ? 1 : 0 }} transition={{ duration: 2, ease: KURVE }} />
-                </svg>
+            )
+            return
+        }
+        const spalte = i + 1
+        if (i > 0) zellen.push(<div key={"l" + i} style={{ gridColumn: spalte, gridRow: "1 / -1", borderLeft: `1px solid ${LINIE}`, marginLeft: -18 }} />)
+        zellen.push(
+            <div key={"z" + i} style={{ gridColumn: spalte, gridRow: 1 }}>{zahl}</div>,
+            <div key={"b" + i} style={{ ...text(13, PAPIER), gridColumn: spalte, gridRow: 2, paddingTop: 8 }}>{z.l}</div>,
+            <div key={"q" + i} style={{ ...text(11.5, GRAU), gridColumn: spalte, gridRow: 3, paddingTop: 6 }}>{z.q}</div>
+        )
+    })
+    return (
+        <div style={{ display: "flex", flexDirection: schmal ? "column" : "row", height: "100%", gap: schmal ? 20 : 40, alignItems: schmal ? "stretch" : "center" }}>
+            <div style={{ flex: schmal ? "none" : "0 0 30%", display: "flex", flexDirection: "column", gap: 10 }}>
+                <Kopf
+                    art={props.art ?? "performance"}
+                    titel={props.titel ?? "Neue Mitarbeiter über Instagram"}
+                    firma={props.firma ?? "Patio Oldenburg: zwei Kampagnen für neues Personal — dort ausgespielt, wo die Leute ohnehin scrollen."}
+                    beispiel={false}
+                    akzent={akzent}
+                />
+            </div>
+            <div
+                style={{
+                    flex: 1,
+                    display: "grid",
+                    gridTemplateColumns: schmal ? "1fr" : `repeat(${zahlen.length}, 1fr)`,
+                    gridTemplateRows: schmal ? "none" : "auto auto auto",
+                    columnGap: schmal ? 0 : 36,
+                    rowGap: schmal ? 18 : 0,
+                }}
+            >
+                {zellen}
             </div>
         </div>
     )
@@ -576,9 +606,24 @@ function Recruiting(props: { los: boolean; akzent: string; beispiel: boolean }) 
 
 // ---------- Websites ----------
 
-function Browser(props: { bild: string; alt: string; adresse: string; titel: string; firma: string; firmaEng?: string; merkmale: string[]; akzent: string; link: string }) {
+function Browser(props: { bild: string; alt: string; adresse: string; titel: string; firma: string; firmaEng?: string; merkmale: string[]; akzent: string; link: string; beispiel?: boolean }) {
     const { bild, alt, adresse, titel, firma, merkmale, akzent, link } = props
     const [ueber, setUeber] = useState(false)
+    // Die Durchlaufzeit hängt an der Bildhöhe: eine 7000 px lange Seite in sieben Sekunden
+    // durchzuziehen ist unlesbar. Jetzt rund 150 px pro Sekunde, gedeckelt auf 45 s.
+    const bildRef = useRef<HTMLImageElement>(null)
+    const [strecke, setStrecke] = useState(600)
+    useEffect(() => {
+        const el = bildRef.current
+        if (!el) return
+        const messen = () => setStrecke(Math.max(0, el.clientHeight - 100))
+        messen()
+        el.addEventListener("load", messen)
+        const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(messen) : null
+        if (ro) ro.observe(el)
+        return () => { el.removeEventListener("load", messen); if (ro) ro.disconnect() }
+    }, [props.bild])
+    const dauer = Math.min(45, Math.max(6, Math.round(strecke / 150)))
     // Auf dem Handy gibt es kein Überfahren: der Hinweis würde ins Leere laufen und der
     // Öffnen-Knopf bliebe unsichtbar — niemand sähe, dass die Karte zur Website führt.
     const [ref, m] = useMass<HTMLAnchorElement>()
@@ -594,7 +639,7 @@ function Browser(props: { bild: string; alt: string; adresse: string; titel: str
             onPointerLeave={() => setUeber(false)}
             style={{ display: "flex", flexDirection: "column", height: "100%", gap: 14, textDecoration: "none" }}
         >
-            <Kopf art="websites" titel={titel} firma={eng && props.firmaEng ? props.firmaEng : firma} beispiel={false} akzent={akzent} />
+            <Kopf art="websites" titel={titel} firma={eng && props.firmaEng ? props.firmaEng : firma} beispiel={props.beispiel ?? false} akzent={akzent} />
             <div style={{ position: "relative", flex: 1, minHeight: 160, borderRadius: 12, overflow: "hidden", boxShadow: `inset 0 0 0 1px ${LINIE}, 0 30px 60px -30px rgba(0,0,0,0.7)`, background: "rgb(30,31,35)" }}>
                 <div style={{ height: 30, display: "flex", alignItems: "center", gap: 6, padding: "0 12px", background: "rgb(30,31,35)", borderBottom: `1px solid ${LINIE}` }}>
                     {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
@@ -604,6 +649,7 @@ function Browser(props: { bild: string; alt: string; adresse: string; titel: str
                 </div>
                 <div style={{ position: "absolute", left: 0, right: 0, top: 30, bottom: 0, overflow: "hidden" }}>
                     <img
+                        ref={bildRef}
                         src={bild}
                         alt={alt}
                         loading="lazy"
@@ -612,7 +658,7 @@ function Browser(props: { bild: string; alt: string; adresse: string; titel: str
                             height: "auto",
                             display: "block",
                             transform: ueber ? "translateY(calc(-100% + 100px))" : "translateY(0)",
-                            transition: `transform ${ueber ? 7 : 1.2}s ${ueber ? "linear" : CSSKURVE}`,
+                            transition: `transform ${ueber ? dauer : 1.2}s ${ueber ? "linear" : CSSKURVE}`,
                         }}
                     />
                 </div>
@@ -633,77 +679,90 @@ function Browser(props: { bild: string; alt: string; adresse: string; titel: str
 
 // ---------- Content ----------
 
-function Reel(props: { los: boolean; akzent: string; beispiel: boolean }) {
-    const { los, akzent, beispiel } = props
-    return (
-        <div style={{ position: "relative", height: "100%", margin: -20, borderRadius: 16, overflow: "hidden" }}>
-            <img src={BILD("photo-1758767355046-1986dda2d967", 800)} alt="Beispielmotiv Werkstatt" loading="lazy" decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.62) 16%, rgba(0,0,0,0.18) 34%, rgba(0,0,0,0.12) 55%, rgba(0,0,0,0.85) 100%)" }} />
-            <div style={{ position: "absolute", left: 20, right: 20, top: 20 }}>
-                <Kopf art="content" titel="Videos aus dem Arbeitsalltag" firma="Werkstatt Harms: kurze Clips für Instagram und Anzeigen." beispiel={beispiel} akzent={akzent} hell />
+// ---------- Fotos & Videos: einzelner Film ----------
+
+// Lädt das Video erst auf Klick. Vorher steht nur das Standbild da (60–120 KB), die mp4 selbst
+// holt der Browser nie, wenn niemand abspielt. Deshalb kosten auch die schweren Filme (bis 14 MB)
+// an dieser Stelle nichts.
+function Filmkachel(props: { akzent: string; titel: string; firma: string; datei: string; standbild: string; hinweis: string }) {
+    const { akzent, titel, firma, datei, standbild, hinweis } = props
+    const istStatisch = useIsStaticRenderer()
+    const [laeuft, setLaeuft] = useState(false)
+    const videoRef = useRef<HTMLVideoElement>(null)
+    const starten = () => {
+        setLaeuft(true)
+        window.setTimeout(() => videoRef.current?.play().catch(() => {}), 0)
+    }
+    if (laeuft && !istStatisch) {
+        return (
+            <div style={{ position: "absolute", inset: 0, borderRadius: 16, overflow: "hidden", background: "rgb(14,15,18)" }}>
+                <video ref={videoRef} src={datei} poster={standbild} controls playsInline preload="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
-            <motion.div
-                animate={los ? { scale: [1, 1.08, 1] } : {}}
-                transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-                style={{ position: "absolute", left: "50%", top: "50%", width: 58, height: 58, marginLeft: -29, marginTop: -29, borderRadius: 99, background: "rgba(245,243,239,0.18)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "inset 0 0 0 1px rgba(245,243,239,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-                <svg width="18" height="18" viewBox="0 0 16 16">
-                    <path d="M5 3.5v9l7.5-4.5z" fill={PAPIER} />
-                </svg>
-            </motion.div>
-            <div style={{ position: "absolute", left: 20, right: 20, bottom: 20, display: "flex", flexDirection: "column", gap: 12 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-                    <div>
-                        <div style={{ ...text(30), fontVariantNumeric: "tabular-nums" }}>
-                            <Zaehler bis={128.4} stellen={1} nach="K" los={los} />
-                        </div>
-                        <div style={text(12, "rgba(245,243,239,0.7)")}>Aufrufe</div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                        <div style={text(20)}>71 %</div>
-                        <div style={text(12, "rgba(245,243,239,0.7)")}>Ø angesehen</div>
-                    </div>
-                </div>
-                <div style={{ height: 3, borderRadius: 3, background: "rgba(245,243,239,0.2)", overflow: "hidden" }}>
-                    <motion.div animate={los ? { width: ["0%", "100%"] } : {}} transition={{ duration: 9, repeat: Infinity, ease: "linear" }} style={{ height: "100%", background: PAPIER }} />
-                </div>
+        )
+    }
+    return (
+        <div style={{ position: "absolute", inset: 0, borderRadius: 16, overflow: "hidden" }}>
+            <img src={standbild} alt={titel} loading="lazy" decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.58) 20%, rgba(0,0,0,0.14) 42%, rgba(0,0,0,0.8) 100%)" }} />
+            <div style={{ position: "absolute", left: 20, right: 20, top: 20 }}>
+                <Kopf art="content" titel={titel} firma={firma} beispiel={false} akzent={akzent} hell />
+            </div>
+            <button type="button" onClick={starten} aria-label={titel + " abspielen"} style={{ all: "unset", position: "absolute", inset: 0, cursor: "pointer", display: "grid", placeItems: "center", WebkitTapHighlightColor: "transparent" }}>
+                <span style={{ width: 58, height: 58, borderRadius: 99, background: "rgba(245,243,239,0.18)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "inset 0 0 0 1px rgba(245,243,239,0.35)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <svg width="18" height="18" viewBox="0 0 16 16">
+                        <path d="M5 3.5v9l7.5-4.5z" fill={PAPIER} />
+                    </svg>
+                </span>
+            </button>
+            <div style={{ position: "absolute", left: 20, right: 20, bottom: 20 }}>
+                <span style={text(12, "rgba(245,243,239,0.72)")}>{hinweis}</span>
             </div>
         </div>
     )
 }
 
-function Fotoserie(props: { akzent: string; beispiel: boolean }) {
+function Fotoserie(props: { akzent: string; beispiel: boolean; titel?: string; firma?: string; bilder?: string[]; alt?: string }) {
     const { akzent, beispiel } = props
     const [ueber, setUeber] = useState(false)
-    const bilder = [BILD("photo-1544164560-adac3045edb2", 500), BILD("photo-1776728016975-45f2197c0d2a", 500), BILD("photo-1608613304899-ea8098577e38", 500)]
+    // Drei Aufnahmen aus dem Patio: oben die Bar über die volle Breite, darunter Tisch und Schild.
+    // Bis 15.10.2026 lagen sie als gedrehter Stapel übereinander — davon waren zwei Motive
+    // zur Hälfte verdeckt, und das Tischfoto hatte links einen schwarzen Balken (falscher Export).
+    const bilder = props.bilder ?? [
+        "https://framerusercontent.com/images/rTcMce0vkztNWOX0ARiPW2yaW0.jpg?scale-down-to=1024",
+        "https://framerusercontent.com/images/biHyYmFOP94IwwYVWd2UvoYH8w.jpg?scale-down-to=1024",
+        "https://framerusercontent.com/images/NEyz01HqFugBjJSJEE2fhmUcRmA.jpg",
+    ]
+    const alt = props.alt ?? "Foto aus dem Patio in Oldenburg"
+    const feld = (src: string, i: number, breit: boolean) => (
+        <div
+            key={i}
+            style={{
+                position: "relative",
+                overflow: "hidden",
+                borderRadius: 10,
+                gridColumn: breit ? "1 / span 2" : undefined,
+                boxShadow: "inset 0 0 0 1px rgba(245,243,239,0.12)",
+            }}
+        >
+            <img
+                src={src}
+                alt={alt}
+                loading="lazy"
+                style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    transform: ueber ? "scale(1.05)" : "scale(1)",
+                    transition: `transform 0.9s ${CSSKURVE}`,
+                }}
+            />
+        </div>
+    )
     return (
         <div onPointerEnter={() => setUeber(true)} onPointerLeave={() => setUeber(false)} style={{ display: "flex", flexDirection: "column", height: "100%", gap: 10 }}>
-            <Kopf art="content" titel="Echte Fotos statt Stockbilder" firma="Tischlerei Wübbens: 64 Motive an einem Tag vor Ort." beispiel={beispiel} akzent={akzent} />
-            <div style={{ position: "relative", flex: 1, minHeight: 150 }}>
-                {bilder.map((src, i) => {
-                    const r = (i - 1) * (ueber ? 9 : 5)
-                    const x = (i - 1) * (ueber ? 34 : 16)
-                    return (
-                        <div
-                            key={i}
-                            style={{
-                                position: "absolute",
-                                left: "50%",
-                                top: "50%",
-                                width: "42%",
-                                aspectRatio: "4 / 5",
-                                transform: `translate(calc(-50% + ${x}%), -50%) rotate(${r}deg)`,
-                                transition: `transform 0.8s ${CSSKURVE}`,
-                                borderRadius: 10,
-                                overflow: "hidden",
-                                zIndex: i === 1 ? 3 : 1,
-                                boxShadow: "0 24px 40px -16px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(245,243,239,0.1)",
-                            }}
-                        >
-                            <img src={src} alt="Beispielmotiv Handwerk" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        </div>
-                    )
-                })}
+            <Kopf art="content" titel={props.titel ?? "Echte Fotos statt Stockbilder"} firma={props.firma ?? "Patio Oldenburg: Fotos und Filme aus dem eigenen Haus."} beispiel={beispiel} akzent={akzent} />
+            <div style={{ flex: 1, minHeight: 150, display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: bilder.length > 2 ? "1.15fr 1fr" : "1fr", gap: 8 }}>
+                {bilder.slice(0, 3).map((src, i) => feld(src, i, bilder.length > 2 ? i === 0 : false))}
             </div>
         </div>
     )
@@ -722,21 +781,35 @@ interface Kachel {
 }
 
 const KACHELN: Kachel[] = [
-    { id: "cockpit", art: "performance", d: [7, 3], t: [6, 3], p: 545, inhalt: (k) => <Cockpit {...k} /> },
-    { id: "meta", art: "performance", d: [5, 3], t: [3, 3], p: 700, inhalt: (k) => <MetaAnzeige {...k} /> },
-    { id: "google", art: "performance", d: [5, 3], t: [3, 3], p: 510, inhalt: (k) => <GoogleSuche {...k} /> },
-    { id: "trichter", art: "performance", d: [7, 3], t: [6, 3], p: 480, inhalt: (k) => <Trichter {...k} /> },
+    { id: "google", art: "performance", d: [5, 3], t: [3, 3], p: 510, inhalt: (k) => <GoogleSuche {...k} beispiel={false} titel="Ganz oben bei Google" firma="Sucht jemand im Ammerland eine Werkstatt, steht WAV Westerstede oben. Google Ads, Mai bis Oktober 2026." suche="werkstatt westerstede" domain="wav-wst.de" headline="WAV Westerstede — Alles für Dein Auto. Aus einer Hand." beschreibung="Freie Kfz-Werkstatt im Ammerland: Inspektion, Reparatur, Steinschlag und Autoglas. Für alle Marken, ob Verbrenner, Hybrid oder Elektro." links={["Termin anfragen", "Leistungen", "Steinschlag & Autoglas", "Karriere"]} werte={[{ l: "Klickrate", w: 3.3, s: 1, n: " %" }, { l: "Ø Klickpreis", w: 0.33, s: 2, n: " €" }, { l: "Kontakte", w: 439, s: 0, n: "" }]} /> },
+    { id: "trichter", art: "performance", d: [7, 3], t: [6, 3], p: 480, inhalt: (k) => <Trichter {...k} beispiel={false} titel="Von der Anzeige bis auf die Seite" firma="Universität Oldenburg: Meta-Anzeigen für fünf Studiengänge, Juli bis Oktober 2026." stufen={[{ l: "Eingeblendet", w: 1150458, anteil: 1 }, { l: "Menschen erreicht", w: 589310, anteil: 0.62, q: "51 %" }, { l: "Seitenaufrufe", w: 36842, anteil: 0.3, q: "6,3 %" }]} /> },
     {
-        id: "wav", art: "websites", d: [5, 3], t: [6, 3], p: 400,
-        inhalt: (k) => <Browser bild="https://framerusercontent.com/images/ArC0EnCXXAPEbwWsXDR5b7YS2eg.webp" alt="Website WAV Westerstede" adresse="wav-wst.de" titel="Website für WAV Westerstede" firma="Kfz-Werkstatt — live unter wav-wst.de. Zum Durchscrollen überfahren." firmaEng="Kfz-Werkstatt — live unter wav-wst.de. Tippen öffnet die Seite." merkmale={["Anfragen über Formular & Anruf", "Mobil zuerst"]} akzent={k.akzent} link="https://wav-wst.de/" />,
+        id: "wav", art: "websites", d: [6, 3], t: [6, 3], p: 400,
+        inhalt: (k) => <Browser bild="https://framerusercontent.com/images/ArC0EnCXXAPEbwWsXDR5b7YS2eg.webp?scale-down-to=1024" alt="Website WAV Westerstede" adresse="wav-wst.de" titel="Website für WAV Westerstede" firma="Kfz-Werkstatt — live unter wav-wst.de. Zum Durchscrollen überfahren." firmaEng="Kfz-Werkstatt — live unter wav-wst.de. Tippen öffnet die Seite." merkmale={["Anfragen über Formular & Anruf", "Mobil zuerst"]} akzent={k.akzent} link="https://wav-wst.de/" />,
     },
-    { id: "reel", art: "content", d: [3, 3], t: [3, 3], p: 520, bild: true, inhalt: (k) => <Reel {...k} /> },
-    { id: "kosten", art: "performance", d: [4, 3], t: [3, 3], p: 410, inhalt: (k) => <KostenBalken {...k} /> },
-    { id: "recruiting", art: "performance", d: [4, 2], t: [3, 2], p: 320, inhalt: (k) => <Recruiting {...k} /> },
-    { id: "fotos", art: "content", d: [4, 2], t: [3, 2], p: 320, inhalt: (k) => <Fotoserie {...k} /> },
     {
-        id: "kaemper", art: "websites", d: [4, 2], t: [6, 2], p: 340,
-        inhalt: (k) => <Browser bild="https://framerusercontent.com/images/vsrW4ZDFYyTO5QmW2LTvfyfwko.webp" alt="Website Hotel Kämper" adresse="kaemper.vercel.app" titel="Website für Hotel Kämper" firma="Hotel mit Direktbuchung — Entwurf." merkmale={["Direktbuchung"]} akzent={k.akzent} link="https://kaemper.vercel.app/" />,
+        id: "hotel", art: "websites", d: [6, 3], t: [6, 3], p: 400,
+        inhalt: (k) => <Browser bild="https://framerusercontent.com/images/9KeR5qIyhedL9V2olrA5Rz9xrM.jpg?scale-down-to=1024" alt="Entwurf einer Hotelseite mit Direktbuchung" adresse="hotel-seeklang.vercel.app" titel="So könnte eine Hotelseite aussehen" firma="Beispielseite: Zimmer, Angebote, Direktbuchung — zum Durchscrollen überfahren." firmaEng="Beispielseite: Zimmer, Angebote, Direktbuchung. Tippen öffnet die Seite." merkmale={["Direktbuchung", "Mobil zuerst"]} akzent={k.akzent} link="https://hotel-seeklang.vercel.app/" beispiel={true} />,
+    },
+    { id: "film-thieme", art: "content", d: [3, 3], t: [3, 3], p: 520, bild: true, inhalt: (k) => <Filmkachel akzent={k.akzent} titel="Zwei Kollektionen, im Laden gefilmt" firma="Thieme Augenoptik · Hörakustik: Cazal und Gigi Studios, Kollektion 2026." datei="https://framerusercontent.com/assets/Geu7GpehkTw4NVn0rXD74NZo.mp4" standbild="https://framerusercontent.com/images/taX1EdxFi6dzoDKEvtwkevkXCQk.jpg?scale-down-to=1024" hinweis="24 Sekunden" /> },
+    { id: "film-zwillis", art: "content", d: [3, 3], t: [3, 3], p: 520, bild: true, inhalt: (k) => <Filmkachel akzent={k.akzent} titel="Spielszenen für Instagram" firma="Zwillis Padel, Oldenburg: laufender Content aus der Halle." datei="https://framerusercontent.com/assets/NWJJHwfl5bAt7fKTU7QXy3vJKJk.mp4" standbild="https://framerusercontent.com/images/zdq7SpKfJOcu50ewz7gUrN2XbuY.jpg?scale-down-to=1024" hinweis="28 Sekunden" /> },
+    { id: "film-eule", art: "content", d: [3, 3], t: [3, 3], p: 520, bild: true, inhalt: (k) => <Filmkachel akzent={k.akzent} titel="Drei Marken in einem Film" firma="Eule Oldenburg × Leffers × Hugo Blue: Kooperationsabend im Kaufhaus." datei="https://framerusercontent.com/assets/YRfGjXEUT1I4URYFpOT2eTeOMFo.mp4" standbild="https://framerusercontent.com/images/cIBe4JyRXLPKr8m6nYqR29qmM4.jpg" hinweis="47 Sekunden" /> },
+    { id: "fotos", art: "content", d: [3, 3], t: [3, 3], p: 460, inhalt: (k) => <Fotoserie {...k} beispiel={false} /> },
+    {
+        id: "zwillis-zahlen", art: "content", d: [12, 2], t: [6, 2], p: 360,
+        inhalt: (k) => (
+            <Recruiting
+                {...k}
+                art="content"
+                titel="Was laufender Content bringt"
+                firma="Zwillis Padel, Oldenburg: Fotos, Reels und Stories aus der Halle — fortlaufend, ohne Werbebudget. Instagram-Insights, 16.08.–14.10.2026."
+                werte={[
+                    { w: 375452, s: 0, n: "", l: "Aufrufe in 60 Tagen", q: "" },
+                    { w: 70403, s: 0, n: "", l: "Betrachter", q: "" },
+                    { w: 1042, s: 0, n: "", v: "+", l: "neue Follower", q: "" },
+                ]}
+            />
+        ),
     },
 ]
 
@@ -886,7 +959,7 @@ export default function Arbeitsschau(props: ArbeitsschauProps) {
             ) : null}
             {beispielHinweis ? (
                 <p style={{ ...text(12.5, "rgba(245,243,239,0.4)"), textAlign: "center", maxWidth: 560 }}>
-                    Die Websites sind echte Kundenprojekte. Firmen und Zahlen in den Werbe- und Foto-Kacheln sind Beispiele — so sieht es aus, wenn wir für Sie arbeiten.
+                    Alles hier ist echte Arbeit für Kunden: Websites, Filme, Fotos und Kampagnen. Einzige Ausnahme ist die Hotelseite — ein Entwurf aus dem eigenen Haus.
                 </p>
             ) : null}
         </div>

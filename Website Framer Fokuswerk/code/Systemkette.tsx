@@ -2,48 +2,76 @@ import { addPropertyControls, ControlType, useIsStaticRenderer } from "framer"
 import { motion, useScroll, useTransform, useSpring, useReducedMotion, type MotionValue } from "framer-motion"
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
 
-// Systemkette — die Aussage der Positionierung als Grafik: Vier Bausteine liegen zuerst verstreut
-// und blass da („einzelne Maßnahmen“). Beim Durchscrollen gleiten sie in eine Reihe, eine orange
-// Linie verbindet sie der Reihe nach, die Kennzahlen zählen hoch — aus Einzelteilen wird eine Kette.
-// Ist sie geschlossen, läuft ein Lichtpunkt von der Anzeige bis zum Auftrag. Nicht sticky: die
-// Bewegung hängt nur an der Position der Karte im Fenster. Werte sind Beispielwerte.
+// Systemkette — die Positionierung als eine Rechnung, nicht als vier Kästen.
+//
+// Vorgeschichte: Bis 15.10.2026 standen hier vier gleich große Karten mit Mini-Grafiken und
+// erfundenen Werten („12.480", „4 von 100", „41", „ein Drittel"), die beim Scrollen aus einer
+// verstreuten Lage einrasteten. Rückmeldung: „finde ich noch nicht so mega geil." Drei Gründe,
+// die das erklären: vier gleich gewichtete Karten sind ein Standardraster; die Mini-Grafiken
+// zeigten nichts Echtes; und vor allem rechneten die vier Zahlen nicht miteinander — sie standen
+// beziehungslos nebeneinander, obwohl der Abschnitt gerade behauptet, dass alles ineinandergreift.
+//
+// Jetzt: eine Achse mit vier Knoten, auf der eine einzige Kette durchrechnet —
+// 215.321 Einblendungen → 3,3 % klicken → 7.051 Besucher → 6,2 % melden sich → 439 Anfragen →
+// 2.328 € Budget → 5,30 € je Anfrage. Alle Werte aus einem echten Google-Ads-Konto
+// (WAV Westerstede, 19.05.–12.10.2026, siehe Fallstudien-Material.md). Beim Scrollen wächst die
+// Linie von links nach rechts durch die Knoten; die Stationen kommen in derselben Reihenfolge.
+// Nicht sticky: die Bewegung hängt nur an der Position des Blocks im Fenster.
 
 interface Glied {
     titel: string
     text: string
     wert: string
     einheit: string
+    uebergang?: string
 }
 
 interface SystemketteProps {
     stufen: Glied[]
     akzent: string
+    quelle: string
     beispielHinweis: boolean
     style?: CSSProperties
 }
 
 const SCHRIFT = "Inter, 'Inter Placeholder', system-ui, sans-serif"
 const PAPIER = "rgb(245, 243, 239)"
-const TINTE = "rgb(14, 15, 18)"
-const FLAECHE = "rgb(42, 42, 42)"
-const MARKENGRAU = "rgb(53, 53, 53)" // Markengrau für dunkle Flächen (ersetzt Tinte als Fläche)
+const MARKENGRAU = "rgb(53, 53, 53)"
 const LINIE = "rgba(245, 243, 239, 0.09)"
 const GRAU = "rgba(245, 243, 239, 0.5)"
+const LEISE = "rgba(245, 243, 239, 0.34)"
 
 const STANDARD: Glied[] = [
-    { titel: "Gesehen werden", text: "Ihre Anzeige erscheint bei Google und Instagram — bei Leuten in Ihrer Region, die gerade suchen.", wert: "12.480", einheit: "Menschen sehen die Anzeige" },
-    { titel: "Überzeugen", text: "Ihre Website zeigt in Sekunden, warum Sie die richtige Wahl sind — auch auf dem Handy.", wert: "3,4 %", einheit: "der Besucher melden sich" },
-    { titel: "Anfrage bekommen", text: "Anruf, Formular oder WhatsApp: Wir sehen, welche Anzeige welche Anfrage gebracht hat.", wert: "41", einheit: "Anfragen im Monat" },
-    { titel: "Besser werden", text: "Was funktioniert, bekommt mehr Budget. Was nicht funktioniert, fliegt raus.", wert: "−38 %", einheit: "Kosten pro Anfrage" },
+    {
+        titel: "Gesehen werden",
+        text: "Die Anzeige läuft bei Google und Instagram — dort, wo Ihre Kunden gerade suchen.",
+        wert: "215.321",
+        einheit: "Einblendungen",
+        uebergang: "3,3 % klicken",
+    },
+    {
+        titel: "Überzeugen",
+        text: "In Sekunden klarmachen, warum ausgerechnet Sie — 97 % der Besucher kamen vom Handy.",
+        wert: "7.051",
+        einheit: "Besucher auf der Seite",
+        uebergang: "6,2 % melden sich",
+    },
+    {
+        titel: "Anfrage bekommen",
+        text: "Anruf, Formular oder WhatsApp — und wir sehen, welche Anzeige die Anfrage gebracht hat.",
+        wert: "439",
+        einheit: "Anfragen",
+        uebergang: "2.328 € Budget",
+    },
+    {
+        titel: "Besser werden",
+        text: "Was Anfragen bringt, bekommt mehr Budget. Was nichts bringt, fliegt raus.",
+        wert: "5,30 €",
+        einheit: "je Anfrage",
+    },
 ]
 
-// Verstreute Ausgangslage je Baustein: x, y (px), Drehung (°)
-const STREU: [number, number, number][] = [
-    [-46, 64, -7],
-    [34, -58, 5],
-    [-28, 72, 6],
-    [52, -44, -6],
-]
+const QUELLE_STANDARD = "Google Ads für WAV Westerstede · 19.05.–12.10.2026"
 
 function useBreite<T extends HTMLElement>() {
     const ref = useRef<T>(null)
@@ -65,150 +93,47 @@ const weich = (v: number) => {
     return x * x * (3 - 2 * x)
 }
 
-// ---------- kleine Grafiken je Baustein ----------
+// ---------- Achse: Knoten und wachsende Linie ----------
 
-function Mini(props: { i: number; akzent: string; an: MotionValue<number> }) {
-    const { i, akzent, an } = props
-    const breite = useTransform(an, (v: number) => `${Math.round(weich(v) * 100)}%`)
-    if (i === 0)
-        return (
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {["Google", "Instagram"].map((t, k) => (
+function Knoten(props: { i: number; letzter: boolean; p: MotionValue<number>; akzent: string; statisch: boolean }) {
+    const { i, letzter, p, akzent, statisch } = props
+    const an = useTransform(p, (v: number) => (statisch ? 1 : weich((v - (0.1 + i * 0.22)) / 0.2)))
+    const fuellung = useTransform(an, (v: number) => (v > 0.5 ? akzent : "rgba(245,243,239,0.18)"))
+    const hof = useTransform(an, (v: number) => `0 0 0 ${(v * 5).toFixed(2)}px rgba(255,90,31,0.16)`)
+    const strich = useTransform(p, (v: number) => (statisch ? 1 : weich((v - (0.18 + i * 0.22)) / 0.22)))
+    return (
+        <div style={{ height: 26, display: "flex", alignItems: "center", gap: 0 }}>
+            <motion.span style={{ width: 9, height: 9, borderRadius: 9, background: fuellung, boxShadow: hof, flexShrink: 0 }} />
+            {!letzter && (
+                <span style={{ flex: 1, height: 1, background: LINIE, position: "relative", overflow: "hidden" }}>
                     <motion.span
-                        key={t}
-                        style={{
-                            fontSize: 11,
-                            fontWeight: 500,
-                            letterSpacing: "-0.01em",
-                            color: PAPIER,
-                            padding: "5px 10px",
-                            borderRadius: 999,
-                            border: `1px solid ${LINIE}`,
-                            background: "rgba(245,243,239,0.04)",
-                            opacity: useTransform(an, [k * 0.2, 0.5 + k * 0.2], [0.3, 1]),
-                        }}
-                    >
-                        {t}
-                    </motion.span>
-                ))}
-            </div>
-        )
-    if (i === 1)
-        return (
-            <div style={{ borderRadius: 8, border: `1px solid ${LINIE}`, overflow: "hidden", background: "rgba(245,243,239,0.03)" }}>
-                <div style={{ display: "flex", gap: 4, padding: "6px 8px", borderBottom: `1px solid ${LINIE}` }}>
-                    {[0, 1, 2].map((k) => (
-                        <span key={k} style={{ width: 5, height: 5, borderRadius: 9, background: "rgba(245,243,239,0.22)" }} />
-                    ))}
-                </div>
-                <div style={{ padding: "8px 8px 9px", display: "grid", gap: 5 }}>
-                    <div style={{ height: 6, width: "72%", borderRadius: 3, background: "rgba(245,243,239,0.28)" }} />
-                    <div style={{ height: 4, width: "90%", borderRadius: 3, background: "rgba(245,243,239,0.12)" }} />
-                    <motion.div style={{ height: 12, width: 54, borderRadius: 6, background: akzent, opacity: useTransform(an, [0.3, 0.9], [0.25, 1]) }} />
-                </div>
-            </div>
-        )
-    if (i === 2)
-        return (
-            <div style={{ display: "grid", gap: 6 }}>
-                {[
-                    ["Instagram", 0.48],
-                    ["Google", 0.37],
-                    ["Direkt", 0.15],
-                ].map(([l, a], k) => (
-                    <div key={l as string} style={{ display: "grid", gridTemplateColumns: "58px 1fr", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 10.5, color: GRAU, letterSpacing: "0.02em" }}>{l}</span>
-                        <div style={{ height: 5, borderRadius: 3, background: "rgba(245,243,239,0.07)", overflow: "hidden" }}>
-                            <motion.div style={{ height: "100%", borderRadius: 3, background: k === 0 ? akzent : "rgba(245,243,239,0.45)", width: useTransform(an, (v: number) => `${Math.round(weich((v - k * 0.12) / 0.7) * (a as number) * 100)}%`) }} />
-                        </div>
-                    </div>
-                ))}
-            </div>
-        )
-    return (
-        <svg viewBox="0 0 120 40" width="100%" height={40} style={{ display: "block", overflow: "visible" }}>
-            <path d="M2 8 C 20 10, 30 14, 44 18 S 70 26, 84 30 S 108 34, 118 35" fill="none" stroke="rgba(245,243,239,0.12)" strokeWidth={2} strokeLinecap="round" />
-            <motion.path
-                d="M2 8 C 20 10, 30 14, 44 18 S 70 26, 84 30 S 108 34, 118 35"
-                fill="none"
-                stroke={akzent}
-                strokeWidth={2}
-                strokeLinecap="round"
-                style={{ pathLength: useTransform(an, [0.1, 1], [0, 1]) }}
-            />
-            <motion.circle cx={118} cy={35} r={3.2} fill={akzent} style={{ opacity: useTransform(an, [0.85, 1], [0, 1]) }} />
-        </svg>
+                        style={{ position: "absolute", inset: 0, background: akzent, transformOrigin: "0% 50%", scaleX: strich }}
+                    />
+                </span>
+            )}
+        </div>
     )
 }
 
-// ---------- ein Baustein ----------
-
-function Baustein(props: { g: Glied; i: number; p: MotionValue<number>; akzent: string; schmal: boolean; statisch: boolean }) {
-    const { g, i, p, akzent, schmal, statisch } = props
-    const [sx, sy, sr] = STREU[i % STREU.length]
-    // gestaffeltes Einrasten: Baustein i kommt zwischen a und b an
-    const a = 0.05 + i * 0.1
-    const b = a + 0.42
-    const t = useTransform(p, (v: number) => (statisch ? 1 : weich((v - a) / (b - a))))
-    const x = useTransform(t, (v: number) => (schmal ? sx * 0.5 : sx) * (1 - v))
-    const y = useTransform(t, (v: number) => (schmal ? 0 : sy) * (1 - v))
-    const rotate = useTransform(t, (v: number) => sr * (1 - v))
-    const scale = useTransform(t, [0, 1], [0.92, 1])
-    const opacity = useTransform(t, [0, 1], [0.42, 1])
-    const filter = useTransform(t, (v: number) => `blur(${((1 - v) * 3).toFixed(2)}px)`)
-    // Innenleben (Kennzahl, Mini-Grafik) folgt, sobald das Glied angeschlossen ist
-    const an = useTransform(p, (v: number) => (statisch ? 1 : klemm((v - (0.45 + i * 0.1)) / 0.35)))
-    const rand = useTransform(an, (v: number) => `1px solid ${v > 0.02 ? `rgba(255, 90, 31, ${(0.12 + v * 0.38).toFixed(3)})` : LINIE}`)
-    const ziffer = useTransform(an, (v: number) => (v > 0.5 ? akzent : GRAU))
-    const kennzahl = useTransform(an, [0, 1], [0.25, 1])
-
+function Strecke(props: { i: number; p: MotionValue<number>; akzent: string; statisch: boolean }) {
+    const { i, p, akzent, statisch } = props
+    const strich = useTransform(p, (v: number) => (statisch ? 1 : weich((v - (0.2 + i * 0.22)) / 0.22)))
     return (
-        <motion.div
-            style={{
-                x,
-                y,
-                rotate,
-                scale,
-                opacity,
-                filter,
-                position: "relative",
-                zIndex: 2,
-                background: FLAECHE,
-                border: rand,
-                borderRadius: 16,
-                padding: schmal ? "20px 20px 18px" : "22px 22px 20px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 14,
-                minHeight: schmal ? 0 : 318,
-                boxShadow: "0 30px 60px -30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(245,243,239,0.05)",
-                boxSizing: "border-box",
-            }}
-        >
-            <motion.span style={{ fontSize: 11, fontWeight: 500, letterSpacing: "0.14em", color: ziffer }}>{String(i + 1).padStart(2, "0")}</motion.span>
-            <div style={{ display: "grid", gap: 8 }}>
-                <span style={{ fontSize: schmal ? 19 : 20, fontWeight: 500, letterSpacing: "-0.035em", lineHeight: 1.15, color: PAPIER, ...({ textWrap: "balance" } as any) }}>{g.titel}</span>
-                <span style={{ fontSize: 13.5, lineHeight: 1.5, letterSpacing: "-0.01em", color: GRAU }}>{g.text}</span>
-            </div>
-            <div style={{ flex: 1, minHeight: schmal ? 0 : 12 }} />
-            <Mini i={i} akzent={akzent} an={an} />
-            <motion.div style={{ opacity: kennzahl, borderTop: `1px solid ${LINIE}`, paddingTop: 12, display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 26, fontWeight: 500, letterSpacing: "-0.05em", color: PAPIER, fontVariantNumeric: "tabular-nums" }}>{g.wert}</span>
-                <span style={{ fontSize: 12, color: GRAU, letterSpacing: "-0.005em" }}>{g.einheit}</span>
-            </motion.div>
-        </motion.div>
+        <div style={{ height: 26, display: "flex", alignItems: "center" }}>
+            <span style={{ flex: 1, height: 1, background: LINIE, position: "relative", overflow: "hidden" }}>
+                <motion.span style={{ position: "absolute", inset: 0, background: akzent, transformOrigin: "0% 50%", scaleX: strich }} />
+            </span>
+        </div>
     )
 }
 
-// ---------- Handy: zweispaltige Aufstellung statt Diagramm ----------
+// ---------- Handy: eine Zeile je Schritt ----------
 // Vorgeschichte: erst vier scrollgesteuerte Karten (zu wuchtig, ruckelte), dann eine Zeitleiste
-// mit Kreisen, Verbindungslinie und je drei Textgrößen pro Schritt. Auch die las sich wie ein
-// technisches Schaubild — vier verschachtelte Blöcke, zwei Etiketten in der Kopfzeile.
-// Jetzt: eine Zeile je Schritt. Links was passiert, rechts was dabei herauskommt, dazwischen
-// eine feine Linie. Keine Kreise, keine Verschachtelung, ein Etikett.
+// mit Kreisen. Beides las sich wie ein technisches Schaubild. Jetzt: links was passiert, rechts
+// was dabei herauskommt, dazwischen die Umrechnung auf einer feinen Linie.
 
-function KompaktKette(props: { liste: Glied[]; akzent: string; beispielHinweis: boolean; statisch: boolean; reduziert: boolean }) {
-    const { liste, akzent, beispielHinweis, statisch, reduziert } = props
+function KompaktKette(props: { liste: Glied[]; akzent: string; fussnote: string; statisch: boolean; reduziert: boolean }) {
+    const { liste, akzent, fussnote, statisch, reduziert } = props
     const ruhig = statisch || reduziert
     return (
         <div style={{ position: "relative" }}>
@@ -222,84 +147,31 @@ function KompaktKette(props: { liste: Glied[]; akzent: string; beispielHinweis: 
                     whileInView={ruhig ? undefined : { opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.6 }}
                     transition={{ duration: 0.45, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr auto",
-                        alignItems: "baseline",
-                        columnGap: 14,
-                        padding: "13px 0",
-                        borderTop: i === 0 ? "none" : `1px solid ${LINIE}`,
-                    }}
                 >
-                    <span style={{ minWidth: 0 }}>
-                        <span style={{ fontSize: 16, fontWeight: 500, letterSpacing: "-0.025em", lineHeight: 1.25, color: PAPIER }}>
-                            <span style={{ color: akzent, fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", marginRight: 8, verticalAlign: "1px" }}>
-                                {String(i + 1).padStart(2, "0")}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr auto", alignItems: "baseline", columnGap: 14, padding: "13px 0", borderTop: i === 0 ? "none" : `1px solid ${LINIE}` }}>
+                        <span style={{ minWidth: 0 }}>
+                            <span style={{ fontSize: 16, fontWeight: 500, letterSpacing: "-0.025em", lineHeight: 1.25, color: PAPIER }}>
+                                <span style={{ color: akzent, fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", marginRight: 8, verticalAlign: "1px" }}>
+                                    {String(i + 1).padStart(2, "0")}
+                                </span>
+                                {g.titel}
                             </span>
-                            {g.titel}
+                            <span style={{ display: "block", fontSize: 12.5, lineHeight: 1.35, letterSpacing: "-0.005em", color: GRAU, marginTop: 2 }}>{g.einheit}</span>
                         </span>
-                        <span style={{ display: "block", fontSize: 12.5, lineHeight: 1.35, letterSpacing: "-0.005em", color: GRAU, marginTop: 2 }}>{g.einheit}</span>
-                    </span>
-                    <span style={{ fontSize: 20, fontWeight: 500, letterSpacing: "-0.04em", color: PAPIER, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", textAlign: "right" }}>
-                        {g.wert}
-                    </span>
+                        <span style={{ fontSize: 20, fontWeight: 500, letterSpacing: "-0.04em", color: PAPIER, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", textAlign: "right" }}>
+                            {g.wert}
+                        </span>
+                    </div>
+                    {g.uebergang && (
+                        <div aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 2 }}>
+                            <span style={{ width: 1, height: 14, background: akzent, opacity: 0.7, flexShrink: 0 }} />
+                            <span style={{ fontSize: 11, letterSpacing: "0.04em", color: LEISE }}>{g.uebergang}</span>
+                        </div>
+                    )}
                 </motion.div>
             ))}
-            {beispielHinweis && (
-                <div style={{ marginTop: 14, fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(245,243,239,0.3)" }}>
-                    Beispielwerte
-                </div>
-            )}
-        </div>
-    )
-}
-
-// ---------- Verbindung zwischen zwei Bausteinen ----------
-
-function Verbindung(props: { i: number; p: MotionValue<number>; akzent: string; schmal: boolean; statisch: boolean; geschlossen: boolean }) {
-    const { i, p, akzent, schmal, statisch, geschlossen } = props
-    const reduziert = useReducedMotion()
-    const a = 0.42 + i * 0.1
-    const f = useTransform(p, (v: number) => (statisch ? 1 : weich((v - a) / 0.2)))
-    const skala = schmal ? { scaleY: f } : { scaleX: f }
-    const punkt = useTransform(f, [0.9, 1], [0, 1])
-    return (
-        <div
-            aria-hidden="true"
-            style={{
-                position: "relative",
-                zIndex: 1,
-                ...(schmal ? { width: 2, height: 28, margin: "0 auto" } : { height: 2, width: "100%", alignSelf: "center" }),
-                background: "rgba(245,243,239,0.08)",
-                borderRadius: 2,
-            }}
-        >
-            <motion.div style={{ position: "absolute", inset: 0, background: akzent, borderRadius: 2, transformOrigin: schmal ? "50% 0%" : "0% 50%", ...skala }} />
-            <motion.div
-                style={{
-                    position: "absolute",
-                    ...(schmal ? { left: "50%", bottom: -4, marginLeft: -4 } : { top: "50%", right: -4, marginTop: -4 }),
-                    width: 8,
-                    height: 8,
-                    borderRadius: 8,
-                    background: akzent,
-                    boxShadow: `0 0 0 4px rgba(255,90,31,0.18)`,
-                    opacity: punkt,
-                }}
-            />
-            {geschlossen && !reduziert && (
-                <motion.div
-                    style={{
-                        position: "absolute",
-                        ...(schmal ? { left: "50%", width: 6, height: 18, marginLeft: -3 } : { top: "50%", height: 6, width: 22, marginTop: -3 }),
-                        borderRadius: 6,
-                        background: `radial-gradient(closest-side, rgba(255,255,255,0.95), ${akzent} 60%, rgba(255,90,31,0))`,
-                        filter: "blur(0.5px)",
-                    }}
-                    initial={schmal ? { top: "-20%", opacity: 0 } : { left: "-20%", opacity: 0 }}
-                    animate={schmal ? { top: ["-20%", "110%"], opacity: [0, 1, 1, 0] } : { left: ["-20%", "110%"], opacity: [0, 1, 1, 0] }}
-                    transition={{ duration: 0.9, ease: "easeInOut", repeat: Infinity, repeatDelay: 2.6, delay: i * 0.75 }}
-                />
+            {fussnote && (
+                <div style={{ marginTop: 16, fontSize: 10.5, letterSpacing: "0.06em", color: "rgba(245,243,239,0.3)" }}>{fussnote}</div>
             )}
         </div>
     )
@@ -309,43 +181,127 @@ function Verbindung(props: { i: number; p: MotionValue<number>; akzent: string; 
  * Systemkette
  *
  * @framerIntrinsicWidth 1176
- * @framerIntrinsicHeight 520
+ * @framerIntrinsicHeight 420
  *
  * @framerSupportedLayoutWidth fixed
  * @framerSupportedLayoutHeight auto
  */
 export default function Systemkette(props: SystemketteProps) {
-    const { stufen: glieder, akzent = "rgb(255, 90, 31)", beispielHinweis = true, style } = props
+    const { stufen: glieder, akzent = "rgb(255, 90, 31)", quelle, beispielHinweis = false, style } = props
     const statisch = useIsStaticRenderer()
     const reduziert = useReducedMotion() ?? false
     const [huelle, breite] = useBreite<HTMLDivElement>()
     const schmal = breite < 820
-    const liste = (glieder && glieder.length ? glieder : STANDARD).slice(0, 4).map((g, i) => ({ ...STANDARD[i], ...Object.fromEntries(Object.entries(g || {}).filter(([, v]) => v)) })) as Glied[]
+    const liste = (glieder && glieder.length ? glieder : STANDARD)
+        .slice(0, 4)
+        .map((g, i) => ({ ...STANDARD[i], ...Object.fromEntries(Object.entries(g || {}).filter(([, v]) => v !== undefined && v !== "")) })) as Glied[]
+    const fussnote = beispielHinweis ? "Beispielwerte" : quelle || QUELLE_STANDARD
 
-    const { scrollYProgress } = useScroll({ target: huelle, offset: ["start 1", "start 0.5"] })
+    const { scrollYProgress } = useScroll({ target: huelle, offset: ["start 1", "start 0.55"] })
     const federnd = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.4 })
-    const p = reduziert || statisch ? scrollYProgress : federnd
     const fest = reduziert || statisch
+    const p = fest ? scrollYProgress : federnd
     const pp = useTransform(p, (v: number) => (fest ? 1 : v))
-
-    const [geschlossen, setGeschlossen] = useState(false)
-    useEffect(() => pp.on("change", (v: number) => setGeschlossen((alt) => (v > 0.97 ? true : v < 0.6 ? false : alt))), [pp])
-
-    const zustandEinzeln = useTransform(pp, [0.2, 0.55], [1, 0])
-    const zustandSystem = useTransform(pp, [0.75, 0.98], [0, 1])
 
     if (schmal)
         return (
-            <div ref={huelle} style={{ ...style, position: "relative", width: "100%", background: MARKENGRAU, borderRadius: 20, padding: "22px 18px 20px", boxSizing: "border-box", fontFamily: SCHRIFT, overflow: "hidden", color: PAPIER }}>
-                <KompaktKette liste={liste} akzent={akzent} beispielHinweis={beispielHinweis} statisch={statisch} reduziert={reduziert} />
+            <div
+                ref={huelle}
+                style={{
+                    ...style,
+                    position: "relative",
+                    width: "100%",
+                    background: MARKENGRAU,
+                    borderRadius: 20,
+                    padding: "22px 18px 20px",
+                    boxSizing: "border-box",
+                    fontFamily: SCHRIFT,
+                    overflow: "hidden",
+                    color: PAPIER,
+                }}
+            >
+                <KompaktKette liste={liste} akzent={akzent} fussnote={fussnote} statisch={statisch} reduziert={reduziert} />
             </div>
         )
 
-    const spalten = "1fr 28px 1fr 28px 1fr 28px 1fr"
-    const kinder: ReactNode[] = []
+    const spalten = "1fr 92px 1fr 92px 1fr 92px 1fr"
+    const zellen: ReactNode[] = []
     liste.forEach((g, i) => {
-        kinder.push(<Baustein key={"b" + i} g={g} i={i} p={pp} akzent={akzent} schmal={schmal} statisch={fest} />)
-        if (i < liste.length - 1) kinder.push(<Verbindung key={"v" + i} i={i} p={pp} akzent={akzent} schmal={schmal} statisch={fest} geschlossen={geschlossen} />)
+        const spalte = i * 2 + 1
+        const an = 0.08 + i * 0.22
+        const erscheint = {
+            initial: fest ? false : ({ opacity: 0, y: 10 } as const),
+            whileInView: fest ? undefined : ({ opacity: 1, y: 0 } as const),
+            viewport: { once: true, amount: 0.4 } as const,
+            transition: { duration: 0.5, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
+        }
+        zellen.push(
+            <motion.div key={"n" + i} {...erscheint} style={{ gridColumn: spalte, gridRow: 1, fontSize: 11, fontWeight: 600, letterSpacing: "0.14em", color: akzent }}>
+                {String(i + 1).padStart(2, "0")}
+            </motion.div>,
+            <motion.div
+                key={"t" + i}
+                {...erscheint}
+                style={{ gridColumn: spalte, gridRow: 2, fontSize: 19, fontWeight: 500, letterSpacing: "-0.035em", lineHeight: 1.2, color: PAPIER, paddingTop: 10, ...({ textWrap: "balance" } as any) }}
+            >
+                {g.titel}
+            </motion.div>,
+            <motion.div
+                key={"x" + i}
+                {...erscheint}
+                style={{ gridColumn: spalte, gridRow: 3, fontSize: 13.5, lineHeight: 1.5, letterSpacing: "-0.01em", color: GRAU, paddingTop: 8, paddingRight: 12, paddingBottom: 18 }}
+            >
+                {g.text}
+            </motion.div>,
+            <div key={"k" + i} style={{ gridColumn: spalte, gridRow: 4 }}>
+                <Knoten i={i} letzter={i === liste.length - 1} p={pp} akzent={akzent} statisch={fest} />
+            </div>,
+            <motion.div
+                key={"w" + i}
+                initial={fest ? false : { opacity: 0, y: 6 }}
+                whileInView={fest ? undefined : { opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{ duration: 0.5, delay: 0.1 + i * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                style={{ gridColumn: spalte, gridRow: 5, fontSize: 40, fontWeight: 500, letterSpacing: "-0.055em", lineHeight: 1.05, color: PAPIER, fontVariantNumeric: "tabular-nums", paddingTop: 12 }}
+            >
+                {g.wert}
+            </motion.div>,
+            <motion.div
+                key={"e" + i}
+                {...erscheint}
+                style={{ gridColumn: spalte, gridRow: 6, fontSize: 12.5, letterSpacing: "-0.005em", color: GRAU, paddingTop: 6 }}
+            >
+                {g.einheit}
+            </motion.div>
+        )
+        if (i < liste.length - 1) {
+            const zwischen = i * 2 + 2
+            zellen.push(
+                <motion.div
+                    key={"u" + i}
+                    initial={fest ? false : { opacity: 0 }}
+                    whileInView={fest ? undefined : { opacity: 1 }}
+                    viewport={{ once: true, amount: 0.4 }}
+                    transition={{ duration: 0.5, delay: 0.25 + i * 0.12 }}
+                    style={{
+                        gridColumn: zwischen,
+                        gridRow: 3,
+                        alignSelf: "end",
+                        textAlign: "center",
+                        fontSize: 11,
+                        letterSpacing: "0.03em",
+                        color: LEISE,
+                        paddingBottom: 7,
+                        whiteSpace: "nowrap",
+                    }}
+                >
+                    {g.uebergang}
+                </motion.div>,
+                <div key={"s" + i} style={{ gridColumn: zwischen, gridRow: 4 }}>
+                    <Strecke i={i} p={pp} akzent={akzent} statisch={fest} />
+                </div>
+            )
+        }
     })
 
     return (
@@ -357,7 +313,7 @@ export default function Systemkette(props: SystemketteProps) {
                 width: "100%",
                 background: MARKENGRAU,
                 borderRadius: 24,
-                padding: schmal ? "22px 16px 20px" : "30px 30px 26px",
+                padding: "30px 34px 32px",
                 boxSizing: "border-box",
                 fontFamily: SCHRIFT,
                 overflow: "hidden",
@@ -378,15 +334,27 @@ export default function Systemkette(props: SystemketteProps) {
                     pointerEvents: "none",
                 }}
             />
-            {/* Kopfzeile: Einzelteile → System */}
-            <div style={{ position: "relative", zIndex: 3, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: schmal ? 18 : 30, fontSize: 11, fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase" }}>
-                <div style={{ position: "relative", height: 14, flex: 1 }}>
-                    <motion.span style={{ position: "absolute", left: 0, top: 0, color: GRAU, opacity: zustandEinzeln, whiteSpace: "nowrap" }}>Jedes Teil für sich</motion.span>
-                    <motion.span style={{ position: "absolute", left: 0, top: 0, color: akzent, opacity: zustandSystem, whiteSpace: "nowrap" }}>{schmal ? "Alles greift ineinander" : "Alles greift ineinander · von der Anzeige bis zum Auftrag"}</motion.span>
-                </div>
-                {beispielHinweis && <span style={{ color: "rgba(245,243,239,0.32)", whiteSpace: "nowrap" }}>Beispielwerte</span>}
+            <div
+                style={{
+                    position: "relative",
+                    zIndex: 2,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                    gap: 24,
+                    marginBottom: 26,
+                    fontSize: 11,
+                    fontWeight: 500,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                }}
+            >
+                <span style={{ color: akzent, whiteSpace: "nowrap" }}>Alles greift ineinander</span>
+                <span style={{ color: "rgba(245,243,239,0.32)", letterSpacing: "0.06em", textTransform: "none", textAlign: "right" }}>{fussnote}</span>
             </div>
-            <div style={{ position: "relative", display: "grid", gridTemplateColumns: spalten, gap: schmal ? 0 : 0, alignItems: "stretch" }}>{kinder}</div>
+            <div style={{ position: "relative", zIndex: 2, display: "grid", gridTemplateColumns: spalten, gridTemplateRows: "auto auto 1fr auto auto auto", alignItems: "start" }}>
+                {zellen}
+            </div>
         </div>
     )
 }
@@ -403,10 +371,12 @@ addPropertyControls(Systemkette, {
                 text: { type: ControlType.String, title: "Text", displayTextArea: true },
                 wert: { type: ControlType.String, title: "Wert" },
                 einheit: { type: ControlType.String, title: "Einheit" },
+                uebergang: { type: ControlType.String, title: "Übergang" },
             },
         },
         defaultValue: STANDARD,
     },
     akzent: { type: ControlType.Color, title: "Akzent", defaultValue: "rgb(255, 90, 31)" },
-    beispielHinweis: { type: ControlType.Boolean, title: "Beispiel-Hinweis", defaultValue: true },
+    quelle: { type: ControlType.String, title: "Quelle", defaultValue: QUELLE_STANDARD },
+    beispielHinweis: { type: ControlType.Boolean, title: "Beispiel-Hinweis", defaultValue: false },
 })

@@ -55,6 +55,7 @@ const P45 = "rgba(245, 243, 239, 0.56)"
 const LINIE_D = "rgba(245, 243, 239, 0.1)"
 
 const STIL = `
+.fw-sa-marke svg { height: 100%; width: auto; display: block; }
 .fw-sa { --rand: 20px; }
 @media (min-width: 810px) { .fw-sa { --rand: 32px; } }
 
@@ -662,7 +663,7 @@ const EINWILLIGUNGSTEXT =
 const NEWSLETTER_TEXT =
     "Schickt mir außerdem, was bei anderen Betrieben funktioniert hat — ein paar Mal im Jahr, jederzeit abbestellbar. Freiwillig."
 
-// Seit aus drei Anzeigen eine Mappe für drei Kanäle geworden ist, braucht die Antwort rund
+// Seit aus drei Anzeigen eine Mappe für vier Kanäle geworden ist, braucht die Antwort rund
 // 70 bis 80 Sekunden (gemessen am 27.10.2026). Läuft der Vorlauf, ist sie beim Absenden
 // meist schon fertig und es erscheint gar kein Ladetext. Die Marken müssen trotzdem zur
 // echten Dauer passen: „Gleich fertig" nach 16 Sekunden war eine Lüge.
@@ -757,8 +758,14 @@ interface Ergebnis {
 
 // Echtes Ergebnis eines Durchlaufs, hier als Beweis, was herauskommt. Steht ausdrücklich
 // als Beispiel da — es ist nicht die Seite des Besuchers.
+//
+// ▲ Ohne Namen, und das mit Absicht. Bis zum 28.10.2026 stand hier ein echter Betrieb mit
+// Namen und Ort, für den es kein Kundenverhältnis und keine Zustimmung gab — auf einer
+// öffentlichen Seite, deren Rahmentext „aus einem echten Durchlauf" sagt und damit eine
+// Zusammenarbeit behauptet. Der Durchlauf war echt, der Name gehörte uns nicht. Wer hier
+// einen Betrieb benennen will, braucht vorher dessen Ja.
 const BEISPIEL: Ergebnis = {
-    betrieb: "Knolle Garten- und Landschaftsbau",
+    betrieb: "Garten- und Landschaftsbau, Landkreis Oldenburg",
     kanaele: [
         {
             id: "kleinanzeigen",
@@ -770,11 +777,11 @@ const BEISPIEL: Ergebnis = {
                 {
                     titel: null,
                     felder: [
-                        { etikett: "Titel", wert: "Landschaftsgärtner (m/w/d) in Harpstedt, ab sofort", grenze: 65, grenzeArt: "max" },
+                        { etikett: "Titel", wert: "Landschaftsgärtner (m/w/d) im Kreis Oldenburg, ab sofort", grenze: 65, grenzeArt: "max" },
                         {
                             etikett: "Anzeigentext",
                             wert:
-                                "Knolle in Harpstedt sucht ab sofort zwei bis drei Landschaftsgärtner (m/w/d). Die Arbeit liegt schon da.\n\n" +
+                                "Ein Familienbetrieb im Landkreis Oldenburg sucht ab sofort zwei bis drei Landschaftsgärtner (m/w/d). Die Arbeit liegt schon da.\n\n" +
                                 "Gearbeitet wird im Großraum Bremen, Wildeshausen und Oldenburg: neue Privatgärten, Pflaster- und Natursteinarbeiten, Teich- und Schwimmteichbau.\n\n" +
                                 "Der Betrieb bietet einen unbefristeten Arbeitsplatz, Werkzeug und Maschinen auf Stand und einen geregelten Feierabend ohne Dauer-Überstunden.\n\n" +
                                 "[Bitte eintragen: Verdienst, z. B. \"ab 3.400 Euro brutto\"]\n\n" +
@@ -794,24 +801,24 @@ const BEISPIEL: Ergebnis = {
                 {
                     titel: "Was die Stelle bietet",
                     felder: [
-                        { etikett: "Primärtext", grenze: 125, grenzeArt: "schnitt", wert: "Bezahlung über dem Üblichen, Maschinen auf Stand und ein geregelter Feierabend.\n\nKnolle in Harpstedt sucht ab sofort zwei bis drei Landschaftsgärtner.\n\nVier Fragen, zwei Minuten, keine Mappe: So bewirbst du dich." },
-                        { etikett: "Überschrift", wert: "Landschaftsgärtner in Harpstedt", grenze: 40, grenzeArt: "max" },
+                        { etikett: "Primärtext", grenze: 125, grenzeArt: "schnitt", wert: "Bezahlung über dem Üblichen, Maschinen auf Stand und ein geregelter Feierabend.\n\nEin Familienbetrieb im Kreis Oldenburg sucht zwei bis drei Landschaftsgärtner.\n\nVier Fragen, zwei Minuten, keine Mappe: So bewirbst du dich." },
+                        { etikett: "Überschrift", wert: "Landschaftsgärtner, Kreis Oldenburg", grenze: 40, grenzeArt: "max" },
                         { etikett: "Beschreibung", wert: "Ab sofort, 2–3 Stellen", grenze: 30, grenzeArt: "max" },
                     ],
                 },
                 {
                     titel: "Die Arbeit",
                     felder: [
-                        { etikett: "Primärtext", grenze: 125, grenzeArt: "schnitt", wert: "Natursteinmauern, Pflasterwege, Holzterrassen, Schwimmteiche: Das ist dein Arbeitsalltag bei Knolle.\n\nIm Privatgarten planst du dein Stück selbst.\n\nBeantworte vier Fragen, zwei Minuten reichen." },
+                        { etikett: "Primärtext", grenze: 125, grenzeArt: "schnitt", wert: "Natursteinmauern, Pflasterwege, Holzterrassen, Schwimmteiche: Das ist dein Arbeitsalltag in diesem Betrieb.\n\nIm Privatgarten planst du dein Stück selbst.\n\nBeantworte vier Fragen, zwei Minuten reichen." },
                         { etikett: "Überschrift", wert: "Pflaster, Naturstein, Teichbau", grenze: 40, grenzeArt: "max" },
-                        { etikett: "Beschreibung", wert: "Knolle, Harpstedt", grenze: 30, grenzeArt: "max" },
+                        { etikett: "Beschreibung", wert: "Familienbetrieb bei Oldenburg", grenze: 30, grenzeArt: "max" },
                     ],
                 },
                 {
                     titel: "Der Betrieb",
                     felder: [
-                        { etikett: "Primärtext", grenze: 125, grenzeArt: "schnitt", wert: "Vierte Generation, über 100 Jahre, und die Arbeit liegt schon da: Knolle in Harpstedt.\n\nFür zwei bis drei Landschaftsgärtner ist ab sofort Platz.\n\nVier Fragen beantworten, zwei Minuten, fertig." },
-                        { etikett: "Überschrift", wert: "Familienbetrieb in Harpstedt", grenze: 40, grenzeArt: "max" },
+                        { etikett: "Primärtext", grenze: 125, grenzeArt: "schnitt", wert: "Vierte Generation, über 100 Jahre, und die Arbeit liegt schon da.\n\nFür zwei bis drei Landschaftsgärtner ist ab sofort Platz.\n\nVier Fragen beantworten, zwei Minuten, fertig." },
+                        { etikett: "Überschrift", wert: "Familienbetrieb im Kreis Oldenburg", grenze: 40, grenzeArt: "max" },
                         { etikett: "Beschreibung", wert: "Seit über 100 Jahren", grenze: 30, grenzeArt: "max" },
                     ],
                 },
@@ -827,8 +834,8 @@ const BEISPIEL: Ergebnis = {
                 {
                     titel: null,
                     felder: [
-                        { etikett: "Überschrift", wert: "Landschaftsgärtner (m/w/d) in Harpstedt" },
-                        { etikett: "Einleitung", wert: "Knolle in Harpstedt ist ein Familienbetrieb für Garten- und Landschaftsbau in vierter Generation. Gesucht werden ab sofort zwei bis drei Landschaftsgärtner (m/w/d)." },
+                        { etikett: "Überschrift", wert: "Landschaftsgärtner (m/w/d), Kreis Oldenburg" },
+                        { etikett: "Einleitung", wert: "Der Betrieb ist ein Familienbetrieb für Garten- und Landschaftsbau in vierter Generation. Gesucht werden ab sofort zwei bis drei Landschaftsgärtner (m/w/d)." },
                         { etikett: "Das machst du", wert: "Neuanlage privater Gärten\nPflaster- und Natursteinarbeiten\nBau von Teichen und Schwimmteichen\nSelbstständige Abwicklung von Baustellen" },
                         { etikett: "Das bringst du mit", wert: "Abgeschlossene Ausbildung in der Grünen Branche\nErfahrung in Pflaster- und Natursteinarbeiten\nFührerschein mindestens Klasse B/BE" },
                         { etikett: "Das bieten wir", wert: "[Bitte eintragen: Verdienst, z. B. \"ab 3.400 Euro brutto\"]\nBezahlung über dem Üblichen\nWerkzeug und Maschinen auf Stand\nGeregelter Feierabend, keine Dauer-Überstunden" },
@@ -844,7 +851,7 @@ const BEISPIEL: Ergebnis = {
         "Ab wann könnten Sie anfangen?",
         "Wie erreichen wir Sie am besten?",
     ],
-    budget: "Für zwei bis drei Stellen im Umkreis von Harpstedt rechnen Sie mit 15 bis 25 Euro am Tag über vier Wochen.",
+    budget: "Für zwei bis drei Stellen im Umkreis des Betriebs rechnen Sie mit 15 bis 25 Euro am Tag über vier Wochen.",
 }
 
 const WIEDERERKENNEN = [
@@ -856,10 +863,58 @@ const WIEDERERKENNEN = [
     "Beim Schreiben kommt immer dasselbe heraus: „Wir bieten ein nettes Team und gute Bezahlung.\"",
 ]
 
+// Die Zeichen der Kanäle.
+//
+// Nominative Nutzung: Sie sagen, wofür die Texte gemacht sind, und behaupten keine
+// Zusammenarbeit — der Hinweis darauf steht unter der Leiste. Die Pfade kommen aus den
+// Originaldateien der Anbieter (kleinanzeigen.de, arbeitsagentur.de) und, für die beiden
+// Meta-Dienste, aus simple-icons; unverändert in Form und Farbe, nur Klassen und IDs
+// entfernt. Umfärben wäre bei fremden Marken die schlechtere Wahl, deshalb stehen sie auf
+// hellen Kacheln statt einfarbig im Dunkeln.
+//
+// Eingesetzt per dangerouslySetInnerHTML: feste Zeichenketten aus dieser Datei, nichts
+// aus einer Antwort. Als JSX geschrieben wären es 40 Pfade mit umbenannten Attributen.
+const MARKE_KLEINANZEIGEN = `<svg viewBox="0 0 787 132" xmlns="http://www.w3.org/2000/svg" fill="none"><path fill="#1D4B00" d="M85.475 131.213c-17.56 0-26.15-12.255-27.894-14.787-5.183 5.101-13.007 14.787-27.1 14.787-16.275 0-29.995-12.3-29.995-32.242V32.472C.486 12.485 14.228.231 30.48.231c16.253 0 29.994 13.015 29.994 31.938a29.787 29.787 0 0 1 10.001-1.713c16.744 0 29.994 13.727 29.994 30.226 0 4.625-.874 8.739-2.785 12.68 10.618 4.757 17.784 15.462 17.784 27.625 0 16.667-13.457 30.226-29.993 30.226Zm-20.642-22.094c4.313 7.552 11.573 12.018 20.642 12.018 11.024 0 19.997-9.042 19.997-20.15 0-8.788-5.607-16.435-13.674-19.126l-26.966 27.262v-.004ZM30.484 10.306c-9.952 0-19.998 6.854-19.998 22.166v66.5c0 15.311 10.042 22.165 19.998 22.165 7.9 0 12.268-4.018 19.312-11.117l3.12-3.144c-1.61-4.833-2.44-10.197-2.44-15.969v-58.44c0-15.311-10.04-22.166-19.997-22.166l.005.005Zm29.994 32.916v47.69c0 2.7.225 5.269.653 7.688l21.733-21.9c6.314-6.36 7.608-11.003 7.608-16.014 0-10.705-8.537-20.15-19.998-20.15-3.565 0-6.976.924-9.996 2.691v-.005ZM161.462 30.456h12.57v44.011c9.74-4.213 16.446-11.584 20.742-22.954h12.885c-3.561 10.845-8.59 19.267-15.292 25.373l20.425 27.272h-14.873l-15.292-20.53a55.432 55.432 0 0 1-8.59 3.157v17.373h-12.57V30.456h-.005Zm55.725 58.857V30.456h11.943v58.227c0 4.947 1.361 6.424 4.084 6.424 1.573 0 3.037-.317 4.921-1.16v10.216c-2.199.842-4.714 1.472-7.648 1.472-8.068 0-13.305-4.213-13.305-16.318l.005-.004Zm24.982-11.475c0-16.74 10.474-27.798 27.024-27.798 18.433 0 27.97 13.9 22.94 31.168h-37.29c1.05 8.739 5.868 13.899 14.246 13.899 5.553 0 10.79-2.632 13.724-6.003l9.113 6.528c-5.237 5.686-12.782 10.003-23.044 10.003-16.342 0-26.713-11.054-26.713-27.797Zm38.652-5.16c.734-7.58-3.561-12.53-11.836-12.53-8.274 0-12.673 4.42-13.931 12.53h25.767Zm27.673-44.115c4.295 0 7.648 3.37 7.648 7.687 0 4.318-3.353 7.688-7.648 7.688s-7.649-3.37-7.649-7.688c0-4.317 3.354-7.687 7.649-7.687Zm-6.076 22.954h11.944v52.646h-11.944V51.517Zm23.536 0h11.943v9.686c3.457-6.95 9.848-11.163 17.807-11.163 16.866 0 16.865 16.74 16.865 24.64v29.483h-11.943V74.997c0-6.002 0-14.528-9.217-14.528-7.959 0-13.512 7.158-13.512 17.899v25.795h-11.943V51.517Zm105.828 43.59c.839 0 1.884-.104 2.826-.526v9.899c-1.884.843-3.56 1.16-5.656 1.16-6.287 0-9.848-5.056-9.848-12.11v-1.685c-3.457 8.739-10.578 13.795-20.322 13.795-11.105 0-18.019-6.528-18.019-15.689 0-10.632 9.217-17.056 23.986-17.056 4.084 0 8.275.526 11.944 1.368 0-7.791-3.561-13.794-11.525-13.794-5.656 0-9.847 2.736-10.474 8.422h-12.047c.419-11.475 9.532-18.846 22.729-18.846 16.342 0 23.256 10.003 23.256 24.218v17.374c0 2.528 1.361 3.474 3.141 3.474l.009-.004Zm-30.589.947c7.649 0 13.931-4.947 15.924-12.635-3.457-1.16-7.649-1.79-11.417-1.79-8.59 0-12.781 3.158-12.781 8 0 4.214 3.141 6.425 8.274 6.425Zm40.694-44.537h11.943v9.686c3.457-6.95 9.848-11.163 17.808-11.163 16.865 0 16.865 16.74 16.865 24.64v29.483h-11.944V74.997c0-6.002 0-14.528-9.217-14.528-7.959 0-13.512 7.158-13.512 17.899v25.795h-11.943V51.517Zm54.165 43.064 27.551-33.061H497.94V51.517h41.167v7.688l-29.331 35.376h30.377v9.582h-44.101v-9.582Zm48.391-16.739c0-16.739 10.475-27.797 27.024-27.797 18.434 0 27.971 13.899 22.941 31.168h-37.291c1.05 8.739 5.868 13.898 14.246 13.898 5.553 0 10.79-2.632 13.724-6.002l9.113 6.528c-5.237 5.685-12.781 10.003-23.044 10.003-16.342 0-26.713-11.054-26.713-27.798Zm38.652-5.16c.735-7.579-3.56-12.53-11.835-12.53s-12.674 4.421-13.931 12.53h25.766Zm27.673-44.115c4.295 0 7.648 3.37 7.648 7.688 0 4.317-3.353 7.688-7.648 7.688s-7.648-3.37-7.648-7.688c0-4.317 3.353-7.688 7.648-7.688Zm-6.075 22.955h11.943v52.645h-11.943V51.522Zm19.578 56.963h12.466c.942 4.421 5.657 7.687 13.305 7.687 7.017 0 11.416-2.845 11.416-7.266 0-9.794-27.97-4-27.97-14.741 0-3.58 3.141-5.369 7.54-6.737-9.951-1.58-16.342-8.213-16.342-17.794 0-11.584 9.532-19.48 23.778-19.48 7.333 0 13.305 2.106 17.492 5.58 1.046-2.948.735-7.37 0-10.74h9.74c1.045 6.106-.942 12.847-5.237 16.53 1.153 2.315 1.78 5.056 1.78 7.897 0 20.743-25.559 17.898-25.559 21.899 0 5.055 27.235-.317 27.235 17.69 0 10.528-9.847 17.691-23.778 17.691-14.982 0-23.883-8.422-25.875-18.216h.009Zm24.198-29.379c6.81 0 11.313-3.683 11.313-9.264 0-5.581-4.399-9.264-11.313-9.264-6.914 0-11.313 3.683-11.313 9.264 0 5.581 4.503 9.264 11.313 9.264Zm31.342-1.264c0-16.739 10.474-27.797 27.023-27.797 18.434 0 27.971 13.899 22.941 31.168h-37.291c1.05 8.739 5.868 13.898 14.247 13.898 5.552 0 10.789-2.632 13.724-6.002l9.113 6.528c-5.237 5.685-12.782 10.003-23.045 10.003-16.342 0-26.712-11.054-26.712-27.798Zm38.651-5.16c.735-7.579-3.56-12.53-11.835-12.53s-12.674 4.421-13.931 12.53h25.766Zm21.422-21.165h11.944v9.686c3.456-6.95 9.847-11.163 17.807-11.163 16.865 0 16.865 16.74 16.865 24.64v29.483h-11.944V74.997c0-6.002 0-14.528-9.216-14.528-7.96 0-13.512 7.158-13.512 17.899v25.795h-11.944V51.517Z"/></svg>`
+const MARKE_ARBEITSAGENTUR = `<svg viewBox="0 0 245 37.5" xmlns="http://www.w3.org/2000/svg"><path d="m41.3 20.5h2.7c2 0 2.5-0.1 3.3-0.3 1.3-0.4 2.1-1.6 2.1-3 0-1.5-0.8-2.5-2.5-2.8 1.3-0.4 1.9-1.2 1.9-2.4s-0.7-2.2-1.8-2.6c-0.6-0.2-1.3-0.3-2.7-0.3h-3.1v11.4h0.1zm2.2-9.6h0.8c1.8 0 2.4 0.3 2.4 1.4s-0.6 1.4-2.3 1.4h-0.9v-2.8zm0 4.6h1c2.1 0 2.7 0.4 2.7 1.7s-0.5 1.6-2.8 1.6h-1v-3.3h0.1z"></path><path d="m51 17.1c0 0.8 0.1 1.5 0.3 1.9 0.4 1 1.5 1.6 2.7 1.6 1 0 1.6-0.3 2.3-1.1 0 0.4 0.1 0.7 0.2 0.9h2c-0.1-0.2-0.1-0.3-0.1-0.4-0.1-0.3-0.1-0.6-0.1-0.9v-0.7-6h-2.1v4.4c0 1.4-0.5 2.1-1.6 2.1-1 0-1.4-0.5-1.4-1.8v-4.6h-2.2v4.6z"></path><path d="m60.4 14.7v5.9h2.1v-4.2c0-1.6 0.5-2.3 1.5-2.3s1.3 0.6 1.3 2.2v4.2h2.1v-4.7c0-1.5-0.1-1.9-0.4-2.4-0.4-0.7-1.3-1.2-2.3-1.2s-1.8 0.4-2.4 1.2c0-0.5 0-0.7-0.2-1h-2c0.3 0.7 0.3 1 0.3 2.3z"></path><path d="m74.6 9v4.3c-0.6-0.8-1.2-1.1-2.1-1.1-2 0-3.4 1.8-3.4 4.3s1.4 4.2 3.5 4.2c1.1 0 1.8-0.4 2.3-1.3v0.4c0 0.2 0 0.4 0.1 0.7h2c-0.1-0.6-0.2-1.2-0.2-2.6v-8.9h-2.2zm0 7.4c0 1.6-0.7 2.5-1.7 2.5s-1.7-0.9-1.7-2.4c0-1.6 0.7-2.5 1.7-2.5 1.1 0 1.7 0.9 1.7 2.4z"></path><path d="m86 16.6c0-2.7-1.4-4.4-3.7-4.4-2.4 0-4 1.8-4 4.4s1.6 4.2 4 4.2c1.8 0 3.1-1 3.5-2.5l-1.9-0.1c-0.3 0.6-0.8 0.9-1.6 0.9-1.2 0-1.9-0.8-2-2.1h5.7v-0.4zm-5.6-1.1c0.3-1.1 0.8-1.6 1.8-1.6 0.9 0 1.5 0.5 1.6 1.6h-3.4z"></path><path d="m90.6 12.2c-2 0-3.3 1.1-3.3 2.7 0 1.2 0.6 1.8 2.2 2.3l1.1 0.3c0.9 0.3 1.2 0.5 1.2 0.9 0 0.5-0.5 0.9-1.3 0.9-1 0-1.5-0.4-1.5-1.4h-2v0.1c0 1.9 1.3 2.9 3.6 2.9 2.1 0 3.3-1 3.3-2.6 0-0.5-0.1-0.9-0.3-1.2-0.3-0.5-0.8-0.8-2.2-1.2-1.8-0.5-2-0.6-2-1.1s0.5-0.8 1.1-0.8c0.8 0 1.2 0.3 1.3 1.1h2c0-1.9-1.2-2.9-3.2-2.9z"></path><path d="m98.9 13.9c0.9 0 1.2 0.3 1.2 1.2v0.1l-0.3 0.1c-0.8 0.1-1.2 0.2-1.4 0.2-0.5 0.1-1 0.2-1.4 0.4-1.2 0.4-1.9 1.3-1.9 2.4 0 1.5 1.1 2.3 3 2.3 1.1 0 1.8-0.4 2.2-1.1v0.2c0 0.2 0 0.4 0.1 0.8h1.9c-0.2-0.4-0.3-0.8-0.3-1.8v-3.3c0-1-0.1-1.5-0.3-2-0.4-0.8-1.4-1.2-2.8-1.2-0.9 0-1.6 0.2-2.3 0.5-0.8 0.4-1.2 1-1.3 2.1h2c0.3-0.6 0.8-0.9 1.6-0.9zm1.2 3.2c0 1.4-0.4 2-1.5 2-0.7 0-1.2-0.4-1.2-1 0-0.9 0.7-1.2 2.8-1.5v0.5h-0.1z"></path><path d="m109.2 12.4c-0.7-0.2-1-0.2-1.5-0.2-2.1 0-3.4 1.1-3.4 2.9 0 1.1 0.4 1.8 1.4 2.3-1 0.4-1.4 0.8-1.4 1.3 0 0.4 0.3 0.7 0.9 1-1.1 0.4-1.6 1-1.6 1.9 0 1.5 1.6 2.4 4.1 2.4 2.6 0 4-1 4-2.7 0-0.7-0.3-1.4-0.8-1.7-0.5-0.4-1.2-0.5-2.8-0.7-1.7-0.2-1.8-0.2-1.8-0.5 0-0.2 0.3-0.4 0.8-0.5l1-0.1c1.7-0.2 2.6-1 2.6-2.4 0-0.5-0.2-1-0.4-1.5h1.6v-1.5h-2.7zm-0.3 2.7c0 0.7-0.6 1.2-1.4 1.2s-1.4-0.5-1.4-1.2c0-0.8 0.6-1.3 1.4-1.3s1.4 0.5 1.4 1.3zm0.7 6.4c0 0.6-0.7 1-2 1-1.4 0-2.3-0.4-2.3-1 0-0.7 0.7-1 2-1h0.2c1.3 0 2.1 0.3 2.1 1z"></path><path d="m120.3 16.6c0-2.7-1.4-4.4-3.7-4.4-2.4 0-4 1.8-4 4.4s1.6 4.2 4 4.2c1.8 0 3.1-1 3.5-2.5l-1.9-0.1c-0.3 0.6-0.8 0.9-1.6 0.9-1.2 0-1.9-0.8-2-2.1h5.6c0.1-0.2 0.1-0.3 0.1-0.4zm-5.5-1.1c0.3-1.1 0.8-1.6 1.8-1.6 0.9 0 1.5 0.5 1.6 1.6h-3.4z"></path><path d="m121.9 14.7v5.9h2.1v-4.2c0-1.6 0.5-2.3 1.5-2.3s1.3 0.6 1.3 2.2v4.2h2.1v-4.7c0-1.5-0.1-1.9-0.4-2.4-0.4-0.7-1.3-1.2-2.3-1.2s-1.8 0.4-2.4 1.2c0-0.5 0-0.7-0.2-1h-2c0.2 0.7 0.3 1 0.3 2.3z"></path><path d="m133.8 10h-2v2.4h-1.3v1.6h1.3l-0.1 3.2v0.8c0 1.1 0.1 1.5 0.6 2 0.4 0.5 1 0.7 1.8 0.7 0.7 0 1.2-0.1 1.9-0.4v-1.8c-0.5 0.2-0.8 0.3-1.2 0.3-0.7 0-0.8-0.3-0.8-1.2v-0.5l0.1-3.1h1.7v-1.6h-1.7l-0.3-2.4z"></path><path d="m137 17.1c0 0.8 0.1 1.5 0.3 1.9 0.4 1 1.5 1.6 2.7 1.6 1 0 1.6-0.3 2.3-1.1 0 0.4 0.1 0.7 0.2 0.9h2c-0.1-0.2-0.1-0.3-0.1-0.4-0.1-0.3-0.1-0.6-0.1-0.9v-0.7-6h-2.1v4.4c0 1.4-0.5 2.1-1.6 2.1-1 0-1.4-0.5-1.4-1.8v-4.6h-2.2v4.6z"></path><path d="m146.6 13.5v0.9 0.5 5.6h2.1v-3.8c0-1.8 0.5-2.7 1.6-2.7 0.4 0 0.9 0.1 1.3 0.4v-2.1h-0.1c-0.2-0.1-0.3-0.1-0.5-0.1-1 0-1.7 0.5-2.3 1.9v-0.4c0-0.5 0-0.9-0.1-1.3h-2v1.1z"></path><path d="m158.8 12.2c0-1.3 0.2-1.6 0.9-1.6 0.4 0 0.7 0.1 1.4 0.3v-1.8c-0.7-0.3-1.3-0.4-1.9-0.4s-1.1 0.1-1.5 0.4c-0.8 0.5-1 1.2-1 2.7v0.5h-1.1v1.7h1.1v6.5h2.1v-6.5h1.9v-1.6h-1.9v-0.2z"></path><path d="m161.9 17.1c0 0.8 0.1 1.5 0.3 1.9 0.4 1 1.5 1.6 2.7 1.6 1 0 1.6-0.3 2.3-1.1 0 0.4 0.1 0.7 0.2 0.9h2c-0.1-0.2-0.1-0.3-0.1-0.4-0.1-0.3-0.1-0.6-0.1-0.9v-0.7-6h-2.2v4.4c0 1.4-0.5 2.1-1.6 2.1-1 0-1.4-0.5-1.4-1.8v-4.6h-2.1v4.6zm0.7-6.9c0 0.7 0.5 1.2 1.2 1.2s1.2-0.5 1.2-1.2c0-0.6-0.5-1.1-1.2-1.1s-1.2 0.5-1.2 1.1zm3.5 0c0 0.7 0.5 1.2 1.2 1.2s1.2-0.5 1.2-1.2c0-0.6-0.5-1.1-1.2-1.1s-1.2 0.5-1.2 1.1z"></path><path d="m171.3 13.5v0.9 0.5 5.6h2.1v-3.8c0-1.8 0.5-2.7 1.6-2.7 0.4 0 0.9 0.1 1.3 0.4v-2.1h-0.1c-0.2-0.1-0.3-0.1-0.5-0.1-1 0-1.7 0.5-2.3 1.9v-0.4c0-0.5 0-0.9-0.1-1.3h-2v1.1z"></path><path d="m179.8 20.5h2.2l0.7-2.4h4l0.7 2.4h2.3l-3.9-11.4h-2.2l-3.8 11.4zm3.5-4.2 1.5-4.7 1.5 4.7h-3z"></path><path d="m191 13.5v0.9 0.5 5.6h2.1v-3.8c0-1.8 0.5-2.7 1.6-2.7 0.4 0 0.9 0.1 1.3 0.4v-2.1h-0.1c-0.2-0.1-0.3-0.1-0.5-0.1-1 0-1.7 0.5-2.3 1.9v-0.4c0-0.5 0-0.9-0.1-1.3h-2c-0.1 0.5 0 0.7 0 1.1z"></path><path d="m197.3 18.4v0.6c0 0.7 0 1.2-0.1 1.5h1.8c0.1-0.4 0.1-0.5 0.2-1.1 0.4 0.9 1.2 1.3 2.2 1.3 2.1 0 3.6-1.8 3.6-4.3 0-2.4-1.4-4.2-3.3-4.2-0.9 0-1.6 0.3-2.2 1.2v-4.4h-2.1v9.4h-0.1zm5.5-2c0 1.5-0.7 2.5-1.7 2.5s-1.7-0.9-1.7-2.5c0-1.5 0.7-2.5 1.7-2.5 1 0.1 1.7 1 1.7 2.5z"></path><path d="m213.6 16.6c0-2.7-1.4-4.4-3.7-4.4-2.4 0-4 1.8-4 4.4s1.6 4.2 4 4.2c1.8 0 3.1-1 3.5-2.5l-1.9-0.1c-0.3 0.6-0.8 0.9-1.6 0.9-1.2 0-1.9-0.8-2-2.1h5.6c0.1-0.2 0.1-0.3 0.1-0.4zm-5.5-1.1c0.3-1.1 0.8-1.6 1.8-1.6 0.9 0 1.5 0.5 1.6 1.6h-3.4z"></path><path d="m215.2 20.5h2.1v-8.1h-2.1v8.1zm-0.2-10.4c0 0.7 0.5 1.2 1.2 1.2 0.8 0 1.2-0.5 1.2-1.2 0-0.8-0.5-1.2-1.2-1.2s-1.2 0.5-1.2 1.2z"></path><path d="m222.1 10h-2l-0.1 2.4h-1.3v1.6h1.3l-0.1 3.2v0.8c0 1.1 0.1 1.5 0.6 2 0.4 0.5 1 0.7 1.8 0.7 0.7 0 1.2-0.1 1.9-0.4v-1.8c-0.5 0.2-0.8 0.3-1.2 0.3-0.7 0-0.8-0.3-0.8-1.2v-0.5l-0.2-3.1h1.7v-1.6h-1.7l0.1-2.4z"></path><circle cx="14.8" cy="14.8" r="14.7" fill="#fff"></circle><path d="m0 14.8c0-8.2 6.6-14.8 14.8-14.8s14.8 6.6 14.8 14.8-6.6 14.8-14.8 14.8c-3.6 0-6.9-1.3-9.5-3.5 2.4-4 9.5-15.8 9.5-15.8l3.5 5.8h-3.5c-1.7 0-2.1 0.4-2.9 1.5-0.6 0.9-2 3.3-2 3.4-0.2 0.3-0.1 0.5 0.3 0.5h17.1c0.3 0 0.5-0.2 0.3-0.5l-12.6-20.5c-0.2-0.3-0.4-0.3-0.6 0l-12.7 21.2c-1.1-2-1.7-4.4-1.7-6.9z" fill="#ed1c24"></path><path d="m117.1 27v3.2c0.4-0.7 0.9-1 1.6-1 1.3 0 2.2 1.2 2.2 3s-0.9 3-2.3 3c-0.7 0-1.2-0.3-1.6-0.9v0.1c0 0.2 0 0.4-0.1 0.7h-0.8c0.1-0.3 0.1-0.6 0.1-1.6v-6.5h0.9zm0 5.2c0 1.3 0.6 2.2 1.5 2.2s1.5-0.9 1.5-2.3-0.6-2.2-1.4-2.2c-1 0-1.6 0.9-1.6 2.3z"></path><path d="m124.2 29.3c0.1 0.3 0.1 0.6 0.1 0.9v0.3c0.4-0.9 0.9-1.4 1.5-1.4 0.2 0 0.4 0.1 0.7 0.2v0.8c-0.4-0.2-0.5-0.2-0.8-0.2-0.4 0-0.8 0.3-1.1 0.9-0.2 0.4-0.3 0.9-0.3 1.6v2.6h-0.9v-3.7c0-1.3 0-1.4-0.1-2h0.9z"></path><path d="m129.3 27.5c0 0.3-0.3 0.6-0.6 0.6s-0.6-0.3-0.6-0.6c0-0.4 0.3-0.6 0.6-0.6 0.4 0 0.6 0.3 0.6 0.6zm-0.2 1.8v5.7h-0.9v-5.7h0.9z"></path><path d="m132.4 29.3c0.1 0.2 0.1 0.5 0.1 0.8 0.4-0.7 1-1 1.7-1 0.8 0 1.4 0.3 1.6 0.9 0.2 0.4 0.2 0.5 0.2 1.7v3.3h-0.8v-3.2c0-0.9 0-1.1-0.2-1.3-0.2-0.3-0.5-0.5-1-0.5s-1 0.3-1.2 0.7c-0.2 0.3-0.3 0.7-0.3 1.2v3.1h-0.8v-3.8c0-1.4 0-1.4-0.1-1.9h0.8z"></path><path d="m143.4 30h-1.2c0.3 0.3 0.5 0.8 0.5 1.3 0 0.6-0.2 1-0.6 1.3-0.3 0.2-0.6 0.3-1.3 0.5-0.6 0.1-0.7 0.2-0.9 0.2-0.2 0.1-0.3 0.2-0.3 0.4s0.1 0.3 1.1 0.4c1.1 0.1 1.5 0.2 1.8 0.4 0.5 0.3 0.7 0.7 0.7 1.3 0 1.1-1 1.8-2.6 1.8-1.5 0-2.6-0.6-2.6-1.6 0-0.7 0.4-1.1 1.2-1.4-0.4-0.2-0.6-0.4-0.6-0.7 0-0.4 0.3-0.6 1-0.9-0.8-0.3-1.1-0.8-1.1-1.6 0-1.2 0.8-1.9 2.1-1.9 0.3 0 0.6 0 0.9 0.1l1.7-0.1v0.5zm-4.4 5.8c0 0.6 0.7 1 1.8 1s1.8-0.4 1.8-1-0.6-1-1.8-1-1.8 0.4-1.8 1zm0.5-4.6c0 0.7 0.5 1.2 1.2 1.2s1.2-0.5 1.2-1.2-0.5-1.2-1.2-1.2c-0.7-0.1-1.2 0.4-1.2 1.2z"></path><path d="m148 29.3v0.7h-1.4l-0.1 2.9v0.6c0 0.4 0 0.5 0.1 0.7s0.3 0.3 0.6 0.3 0.6-0.1 0.8-0.2v0.7c-0.4 0.1-0.7 0.2-1 0.2-0.6 0-1-0.2-1.2-0.5-0.1-0.2-0.1-0.4-0.1-0.8v-0.5-0.4l0.1-2.9h-0.8v-0.7h0.9v-1.6h0.8v1.6h1.3z"></path><path d="m154.2 29.3 1.2 4.5 1.3-4.5h0.7l1.3 4.5 1.2-4.5h0.9l-1.6 5.8h-0.8l-1.3-4.5-1.3 4.5h-0.8l-1.6-5.8h0.8z"></path><path d="m163.5 32.3c0 1.4 0.6 2.1 1.6 2.1 0.6 0 1-0.2 1.3-0.9l0.8 0.1c-0.3 1-1.1 1.5-2.1 1.5-1.5 0-2.5-1.1-2.5-2.9s1-3.1 2.4-3.1 2.3 1.1 2.3 2.9v0.2h-3.8zm3-0.6c-0.1-1.2-0.6-1.8-1.5-1.8-0.8 0-1.4 0.6-1.5 1.8h3z"></path><path d="m170.7 27.5c0 0.3-0.3 0.6-0.6 0.6s-0.6-0.3-0.6-0.6c0-0.4 0.3-0.6 0.6-0.6s0.6 0.3 0.6 0.6zm-0.2 1.8v5.7h-0.9v-5.7h0.9z"></path><path d="m175.6 29.3v0.7h-1.4l-0.1 2.9v0.6c0 0.4 0 0.5 0.1 0.7s0.3 0.3 0.6 0.3 0.6-0.1 0.8-0.2v0.7c-0.4 0.1-0.7 0.2-1 0.2-0.6 0-1-0.2-1.2-0.5-0.1-0.2-0.1-0.4-0.1-0.8v-0.5-0.4l0.1-2.9h-0.9v-0.7h0.9v-1.6h0.8v1.6h1.4z"></path><path d="m178 32.3c0 1.4 0.6 2.1 1.6 2.1 0.6 0 1-0.2 1.3-0.9l0.8 0.1c-0.3 1-1.1 1.5-2.1 1.5-1.5 0-2.5-1.1-2.5-2.9s1-3.1 2.4-3.1 2.3 1.1 2.3 2.9v0.2h-3.8zm3-0.6c-0.1-1.2-0.6-1.8-1.5-1.8-0.8 0-1.4 0.6-1.5 1.8h3z"></path><path d="m184.9 29.3c0.1 0.3 0.1 0.6 0.1 0.9v0.3c0.4-0.9 0.9-1.4 1.5-1.4 0.2 0 0.4 0.1 0.7 0.2v0.8c-0.4-0.2-0.5-0.2-0.8-0.2-0.4 0-0.8 0.3-1.1 0.9-0.2 0.4-0.3 0.9-0.3 1.6v2.6h-0.9v-3.7c0-1.3 0-1.4-0.1-2h0.9z"></path><path d="m189.8 34.5c0 0.4-0.3 0.7-0.7 0.7s-0.7-0.3-0.7-0.7 0.3-0.7 0.7-0.7 0.7 0.3 0.7 0.7z"></path></svg>`
+const MARKE_FACEBOOK = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>`
+const MARKE_INSTAGRAM = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077"/></svg>`
+
+function Markenzeichen({ quelle, hoehe, farbe }: { quelle: string; hoehe: number; farbe?: string }) {
+    return (
+        <span
+            className="fw-sa-marke"
+            aria-hidden="true"
+            style={{ display: "inline-flex", height: hoehe, color: farbe }}
+            dangerouslySetInnerHTML={{ __html: quelle }}
+        />
+    )
+}
+
+// Die vier Kanäle, in der Reihenfolge, in der sie auch im PDF stehen. Der Zusatz sagt,
+// was Geld kostet — das ist die Frage, die bei „vier Kanäle" sofort kommt.
+const KANAELE_MARKEN: {
+    name: string
+    kosten: string
+    zeichen: { quelle: string; hoehe: number; farbe?: string }[] | null
+}[] = [
+    { name: "Kleinanzeigen", kosten: "kostenlos", zeichen: [{ quelle: MARKE_KLEINANZEIGEN, hoehe: 17 }] },
+    { name: "Jobbörse der Arbeitsagentur", kosten: "kostenlos", zeichen: [{ quelle: MARKE_ARBEITSAGENTUR, hoehe: 20 }] },
+    {
+        name: "Facebook & Instagram", kosten: "bezahlt",
+        zeichen: [
+            { quelle: MARKE_FACEBOOK, hoehe: 19, farbe: "#1877F2" },
+            { quelle: MARKE_INSTAGRAM, hoehe: 19, farbe: "#E4405F" },
+        ],
+    },
+    // Kein fremdes Zeichen, also der Name selbst — und damit auch die einzige Kachel,
+    // die man lesen muss statt zu erkennen.
+    { name: "Ihre eigene Seite", kosten: "kostenlos", zeichen: null },
+]
+
 const WAS_SIE_BEKOMMEN = [
     {
-        titel: "Drei Kanäle, drei Fassungen",
-        text: "Dieselbe Stelle für Kleinanzeigen, für Facebook und Instagram und für Ihre eigene Seite — jeweils in dem Format, das dort verlangt wird. Mit Zeichenzahl, damit nichts abgeschnitten wird.",
+        titel: "Vier Kanäle, vier Fassungen",
+        text: "Dieselbe Stelle für Kleinanzeigen, für die Jobbörse der Arbeitsagentur, für Facebook und Instagram und für Ihre eigene Seite — jeweils in dem Format, das dort verlangt wird. Mit Zeichenzahl, damit nichts abgeschnitten wird.",
     },
     {
         titel: "Die Anleitung dazu",
@@ -1145,6 +1200,90 @@ function KanalKarte({
     )
 }
 
+// Der Stand nach dem Durchlauf.
+//
+// Die Texte sind fertig, die Stelle ist es nicht — zwischen beidem liegen Video,
+// Ausspielung und die Antwort am selben Tag. Das steht hier, weil es stimmt: Wer die
+// Mappe ausdruckt und nichts weiter tut, besetzt nichts. Dass daraus zugleich der Anlass
+// für ein Gespräch wird, ist kein Zufall, aber auch keine Erfindung — dieselbe Rechnung
+// steht im PDF und in der Mail.
+const STAND_ERLEDIGT = [
+    "Texte für vier Kanäle",
+    "Vier Fragen für die Bewerbung",
+    "Budgetrahmen für Ihre Gegend",
+    "Drehbuch für das Handyvideo",
+]
+const STAND_OFFEN = [
+    "Video drehen",
+    "Anzeige einstellen und ausspielen",
+    "Antworten, solange der Bewerber noch wartet",
+]
+
+function Stand({ auf = "hell" }: { auf?: "hell" | "dunkel" }) {
+    const gesamt = STAND_ERLEDIGT.length + STAND_OFFEN.length
+    const anteil = Math.round((STAND_ERLEDIGT.length / gesamt) * 100)
+    const dunkel = auf === "dunkel"
+    const text = dunkel ? PAPIER : TINTE
+    const leise = dunkel ? P45 : T40
+    const linie = dunkel ? LINIE_D : LINIE
+
+    const liste = (titel: string, eintraege: string[], erledigt: boolean) => (
+        <div style={{ flex: "1 1 240px", minWidth: 0 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: erledigt ? leise : (dunkel ? AKZENT_DUNKEL : AKZENT_HELL) }}>
+                {titel}
+            </div>
+            <div style={{ marginTop: 12, display: "grid", gap: 0 }}>
+                {eintraege.map((e, i) => (
+                    <div
+                        key={e}
+                        style={{
+                            display: "flex", gap: 10, alignItems: "baseline",
+                            padding: "9px 0", borderTop: i === 0 ? "none" : `1px solid ${linie}`,
+                        }}
+                    >
+                        <span style={{ fontSize: 13, lineHeight: 1.5, color: erledigt ? leise : (dunkel ? AKZENT_DUNKEL : AKZENT_HELL) }}>
+                            {erledigt ? "✓" : "○"}
+                        </span>
+                        <span style={{ fontSize: 15, lineHeight: 1.5, letterSpacing: "-0.02em", color: erledigt ? leise : text }}>
+                            {e}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+
+    return (
+        <div
+            style={{
+                marginTop: 22, background: dunkel ? "rgba(245,243,239,0.04)" : REIN,
+                border: `1px solid ${dunkel ? LINIE_D : LINIE}`, borderRadius: RADIUS_KARTE,
+                padding: "clamp(20px, 3vw, 30px)",
+            }}
+        >
+            <div style={{ display: "flex", gap: 14, alignItems: "baseline", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "clamp(1.7rem, 3.4vw, 2.2rem)", lineHeight: 1, fontWeight: 500, letterSpacing: "-0.05em", color: text, fontVariantNumeric: "tabular-nums" }}>
+                    {STAND_ERLEDIGT.length} von {gesamt}
+                </span>
+                <span style={{ fontSize: 15, lineHeight: 1.5, letterSpacing: "-0.02em", color: leise }}>
+                    Schritten bis zur besetzten Stelle sind erledigt
+                </span>
+            </div>
+            <div style={{ marginTop: 16, height: 4, borderRadius: 999, background: dunkel ? "rgba(245,243,239,0.12)" : "rgba(14,15,18,0.09)", overflow: "hidden" }}>
+                <div style={{ width: anteil + "%", height: "100%", background: SIGNAL, borderRadius: 999 }} />
+            </div>
+            <div style={{ marginTop: 22, display: "flex", gap: "clamp(20px, 3vw, 44px)", flexWrap: "wrap" }}>
+                {liste("Haben Sie jetzt", STAND_ERLEDIGT, true)}
+                {liste("Fehlt noch", STAND_OFFEN, false)}
+            </div>
+            <p style={{ margin: "20px 0 0", paddingTop: 18, borderTop: `1px solid ${linie}`, fontSize: 15, lineHeight: 1.6, letterSpacing: "-0.02em", color: leise, maxWidth: "62ch" }}>
+                Die drei offenen Schritte kosten zusammen etwa sechs Stunden — und sie
+                entscheiden, ob sich jemand meldet. Die Texte behalten Sie in jedem Fall.
+            </p>
+        </div>
+    )
+}
+
 function Blatt({
     ergebnis, beispiel = false, angeschnitten = false, endpunkt = "", beruf = "", domain = "",
 }: {
@@ -1209,6 +1348,23 @@ function Blatt({
 
     return (
         <div>
+            {beispiel ? (
+                <div
+                    style={{
+                        marginBottom: 14, display: "flex", gap: 12, alignItems: "baseline",
+                        flexWrap: "wrap", padding: "14px 18px", borderRadius: RADIUS_KARTE,
+                        background: "rgba(184, 65, 22, 0.07)", border: `1px solid rgba(184, 65, 22, 0.22)`,
+                    }}
+                >
+                    <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: AKZENT_HELL }}>
+                        Beispiel
+                    </span>
+                    <span style={{ fontSize: 14, lineHeight: 1.5, letterSpacing: "-0.02em", color: T40, flex: "1 1 240px", minWidth: 0 }}>
+                        Ein echter Durchlauf für einen anderen Betrieb — nicht Ihre Seite. Ihre
+                        Texte entstehen aus Ihrer Website.
+                    </span>
+                </div>
+            ) : null}
             {!angeschnitten && endpunkt ? (
                 <div
                     style={{
@@ -1430,7 +1586,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         }
     }
 
-    function nachfuehren() {
+    function nachfuehren(erzwingen = false) {
         const k = rahmen.current
         if (!k) return
         const r = k.getBoundingClientRect()
@@ -1442,7 +1598,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
         // die unteren Antworten unter der Kante, und wer dafür scrollt, wird beim
         // Antippen wieder zurückgeworfen.
         const ragtRaus = r.bottom > window.innerHeight && r.top > kopf + 16
-        if (!verdeckt && !zuTief && !ragtRaus) return
+        if (!erzwingen && !verdeckt && !zuTief && !ragtRaus) return
         // ▲ KEIN `scrollTo({ behavior: "smooth" })`. Auf dieser Seite läuft Lenis als
         // Smooth-Scroll-Baustein, und der schluckt beide weichen Wege — `behavior: "smooth"`
         // ebenso wie `lenis.scrollTo(...)`. Nur die Zwei-Argument-Form kommt an.
@@ -1464,10 +1620,15 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
             ersterLauf.current = false
             return
         }
-        nachfuehren()
+        // Beim Absenden und beim Ergebnis wird immer angedockt, nicht nur wenn der
+        // Kasten schlecht steht. Sonst bleibt die Seite dort stehen, wo der Finger
+        // zuletzt war — beim Warten war das der Beispielblock weiter unten, und der
+        // sieht aus wie ein fertiges Ergebnis. Genau das wurde gemeldet.
+        const andocken = lage === "laeuft" || lage === "fertig"
+        nachfuehren(andocken)
         // Zweiter Anlauf: Nach einem Textfeld schließt sich auf dem iPhone die Tastatur,
         // und iOS setzt die Scrollposition dabei selbst noch einmal.
-        const t = window.setTimeout(nachfuehren, 420)
+        const t = window.setTimeout(() => nachfuehren(andocken), 420)
         return () => window.clearTimeout(t)
     }, [schritt, lage])
 
@@ -1917,8 +2078,10 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                         {hinweis}
                     </p>
                     <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        {/* „Kostenlos, kein Konto" stand hier, bis die Kanalleiste darunter
+                            an jedem einzelnen Kanal dasselbe sagte. Zweimal dieselbe Zusage
+                            direkt untereinander liest sich wie ein Versprechen zu viel. */}
                         <Etikett auf="dunkel">Aus Ihrer Website</Etikett>
-                        <Etikett auf="dunkel">Kostenlos, kein Konto</Etikett>
                         <Etikett auf="dunkel">Danach ein Anruf, zehn Minuten</Etikett>
                     </div>
                 </div>
@@ -2168,8 +2331,8 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                         }}
                     >
                         {fertig
-                            ? "Die Texte für drei Kanäle, die vier Bewerberfragen — und darunter die Anleitung: welche Einstellungen, welches Budget, welches Video, und was Sie antworten, wenn sich jemand meldet."
-                            : "Wir lesen Ihre Website und schreiben daraus die Ausschreibung für drei Kanäle. Dazu die Anleitung, wie Sie sie schalten: Einstellungen, Budget, ein Video-Drehbuch für zwanzig Minuten mit dem Handy und die ersten Antworten an Bewerber."}
+                            ? "Die Texte für vier Kanäle, die vier Bewerberfragen — und darunter die Anleitung: welche Einstellungen, welches Budget, welches Video, und was Sie antworten, wenn sich jemand meldet."
+                            : "Wir lesen Ihre Website und schreiben daraus die Ausschreibung für vier Kanäle — zwei davon kosten nichts. Dazu die Anleitung, wie Sie sie schalten: Einstellungen, Budget, ein Video-Drehbuch für zwanzig Minuten mit dem Handy und die ersten Antworten an Bewerber."}
                     </p>
 
                     <div
@@ -2213,6 +2376,7 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                                     beruf={String(antworten.beruf || "")}
                                     domain={domain.trim()}
                                 />
+                                {!beispiel ? <Stand /> : null}
                                 {!beispiel ? <Rueckruf /> : null}
                                 {/* Wer hier steht, hat seine Texte. Ihm jetzt anzubieten, noch
                                     eine Stelle schreiben zu lassen, ist das kleinere Geschäft —
@@ -2253,6 +2417,58 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                         )}
                     </div>
 
+                    {/* Die Kanäle, bevor jemand etwas einträgt. Vorher stand unter dem Feld
+                        nur „4 Kanäle, fertig formuliert" — welche vier, stand erst drei
+                        Bildschirme weiter unten. */}
+                    {!imTrichter && !fertig ? (
+                        <div style={{ marginTop: "clamp(26px, 3.4vw, 36px)" }}>
+                            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", color: P45 }}>
+                                Fertig formuliert für
+                            </div>
+                            <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 10 }}>
+                                {KANAELE_MARKEN.map((k) => (
+                                    <div key={k.name} style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                                        {/* Helle Kachel, damit die Zeichen in ihren eigenen Farben
+                                            stehen können. Auf dem dunklen Grund einfarbig
+                                            umgefärbt wären es fremde Marken in unserer Optik. */}
+                                        <div
+                                            style={{
+                                                display: "flex", alignItems: "center", gap: 10,
+                                                minHeight: 48, padding: "11px 16px",
+                                                borderRadius: RADIUS_FELD, background: PAPIER,
+                                            }}
+                                        >
+                                            {k.zeichen ? (
+                                                k.zeichen.map((z, i) => (
+                                                    <Markenzeichen key={i} quelle={z.quelle} hoehe={z.hoehe} farbe={z.farbe} />
+                                                ))
+                                            ) : (
+                                                <span style={{ fontSize: 15, fontWeight: 500, letterSpacing: "-0.025em", color: TINTE, whiteSpace: "nowrap" }}>
+                                                    {k.name}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <span style={{ paddingLeft: 2, fontSize: 11.5, letterSpacing: "-0.005em", color: k.kosten === "bezahlt" ? AKZENT_DUNKEL : P45 }}>
+                                            {k.kosten}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div style={{ marginTop: 15, fontSize: 14, lineHeight: 1.55, letterSpacing: "-0.015em", color: P70, maxWidth: "58ch" }}>
+                                Dazu die vier Bewerberfragen, die Anleitung zum Schalten mit Ihrem Ort
+                                und Ihrem Tagesbudget, ein Drehbuch fürs Handyvideo und die ersten
+                                Antworten an Bewerber — hier auf der Seite, als PDF und per Mail.
+                            </div>
+                            {/* Fremde Marken, nominativ genannt. Der Satz steht klein, aber er
+                                steht: Wir sind kein Partner dieser Plattformen. */}
+                            <div style={{ marginTop: 10, fontSize: 11.5, lineHeight: 1.5, letterSpacing: "-0.005em", color: P45, maxWidth: "58ch" }}>
+                                Namen und Zeichen der Plattformen gehören ihren Inhabern. Wir schreiben
+                                die Texte im jeweils passenden Format — eine Zusammenarbeit mit den
+                                Anbietern besteht nicht.
+                            </div>
+                        </div>
+                    ) : null}
+
                     {/* Drei Zahlen offen zwischen Haarlinien — das Belegzahlen-Muster der
                         Startseite. Kein Kasten: Eine große Zahl braucht Raum. */}
                     {!imTrichter && !fertig ? (
@@ -2260,9 +2476,11 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                             {[
                                 // Drei Spalten, drei Zahlen. Eine vierte stünde allein in
                                 // der zweiten Reihe — dasselbe Loch wie bei den Karten.
-                                { zahl: "3", label: "Kanäle, fertig formuliert", quelle: "Kleinanzeigen · Meta · Ihre Seite" },
-                                { zahl: "10", label: "Schritte bis zur Anzeige", quelle: "mit Ihrem Ort und Ihrem Budget" },
+                                // Die Kanäle stehen jetzt als Marken darüber — hier stünde
+                                // sonst zweimal dasselbe.
                                 { zahl: "0", label: "Euro, kein Konto", quelle: "die Texte behalten Sie in jedem Fall" },
+                                { zahl: "10", label: "Schritte bis zur Anzeige", quelle: "mit Ihrem Ort und Ihrem Budget" },
+                                { zahl: "4", label: "Bewerberfragen", quelle: "statt Lebenslauf und Anschreiben" },
                             ].map((b) => (
                                 <div key={b.label} style={{ minWidth: 0 }}>
                                     <div style={{ fontSize: "clamp(2.2rem, 5vw, 3.5rem)", lineHeight: 0.92, fontWeight: 500, letterSpacing: "-0.055em", color: PAPIER, fontVariantNumeric: "tabular-nums" }}>
@@ -2281,11 +2499,16 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                 Direkt nach dem Auftakt gehört das Ergebnis, nicht die Methode. Liegen die
                 echten Anzeigen vor, fällt der Abschnitt weg — sonst stünde dieselbe
                 Darstellung zweimal auf einer Seite. */}
-            {!fertig ? (
+            {/* Sobald jemand im Trichter ist, fällt der Abschnitt weg. Auf dem Handy stand
+                er sonst direkt unter der offenen Frage, und wer scrollte, sah ein fertig
+                gesetztes Ergebnis mit Kopieren-Knöpfen — gemeldet als „was ist das denn
+                hier, das sieht aus wie was Fertiges". Vor dem ersten Antippen ist er der
+                Beweis, währenddessen ist er eine Verwechslung. */}
+            {!fertig && !imTrichter ? (
                 <Abschnitt grund={PAPIER}>
                     <Versal>So sieht das Ergebnis aus</Versal>
                     <div style={{ marginTop: 22 }}>
-                        <H2>Ein Kanal von dreien, aus einem echten Durchlauf</H2>
+                        <H2>Ein Kanal von vieren, aus einem echten Durchlauf</H2>
                         <Lead>
                             Das ist kein Entwurf für diese Seite, sondern das, was bei einem Betrieb
                             herausgekommen ist. Die Fassungen für Facebook und Instagram und für die
@@ -2298,13 +2521,16 @@ export default function Stellenanzeiger(props: StellenanzeigerProps) {
                     </div>
                     <div style={{ marginTop: 26, paddingTop: 20, borderTop: `1px solid ${LINIE}`, display: "flex", gap: 18, alignItems: "baseline", flexWrap: "wrap" }}>
                         <span style={{ fontSize: "clamp(1.9rem, 4vw, 2.6rem)", lineHeight: 1, fontWeight: 500, letterSpacing: "-0.05em", color: TINTE, fontVariantNumeric: "tabular-nums" }}>
-                            69
+                            291
                         </span>
                         <span style={{ fontSize: 16, lineHeight: 1.62, letterSpacing: "-0.005em", color: T60, maxWidth: "46ch" }}>
-                            Bewerbungen kamen bei Patio in Oldenburg über zwei Kampagnen herein.
-                            Quelle: Auswertung des Kunden.{" "}
-                            <a href="/arbeiten/patio-oldenburg" style={{ color: AKZENT_HELL }}>
-                                Der Fall
+                            Tage bleibt eine gemeldete Stelle im Sanitär- und Heizungsbau offen, und
+                            auf 100 offene Stellen kommen 68 Arbeitslose. Niedersachsen, gleitende
+                            Jahresergebnisse der Statistik der Bundesagentur für Arbeit, September
+                            2026. Die Karriereseite der Kfz-Werkstatt WAV in Westerstede haben wir
+                            gebaut, Bewerbung ohne Anschreiben:{" "}
+                            <a href="https://wav-wst.de/karriere" style={{ color: AKZENT_HELL }}>
+                                wav-wst.de/karriere
                             </a>
                         </span>
                     </div>

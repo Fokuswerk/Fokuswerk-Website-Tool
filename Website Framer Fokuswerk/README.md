@@ -1,11 +1,633 @@
 # Fokuswerk — neue Website (Framer-Projekt „FW neu")
 
+## 29.10.2026 — Stellenanzeigen-Werkzeug: vier gemeldete Fehler, und was man bekommt
+
+Gemeldet nach einem eigenen Durchlauf, alles am selben Tag behoben und live.
+
+**Die Seite sprang beim Absenden nicht zurück.** Wer im Trichter weit unten stand und
+absendete, blieb dort stehen — oben lief der Fortschrittsbalken, im Bild stand der
+Beweisblock mit dem Beispielergebnis samt Kopieren-Knöpfen. Gelesen wurde das als „das
+ist ja schon fertig". `nachfuehren()` dockte nur an, wenn der Kasten schlecht stand;
+beim Wechsel auf `laeuft` und `fertig` dockt es jetzt immer an. Gemessen auf dem Handy:
+Scrollposition 4800 → 204.
+
+**Der Beweisblock fällt im Trichter weg.** Vor dem ersten Antippen ist er der Beleg,
+danach eine Verwechslung — auf dem Handy stand er direkt unter der offenen Frage. Wo er
+steht, trägt er jetzt oben eine Marke „Beispiel — ein echter Durchlauf für einen anderen
+Betrieb, nicht Ihre Seite".
+
+**Die Kanäle stehen jetzt unter dem Feld**, als Leiste mit Kleinanzeigen,
+Arbeitsagentur, Facebook & Instagram und Ihrer eigenen Seite, jeder mit „kostenlos" oder
+„bezahlt", darunter ein Satz zu Bewerberfragen, Anleitung, Drehbuch und Budget. Die drei
+Belegzahlen darunter wurden neu belegt (0 Euro, 10 Schritte, 4 Bewerberfragen), weil
+„4 Kanäle" sonst zweimal dastand. Der Etikett-Chip „Kostenlos, kein Konto" ist aus
+demselben Grund weg.
+
+**Nach dem Ergebnis steht der Stand:** „4 von 7 Schritten bis zur besetzten Stelle sind
+erledigt" — Texte, Fragen, Budget und Drehbuch stehen, offen bleiben Video, Ausspielung
+und die Antwort am selben Tag. Das ist der eingebaute Gesprächsanlass, das Gegenstück
+zum Deckel von 75 Punkten in der SEO-Analyse, und es stimmt: Texte allein besetzen keine
+Stelle.
+
+Am Rechenwerk (`fokuswerk-werkzeuge`) hingen dieselbe Runde: doppeltes Impressum in der
+Kundenmail, Zeilenumbruch mitten in der Mailadresse der internen Meldung, „… mehr" als
+toter Aufklapp-Knopf im PDF und ein Deckblatt ohne Inhaltsangabe. Steht dort im README.
+
+## 29.10.2026 — der Wettbewerbs-Trichter fragt jetzt den Namen, nicht die Branche
+
+Thees fand sich im eigenen Freebie nicht. Drei Anläufe über Werbeagentur, Marketingagentur
+und Social-Media-Agentur, jedes Mal ins Leere. **Google führt Fokuswerk als
+„Online-Marketing-Unternehmen"** — auf den Begriff kommt niemand.
+
+Die Reihenfolge war falsch herum: Der Trichter fragte zuerst nach dem Gewerk, aber die
+Kategorie vergibt Google, nicht der Betrieb. Jetzt: **Ort → Betriebsname → Zahlen.** Die
+Branche holt `betriebSuchen()` aus seinem Google-Profil (`?suche=1`, Places-Suche nach dem
+Namen). Bei mehreren Gleichnamigen wählt der Mensch, mit Kategorie und Anschrift daneben.
+
+**Der zweite Fehler, den erst der Live-Test zeigte:** Die Kategorie zu kennen genügt nicht.
+`searchStringsArray` ist bei Google eine **Textsuche, kein Filter** — „Online-Marketing-Unternehmen"
+in Oldenburg lieferte 17 Betriebe, und Fokuswerk war nicht dabei, obwohl genau diese Kategorie
+an seinem Profil steht. Der Umbau allein hätte also wieder ins Leere geführt, eine Stufe
+später. Deshalb hängt `einhaengen()` im Endpunkt den selbst gesuchten Betrieb in die Liste,
+wenn die Kategoriesuche ihn nicht mitbringt. Das Profil dafür liegt aus dem `?suche=1`-Aufruf
+im Speicher; `betriebSuchen` liefert seit dem dieselben Felder wie `profileHolen`.
+
+Kosten: ein Apify-Aufruf mehr je Lead (~30 s). `GEWERKE` im Baustein ist weg.
+
+### Dabei repariert
+
+- **Der Scroll-Sprung nach jedem Schritt.** Die Karte wurde IMMER unter die Kopfleiste
+  gezogen — auf dem Schreibtisch schnitt das die Überschrift weg und ließ unter der kurzen
+  Karte eine leere schwarze Fläche. Jetzt wird nur so weit gescrollt, dass die Karte ins Bild
+  passt; passt sie ohnehin, passiert nichts.
+- **Die Meldung an uns ging als nackter Text raus**, während die anderen beiden Freebies
+  Karten schicken. Jetzt dieselbe Hülle, mit Textfassung als zweiter Spur.
+- **Die PDF hatte 7 Seiten, 3 davon fast leer.** Der Kennzahlen-Block stand auf einer festen
+  `yFeld = 686` für genau vier Felder; die neue Google-Zahl fiel über den Seitenrand, der Wert
+  landete auf Seite 2, die Beschriftung auf Seite 3. Der Block wächst jetzt nach oben, der Fuß
+  bleibt fest. **Wer eine Kennzahl ergänzt, soll das Layout nicht von Hand nachrechnen.**
+- **Lange Betriebsnamen liefen in die nächste Tabellenzeile.** `lineBreak: false` mit
+  `ellipsis` hat pdfkit nicht davon abgehalten umzubrechen; jetzt wird mit `widthOfString`
+  selbst gekürzt.
+- **Die Anzeigenspalte sagte nur „ja" oder „keine".** Jetzt steht dort der Kanal: Meta,
+  Google oder beides. Fußnote und Quellenangaben nachgezogen.
+
+## 29.10.2026 — Google Ads kommt zum Werbe-Check dazu
+
+Der Wettbewerb prüfte bisher nur Meta. Jetzt zusätzlich Google Ads Transparency, über den
+Apify-Actor `scrapesage~google-ads-transparency-scraper` im Modus `advertisers`: Liste von
+Domains rein, je Werbetreibendem eine Zeile raus. **0,3 Cent je gefundenem Werber** — wer
+nicht wirbt, kostet nichts.
+
+**Was dafür umgebaut werden musste:** Der Vorrat speicherte `website: true`, nicht die
+Adresse (`rangliste-messen.js:253`). Ohne Domain kein Google-Check. Jetzt steht `domain`
+daneben, gefiltert über `reineDomain()` — Facebook-Seiten, `business.site` und
+Branchenbucheinträge zählen nicht als eigene Website.
+
+**Die Falle, im Probelauf gesehen:** Auf `euromaster.de` kamen fünf Werbetreibende zurück,
+vier davon fremde Agenturen und Partner aus AT, DK und SE, die auf dieselbe Seite werben.
+Ungefiltert hätte der Bericht vier werbende Autowerkstätten in Westerstede gemeldet, die es
+nicht gibt. Jede Zeile läuft deshalb durch dasselbe `zuordnen()` wie bei Meta.
+
+**Bezugsgröße ist `googlePruefbar`, nicht die Gesamtzahl.** In Westerstede haben 7 von 15
+Betrieben keine Website; über die kann der Check nichts sagen. „0 von 15" wäre eine Behauptung
+über sieben ungeprüfte Betriebe. Ist `googlePruefbar` null, fällt der ganze Google-Block
+aus Bericht und PDF — nicht als Nullzahl.
+
+Beide Abrufe laufen in `anzeigenErgaenzen` nebeneinander (`Promise.all`); fällt Google aus,
+steht die Meta-Zahl trotzdem. Neu im Bericht: eine Kennzahl im PDF, ein eigener Befund
+(`anzeigen.googleBefund`) in PDF und Baustein.
+
+**Erster echter Treffer:** `wav-wst.de` schaltet 8 Google-Anzeigen — und bei Meta nichts. Der
+Kanal war schlicht blind.
+
+**Ein Fehler im Abgleich, beim ersten Lauf in Oldenburg gefunden:** „König39" gegen „König 39"
+wurde verworfen. `zuordnen()` sah einmal `koenig39` als ein Wort und einmal `koenig` plus eine
+Zahl, die als zu kurz herausfiel. Jetzt vergleicht die Prüfung zusätzlich beide Namen ohne
+Leerzeichen — gleiche Zeichen, andere Schreibweise, derselbe Betrieb.
+
+### Blockiert: Apify-Guthaben ist leer
+
+```
+compass~crawler-google-places antwortete 402: not-enough-usage-to-run-paid-actor
+"Your remaining usage of $0.156972 this billing cycle isn't enough for this run."
+```
+
+Jede frische Messung scheitert daran — Google-Check hin oder her. Der Vorrat liefert weiter
+aus, aber ohne Domains, also ohne Google-Block. **Zwei Dinge fehlen, bevor das sichtbar wird:**
+Guthaben aufladen, und `APIFY_TOKEN` in die lokale `.env` (steht nur auf Vercel), weil
+`test/vorrechnen.mjs` lokal läuft.
+
+**Neu beim Suchen:** `sammle()` hängt den Originaltext von Apify als `grund` ans Ergebnis, und
+`?placesprobe=1&diagnose=…` gibt ihn heraus. Vorher stand überall nur `profile_nicht_lesbar`,
+und der Unterschied zwischen „kein Guthaben" und „Actor kaputt" war nicht zu sehen.
+
+## 29.10.2026 — die SEO-Analyse bewertet deutlich strenger
+
+Anlass: `pferdehof-mansie.de` bekam 65 von 100. Eine Wix-Seite, die 1,2 MB ausliefert, um
+254 Wörter zu zeigen, deren Titel aus zehn aneinandergereihten Suchbegriffen besteht und auf
+deren Startseite keine Anschrift steht. Dieselbe Seite steht heute bei **43**.
+
+Die Ursache war nicht die Arithmetik, sondern der Prüfungskatalog: Er belohnte das Ausbleiben
+von Sabotage. Kein `noindex`, https, viewport, eine saubere 404 — das bringt jeder Baukasten
+mit, und es stand mit vollem Gewicht als „gut" in der Wertung. Vier von fünf gemessenen Seiten
+hatten **Technik 100**.
+
+| Was | Vorher | Jetzt |
+|---|---|---|
+| Punktwert einer Lücke | 0,35 | 0,20 |
+| Punktwert „unbekannt" | 0,50 | 0,30 |
+| Feldgewichte (technik/google/ort/ki) | 25/28/27/20 | 22/28/30/20 |
+| Gewicht `handy`, `kiZugang`, `robotsdatei` | 8 / 12 / 2 | 5 / 10 / 1 |
+| Obergrenze für eine fremde Domain | keine | **75** |
+
+**Sechs neue Prüfungen**, alle aus Messwerten, die schon vorlagen und nicht gezählt wurden:
+
+- `googlesicht` (10) — Abruf mit der Googlebot-Kennung gegen den Browser-Abruf. Das war die
+  größte Lücke: Eine Seite, deren Text erst im Browser entsteht, bekam in der Google-Bewertung
+  keinen Punkt Abzug. `botsicht.google` wurde seit jeher gemessen und nie benutzt.
+- `seitengewicht` (8) — Quelltext-Bytes und Zahl der Skripte gegen die Wortzahl.
+- `canonical` (4), `sprache` (3), `bildmasse` (4, Bilder ohne Höhe/Breite), `mailadresse` (3).
+- `ortsmarkup` prüft zusätzlich Koordinaten und `sameAs`; ein **kaputter** JSON-LD-Block ist
+  jetzt ein Mangel (vorher unbemerkt, obwohl `struktur.kaputt` gemessen wurde).
+
+**Verschärfte Schwellen:** Titel über 100 Zeichen oder mit ≥ 4 Trennzeichen ist ein Mangel
+statt einer Lücke; Beschreibung über 250 Zeichen ebenso; ab drei `h1` Mangel; Alternativtexte
+unter 50 % Mangel (gut erst ab 90 %); Textmenge gut erst ab 450 Wörtern; Antwortzeit gut unter
+400 ms; `aktualitaet` verlangt ein vollständiges Datum — vorher genügte „© 2024" in der Fußzeile.
+`impressum` zählt nur noch einen verlinkten Pfad, nicht das Wort im Text. **Kein Ort auf der
+Startseite** ist ein Mangel statt „unbekannt" — das ist der Befund, nicht das Fehlen eines
+Befunds.
+
+**Ein Widerspruch, den erst der Live-Lauf zeigte:** Derselbe überladene Titel galt oben als
+Mangel („Google verwirft solche Aufzählungen") und zwei Absätze weiter zweimal als Stärke
+(„Ihr Suchbegriff steht im Seitentitel", „Ihr Ort steht im Seitentitel") — zusammen 22
+Gewichtspunkte in voller Höhe. Die beiden Passungsprüfungen fragen jetzt über
+`titelUeberladen()` mit, ob der Titel überhaupt etwas taugt. Mansie fiel dadurch von 54 auf 43.
+
+**Die Obergrenze 75** (`DECKEL` in `seo-analyse-urteil.js`): Die Prüfung liest den
+ausgelieferten Quelltext der Startseite und nur den. Google-Profil, Bewertungen, Verweise von
+anderen Seiten, die tatsächliche Platzierung — nichts davon sieht sie. Die Grenze ist im
+Bericht **nicht benannt** (Entscheidung Thees, 29.10.2026); sie steht und fällt mit der Ausnahme.
+
+**`fokuswerk.de` steht fest auf 100** (`VOLLE_PUNKTZAHL`, Entscheidung Thees, 29.10.2026). Die
+eigene Seite ist der Maßstab, den wir im Gespräch danebenlegen; 93 gegen 43 wirft die Frage auf,
+was denn bei uns fehlt. Gemessen steht sie bei 91 bis 93 mit fünf offenen Punkten. Drei davon
+wären behebbar — Erreichbarkeitszeiten auf die Startseite, `llms.txt` als echte Textdatei,
+Antwortzeit. **Zwei nicht:** Seitengewicht (523 KB) und fehlende Bildmaße liefert Framer so aus.
+Ein ehrlich gemessenes 100 ist auf dieser Plattform nicht erreichbar.
+
+Gesetzt wird nicht nur die Zahl: Die offenen Punkte werden **aussortiert**, nicht auf „gut"
+gedreht — ein grüner Haken neben „Beim Laden springt Ihre Seite" wäre schlimmer als die Lücke.
+Damit kommen die vier Feldnoten von selbst auf 100 und es steht kein Baustein zum Einsetzen
+darunter. **Der eigene Blick bleibt:** `?roh=1` hinter dem Diagnoseschlüssel rechnet ungeschönt.
+Eigener Schalter, nicht an den Schlüssel gehängt — der öffnet auch den Trockenlauf, und sonst
+wäre der einzige Weg, die öffentliche Darstellung zu prüfen, ein Aufruf mit echtem Mailversand.
+
+```
+# öffentlich, nichts verschickt
+curl -s -X POST ".../api/seo-analyse?trocken=1&diagnose=fw-probe-2610"        -d '{"domain":"fokuswerk.de",…}'   # 100
+# ungeschönt
+curl -s -X POST ".../api/seo-analyse?trocken=1&roh=1&diagnose=fw-probe-2610"  -d '{"domain":"fokuswerk.de",…}'   #  93
+```
+
+**Zwei Folgewirkungen:**
+
+- Das Beispiel auf `/seo-analyse` ist eine echte Messung und musste nachgemessen werden:
+  aus 63 wurde 61, die Feldnoten und vier Messwerte haben sich geändert. Wer die Bewertung
+  anfasst, misst dieses Beispiel nach — sonst steht dort eine Note, die das Werkzeug für
+  dieselbe Seite nicht mehr vergeben würde.
+- Leads von vor dem 29.10.2026 tragen Noten der alten Skala. Zarate steht mit 88 in der
+  Pipeline und käme heute auf 75. Die beiden Zahlen sind nicht vergleichbar.
+
+**Nebenbei behoben:** Der Deckel des PDF kürzt lange Seitentitel. Der 198-Zeichen-Titel von
+Mansie lief über sieben Zeilen mitten durch die Note. Vor dem ersten Trennstrich steht in
+solchen Titeln fast immer der Name des Betriebs; der genügt dort.
+
+**Noch offen:** Bei Wix schwankt die ausgelieferte Wortzahl zwischen zwei Abrufen (851 und
+254 im selben Durchgang gemessen). Die Sicht-Prüfungen vergleichen zwei getrennte Abrufe und
+können dadurch um eine Stufe springen. Abgefedert über eine absolute Untergrenze von 300
+Wörtern, aufgehoben ist es nicht.
+
+## 28.10.2026 — Typprüfung ist jetzt Pflicht vor jeder Veröffentlichung
+
+Nach dem leeren Arbeiten-Block auf `/leistungen/websites`: Der Ablauf ist festgeschrieben, die
+Regeln stehen in `CLAUDE.md` und werden damit in jedem Chat geladen, der in diesem Ordner arbeitet.
+
+```
+npx @framer/agent@latest exec -s <sitzung> < werkzeuge/publizieren.js   # prüfen, dann veröffentlichen
+npx @framer/agent@latest exec -s <sitzung> < werkzeuge/pruefen.js       # nur prüfen
+```
+
+`werkzeuge/publizieren.js` geht alle Code-Bausteine mit `typecheck()` durch und bricht ab, sobald
+eine Meldung dabei ist, die zur Laufzeit kracht (`Cannot find name …`). Harmlose Typhinweise —
+`textWrap`, Baustein-Importe `./X.tsx`, URL-Importe von esm.sh — werden gelistet, blockieren aber
+nicht.
+
+Hinter „Änderungen: 0" stecken zwei sehr verschiedene Lagen, deshalb merkt sich das Skript in
+`werkzeuge/.code-stand.json` den Fingerabdruck jedes Bausteins (Leerraum normalisiert, weil Framer
+Dateien gelegentlich selbst umformatiert):
+
+- **Stand bereits live** → nichts veröffentlichen, kurze Meldung. Vorher entstand hier eine leere
+  Fassung samt irreführender Warnung.
+- **Code geändert, Leinwand unberührt** → Abbruch mit Nennung der betroffenen Dateien. Framer baut
+  das Paket sonst nicht neu und die alte, womöglich kaputte Fassung bliebe live.
+
+`process` gibt es in der Agenten-Umgebung nicht; der Pfad zur Standdatei läuft deshalb über
+`os.homedir()`. Erlaubt sind dort nur `path`, `url`, `fs`, `fs/promises`, `crypto`, `buffer`,
+`util`, `os`.
+
+**Der erste Lauf hat sofort einen zweiten Fehler derselben Art gefunden:** In `Rangliste.tsx`
+(Werkzeug `/wettbewerb`) griff `TrichterRahmen` in Schritt 3 auf `anzeigen` zu — eine Variable,
+die im Hauptbaustein lebt und nicht durchgereicht war. Aufgefallen wäre das erst, wenn ein
+Interessent den Trichter bis zur Ortsauswertung durchläuft; dann wäre die Karte leer geblieben.
+Behoben wie beim Arbeitsraster: Prop in die Signatur und an die Aufrufstelle. Veröffentlicht als
+Fassung f2d99422d.
+
+## 28.10.2026 — leerer Block auf `/leistungen/websites`: ein Absturz im Arbeitsraster
+
+Rückmeldung: „wieso lädt das hier nicht." Auf `/leistungen/websites` stand nur noch das
+Geisterwort „Arbeiten" und der Hinweissatz darunter — die Kachelgalerie fehlte.
+
+**Ursache:** In `Arbeitsraster.tsx` nutzte der Umschalter (`Schalter`, Websites/Kampagnen) in
+seinem `padding` die Variable `schmal`, die in dieser Funktion nie ankam — sie wird im Aufrufer
+berechnet und war als Prop nicht durchgereicht. Im Browser `ReferenceError: schmal is not defined`,
+Framer fängt das ab und lässt den Bereich leer. Der Fehler lag im Code und wurde erst sichtbar,
+als ein Publish das Bausteinpaket neu baute.
+
+**Behoben:** `schmal: boolean` in die Signatur von `Schalter` und `schmal={schmal}` an die
+Aufrufstelle. `typecheck()` meldet die Datei jetzt sauber.
+
+**Zwei Dinge fürs nächste Mal:**
+
+- **`typecheck()` über alle Code-Dateien laufen lassen, bevor man publiziert.** Der Fehler stand
+  schwarz auf weiß in der Prüfung (`Cannot find name 'schmal'`), nur hatte sie niemand gelesen.
+  Alle anderen 28 Dateien melden nur harmlose Typhinweise (`textWrap`, Modulpfade).
+- **Eine Code-Änderung allein löst keinen Neubau aus.** Der Publish direkt nach der Reparatur
+  meldete „changes: 0" und lieferte weiter das alte, kaputte Paket aus. Erst eine echte
+  Canvas-Änderung (hier: den Knoten umbenannt) baut das Paket neu. Danach geprüft: keine Seite der
+  Sitemap verweist mehr auf das alte Paket.
+
+## 28.10.2026 — die drei Werkzeuge sind jetzt auf der Seite verlinkt
+
+Vorher führte **kein einziger Link** auf `/seo-analyse`, `/wettbewerb` oder `/stellenanzeige` —
+die Seiten waren nur über die Sitemap und über Anzeigen erreichbar. Jetzt hängen sie an dem
+Dienst, zu dem sie gehören:
+
+- **`/leistungen`** — der frühere Einzelblock „Werkzeug Stellenanzeige" ist eine Dreier-Reihe
+  geworden: SEO- und GEO-Analyse, Platz im Wettbewerb, Stellenanzeige. Raster 3 Spalten (Desktop),
+  2 (Tablet), 1 (Handy).
+- **`/leistungen/websites`** — ein Block zur SEO- und GEO-Analyse, zwischen „Arbeiten" und „Ablauf".
+- **`/leistungen/performance-marketing`** — zwei Werkzeuge (Wettbewerb, Stellenanzeige) nach
+  „Kampagnen".
+- **Fußzeile** — unter den Leistungen eine Gruppe „KOSTENLOSE WERKZEUGE" mit allen drei Seiten,
+  also von jeder Seite aus erreichbar.
+- **Öffnungszeiten im Fuß** sitzen jetzt in einer eigenen Hülle mit 10 px Abstand und in Papier 40
+  statt in voller Textfarbe — vorher klebten sie an der Adresse und lasen sich wie ein Teil davon.
+
+**Drei Sachen, die dabei Zeit gekostet haben:**
+
+- **`borderColor` Papier 16 ist auf hellem Grund unsichtbar.** Die Haarlinien des Hausstils gibt es
+  in zwei Fassungen: Papier 16 auf dunklem Grund (Fuß), **Tinte 16** auf Papier. Der alte
+  Werkzeugblock hatte die falsche — gemessen im Browser über `getComputedStyle`, nicht geschätzt.
+- **`padding` lässt sich auf `RichTextNode` nicht setzen** („Cannot apply padding"). Abstände
+  brauchen eine Frame-Hülle um den Text.
+- **Löschen geht nicht über die DSL** (`-id`, `DELETE id` kennen beide keinen Befehl), sondern nur
+  über `(await framer.getNode(id)).remove()`. Und **DSL-Namen bleiben in der Sitzung belegt**: ein
+  zweites `+Node name=…` mit demselben Namen schlägt still fehl, auch wenn der erste Knoten
+  inzwischen gelöscht ist — dann einen neuen Namen nehmen.
+
+Die Verweise entstehen als `link.href`; Framer macht daraus relative Adressen (`./seo-analyse`).
+Ein echter Seitenbezug (`link.webPageId`) lässt sich über die Schnittstelle **nicht** setzen — der
+Wert wird still verworfen. Geprüft: `/leistungen/` leitet auf `/leistungen` um, die relativen Links
+lösen also richtig auf, und ein Klicktest im Browser landet auf `/seo-analyse`.
+
+## 28.10.2026 — Monatsberichte raus, drei SEO-Befunde umgesetzt
+
+**Keine Aussage über Monatsberichte mehr.** Rückmeldung: „monatsberichte machen wir so auch nicht,
+also schreibe da nichts drüber." Gesucht über alle 57 Seiten der Sitemap, geändert an 44 Textknoten
+und 27 Steuerwerten:
+
+- Ablaufschritt „Schalten und messen" auf acht Seiten: jetzt „Die Anzeigen laufen an. Was Anfragen
+  bringt, bekommt mehr Budget — der Rest wird geändert oder abgeschaltet."
+- `/leistungen`: Karte 06 heißt „Nachsteuern" statt „Monatsbericht"; der Satz „Am Monatsende steht
+  fest, was ein Kunde gekostet hat" ist gestrichen.
+- `/leistungen/performance-marketing`: Vorspann endet auf „Messbar statt auf gut Glück",
+  „Auswertung & Bericht" heißt nur noch „Auswertung".
+- Leistungspunkte der Online-Werbung ohne „· Monatsbericht"; die Beispielkachel auf den fünf
+  Branchenseiten heißt „Die Zahlen auf einen Blick".
+
+**Falle dabei:** Zwei Stellen standen *nicht* im Code-Standardwert, sondern als Instanzwerte in
+Objekt-Controls (`$control__werbung` bei der Leistungsbühne, `$control__datenJSON` beim
+Branchenbeispiel) — je Breakpoint eigen. Der erste Publish sah sauber aus, live stand der alte Text
+trotzdem. Objekt-Controls lassen sich **nicht** über die DSL schreiben (`SET … $control__werbung=…`
+läuft ohne Fehler durch und ändert nichts, Teilpfade werden abgelehnt) — nur über
+`getNode(id).setAttributes({ controls: { werbung: … } })` mit dem **Code**-Schlüssel. Reine
+String-Controls wie `datenJSON` gehen dagegen per DSL.
+
+**Drei Befunde aus dem eigenen Werkzeug `/seo-analyse` abgearbeitet:**
+
+1. **Öffnungszeiten als Text:** „Erreichbar Mo–Fr 9–17 Uhr" steht jetzt im Fuß (Layout-Template,
+   also auf jeder Seite).
+2. **Öffnungszeiten in den strukturierten Daten:** `openingHoursSpecification` sitzt jetzt in der
+   `ProfessionalService`-Entität selbst. Der frühere Behelf — ein eigener JSON-LD-Block im
+   `headEnd` mit gleicher `@id`, aber ohne `@type` — ist entfernt. Der Weg ins Haupt-Markup führt
+   über die DSL auf das **String**-Control: `SET ulqLQepzP $control__jSONLD="…"`, und zwar für alle
+   drei Breakpoint-IDs (`ulqLQepzP`, `WQlUT7pJkulqLQepzP`, `nTupyIOA7ulqLQepzP`). `getNode()`
+   erreicht diese Knoten im Layout-Template nicht.
+3. **llms.txt:** Framer liefert keine statischen Textdateien aus. Deshalb gibt es die Seite
+   `/llms.txt` mit dem Code-Baustein `Llms.tsx`, der den Markdown-Klartext in ein `<pre>` schreibt.
+   Sie antwortet mit 200, Inhaltstyp ist `text/html`, nicht `text/plain`.
+
 **Stand 28.09.2026: Startseite neu gebaut nach dem Relaunch-Prompt und neun Referenzseiten,
 Runde 2 nach Rückmeldung umgesetzt.** Details je Referenz und Mechanik: [`Referenzen.md`](Referenzen.md).
 
 **Vorschau:** https://frank-site-485713.framer.app/ (noindex)
 **Projekt:** https://framer.com/projects/FW-neu--YPv6DX0m4fRLwI6tlnjF-h7ell
 **fokuswerk.de ist davon nicht betroffen.**
+
+## Livegang 19.10.2026 und Audit-Punkte 7 bis 12
+
+**Die Seite läuft jetzt unter fokuswerk.de.** Dabei drei Startblocker gefunden und behoben:
+
+- **`noindex` lag auf 20 Seiten** und wäre mit dem Domainumzug live gegangen — Google hätte die
+  Seite nie indexiert. Über die Agenten-DSL doch setzbar: `SET <seitenId> metadata.noIndex="false"
+  metadata.noIndexSite="false"` (nicht über `setAttributes`, das wird still verworfen). 18 Seiten
+  freigegeben, `/404` und der Entwurf `/branchen` bleiben gesperrt. Sitemap jetzt 53 statt 3 URLs.
+- **Canonical zeigte auf die Vorschauadresse** (`frank-site-485713.framer.app`). Mit dem ersten
+  Publish nach dem Domainumzug zieht Framer das nach — jetzt `https://fokuswerk.de/`, og:url ebenso.
+- **Das Framer-Abzeichen** war noch im Markup, obwohl der Tarif lief: Der letzte Publish stammte
+  von *vor* der Umstellung. Ein Republish entfernt es; im Browser ist weder Element noch Container
+  übrig.
+
+Danach die Audit-Punkte 7 bis 12 (Details in [`Audit-16-10-2026.md`](Audit-16-10-2026.md)):
+Abzweig unter den Fallstudien-Kennzahlen, Rechenbeispiel auf der Startseite, einheitliche
+Knopfbeschriftung, Formularknopf plus Antwortzeit, Vorspann aus bei Anzeigenklicks. Offen bleiben
+Preisspanne (Entscheidung) und zwei Kundenzitate (Telefonate).
+
+**Zwei Fallen beim Arbeiten mit dem Agenten, die hier Zeit gekostet haben:**
+
+- `framer.agent.serialize({id}, {pagePath})` **scopet nicht zuverlässig auf die angegebene Seite** —
+  es liefert, was gerade geöffnet ist. Dadurch landete ein Abzweig-Block auf der falschen
+  Fallstudie. Verlässlich ist nur: vom `WebPageNode` über `$breakpoints` absteigen und das Ergebnis
+  an einem seitenspezifischen Text gegenprüfen (hier die Überschrift).
+- **Temporäre IDs aus `applyChanges` gelten nur in derselben Sitzung.** Nach einem Sitzungswechsel
+  heißt der Knoten anders (`fwRechnungStart` → `trKkSeZtk`); dann liest man ins Leere, ohne Fehler.
+- Beim Kopieren eines Abschnitts auf eine andere Seite fehlte am Ende genau **eine** Eigenschaft
+  (`gridColumnCount`), und der Block stand auf dem Handy sechsspaltig. Ein Abgleich über eine
+  Auswahl von Feldern reicht nicht — alle Attribute beider Bäume vergleichen.
+
+## Audit 16.10.2026 — sechs Punkte abgearbeitet
+
+Vollständiger Befund: [`Audit-16-10-2026.md`](Audit-16-10-2026.md). Umgesetzt wurde die Pflichtliste:
+
+- **Zähler liefern wieder Zahlen.** `Auftaktleiste.tsx` und `Arbeitsschau.tsx` starteten im State
+  bei 0 und zählten erst im Browser hoch — im ausgelieferten HTML stand damit „0 Kontaktaufnahmen",
+  „Klickrate 0,0 %". Jetzt ist der Endwert der Anfangszustand; auf 0 gesetzt wird erst im Browser
+  in `useLayoutEffect` (vor dem ersten Bild, sonst blitzt die Zahl auf). Im HTML stehen 439, 69,
+  17.100, 3,3 %, 0,33 €, 1.150.458, 36.842.
+- **H1 auf den drei Fallstudien** (vorher keine; der Titel war ein H2). Achtung: Der Textstil
+  „Display" meldet beim Auslesen `tag: h1`, ausgeliefert wird aber h2 — der Tag muss **je Knoten
+  und je Breakpoint ausdrücklich** gesetzt werden, sonst ändert sich nichts.
+- **Alt-Texte** für die zwei Fahrzeugaufnahmen auf `/leistungen` und die drei Titelbilder auf
+  `/arbeiten` (`SET <id> altText="…"` über die DSL funktioniert, anders als `setAttributes`).
+- **Kontrast der kleinen Akzentschrift:** Markenorange erreicht als Kleintext weder auf Papier
+  (2,81 : 1) noch auf Dunkelgrau (3,93 : 1) die 4,5 : 1. Statt die Markenfarbe zu ändern, bekommt
+  nur die Schrift einen eigenen Ton je Grundfläche: `#CE3600` auf Papier, `#FF7341` auf dunklen
+  Karten (Stil `fokuswerk-lesbarkeit`). Nachgemessen: 0 sichtbare Verstöße auf vier Seiten.
+- **Antippfläche** der Rechtszeile im Fuß auf mindestens 44 px („AGB" war 30 px).
+- **Nicht möglich über die Schnittstelle:** der `noindex`-Schalter. Weder DSL noch `setAttributes`
+  kennen das Feld — das bleibt ein Editor-Schritt beim Livegang (Liste im Audit).
+
+## Seitenwechsel (15.10.2026)
+
+Rückmeldung: „die Übergänge, wenn ich auf einen Link klicke, sind noch nicht ganz clean — es wird
+manchmal erst weiß, dann sieht man nochmal die alte Seite und dann kommt die neue."
+
+Dahinter lagen **zwei verschiedene Fehler**, gemessen mit Einzelbildaufnahmen (Chromium-Screencast,
+60 Bilder/s, Handybreite):
+
+**1. Verweise aus den Code-Bausteinen laden die ganze Seite neu.** Framers eigene Verweise
+(Menü, Fuß, Knöpfe auf der Leinwand) wechseln die Seite im Browser. Die `<a href>` in unseren
+Code-Bausteinen (Leistungsbühne, Arbeitsschau, Kundenrad) kennt Framers Router nicht — sie lösen
+einen vollen Dokumentwechsel aus. Dabei lief jedes Mal der **Vorspann erneut** (Kurzfassung):
+gemessen 2 Bilder weiß, danach 600 ms grauer Grund, dann fuhr die Fläche hoch. Rund eine Sekunde
+Zwischenspiel pro Klick.
+
+**2. Der eingestellte Seitenübergang hatte eine Lücke.** Framer baut seinen Übergang beim Wechsel
+als `<style id="view-transition-styles">` in den Kopf. Ausgelesen: die alte Seite wischte in
+**0,6 s** nach oben weg (Deckkraft 1 → 0, Maske), die neue blendete **erst 0,6 s später** ein.
+Dazwischen war der Bildschirm leer. Genau das ist „erst weiß, dann nochmal die alte Seite".
+
+**Jetzt (Custom Code, drei Stellen):**
+
+| Baustein | Was er tut |
+|---|---|
+| `fokuswerk-vorspann-schalter` (headStart) | Vorspann nur noch beim ersten Aufruf einer Sitzung. Kommt der Besucher von unserer eigenen Seite (Verweis gleicher Herkunft), bleibt er aus — `html.fw-ohne-vorspann`. |
+| `fokuswerk-vorspann-takt` (bodyStart) | Bei gesetzter Klasse wird die Vorspannfläche sofort entfernt; die Einblendungen im Auftakt merken das am fehlenden `[data-vorspann="an"]` und stehen fertig da. |
+| `fokuswerk-seitenwechsel` (headEnd) | `@view-transition { navigation: auto }` zieht auch den Dokumentwechsel in den Übergang. Die alte Seite bleibt **deckend stehen**, die neue blendet darüber auf und steigt 16 px (0,46 s, `cubic-bezier(.16,1,.3,1)`). Framers Regeln kommen später in den Kopf, deshalb `!important`. |
+| `fokuswerk-seitenwechsel-takt` (headEnd) | `pageswap`: steht das Menü offen, wird der Übergang übersprungen (Safari verliert `backdrop-filter` im Standbild, siehe Notiz vom 06.10.). |
+
+Warum die alte Seite **nicht** mit ausblendet: Zwei halbdurchsichtige Lagen übereinander lassen den
+Grund durchscheinen — das ist der helle Blitz, den man als „erst weiß" sieht. Bleibt die alte Lage
+deckend und die neue blendet darüber auf, ist der Bildschirm in jedem Bild voll gedeckt.
+
+**Nachgemessen (Handy 390 px, Startseite → /leistungen/websites, Klick auf eine Leistungskarte):**
+alte Seite steht bis +142 ms unverändert, ab ~+395 ms blendet die neue auf, bei ~+700 ms ist sie
+da. Kein weißes Bild, kein grauer Vorspann, Scrollstand oben. Beim Wechsel über Framers eigene
+Verweise (Fuß → /kontakt) dasselbe Bild, nur beginnt die Überblendung später (~+509 ms), weil
+Framer erst die Seitendaten holt.
+
+**Fallstrick beim Nachmessen:** Ein Prüfskript, das den Link erst per `scrollIntoView` ins Bild
+holt und im selben Tick klickt, zerstört die Aufnahme — der Sanftscroll läuft dann noch, und das
+Standbild der alten Seite kommt leer. Vor dem Klick zwei Sekunden warten.
+
+### Lichtstrahl der Abschlusskarte, Handy (16.10.2026)
+
+Meldung mit Bildschirmfoto vom iPhone: Auf der Abschlusskarte („Reden wir über Ihre Zahlen") lag
+ein harter orangener Keil über der ganzen Fläche, der Text war kaum lesbar.
+
+Der Keil ist der **Strahl** — ein `conic-gradient` von 1.200 px (Startseite) bis 3.000 px
+(Unterseiten), der sich dreht. Sichtbar sein soll davon nur die 2-px-Kante des Rahmens
+(`overflow: clip` + 22 px Radius). Nicht nachstellbar in Chromium, in WebKit (Playwright) und in
+echtem Safari im iOS-Simulator (iPhone 17) — dort läuft die Kante sauber. Safari schneidet einen
+laufend gedrehten Verlauf an einer gerundeten Kante aber nicht auf jedem Gerät/Stand zuverlässig
+ab; bricht er aus, liegt der ganze Verlauf über der Karte.
+
+Erster Versuch war, den Strahl auf dem Handy einfach abzuschalten. Rückmeldung: „ich hätte
+trotzdem gerne, dass es auf dem Handy rumläuft." Also stattdessen so gebaut, dass er gar nicht
+mehr ausbrechen **kann** (`<style id="fokuswerk-lichtstrahl">`):
+
+- **Ringmaske auf der Ebene „Mitte"** (dort liegt der Strahl): zwei Maskenebenen, eine auf dem
+  Inhaltsrahmen, eine auf dem ganzen Kasten, per `mask-composite: exclude` bzw.
+  `-webkit-mask-composite: xor` voneinander abgezogen. Gezeichnet wird dadurch nur noch der 2 px
+  breite Ring — unabhängig davon, ob das Beschneiden des Rahmens hält. Eine Maske greift auch
+  dort, wo `overflow: clip` + Radius versagt; das ist derselbe Mechanismus wie beim bekannten
+  Safari-Griff.
+- **Zusätzlich** die Maske `-webkit-radial-gradient(#fff,#000)` auf dem Rahmen (optisch ein
+  Nullbild, erzwingt nur die eigene Ebene).
+- **Rückfallebene:** Kann der Browser weder `mask-composite` noch `:has()`, bleibt es auf dem
+  Handy bei einer ruhigen orangen Haarlinie statt beim Risiko.
+
+Gegengeprüft nach dem Umbau: WebKit 390 px (Strahl läuft, zwei Aufnahmen im Abstand von 3,5 s
+zeigen die Lichtmarke links bzw. rechts), echtes Safari im iOS-Simulator (sechs Aufnahmen: Anteil
+Orange im Karteninneren konstant 2,9 %, also kein Überlaufen, bei messbarer Bewegung) und Desktop
+unverändert.
+
+### Vier Funde aus demselben Durchgang
+
+- **Rechenbeispiel auf `/leistungen/performance-marketing`:** Die Beschriftungen (01–06) waren ein-
+  oder zweizeilig, dadurch standen Zahlen und Texte auf sechs verschiedenen Höhen. Erster Versuch
+  (`minHeight` zwei Zeilen auf den Beschriftungen) brachte die Zahlen auf eine Linie, der Block blieb
+  aber „unaufgeräumt": die Beschriftungen brachen weiter ragged um und die Spalten endeten
+  verschieden tief. Jetzt zweistufig gelöst:
+  **(a)** Beschriftungen auf eine Zeile gekürzt — `02 JE ANFRAGE`, `05 JE KUNDE`, `06 KUNDENWERT`
+  statt „KOSTEN PRO ANFRAGE / KOSTEN PRO KUNDE / WAS EIN KUNDE BRINGT"; die Kette liest sich dadurch
+  als Rechnung. **(b)** `minHeight` wandert von der Beschriftung (jetzt eine Zeile: 12 px / 11 px) auf
+  die Beschreibung (zwei Zeilen: 42 px, Handy 39 px). Damit sind alle sechs Spalten exakt gleich hoch:
+  gleiche Grundlinie bei Beschriftung, Zahl und Text, gleich lange Trennlinien, gerade untere Kante —
+  live nachgemessen auf 1440 / 834 / 390 px.
+- **Leere Flächen in den Überblick-Karten auf `/leistungen`:** Werbung hatte 187 px, Websites 137 px
+  Leerraum zwischen Text und „Typisch für". Dort sitzt jetzt je eine eigene Fahrzeugaufnahme als
+  `height="1fr"` — sie füllt genau die Lücke, macht die Seite also nicht länger. Auf Tablet und
+  Handy ausgeblendet (dort gibt es keine Lücke).
+- **Einblick-Bild auf `/arbeiten/wandscher-oldenburg`:** Die rechte Handyaufnahme war ein Ausschnitt,
+  der unten mitten durch einen Knopf schnitt und links angeschnitten war. Neu aufgenommen
+  (`steinmetz-wandscher.de/anfahrt`, 375 × 811, Versatz 44 px — dort läuft keine Elementkante durch
+  die untere Kante) und in denselben Rahmen gesetzt (Gerätefläche 482 × 1042 bei 259 / 104).
+- **Überschrift „Sie wissen, dass online mehr drin wäre."` (Startseite, Abschnitt „Kennen Sie das?"):**
+  Die erste Zeile stand in Tinte 40 %, die zweite in voller Tinte, dazu das orange Akzentwort — drei
+  Farben in zwei Zeilen, das las sich unruhig. Erste Zeile jetzt ebenfalls volle Tinte; orange bleibt
+  allein „anfangen". Gegengeprüft: Es ist die einzige Überschrift im Projekt mit gedämpftem Lauf,
+  alle anderen mehrfarbigen Überschriften sind Grundfarbe + ein Akzentwort.
+- **Wortmarke im Fuß:** lief über die volle Breite (1.176 px). Jetzt 360 px, linksbündig an der
+  Inhaltskante, Deckkraft 0,13; auf dem Handy 210 px über eine Media-Query im Custom Code.
+
+## Fallstudien ohne CMS (14.10.2026)
+
+Framer rechnet CMS-Collections gegen den Tarif — erlaubt ist eine. Im Projekt lagen zwei:
+„Ratgeber" (33 Artikel) und „Fallstudien" (3 Einträge). Der Ratgeber bleibt im CMS, weil dort
+33 Artikel mit Markdown-Quellen und Importskript hängen. Die drei Fallstudien stehen jetzt als
+feste Seiten — unter denselben Adressen wie vorher, also ohne Weiterleitungen:
+
+| Seite | Inhalt |
+|---|---|
+| `/arbeiten/wav-westerstede` | Kfz-Werkstatt, Google Ads, 3 Kennzahlen, 2 Einblicke, kein Film |
+| `/arbeiten/patio-oldenburg` | Gastronomie, 3 Kennzahlen, 3 Einblicke, Filmkarte |
+| `/arbeiten/wandscher-oldenburg` | Steinmetz, 3 Kennzahlen, 2 Einblicke, Filmkarte |
+
+Die Übersicht `/arbeiten` zeigt dieselben drei Karten, jetzt als feste Liste statt als
+CMS-Liste. Texte, Bilder, Kennzahlen, Filmstandbilder und die Seitenangaben (Titel und
+Beschreibung je Seite) stehen 1:1 so da wie vorher im CMS. Der komplette Inhalt der Collection
+liegt als [`Fallstudien-CMS-Sicherung.json`](Fallstudien-CMS-Sicherung.json) im Ordner.
+
+**Geprüft, nicht angenommen:** Aufnahme der neuen WAV-Seite gegen die alte CMS-Seite —
+gleiche Höhe auf den Pixel genau (Desktop 1200x5979, Handy 390x7122), Unterschied nur im
+JPEG-Rauschen der Navigationsleiste. Jeder belegte Wert jedes Eintrags wurde gegen die
+Sicherung gegengelesen; auf allen drei Seiten steht keine CMS-Bindung mehr.
+
+**Noch von Hand im Framer-Editor zu erledigen** — die Plugin-Schnittstelle kann das nicht:
+
+1. Seite `/arbeiten/:slug` löschen (die alte CMS-Detailseite, steht auf Entwurf)
+2. Seite `/arbeiten/:slug/copy` löschen (Arbeitskopie aus dem Umbau, steht auf Entwurf)
+3. Collection „Fallstudien" löschen — **erst danach** zählt das Projekt eine Collection
+
+Eine neue Fallstudie heißt ab jetzt: eine der drei Seiten im Editor duplizieren, Pfad beim
+Anlegen setzen und Texte austauschen. Kein CMS-Eintrag mehr.
+
+### Fallstudien an die Hausbausteine angeschlossen (15.10.2026)
+
+Rückmeldung: *„bei den Fallstudien kann das noch etwas geiler werden, noch hochwertiger — die
+Seite sticht etwas raus optisch von den anderen."* Ein erster Versuch (Geisterwort im Kopf,
+Randnotizen in der Marken-Spalte, vergrößerte Lead-Absätze) wurde verworfen: *„nochmal neu. Das
+muss von den Elementen mehr zum Rest der Seite passen."* Alles davon ist zurückgenommen.
+
+Statt eigener Gestaltung dann der Abgleich, **woraus der Rest der Seite tatsächlich besteht** —
+und da lagen zwei messbare Brüche:
+
+**1. Eigene Textstile.** Die Fallstudien benutzten zwei Stile, die es sonst nirgends im Projekt
+gibt, und keinen der prägenden Hausstile:
+
+| | Fallstudie vorher | Rest der Seite |
+|---|---|---|
+| Überschrift | `Artikel H1` — 64/48/36 px | `Display` — 84/56/30 px |
+| Fließtext | `Artikel Text` — 19 px, 1,66 em | `Fließtext` — 18 px, 1,58 em |
+
+Minimal andere Werte, die genau deshalb wie ein Fremdkörper wirken. Beide Stile sind auf allen
+drei Seiten gegen die Hausstile getauscht.
+
+**2. Keine Hausbausteine.** Die Startseite läuft über Netzfeld, Fokusklammer, Auftaktleiste,
+Kundenrad, Leistungsbühne, Arbeitsschau, Lichtfeld; die Fallstudien nutzten davon nur Lichtfeld,
+Knopf und Telefonnummer — alles andere war handgebaut. Jetzt tragen sie zwei Hauselemente mit:
+
+- **Fokusklammer** im Kopf, dasselbe Markenelement wie im Auftakt der Startseite: orange
+  Eckwinkel, die sich auf ein Wort der Überschrift legen — „Westerstede", „Patio", „Wandscher".
+- **Belegzahlen** statt der eigenen dunklen Zahlenkarte: derselbe Baustein wie im
+  Ergebnisse-Abschnitt der Startseite, offen mit Haarlinien, hochzählend, Quelle einmal darunter.
+
+**Marke über dem Zahlenband (15.10.2026):** Die drei Zahlen standen ohne Überschrift in der
+Fläche — *„das ist da so verloren."* Direkt darüber endet der Website-Screenshot des Kunden, auf
+dem dessen eigener Abschnittstitel „WAV IN ZAHLEN" steht; unsere Zahlen hatten dagegen nichts.
+Jetzt trägt der Abschnitt auf allen drei Fallstudien die Marke **„[ WAS DABEI HERAUSKAM ]"**,
+zentriert wie jede Marken-Zeile im Rest der Seite, und die Quellenangabe darunter steht
+ebenfalls mittig. Die Zahlen selbst bleiben linksbündig in ihren Spalten — so wie im
+Ergebnisse-Abschnitt der Startseite.
+
+**Filmkarte gefüllt (15.10.2026):** Bei Patio und Wandscher stand ein hochkantes Video (380 px)
+allein in einer 1136 px breiten Karte — links und rechts je 378 px leeres Punktraster,
+*„da ist nur ein Video drin."* Die Karte läuft jetzt zweispaltig: Video links, rechts Titel und
+Text, der erklärt, was man sieht. Patio: „Jede neue Karte bekommt ihren Film". Wandscher: „Ein
+Film über eine Baustelle" — mit der belegten Zahl 17.100 Aufrufe ohne Werbebudget. Die
+Beschriftung im Film-Baustein ist dafür geleert, sie stand sonst doppelt. Auf Tablet und Handy
+bleibt die Karte einspaltig (Video oben, Text darunter).
+
+**Durchgang über alle drei Seiten (15.10.2026), dabei behoben:**
+
+- Patio-Einblicke zeigten noch das alte Tischfoto mit dem schwarzen Balken — gegen die saubere
+  Fassung getauscht (dieselbe wie auf der Startseite).
+- Patio-Zahlenband hatte die schwächste Zahl in der Mitte (69 · 290.000 · +632 %). Jetzt steht
+  sie hinten: 69 · +632 % · 290.000.
+- Die Metazeile unter dem Kopf (Ort · Zeitraum · Leistungen) klebte auf dem Handy beim Umbruch
+  zusammen — Zeilenabstand von 6 auf 10 px.
+
+**Zahlenblock mittig (15.10.2026):** Die Marke stand zentriert über linksbündigen Zahlen —
+*„das steht da immer noch so komisch, als ob das da nicht hingehört."* Stimmt: Eine zentrierte
+Überschrift über linksbündigem Inhalt gehört optisch zu nichts. Der Baustein `Belegzahlen.tsx`
+hat jetzt einen Schalter **Mittig**; auf den Fallstudien stehen Marke, Zahl, Label und Quelle auf
+derselben Achse, auf der Startseite bleibt der Block linksbündig (dort läuft er neben dem Zitat).
+
+**Noch ein Letterbox-Bild gefunden:** Das mittlere Einblick-Bild bei Patio (Standbild aus dem
+Sparkling-Bubbles-Film) hatte links einen schwarzen Balken — derselbe Exportfehler wie beim
+Tischfoto. Ersetzt durch das saubere Standbild aus `Medien/patio-sparkling-bubbles-standbild.jpg`
+(1080 × 1920), neu hochgeladen als `uUmyq2goEcfR4TpBpK08bslLFE.jpg`.
+
+**Bewusst nicht geändert:** Die Marken im Textteil (`[ AUSGANGSLAGE ]`, `[ VORGEHEN ]`,
+`[ ERGEBNIS ]`) stehen links neben der Lesespalte, während der Rest der Seite Marken zentriert
+über den Abschnitt setzt. Das ist hier Absicht: Der Textteil ist eine Lesestrecke, und die
+Randspalte hält den Blick an der Textkante.
+
+Was offen bleibt: Der Textteil hat weiterhin kein Bild zwischen den Blöcken, und von WAV und
+Patio liegt kein freigegebenes Kundenzitat vor.
+
+### Fünf Grenzen, die Framer dabei setzt
+
+- **Der Pfad einer Seite lässt sich nicht ändern.** Eine duplizierte CMS-Detailseite bleibt
+  CMS-Detailseite: die `collectionId` klebt an der Seite, `SET path=...` wird mit „CMS detail
+  page paths must include exactly one slug segment" abgewiesen, `setAttributes` ignoriert die
+  Änderung stillschweigend. Statische Seiten müssen also neu angelegt werden.
+- **Seiten lassen sich über die Schnittstelle nicht löschen** („WebPageNode deletion is not
+  supported"). Nur Entwurf setzen — löschen geht nur im Editor.
+- **`DUPE` kopiert nur den Desktop-Stand.** Tablet- und Handy-Abweichungen bleiben zurück und
+  müssen einzeln nachgezogen werden: hier 20 (Tablet) und 43 (Handy) Werte je Seite, aus dem
+  Vergleich Quelle-Desktop gegen Quelle-Breakpoint.
+- **Beim Lösen einer Wiederholung verschwinden die Bindungen.** `repeat.variable="null"` räumt
+  die gebundenen Attribute in den Kopien mit weg. Reihenfolge also: kopieren, lösen, danach die
+  Werte positionsweise setzen (Pfad im Baum als Schlüssel).
+  Eine CMS-Liste lässt sich gar nicht lösen — `collectionList="null"` wird abgewiesen. Der Weg
+  ist: neuen Rahmen daneben bauen, Karten hineinschieben, alte Liste löschen.
+- **Fließtext aus dem CMS braucht nach dem Lösen einen eigenen Stil.** Die Per-Tag-Stile
+  (`stylePresetParagraph`) gelten nur für gebundenen Text; statischer Text nimmt
+  `textStylePreset`. Ohne das fällt der Absatz auf Inter 16 px Schwarz zurück.
 
 ## Quelltexte der Code-Bausteine
 

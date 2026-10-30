@@ -12,42 +12,91 @@
 #fw-ew p { margin: 0 0 14px; color: rgba(245, 243, 239, .72); }
 #fw-ew a { color: rgb(245, 243, 239); text-decoration: underline; text-underline-offset: 2px; }
 #fw-ew .fw-ew-k { display: flex; gap: 8px; }
+#fw-ew .fw-ew-kurz, #fw-ew .fw-ew-knapp { display: none; }
 #fw-ew button { flex: 1; font: 500 13px/1 Inter, "Inter Placeholder", system-ui, sans-serif; padding: 13px 14px; border-radius: 999px; cursor: pointer;
   border: 1px solid rgba(245, 243, 239, .3); background: transparent; color: rgb(245, 243, 239); transition: background .2s, color .2s; }
 #fw-ew button:hover, #fw-ew button:focus-visible { background: rgb(245, 243, 239); color: rgb(22, 20, 19); outline: none; }
-@media (max-width: 809.98px) { #fw-ew { bottom: var(--fw-ew-unten, 16px); } } /* siehe abstandSetzen() */
+/* ▲ Auf dem Handy nahm dieser Hinweis als Karte 199 px ein — ein Viertel des Bildschirms,
+   und zwar am unteren Rand, wo auf allen drei Werkzeugseiten der Absenden-Knopf sitzt.
+   Gemessen am 28.10.2026 bei 375x812: Der Knopf von /wettbewerb lag bei y=709-758 und damit
+   vollständig dahinter, der von /seo-analyse rutschte auf y=815 unter die Falz. Der Hinweis
+   erscheint bei der ersten Berührung — also genau dann, wenn jemand anfängt zu tippen.
+   Als Leiste sind es rund 56 px, und der Absenden-Knopf bleibt frei. Der ausführliche Text
+   wandert in die Datenschutzerklärung, die verlinkt bleibt. */
+@media (max-width: 809.98px) {
+  #fw-ew { bottom: var(--fw-ew-unten, 16px); /* siehe abstandSetzen() */
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; }
+  #fw-ew .fw-ew-text { flex: 1; min-width: 0; }
+  #fw-ew .fw-ew-lang, #fw-ew p { display: none; }
+  #fw-ew .fw-ew-knapp { display: block; margin: 0; font-size: 13px; line-height: 1.25; }
+  #fw-ew .fw-ew-kurz { display: block; font-size: 11px; line-height: 1.35; color: rgba(245, 243, 239, .6); }
+  #fw-ew .fw-ew-k { flex: 0 0 auto; gap: 6px; }
+  /* ▲ „flex: 1" aus der Grundregel muss hier weg, sonst blähen sich die beiden Knöpfe auf
+     197 px auf und dem Text bleiben 98 px — die Überschrift bricht dann auf drei Zeilen
+     um, und die Leiste ist wieder 141 px hoch. Gemessen, nicht geschätzt. */
+  #fw-ew button { flex: 0 0 auto; padding: 9px 11px; font-size: 12px; white-space: nowrap; }
+}
 @media (prefers-reduced-motion: reduce) { #fw-ew { transition: none; } }
 </style>
 <script id="fokuswerk-einwilligung-skript">
 (function () {
   var SCHLUESSEL = "fw-einwilligung", ID = "G-NGN7HYSSP8";
+  // Google Ads läuft nicht mehr hier, sondern im Einwilligungsmodus ganz vorn in
+  // headStart: Der Tag lädt auf jeder Seite, mit der Vorgabe „abgelehnt" und damit ohne
+  // Cookies. Hier wird nur noch die Freigabe nachgereicht beziehungsweise zurückgenommen.
   function lesen() { try { return localStorage.getItem(SCHLUESSEL); } catch (e) { return null; } }
+  function gtagBereit() {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+  }
+
+  // Muss vor jedem vorzeitigen Rücksprung in analytics() laufen: Wer beim Laden schon
+  // eingewilligt hatte, bekommt Framers Tag regulär, und analytics() steigt dann an der
+  // Skript-Prüfung aus — das Ads-Ziel wäre nie angemeldet worden.
+  function einwilligungMelden(wert) {
+    // Zwei Empfänger, zwei Ablagen: Ads läuft im Einwilligungsmodus auf seiner eigenen
+    // dataLayer (siehe headStart), Analytics auf der normalen.
+    try { if (window.fwAdsEinwilligung) window.fwAdsEinwilligung(wert); } catch (e) {}
+    gtagBereit();
+    window.gtag("consent", "update", { analytics_storage: wert });
+  }
+
   function analytics() {
+    // Muss vor jedem vorzeitigen Rücksprung stehen: Wer beim Laden schon eingewilligt
+    // hatte, steigt unten an der Skript-Prüfung aus, und die Freigabe käme nie an.
+    einwilligungMelden("granted");
     if (window.__fwGa) return; window.__fwGa = 1;
     window["ga-disable-" + ID] = false;
     // Framers Tag ist schon aktiv (Einwilligung lag beim Laden vor) → nichts tun.
-    if (document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) return;
+    // Muss die Analytics-Kennung meinen, nicht irgendein gtag-Skript: Seit der Ads-Tag
+    // immer lädt, ist immer eines da — die alte Prüfung hätte hier für jeden Besucher
+    // abgebrochen und GA4 nie geladen.
+    if (document.querySelector('script[src*="id=' + ID + '"]')) return;
     // Framer hat gtag('js')/gtag('config') bereits in die dataLayer gelegt → nur das Skript nachladen,
     // sonst doppelte Seitenaufrufe. Fehlt Framers Einbindung (ID entfernt), selbst konfigurieren.
-    var framerKonfig = window.dataLayer && window.dataLayer.some(function (e) { return e && e[0] === "config"; });
+    // Ebenso: Das config des Ads-Tags liegt immer in der dataLayer. Gemeint ist das von
+    // Framer für Analytics.
+    var framerKonfig = window.dataLayer && window.dataLayer.some(function (e) { return e && e[0] === "config" && e[1] === ID; });
     if (!framerKonfig) {
-      window.dataLayer = window.dataLayer || [];
-      window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+      gtagBereit();
       window.gtag("js", new Date()); window.gtag("config", ID);
     }
     var s = document.createElement("script"); s.async = true; s.src = window.__fwGtagSrc || ("https://www.googletagmanager.com/gtag/js?id=" + ID); document.head.appendChild(s);
   }
   function cookiesLoeschen() {
+    einwilligungMelden("denied");
     window["ga-disable-" + ID] = true;
     document.cookie.split(";").forEach(function (c) {
       var n = c.split("=")[0].trim();
-      if (/^_ga/.test(n)) ["", "; domain=" + location.hostname, "; domain=." + location.hostname.replace(/^www\./, "")].forEach(function (d) {
+      // _gcl* sind die Klick-Kennungen von Google Ads. Wer ablehnt, soll auch die los sein.
+      if (/^(_ga|_gcl)/.test(n)) ["", "; domain=" + location.hostname, "; domain=." + location.hostname.replace(/^www\./, "")].forEach(function (d) {
         document.cookie = n + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/" + d;
       });
     });
   }
   function schliessen(box) { box.classList.remove("fw-an"); setTimeout(function () { box.remove(); }, 350); }
   function speichern(wert, box) {
+    try { document.documentElement.style.setProperty("--fw-ew-platz", "0px"); } catch (e) {}
     var vorher = lesen();
     try { localStorage.setItem(SCHLUESSEL, wert); localStorage.setItem(SCHLUESSEL + "-datum", new Date().toISOString()); } catch (e) {}
     schliessen(box);
@@ -76,13 +125,38 @@
       }
     } catch (e) {}
     box.style.setProperty("--fw-ew-unten", hoch + "px");
+    platzMelden(box);
+  }
+
+  // Wie viel Höhe der Kasten am unteren Rand belegt, gemessen von seiner Oberkante bis
+  // zum Fensterrand. Unter 810 px nimmt er die volle Breite ein und verdeckt dort alles,
+  // was darunter liegt; darüber steht er schmal rechts und stört nicht.
+  function platzMelden(box) {
+    try {
+      var belegt = 0;
+      if (box && document.body.contains(box) && window.innerWidth < 810) {
+        var r = box.getBoundingClientRect();
+        belegt = Math.max(0, Math.round(window.innerHeight - r.top));
+      }
+      document.documentElement.style.setProperty("--fw-ew-platz", belegt + "px");
+    } catch (e) {}
   }
 
   function zeigen() {
     if (document.getElementById("fw-ew")) return;
     var box = document.createElement("div");
     box.id = "fw-ew"; box.setAttribute("role", "dialog"); box.setAttribute("aria-live", "polite"); box.setAttribute("aria-label", "Einwilligung für Statistik");
-    box.innerHTML = '<b>Statistik nur mit Ihrer Zustimmung</b><p>Mit Google Analytics sehen wir, wie unsere Website genutzt wird, und können sie verbessern. Das setzt Cookies und überträgt Daten an Google. <a href="/datenschutz">Datenschutzerklärung</a></p><div class="fw-ew-k"><button type="button" data-w="nein">Ablehnen</button><button type="button" data-w="ja">Zustimmen</button></div>';
+    // Zwei Fassungen desselben Hinweises: die ausführliche Karte am Rechner, die
+    // einzeilige Leiste auf dem Handy. Welche sichtbar ist, entscheidet die CSS unten.
+    box.innerHTML = '<div class="fw-ew-text"><b class="fw-ew-lang">Statistik nur mit Ihrer Zustimmung</b>' +
+      '<p>Mit Google Analytics sehen wir, wie unsere Website genutzt wird, und können sie ' +
+      'verbessern. Das setzt Cookies und überträgt Daten an Google. ' +
+      '<a href="/datenschutz">Datenschutzerklärung</a></p>' +
+      '<b class="fw-ew-knapp">Statistik-Cookies?</b>' +
+      '<span class="fw-ew-kurz">Google Analytics. ' +
+      '<a href="/datenschutz">Datenschutz</a></span></div>' +
+      '<div class="fw-ew-k"><button type="button" data-w="nein">Ablehnen</button>' +
+      '<button type="button" data-w="ja">Zustimmen</button></div>';
     box.addEventListener("click", function (e) { var w = e.target.getAttribute && e.target.getAttribute("data-w"); if (w) speichern(w, box); });
     document.body.appendChild(box);
     abstandSetzen(box);

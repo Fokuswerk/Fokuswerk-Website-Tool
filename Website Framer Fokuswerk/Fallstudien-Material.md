@@ -204,6 +204,17 @@ Beiträge 250.865 / Stories 42.646 / Reels 18.808.
 Weg nach vorn: Buchungszahl aus **Playtomic** beim Kunden abfragen, dann wird aus der Schätzung
 ein Beleg. Bis dahin entweder Insights-Zahl nehmen oder Zwillis aus der Kopfleiste nehmen.
 
+**Zweite Aufnahme, 60 Tage (Screenshot der Instagram-Insights, 15.10.2026, Zeitraum
+16.08.–14.10.2026):** 375.452 Aufrufe · +1.042 Follower netto · 70.403 Betrachter ·
+Beiträge 203.699 / Stories 39.997 / Reels 13.269. Die Interaktionszahl war im Screenshot rechts
+abgeschnitten und ist deshalb **nicht** verwendet.
+
+Diese 60-Tage-Werte stehen seit 15.10.2026 auf der Startseite im Arbeiten-Raster (Kachel „Was
+laufender Content bringt", Kategorie Fotos & Videos): 375.452 Aufrufe · 70.403 Betrachter ·
++1.042 neue Follower, Quelle einmal in der Kopfzeile. Die 90-Tage-Aufnahme oben liegt höher
+(483.892 Aufrufe) — bewusst nicht genommen, weil die 60-Tage-Zahlen aktueller sind und vom
+Kunden so geschickt wurden.
+
 **Material** (Stand 12.10.2026): `Medien/zwillis-padel.mp4` · 28 s · 1080×1920, aus 4K
 umgerechnet. Spielszenen auf dem blauen Platz, zwei Spieler, bewegte Kamera, kein Text im Bild.
 Gut für den Kopfbereich einer Fallstudie, weil es ohne Erklärung funktioniert. Mit 10,2 MB aber
@@ -357,7 +368,7 @@ und haben ein Standbild für `poster`, damit vor dem Klick nichts geladen wird. 
 |---|---|---:|---:|---|---:|
 | `patio.mp4` | Patio, Bar-Atmosphäre | 205,4 MB | **6,6 MB** | 1920×1080, 25,2 s | 2,1 Mbit/s |
 | `patio-sparkling-bubbles.mp4` | Patio, Produktfilm Karte | 250,9 MB | **2,7 MB** | 1080×1920, 34,1 s | 0,6 Mbit/s |
-| `thieme.mp4` | Thieme, Recruiting Ausbildung | 140,6 MB | **4,9 MB** | 1080×1920, 23,5 s | 1,7 Mbit/s |
+| `thieme.mp4` | Thieme, Kollektionen Cazal und Gigi Studios (Kollektion 2026) | 140,6 MB | **4,9 MB** | 1080×1920, 23,5 s | 1,7 Mbit/s |
 | `wandscher-nadorster.mp4` | Wandscher, Infovideo Nadorster Str. | 96,3 MB | **17,2 MB** | 1080×1920, 53,5 s | 2,6 Mbit/s |
 | `zwillis-padel.mp4` | Zwillis Padel, Spielszenen | 185,1 MB | **10,2 MB** | 1080×1920, 27,6 s | 3,0 Mbit/s |
 | `eule-hugo-leffers.mp4` | Eule × Leffers × Hugo Blue | 16,6 MB | **7,8 MB** | 720×1280, 47,4 s | 1,3 Mbit/s |

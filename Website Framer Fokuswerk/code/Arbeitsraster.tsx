@@ -63,19 +63,19 @@ interface ArbeitsrasterProps {
 }
 
 const STANDARD: Arbeit[] = [
-    { titel: "WAV Westerstede", ort: "Kfz-Werkstatt · Westerstede", link: "https://wav-wst.de/", bild: { src: "https://framerusercontent.com/images/ArC0EnCXXAPEbwWsXDR5b7YS2eg.webp", alt: "Website WAV Westerstede" } },
-    { titel: "Glanzwerk", ort: "Gebäudereinigung · Oldenburg", link: "https://glanzwerk-oldenburg.vercel.app/", bild: { src: "https://framerusercontent.com/images/CvrD2aQ0C2DY3Ce023o77gXDQ.webp", alt: "Website Glanzwerk" } },
-    { titel: "Wohnwagen Scharein", ort: "Wohnwagenhandel · Großefehn", link: "https://wohnwagen-scharein.vercel.app/", bild: { src: "https://framerusercontent.com/images/b9skVAhwPZ5x9dCX59VRWCiNUc.webp", alt: "Website Wohnwagen Scharein" } },
-    { titel: "Karosseriebau Heinz", ort: "Karosseriebau · Großheide", link: "https://karosseriebau-heinz.vercel.app/", bild: { src: "https://framerusercontent.com/images/gmJirqTU26tEnuBJ2nCpuazxw.webp", alt: "Website Karosseriebau Heinz" } },
-    { titel: "Andre Henken", ort: "Heizung, Bad, Elektro · Oldenburg", link: "https://andre-henken-website.vercel.app/", bild: { src: "https://framerusercontent.com/images/kM3r4Y9YBrNBYnJ7cIiI1aoXc.webp", alt: "Website Andre Henken" } },
-    { titel: "Hotel Kämper", ort: "Hotel & Restaurant · Bad Zwischenahn", link: "https://kaemper.vercel.app/", bild: { src: "https://framerusercontent.com/images/vsrW4ZDFYyTO5QmW2LTvfyfwko.webp", alt: "Website Hotel Kämper" } },
+    { titel: "WAV Westerstede", ort: "Kfz-Werkstatt · Westerstede", link: "https://wav-wst.de/", bild: { src: "https://framerusercontent.com/images/ArC0EnCXXAPEbwWsXDR5b7YS2eg.webp?scale-down-to=1024", alt: "Website WAV Westerstede" } },
+    { titel: "Glanzwerk", ort: "Gebäudereinigung · Oldenburg", link: "https://glanzwerk-oldenburg.vercel.app/", bild: { src: "https://framerusercontent.com/images/CvrD2aQ0C2DY3Ce023o77gXDQ.webp?scale-down-to=1024", alt: "Website Glanzwerk" } },
+    { titel: "Wohnwagen Scharein", ort: "Wohnwagenhandel · Großefehn", link: "https://wohnwagen-scharein.vercel.app/", bild: { src: "https://framerusercontent.com/images/b9skVAhwPZ5x9dCX59VRWCiNUc.webp?scale-down-to=1024", alt: "Website Wohnwagen Scharein" } },
+    { titel: "Karosseriebau Heinz", ort: "Karosseriebau · Großheide", link: "https://karosseriebau-heinz.vercel.app/", bild: { src: "https://framerusercontent.com/images/gmJirqTU26tEnuBJ2nCpuazxw.webp?scale-down-to=1024", alt: "Website Karosseriebau Heinz" } },
+    { titel: "Andre Henken", ort: "Heizung, Bad, Elektro · Oldenburg", link: "https://andre-henken-website.vercel.app/", bild: { src: "https://framerusercontent.com/images/kM3r4Y9YBrNBYnJ7cIiI1aoXc.webp?scale-down-to=1024", alt: "Website Andre Henken" } },
+    { titel: "Hotel Kämper", ort: "Hotel & Restaurant · Bad Zwischenahn", link: "https://kaemper.vercel.app/", bild: { src: "https://framerusercontent.com/images/vsrW4ZDFYyTO5QmW2LTvfyfwko.webp?scale-down-to=1024", alt: "Website Hotel Kämper" } },
 ]
 
 const KAMPAGNEN: Kampagne[] = [
     {
         kunde: "Zwillis Padel",
         art: "Social & Content · Sport, Oldenburg",
-        logo: { src: "https://framerusercontent.com/images/un5qWoV4NXGEowgSuUw3npjfSw.png", alt: "Zwillis Padel" },
+        logo: { src: "https://framerusercontent.com/images/un5qWoV4NXGEowgSuUw3npjfSw.png?scale-down-to=1024", alt: "Zwillis Padel" },
         motiv: { src: "https://images.unsplash.com/photo-1763560836998-bdeb531e8541?crop=entropy&cs=srgb&fm=webp&ixlib=rb-4.1.0&q=70&w=600", alt: "Padel bei Nacht" },
         schlagzeile: "Heute Abend noch ein Platz frei?",
         knopf: "Platz buchen",
@@ -86,8 +86,8 @@ const KAMPAGNEN: Kampagne[] = [
     {
         kunde: "Patio",
         art: "Recruiting · Gastronomie, Oldenburg",
-        logo: { src: "https://framerusercontent.com/images/b5FitHUfK0WXOC82nswyopSXAE4.png", alt: "Patio" },
-        motiv: { src: "https://images.unsplash.com/photo-1574071318537-1c5c7f4b570d?crop=entropy&cs=srgb&fm=webp&ixlib=rb-4.1.0&q=70&w=600", alt: "Barkeeper schenkt ein" },
+        logo: { src: "https://framerusercontent.com/images/b5FitHUfK0WXOC82nswyopSXAE4.png?scale-down-to=1024", alt: "Patio" },
+        motiv: { src: "https://framerusercontent.com/images/rTcMce0vkztNWOX0ARiPW2yaW0.jpg?scale-down-to=1024", alt: "Die Bar im Patio am Abend" },
         schlagzeile: "Hinter die Bar, die man kennt.",
         knopf: "Jetzt bewerben",
         zahl1: "69", text1: "Bewerbungen",
@@ -97,7 +97,7 @@ const KAMPAGNEN: Kampagne[] = [
     {
         kunde: "WinHadi",
         art: "Content & Website · Hospitality",
-        logo: { src: "https://framerusercontent.com/images/lpvKNedYoddiG0Hgipp3ZIcaNhc.png", alt: "WinHadi" },
+        logo: { src: "https://framerusercontent.com/images/lpvKNedYoddiG0Hgipp3ZIcaNhc.png?scale-down-to=1024", alt: "WinHadi" },
         motiv: { src: "https://images.unsplash.com/photo-1779172131227-4df63a00627e?crop=entropy&cs=srgb&fm=webp&ixlib=rb-4.1.0&q=70&w=600", alt: "Lounge am Abend" },
         schlagzeile: "Ankommen, wo es ruhig wird.",
         knopf: "Mehr erfahren",
@@ -619,8 +619,8 @@ function KampagnenAnsicht(props: {
 
 // ---------- Umschalter ----------
 
-function Schalter(props: { wert: "websites" | "kampagnen"; setWert: (w: "websites" | "kampagnen") => void; anzahl: [number, number]; reduziert: boolean }) {
-    const { wert, setWert, anzahl, reduziert } = props
+function Schalter(props: { wert: "websites" | "kampagnen"; setWert: (w: "websites" | "kampagnen") => void; anzahl: [number, number]; reduziert: boolean; schmal: boolean }) {
+    const { wert, setWert, anzahl, reduziert, schmal } = props
     const refs = [useRef<HTMLButtonElement>(null), useRef<HTMLButtonElement>(null)]
     const [marke, setMarke] = useState({ left: 4, width: 120 })
     const index = wert === "websites" ? 0 : 1
@@ -764,7 +764,7 @@ export default function Arbeitsraster(props: ArbeitsrasterProps) {
     return (
         <div ref={huelle} style={{ ...style, position: "relative", width: "100%", height: schmal ? "auto" : "100%", display: "flex", flexDirection: "column" }}>
             <div style={{ height: kopf, flexShrink: 0, display: "flex", alignItems: "flex-start", justifyContent: "center" }}>
-                <Schalter wert={ansicht} setWert={setAnsicht} anzahl={[anzahlWebsites, liste.length]} reduziert={reduziert} />
+                <Schalter wert={ansicht} setWert={setAnsicht} anzahl={[anzahlWebsites, liste.length]} reduziert={reduziert} schmal={schmal} />
             </div>
             <div style={{ position: "relative", width: "100%", height: schmal ? "auto" : flaeche }}>
                 <div style={ebene(ansicht === "websites")} aria-hidden={ansicht !== "websites"}>

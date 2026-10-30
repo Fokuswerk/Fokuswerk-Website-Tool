@@ -163,9 +163,15 @@ const STIL = `
 const ZAHLWORT = ["", "Ein", "Zwei", "Drei", "Vier", "Fünf", "Sechs", "Sieben", "Acht",
     "Neun", "Zehn", "Elf"]
 
-const GEWERKE = [
-    "Autowerkstatt", "Dachdecker", "Elektriker", "Maler", "Sanitär", "Tischlerei",
-]
+// „im Dezember 2025" aus einem ISO-Datum. Nur Monat und Jahr — der Tag, an dem eine
+// Anzeige endete, interessiert niemanden, das Jahr dagegen sehr wohl. Gleichlautend zu
+// `monatJahr()` in lib/rangliste-urteil.js; Code-Bausteine können nichts importieren.
+function monatJahr(iso?: string | null): string | null {
+    if (!iso) return null
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return null
+    return "im " + d.toLocaleDateString("de-DE", { month: "long", year: "numeric" })
+}
 
 const ORTE = [
     "Oldenburg", "Westerstede", "Bad Zwischenahn", "Delmenhorst", "Wardenburg",
@@ -185,6 +191,47 @@ const WIESO = [
     {
         titel: "Sie bekommen es als PDF",
         text: "Vier Seiten mit der vollständigen Liste, den Befunden zu Ihrem Profil, der Anzeigenlage im Ort und den Quellen. Zum Ausdrucken und Weiterreichen.",
+    },
+]
+
+// Belegte Ergebnisse unserer eigenen Arbeit. Quelle ist Fallstudien-Material.md.
+//
+// ▲ Zwei Regeln, von denen keine verhandelbar ist. Erstens: Hier steht nur, wofür eine
+// Zustimmung zur Namensnennung dokumentiert ist — Alexander Lüers (WAV) und Jan Wandscher,
+// beide am 12.10.2026. Zweitens: keine Zahl ohne Quelle und Zeitraum. Eine Seite, die vom
+// Besucher Belege statt Behauptungen verlangt, verliert mit der ersten unbelegten eigenen
+// Zahl ihr ganzes Argument.
+//
+// ▲ „5,30 € je Kontaktaufnahme" steht hier bewusst nicht. Der Wert ist ein Mischwert über
+// alle Kampagnen — 385 der 439 Kontakte kamen aus einer netzwerkübergreifenden Kampagne zu
+// 1,99 €, die Suchkampagnen lagen bei 28,94 €. Die absolute Zahl mit Budget verspricht
+// nichts, was eine neue Kampagne nicht halten kann.
+const BELEGE = [
+    {
+        wert: "439",
+        label: "Kontaktaufnahmen über Google-Anzeigen, bei 2.328 € Werbebudget",
+        kunde: "WAV Westerstede, Alexander Lüers",
+        branche: "Kfz-Werkstatt",
+        zeitraum: "19. Mai bis 12. Oktober 2026",
+        quelle: "das Google-Ads-Konto des Betriebs",
+    },
+    {
+        wert: "97",
+        einheit: "%",
+        label: "der Klicks kamen vom Handy, bei den Kontakten 99 %",
+        kunde: "WAV Westerstede, Alexander Lüers",
+        branche: "Kfz-Werkstatt",
+        zeitraum: "19. Mai bis 12. Oktober 2026",
+        quelle: "dasselbe Konto, 6.819 von 7.051 Klicks",
+    },
+    {
+        wert: "9:15",
+        einheit: "min",
+        label: "im Schnitt je Besuch auf der neuen Website",
+        kunde: "Jan Wandscher, Steinmetz",
+        branche: "Steinmetz, Oldenburg",
+        zeitraum: "12. September bis 12. Oktober 2026",
+        quelle: "die Besucherstatistik der Website, 311 Besucher",
     },
 ]
 
@@ -504,8 +551,13 @@ export default function Wettbewerb(props: any) {
     const [email, setEmail] = useState("")
     const [telefon, setTelefon] = useState("")
     const [einwilligung, setEinwilligung] = useState(false)
+    // Steht hier etwas, ist für diese Kombination nicht gezählt — und statt der Sackgasse
+    // erscheint die Vormerkung. Siehe `api/warteliste.js`.
+    const [vormerken, setVormerken] = useState(false)
     const [newsletter, setNewsletter] = useState(false)
 
+    // Die Treffer der Namenssuche. Mehr als einer heisst: Der Mensch waehlt, welcher er ist.
+    const [kandidaten, setKandidaten] = useState<any[] | null>(null)
     const [teaser, setTeaser] = useState<any>(null)
     // Die Anzeigenlage kommt in einem zweiten Zug nach. Siehe den Effekt weiter unten.
     const [anzeigen, setAnzeigen] = useState<any>(null)
@@ -532,12 +584,32 @@ export default function Wettbewerb(props: any) {
     // das Ziel wurde negativ und auf 0 geklemmt — die Seite sprang also an den Anfang
     // zurueck, der ganze Vorspann stand wieder da, und der Weiter-Knopf lag bei 815 px auf
     // einem 812-px-Bildschirm, also unter dem Falz. Gemessen am 28.10.2026.
+    //
+    // Und: nur so weit wie noetig. Die erste Fassung holte die Karte IMMER unter die
+    // Kopfleiste — auf dem Schreibtisch schnitt das die Ueberschrift „Auf welchem Platz
+    // steht Ihr Betrieb?" weg und liess unter der kurzen Karte eine leere schwarze Flaeche
+    // stehen. Die Seite sah nach jedem Klick kaputter aus als vorher (29.10.2026).
     useEffect(() => {
         if (schritt === 0) return
         const ziel = karte.current
         if (!ziel) return
-        const y = Math.max(0, ziel.getBoundingClientRect().top + window.scrollY - (KOPFLEISTE + 16))
-        window.scrollTo({ top: y, behavior: "smooth" })
+        const r = ziel.getBoundingClientRect()
+        const oben = KOPFLEISTE + 16
+        // Bis hierhin duerfte gescrollt werden — weiter nie, sonst verschwindet der Kopf.
+        const hoechstens = r.top - oben
+
+        let versatz
+        if (r.bottom > window.innerHeight) {
+            // Karte reicht unter den Falz: nur so weit hoch, dass sie hineinpasst.
+            versatz = Math.min(r.bottom - window.innerHeight + 16, hoechstens)
+        } else if (r.top < oben) {
+            // Karte steckt unter der Kopfleiste: so weit runter, dass sie frei steht.
+            versatz = hoechstens
+        } else {
+            return // Steht ganz im Bild. Nichts tun ist hier die richtige Bewegung.
+        }
+        if (Math.abs(versatz) < 8) return
+        window.scrollTo({ top: Math.max(0, window.scrollY + versatz), behavior: "smooth" })
     }, [schritt])
 
     // Sobald der Markt auf dem Schirm steht, die Anzeigenlage nachholen.
@@ -591,12 +663,66 @@ export default function Wettbewerb(props: any) {
         return daten
     }
 
-    const teaserHolen = async () => {
+    // Schritt 2: den Betrieb ueber seinen Namen finden und daraus die Kategorie nehmen.
+    //
+    // Vorher fragte der Trichter zuerst nach dem Gewerk. Das ist die falsche Reihenfolge:
+    // Die Kategorie vergibt Google, nicht der Betrieb. Fokuswerk steht dort als
+    // „Online-Marketing-Unternehmen" — drei Anlaeufe mit Werbeagentur, Marketingagentur und
+    // Social-Media-Agentur gingen alle ins Leere (29.10.2026).
+    const suchen = async () => {
         setLaeuft(true)
         setFehler(null)
+        setVormerken(false)
+        setKandidaten(null)
+        try {
+            const u = endpunkt + "?suche=1"
+            const antwort = await fetch(u, {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ betrieb, ort }),
+            })
+            const d = await antwort.json().catch(() => null)
+            const treffer: any[] = d?.gefunden || []
+            if (!treffer.length) {
+                setFehler(
+                    `Unter „${betrieb}" findet Google in ${ort} keinen Eintrag. Schreiben Sie den Namen so, wie er bei Google steht — oder prüfen Sie, ob Ihr Betrieb dort überhaupt eingetragen ist. Falls nicht, ist das schon der wichtigste Befund.`,
+                )
+                return
+            }
+            if (treffer.length > 1) {
+                // Mehrere Gleichnamige: auswaehlen lassen, erst danach messen.
+                setKandidaten(treffer)
+                return
+            }
+            await marktHolen(treffer[0])
+        } catch (f: any) {
+            setVormerken(false)
+            setFehler("Die Suche ist nicht durchgelaufen. Versuchen Sie es bitte noch einmal.")
+        } finally {
+            setLaeuft(false)
+        }
+    }
+
+    // Der gewaehlte Treffer steht fest — jetzt seine Kategorie durchzaehlen.
+    const marktHolen = async (gewaehlt: any) => {
+        setGewerk(gewaehlt.kategorie)
+        setBetrieb(gewaehlt.name)
+        setKandidaten(null)
+        await teaserHolen(gewaehlt.kategorie, gewaehlt.name)
+    }
+
+    const teaserHolen = async (gewerkJetzt?: string, betriebJetzt?: string) => {
+        setLaeuft(true)
+        setFehler(null)
+        setVormerken(false)
         setAnzeigen(null)
         try {
-            const d = await abrufen({ gewerk, ort }, true)
+            // Die Kategorie kommt aus der Namenssuche herein: `w.setGewerk` wirkt erst im
+            // naechsten Rendern, der Aufruf hier laeuft aber sofort.
+            // `betrieb` muss mit: Der Endpunkt haengt den selbst gesuchten Betrieb in die
+            // Liste, wenn die Kategoriesuche ihn nicht mitbringt. Ohne den Namen stuende der
+            // Besucher wieder vor einer Liste ohne sich selbst.
+            const d = await abrufen({ gewerk: gewerkJetzt || gewerk, ort, betrieb: betriebJetzt || betrieb }, true)
             setTeaser(d)
             setSchritt(3)
         } catch (f: any) {
@@ -604,16 +730,22 @@ export default function Wettbewerb(props: any) {
             // noch einmal" — bei einem Tippfehler im Ort fuehrt derselbe Versuch zum
             // selben Fehler, und wenn es an uns liegt, sucht der Besucher den Fehler bei
             // sich. Beides kostet ihn genau an der Stelle, an der er schon gewartet hat.
+            // ▲ Zwei Fehler liegen bei uns: Wir haben diese Kombination noch nicht gezählt.
+            // Dann ist der Besucher nicht gescheitert, sondern wir — und er bekommt kein
+            // „noch einmal versuchen" (derselbe Versuch, derselbe Ausgang), sondern die
+            // Vormerkung. Vorher endete er hier in einem Satz ohne Feld und ohne Knopf,
+            // der ihn zuerst fragte, ob er sich beim Ortsnamen vertippt habe.
+            const unsereSchuld = f.message === "profile_nicht_lesbar"
+                || !["zu_wenige_betriebe", "gewerk_oder_ort_fehlt", "zu_viele_abrufe", "betrieb_unbekannt"].includes(f.message)
+            setVormerken(unsereSchuld)
             setFehler(
                 f.message === "zu_wenige_betriebe"
-                    ? `In ${ort} führt Google zu wenige Betriebe unter „${gewerk}" für einen Vergleich. Stimmt die Schreibweise? Sonst wählen Sie oben ein Gewerk aus der Liste.`
-                    : f.message === "profile_nicht_lesbar"
-                        ? `Wir konnten die Betriebe in ${ort} gerade nicht abrufen. Prüfen Sie bitte die Schreibweise des Ortes — wenn die stimmt, liegt es an uns. Schreiben Sie uns kurz, dann schicken wir Ihnen die Zahlen von Hand.`
-                        : f.message === "gewerk_oder_ort_fehlt"
-                            ? "Da fehlt noch eine Angabe. Gehen Sie einen Schritt zurück."
-                            : f.message === "zu_viele_abrufe"
-                                ? "Gerade sind viele Abrufe unterwegs. Versuchen Sie es in ein paar Minuten noch einmal."
-                                : "Die Messung ist nicht durchgelaufen. Das liegt an uns, nicht an Ihrer Eingabe — versuchen Sie es gleich noch einmal.",
+                    ? `Google führt in ${ort} zu wenige Betriebe unter „${gewerk}" für einen Vergleich. Mit einer größeren Stadt in der Nähe geht es — oder wählen Sie oben eine andere Betriebsart.`
+                    : f.message === "gewerk_oder_ort_fehlt"
+                        ? "Da fehlt noch eine Angabe. Gehen Sie einen Schritt zurück."
+                        : f.message === "zu_viele_abrufe"
+                            ? "Gerade sind viele Abrufe unterwegs. Versuchen Sie es in ein paar Minuten noch einmal."
+                            : `${gewerk} in ${ort} haben wir noch nicht gezählt. Das liegt an uns, nicht an Ihrer Eingabe — und es ist keine Sache von Sekunden, weil wir dafür jedes Profil im Ort einzeln lesen.`,
             )
         } finally {
             setLaeuft(false)
@@ -641,7 +773,9 @@ export default function Wettbewerb(props: any) {
         } catch (f: any) {
             setFehler(
                 f.message === "betrieb_unbekannt"
-                    ? "Diesen Betrieb finden wir in der Liste nicht mehr. Gehen Sie einen Schritt zurück und wählen Sie ihn neu."
+                    // Seit der Namenssuche wird hier nichts mehr ausgewählt — der Satz schickte
+                    // den Besucher zu einer Liste, die es nicht mehr gibt.
+                    ? "Ihren Betrieb finden wir in der Liste gerade nicht. Gehen Sie zwei Schritte zurück und schreiben Sie den Namen so, wie er bei Google steht."
                     : "Die Auswertung ist nicht durchgelaufen. Versuchen Sie es bitte noch einmal.",
             )
         } finally {
@@ -650,7 +784,7 @@ export default function Wettbewerb(props: any) {
     }
 
     const kannWeiter =
-        schritt === 1 ? gewerk.trim().length >= 3
+        schritt === 1 ? betrieb.trim().length >= 2
             : schritt === 2 ? ort.trim().length >= 2
                 : schritt === 3 ? betrieb.length > 0
                     : schritt === 4 ? /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email.trim()) && name.trim().length >= 2 && einwilligung
@@ -678,7 +812,7 @@ export default function Wettbewerb(props: any) {
                     </h1>
                     <Lead auf="dunkel" max={52}>
                         Wir zählen die Betriebe Ihrer Branche an Ihrem Ort durch — nach Bewertungen,
-                        Fotos, Internetauftritt und danach, wer von ihnen gerade wirbt. Dann sagen wir
+                        Fotos, Internetauftritt und danach, wer von ihnen wirbt oder geworben hat. Dann sagen wir
                         Ihnen, wo Sie darin stehen.
                     </Lead>
 
@@ -686,8 +820,12 @@ export default function Wettbewerb(props: any) {
                         <TrichterRahmen
                             schritt={schritt} setSchritt={setSchritt}
                             laeuft={laeuft} fehler={fehler} kannWeiter={kannWeiter}
-                            teaser={teaser} ergebnis={ergebnis}
+                            vormerken={vormerken} endpunkt={endpunkt}
+                            teaser={teaser} anzeigen={anzeigen} ergebnis={ergebnis}
                             werte={{ gewerk, setGewerk, ort, setOrt, betrieb, setBetrieb, name, setName, email, setEmail, telefon, setTelefon, einwilligung, setEinwilligung, newsletter, setNewsletter }}
+                            suchen={suchen}
+                            kandidaten={kandidaten}
+                            marktHolen={marktHolen}
                             teaserHolen={teaserHolen} absenden={absenden} karte={karte} aufErgebnisseite={aufErgebnisseite}
                         />
                     </div>
@@ -730,6 +868,63 @@ export default function Wettbewerb(props: any) {
                             </div>
                         ))}
                     </div>
+                </Abschnitt>
+            ) : null}
+
+            {/* ── Wer zählt ──────────────────────────────────────────────────────────
+                Diese Seite verlangt Namen, Mail und die Angabe des eigenen Betriebs — und
+                legte dafür bis zum 28.10.2026 nichts über sich selbst vor: kein Impressum
+                im Blickfeld, keinen Kunden, keine überprüfbare Zahl. Wer nach Belegen
+                fragt, muss selbst welche liefern.
+
+                ▲ Hier stehen ausschließlich Alexander Lüers (WAV) und Jan Wandscher. Nur
+                für diese beiden liegt eine Zustimmung zur Namensnennung vor (12.10.2026).
+                Jede Zahl trägt Quelle und Zeitraum; ohne beides gehört sie nicht hierher. */}
+            {!ergebnis && !aufErgebnisseite ? (
+                <Abschnitt geist="Wer zählt" grund={PAPIER}>
+                    <Versal>Wer hier zählt</Versal>
+                    <div style={{ marginTop: 20 }}><H2>Unsere eigenen Zahlen legen wir genauso offen</H2></div>
+                    <p style={{ margin: "20px 0 0", fontSize: 17, lineHeight: 1.6, letterSpacing: "-0.03em", color: T60, maxWidth: "58ch" }}>
+                        Fokuswerk, das sind Julius Abt und Thees Bodenstab, Abt &amp; Bodenstab GbR,
+                        Schramperweg 90 in 26129 Oldenburg. Die Zahlen zu Ihrem Ort kommen aus
+                        öffentlichen Quellen. Die zu unserer Arbeit auch.
+                    </p>
+
+                    <div className="fw-rl-karten" style={{ marginTop: 40 }}>
+                        {BELEGE.map((b) => (
+                            <div
+                                key={b.wert + b.kunde}
+                                className="fw-karte-hell"
+                                style={{ background: REIN, border: `1px solid ${LINIE}`, borderRadius: RADIUS_KARTE, padding: "26px 24px 28px" }}
+                            >
+                                <Versal farbe={T40} style={{ fontSize: 10 }}>{b.branche}</Versal>
+                                <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 16 }}>
+                                    <span style={{ fontSize: "clamp(2.2rem, 5.5vw, 3rem)", lineHeight: 0.92, fontWeight: 500, letterSpacing: "-0.055em", color: TINTE, fontVariantNumeric: "tabular-nums" }}>
+                                        {b.wert}
+                                    </span>
+                                    {b.einheit ? <span style={{ fontSize: 15, color: T40 }}>{b.einheit}</span> : null}
+                                </div>
+                                <div style={{ margin: "12px 0 0", fontSize: 17, lineHeight: 1.45, letterSpacing: "-0.03em", color: TINTE }}>
+                                    {b.label}
+                                </div>
+                                <div style={{ margin: "10px 0 0", fontSize: 13, lineHeight: 1.5, letterSpacing: "-0.01em", color: T40 }}>
+                                    {b.kunde}
+                                    <br />
+                                    {b.zeitraum}
+                                    <br />
+                                    Quelle: {b.quelle}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <p style={{ margin: "26px 0 0", fontSize: 14, lineHeight: 1.6, letterSpacing: "-0.015em", color: T40, maxWidth: "62ch" }}>
+                        Beide Betriebe haben zugestimmt, dass wir sie nennen. Die Website der
+                        Kfz-Werkstatt ist von uns, und das müssen Sie uns nicht glauben: Im Fuß von{" "}
+                        <a href="https://wav-wst.de" style={{ color: AKZENT_HELL }}>wav-wst.de</a>{" "}
+                        steht es. Die vollständigen Fälle mit allen Zahlen:{" "}
+                        <a href="/arbeiten" style={{ color: AKZENT_HELL }}>fokuswerk.de/arbeiten</a>
+                    </p>
                 </Abschnitt>
             ) : null}
 
@@ -809,7 +1004,94 @@ function herkunftLesen() {
 
 // --- Der Trichter --------------------------------------------------------------------
 
-function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, kannWeiter, teaser, ergebnis, werte, teaserHolen, absenden, karte, aufErgebnisseite }: any) {
+// Die Vormerkung: ein Feld statt einer Sackgasse.
+//
+// Erscheint nur, wenn die Messung an UNS gescheitert ist — also wenn für diese Betriebsart
+// und diesen Ort noch nicht gezählt ist. Vorher las der Besucher an dieser Stelle einen
+// Satz, der ihn zuerst nach seiner Schreibweise fragte und dann „Schreiben Sie uns kurz"
+// sagte, ohne ein Feld, einen Knopf oder eine Adresse. Er hatte seine Betriebsart gewählt,
+// seinen Ort getippt und gewartet — und ging mit nichts. Wir erfuhren nicht einmal, dass
+// er da war, obwohl er seine Absicht gerade bewiesen hatte.
+function Vormerkung({ gewerk, ort, endpunkt }: any) {
+    const [email, setEmail] = useState("")
+    const [einverstanden, setEinverstanden] = useState(false)
+    const [laeuft, setLaeuft] = useState(false)
+    const [fertig, setFertig] = useState(false)
+    const [patzer, setPatzer] = useState<string | null>(null)
+
+    const gueltig = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email.trim()) && einverstanden
+
+    const absenden = async () => {
+        setLaeuft(true)
+        setPatzer(null)
+        try {
+            const antwort = await fetch(endpunkt.replace(/\/rangliste.*$/, "/warteliste"), {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({
+                    gewerk, ort,
+                    kontakt: { email: email.trim() },
+                    einwilligung: true,
+                    herkunft: herkunftLesen(),
+                }),
+            })
+            if (!antwort.ok) throw new Error(String(antwort.status))
+            setFertig(true)
+        } catch {
+            setPatzer("Das hat gerade nicht geklappt. Schreiben Sie uns an contact@fokuswerk.de, dann machen wir es von Hand.")
+        } finally {
+            setLaeuft(false)
+        }
+    }
+
+    if (fertig) {
+        return (
+            <div style={{ marginTop: 14, padding: "16px 18px", borderRadius: RADIUS_FELD, background: "rgba(245,243,239,0.06)", border: `1px solid ${LINIE_D}` }}>
+                <div style={{ fontSize: 16, fontWeight: 500, letterSpacing: "-0.03em", color: PAPIER }}>
+                    Vorgemerkt.
+                </div>
+                <p style={{ margin: "8px 0 0", fontSize: 14, lineHeight: 1.55, color: P70 }}>
+                    Wir zählen {gewerk} in {ort} nach und schicken Ihnen die Liste an{" "}
+                    {email.trim()}. Das dauert ein bis zwei Werktage.
+                </p>
+            </div>
+        )
+    }
+
+    return (
+        <div style={{ marginTop: 14, padding: "16px 18px", borderRadius: RADIUS_FELD, background: "rgba(245,243,239,0.06)", border: `1px solid ${LINIE_D}` }}>
+            <div style={{ fontSize: 16, fontWeight: 500, letterSpacing: "-0.03em", color: PAPIER }}>
+                Wir zählen es nach und schicken es Ihnen
+            </div>
+            <p style={{ margin: "8px 0 14px", fontSize: 14, lineHeight: 1.55, color: P70 }}>
+                Sie bekommen dieselbe Liste wie alle anderen — alle {gewerk} in {ort} mit
+                Bewertungen, Fotos und Ihrem Platz darin. Nur eben nicht in dieser Minute.
+            </p>
+            <Feld kennung="fw-vormerk-mail" wert={email} setWert={setEmail}
+                platzhalter="E-Mail" type="email" autoComplete="email" inputMode="email"
+                onEnter={() => { if (gueltig && !laeuft) absenden() }} />
+            <div style={{ marginTop: 10, marginBottom: 14 }}>
+                <Haken an={einverstanden} setAn={setEinverstanden}
+                    text="Fokuswerk darf mir die Auswertung schicken und sich zu dieser Anfrage melden. Jederzeit widerrufbar, die Angaben gehen an niemanden sonst." />
+            </div>
+            <Pille auf="dunkel" art="voll" aus={!gueltig || laeuft} onClick={absenden}>
+                {laeuft ? "Wird vorgemerkt …" : "Liste anfordern"}
+            </Pille>
+            {patzer ? (
+                <p style={{ margin: "12px 0 0", fontSize: 13, lineHeight: 1.5, color: MANGEL_D }}>{patzer}</p>
+            ) : null}
+        </div>
+    )
+}
+
+// ▲ `anzeigen` MUSS hier als Prop herein. Es ist Zustand der äußeren Komponente, wurde
+// aber weiter unten im Teaser gelesen — ohne jemals übergeben zu werden. Solange
+// `teaser.anzeigenGemessen` wahr ist, wertet JavaScript den Zweig nie aus und nichts
+// passiert; sobald die Anzeigenlage einmal NICHT mitgemessen wurde, wirft dieselbe Zeile
+// `ReferenceError: anzeigen is not defined` — und dann stürzt nicht eine Satzhälfte,
+// sondern der ganze Schritt mit den Marktzahlen. Der Fehler lag live und wäre genau bei
+// den frischen Messungen aufgetreten, bei denen die Werbebibliothek klemmt.
+function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, vormerken, endpunkt, kannWeiter, teaser, anzeigen, ergebnis, werte, teaserHolen, absenden, karte, aufErgebnisseite, suchen, kandidaten, marktHolen }: any) {
     const w = werte
 
     if (ergebnis || aufErgebnisseite) return null
@@ -824,33 +1106,23 @@ function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, kannWeiter, tease
                         Wir zählen die Betriebe in Ihrem Ort durch. Live.
                     </div>
                     <p style={{ margin: "14px 0 26px", fontSize: 15, lineHeight: 1.6, letterSpacing: "-0.025em", color: P70 }}>
-                        Zwei Angaben, dann sehen Sie die Zahlen Ihres Ortes — Bewertungen, Fotos,
-                        Internetauftritt. Erst danach fragen wir, welcher der Betriebe Sie sind.
+                        Ihr Betriebsname und der Ort, mehr brauchen wir nicht. Unter welcher
+                        Branche Google Sie führt, holen wir uns aus Ihrem Profil — das muss
+                        niemand raten.
                     </p>
                     <Pille auf="dunkel" onClick={() => setSchritt(1)}>Meinen Platz finden</Pille>
                 </>
             ) : null}
 
+            {/* Erst der Name, dann der Ort. Vorher stand der Ort vorn — gefragt wird aber
+                nach dem eigenen Betrieb, und der heißt, wie er heißt. Gesucht wird weiter
+                erst am Ende von Schritt 2, weil Google beides braucht. */}
             {schritt === 1 ? (
                 <>
-                    <Frage text="Was für ein Betrieb sind Sie?" neben="Damit wir die richtigen Nachbarn zählen." />
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
-                        {GEWERKE.map((g) => (
-                            <button key={g} type="button" onClick={() => { w.setGewerk(g); setSchritt(2) }}
-                                style={{
-                                    font: "inherit", fontSize: 14, fontWeight: 500, letterSpacing: "-0.02em",
-                                    color: w.gewerk === g ? TINTE : PAPIER,
-                                    background: w.gewerk === g ? PAPIER : "rgba(245,243,239,0.05)",
-                                    border: `1px solid ${w.gewerk === g ? PAPIER : LINIE_D}`,
-                                    borderRadius: 999, padding: "12px 17px", minHeight: 46, cursor: "pointer",
-                                }}>
-                                {g}
-                            </button>
-                        ))}
-                    </div>
-                    <Feld kennung="fw-gewerk" wert={w.gewerk} setWert={w.setGewerk}
-                        platzhalter="oder eintippen, z. B. Fliesenleger"
-                        onEnter={() => { if (w.gewerk.trim().length >= 3) setSchritt(2) }} />
+                    <Frage text="Wie heißt Ihr Betrieb?" neben="So, wie er bei Google steht. Die Branche holen wir uns von dort." />
+                    <Feld kennung="fw-betrieb" wert={w.betrieb} setWert={w.setBetrieb}
+                        platzhalter="z. B. Autohaus Spiegel"
+                        onEnter={() => { if (w.betrieb.trim().length >= 2) setSchritt(2) }} />
                     <Fussleiste zurueck={() => setSchritt(0)} weiter={() => setSchritt(2)} aus={!kannWeiter} />
                 </>
             ) : null}
@@ -859,9 +1131,34 @@ function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, kannWeiter, tease
                 <>
                     <Frage text="In welchem Ort?" neben="Wir nehmen die Betriebe, die Google diesem Ort zuordnet." />
                     <Tippfeld kennung="fw-ort" wert={w.ort} setWert={w.setOrt} platzhalter="z. B. Westerstede"
-                        vorschlaege={ORTE} weiter={teaserHolen} />
-                    <Fussleiste zurueck={() => setSchritt(1)} weiter={teaserHolen} aus={!kannWeiter || laeuft}
-                        wort={laeuft ? "Wird gezählt …" : "Zahlen ansehen"} />
+                        vorschlaege={ORTE} weiter={() => { if (w.ort.trim().length >= 2) suchen() }} />
+
+                    {kandidaten ? (
+                        <>
+                            <p style={{ margin: "18px 0 10px", fontSize: 14, lineHeight: 1.5, color: P70 }}>
+                                Mehrere Einträge passen. Welcher sind Sie?
+                            </p>
+                            <div className="fw-rl-namen" style={{ marginBottom: 18 }}>
+                                {kandidaten.map((k: any) => (
+                                    <button key={k.name + k.anschrift} type="button" onClick={() => marktHolen(k)}
+                                        style={{
+                                            font: "inherit", fontSize: 14, fontWeight: 500, letterSpacing: "-0.02em",
+                                            textAlign: "left", color: PAPIER, background: "rgba(245,243,239,0.04)",
+                                            border: `1px solid ${LINIE_D}`, borderRadius: RADIUS_FELD,
+                                            padding: "13px 15px", minHeight: 48, cursor: "pointer",
+                                        }}>
+                                        {k.name}
+                                        <span style={{ display: "block", marginTop: 3, fontSize: 12, fontWeight: 400, color: P45 }}>
+                                            {k.kategorie}{k.anschrift ? " · " + k.anschrift : ""}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    ) : null}
+
+                    <Fussleiste zurueck={() => setSchritt(1)} weiter={suchen} aus={!kannWeiter || laeuft}
+                        wort={laeuft ? "Wird gesucht …" : "Betrieb suchen"} />
                     {laeuft ? <Messanzeige ort={w.ort} /> : null}
                 </>
             ) : null}
@@ -886,35 +1183,48 @@ function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, kannWeiter, tease
                                 // sich spaeter aendert, ist schlimmer als eine, die erscheint.
                                 const q = teaser.anzeigenGemessen ? teaser : anzeigen?.anzeigenGemessen ? anzeigen : null
                                 if (!q) return ""
-                                return q.werbendeUmKunden === 0
-                                    ? " Um Kunden wirbt hier keiner."
-                                    : q.werbendeUmKunden === 1
-                                        ? " Genau einer wirbt um Kunden."
-                                        : ` ${ZAHLWORT[q.werbendeUmKunden] || q.werbendeUmKunden} werben um Kunden.`
+                                // ▲ Praesens nur, wenn wirklich gerade eine Anzeige laeuft.
+                                // Hier stand „Genau einer wirbt um Kunden" — und in allen neun
+                                // gemessenen Orten lief am 28.10.2026 keine einzige Anzeige, die
+                                // juengste endete im Februar. Wer den genannten Betrieb kennt,
+                                // schlaegt in der Werbebibliothek nach und hat die Seite in zehn
+                                // Sekunden widerlegt. Dann zaehlt auch die Rangliste nichts mehr.
+                                const aktiv = q.werbendeAktiv ?? q.werbendeUmKunden
+                                if (q.werbendeUmKunden === 0) return " Um Kunden hat hier noch keiner geworben."
+                                if (aktiv === 0) {
+                                    const wann = monatJahr(q.letzteKundenwerbung)
+                                    return q.werbendeUmKunden === 1
+                                        ? ` Einer hat es schon einmal versucht${wann ? ", " + wann : ""} — gerade läuft keine Anzeige.`
+                                        : ` ${ZAHLWORT[q.werbendeUmKunden] || q.werbendeUmKunden} haben es schon einmal versucht${wann ? ", zuletzt " + wann : ""} — gerade läuft keine Anzeige.`
+                                }
+                                return aktiv === 1
+                                    ? " Genau einer wirbt gerade um Kunden."
+                                    : ` ${ZAHLWORT[aktiv] || aktiv} werben gerade um Kunden.`
                             })()}
                         </p>
                     </div>
 
-                    <Frage text="Welcher davon sind Sie?" neben="Danach sehen Sie Ihren Platz in der Liste." />
-                    <div className="fw-rl-namen" style={{ marginBottom: 18, maxHeight: 340, overflowY: "auto" }}>
-                        {teaser.namen.map((n: string) => (
-                            <button key={n} type="button" onClick={() => { w.setBetrieb(n); setSchritt(4) }}
-                                style={{
-                                    font: "inherit", fontSize: 14, fontWeight: 500, letterSpacing: "-0.02em",
-                                    textAlign: "left", color: w.betrieb === n ? TINTE : PAPIER,
-                                    background: w.betrieb === n ? PAPIER : "rgba(245,243,239,0.04)",
-                                    border: `1px solid ${w.betrieb === n ? PAPIER : LINIE_D}`,
-                                    borderRadius: RADIUS_FELD, padding: "13px 15px", minHeight: 48, cursor: "pointer",
-                                }}>
-                                {n}
-                            </button>
-                        ))}
+                    {/* Kein Auswaehlen mehr: Wir wissen seit der Namenssuche, wer er ist. Die
+                        Zeile zeigt ihm nur, dass wir den Richtigen haben — und unter welcher
+                        Kategorie Google ihn fuehrt. Das ist fuer viele die erste Ueberraschung. */}
+                    <div style={{
+                        border: `1px solid ${LINIE_D}`, borderRadius: RADIUS_FELD,
+                        padding: "14px 16px", marginBottom: 18, background: "rgba(245,243,239,0.04)",
+                    }}>
+                        <Versal farbe={P45}>Ihr Eintrag bei Google</Versal>
+                        <div style={{ marginTop: 8, fontSize: 15, fontWeight: 500, letterSpacing: "-0.02em", color: PAPIER }}>
+                            {w.betrieb}
+                        </div>
+                        <div style={{ marginTop: 3, fontSize: 13, color: P70 }}>
+                            Kategorie: {w.gewerk}
+                        </div>
                     </div>
                     <p style={{ margin: "0 0 18px", fontSize: 13, lineHeight: 1.5, color: P45 }}>
-                        Nicht dabei? Dann führt Google Sie unter einer anderen Kategorie — das ist für
-                        sich schon ein Befund. Schreiben Sie uns, dann schauen wir nach.
+                        Nicht der richtige Betrieb? Gehen Sie einen Schritt zurück und schreiben Sie
+                        den Namen so, wie er bei Google steht.
                     </p>
-                    <Fussleiste zurueck={() => setSchritt(2)} weiter={() => setSchritt(4)} aus={!kannWeiter} />
+                    <Fussleiste zurueck={() => setSchritt(2)} weiter={() => setSchritt(4)} aus={false}
+                        wort="Meinen Platz ansehen" />
                 </>
             ) : null}
 
@@ -942,6 +1252,9 @@ function TrichterRahmen({ schritt, setSchritt, laeuft, fehler, kannWeiter, tease
                 <div role="alert" style={{ marginTop: 18, padding: "14px 16px", borderRadius: RADIUS_FELD, background: "rgba(255,138,107,0.1)", border: `1px solid rgba(255,138,107,0.3)`, fontSize: 14, lineHeight: 1.55, color: MANGEL_D }}>
                     {fehler}
                 </div>
+            ) : null}
+            {vormerken ? (
+                <Vormerkung gewerk={werte.gewerk} ort={werte.ort} endpunkt={endpunkt} />
             ) : null}
         </div>
     )
@@ -1027,7 +1340,10 @@ function Ergebnisblatt({ e }: any) {
                             { w: String(e.markt.anzahl), t: `${e.gewerkPlural} im Ort` },
                             { w: new Intl.NumberFormat("de-DE").format(e.markt.bewertungenGesamt), t: "Bewertungen zusammen" },
                             { w: `${e.markt.ohneWebsite} von ${e.markt.anzahl}`, t: "ohne Internetauftritt im Profil" },
-                            { w: `${e.markt.umKunden} von ${e.markt.anzahl}`, t: "werben bei Meta um Kunden" },
+                            {
+                                w: `${e.markt.umKundenAktiv || e.markt.umKunden} von ${e.markt.anzahl}`,
+                                t: e.markt.umKundenAktiv ? "werben bei Meta um Kunden" : "haben bei Meta je um Kunden geworben",
+                            },
                         ].map((k) => (
                             <div key={k.t}>
                                 <div style={{ fontSize: "clamp(1.6rem, 4vw, 2.2rem)", fontWeight: 500, letterSpacing: "-0.04em", color: PAPIER, lineHeight: 1.1 }}>{k.w}</div>
@@ -1076,6 +1392,7 @@ function Ergebnisblatt({ e }: any) {
                 <div style={{ display: "grid", gap: 14, marginTop: 44 }}>
                     {e.befunde.map((b: any) => <BefundKarte key={b.titel} b={b} />)}
                     {e.anzeigen ? <BefundKarte b={e.anzeigen.befund} /> : null}
+                    {e.anzeigen?.googleBefund ? <BefundKarte b={e.anzeigen.googleBefund} /> : null}
                 </div>
             </Abschnitt>
 

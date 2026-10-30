@@ -636,3 +636,165 @@ body {
   .drucksache .grid[class*="xl:grid-cols-"] { display: block !important; }
   .drucksache .grid[class*="xl:grid-cols-"] > * + * { margin-top: 10pt; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Die Schauseite: Kalk und Tinte
+   ──────────────────────────────────────────────────────────────────────
+   Die Startseite spricht die Sprache von Aplomb — kuehl-mineralisch statt
+   warm-beige, Mass vor Schmuck, Haarlinien statt Schatten, kein Radius.
+
+   ALLES hier steht unter `.kalk`. Das ist keine Vorsicht, sondern die
+   Bedingung: der Planer unter /kueche behaelt sein `.warm` und darf sich
+   nicht um einen Millimeter aendern. Die Namen huelle, mass, knopf und
+   ueberschrift gibt es dort bereits in anderer Bedeutung; unscoped waere
+   das ein stiller Umbau der Strecke.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.kalk {
+  --kalk-chalk:   #EDEFEE;
+  --kalk-chalk-2: #E4E8E6;
+  --kalk-line:    #CBD1CE;
+  --kalk-ink:     #121A18;
+  --kalk-ink-2:   #1B2523;
+  --kalk-slate:   #55605D;
+  --kalk-mist:    #9CA7A4;
+  --kalk-brass:   #8C6E34;
+  --kalk-brass-lt:#C9A86A;
+  --kalk-hair:        rgb(237 239 238 / 0.16);
+  --kalk-hair-stark:  rgb(237 239 238 / 0.34);
+  --kalk-rand: 1.25rem;
+  --kalk-abschnitt: 5.5rem;
+
+  background: var(--kalk-chalk);
+  color: var(--kalk-ink);
+  font-family: var(--schrift-kalk), ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(1.0625rem, 0.98rem + 0.35vw, 1.1875rem);
+  line-height: 1.62;
+  letter-spacing: 0;
+}
+@media (min-width: 48rem) { .kalk { --kalk-rand: 2.5rem;  --kalk-abschnitt: 8rem } }
+@media (min-width: 80rem) { .kalk { --kalk-rand: 3.5rem;  --kalk-abschnitt: 10.5rem } }
+
+.kalk ::selection { background: var(--kalk-ink); color: var(--kalk-chalk); }
+.kalk :focus-visible { outline: 2px solid var(--kalk-brass); outline-offset: 3px; box-shadow: none; }
+.kalk .auf-tinte :focus-visible { outline-color: var(--kalk-brass-lt); }
+
+/* ── Raster ── */
+.kalk .huelle { width: 100%; max-width: 105rem; margin-inline: auto; padding-inline: var(--kalk-rand); }
+.kalk .raster { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); column-gap: 1.5rem; }
+@media (min-width: 48rem) { .kalk .raster { grid-template-columns: repeat(8, minmax(0,1fr)) } }
+@media (min-width: 64rem) { .kalk .raster { grid-template-columns: repeat(12, minmax(0,1fr)) } }
+.kalk .abschnitt { padding-block: var(--kalk-abschnitt); }
+
+/* ── Typografie ──
+   Die Sperrung haengt an der Groesse, nicht an einem Wert fuer alles:
+   grosse Zeilen vertragen Enge, kleine brauchen Luft. */
+.kalk .display-xl {
+  font-weight: 500; font-size: clamp(2.875rem, 1.95rem + 4.3vw, 5.75rem);
+  line-height: 0.94; letter-spacing: -0.034em; text-wrap: balance;
+}
+.kalk .display-l {
+  font-weight: 500; font-size: clamp(2.375rem, 1.6rem + 4.6vw, 5.25rem);
+  line-height: 1.0; letter-spacing: -0.03em; text-wrap: balance;
+}
+.kalk .display-m {
+  font-weight: 500; font-size: clamp(1.875rem, 1.4rem + 2.3vw, 3.25rem);
+  line-height: 1.1; letter-spacing: -0.024em; text-wrap: balance;
+}
+.kalk .ueberschrift {
+  font-weight: 500; font-size: clamp(1.375rem, 1.22rem + 0.75vw, 1.875rem);
+  line-height: 1.2; letter-spacing: -0.018em;
+}
+.kalk .fliess-gross {
+  font-size: clamp(1.1875rem, 1.08rem + 0.5vw, 1.4375rem);
+  line-height: 1.52; letter-spacing: -0.004em; max-width: 46ch;
+}
+.kalk .fliess { max-width: 62ch; }
+
+/* Massangabe — Information, kein Etikett. */
+.kalk .mass {
+  font-weight: 500; font-size: 0.6875rem; line-height: 1;
+  letter-spacing: 0.14em; font-variant-numeric: tabular-nums; text-transform: uppercase;
+}
+.kalk .wortmarke {
+  font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+  line-height: 1; white-space: nowrap;
+}
+
+/* ── Farben als Helfer, damit die Seite ohne Tailwind-Tokens auskommt ── */
+.kalk .k-chalk  { color: var(--kalk-chalk) }
+.kalk .k-mist   { color: var(--kalk-mist) }
+.kalk .k-slate  { color: var(--kalk-slate) }
+.kalk .k-brass  { color: var(--kalk-brass) }
+.kalk .k-brass-lt { color: var(--kalk-brass-lt) }
+.kalk .auf-tinte { background: var(--kalk-ink); color: var(--kalk-chalk) }
+.kalk .text-hell { color: var(--kalk-chalk) }
+.kalk .grund-2 { background: var(--kalk-chalk-2) }
+.kalk .linie { border-color: var(--kalk-line) }
+.kalk .auf-tinte .linie, .kalk .text-hell .linie { border-color: var(--kalk-hair) }
+
+/* ── Masslinie: die Figur, die diese Marke traegt ── */
+.kalk .masslinie__strich { position: relative; flex: 1; height: 1px; background: currentColor; opacity: 0.45; }
+.kalk .masslinie__strich::before,
+.kalk .masslinie__strich::after { content: ""; position: absolute; top: -3px; width: 1px; height: 7px; background: currentColor; }
+.kalk .masslinie__strich::before { left: 0 } .kalk .masslinie__strich::after { right: 0 }
+
+/* ── Schaltflaechen: rechtwinklig, kein Schatten, kein Verlauf ── */
+.kalk .knopf {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.625rem;
+  font-weight: 500; font-size: 0.9375rem; letter-spacing: 0.01em; line-height: 1;
+  padding: 1.0625rem 1.75rem; border: 1px solid transparent; border-radius: 0;
+  cursor: pointer; text-decoration: none;
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+.kalk .knopf--voll { background: var(--kalk-ink); color: var(--kalk-chalk) }
+.kalk .knopf--voll:hover { background: #000 }
+.kalk .knopf--linie { border-color: var(--kalk-ink); color: var(--kalk-ink) }
+.kalk .knopf--linie:hover { background: var(--kalk-ink); color: var(--kalk-chalk) }
+.kalk .auf-tinte .knopf--voll, .kalk .text-hell .knopf--voll { background: var(--kalk-chalk); color: var(--kalk-ink) }
+.kalk .auf-tinte .knopf--voll:hover, .kalk .text-hell .knopf--voll:hover { background: #fff }
+.kalk .auf-tinte .knopf--linie, .kalk .text-hell .knopf--linie { border-color: var(--kalk-hair-stark); color: var(--kalk-chalk) }
+.kalk .auf-tinte .knopf--linie:hover, .kalk .text-hell .knopf--linie:hover { background: var(--kalk-chalk); color: var(--kalk-ink); border-color: var(--kalk-chalk) }
+.kalk .knopf:active { transform: translateY(1px) }
+
+/* Textlink mit Messing-Unterstreichung, die von links einlaeuft. */
+.kalk .textlink { position: relative; text-decoration: none; color: inherit; padding-bottom: 2px }
+.kalk .textlink::after {
+  content: ""; position: absolute; left: 0; bottom: 0; height: 1px; width: 100%;
+  background: var(--kalk-brass); transform: scaleX(0); transform-origin: right;
+  transition: transform 280ms cubic-bezier(.2,.7,.3,1);
+}
+.kalk .auf-tinte .textlink::after, .kalk .text-hell .textlink::after { background: var(--kalk-brass-lt) }
+.kalk .textlink:hover::after, .kalk .textlink:focus-visible::after { transform: scaleX(1); transform-origin: left }
+
+/* Der Schleier ueber dem Auftaktfoto, in Tinte statt in Oliv. */
+.kalk .kalk-schleier {
+  background: linear-gradient(to top,
+    rgb(14 20 19 / 0.90) 0%, rgb(14 20 19 / 0.80) 20%, rgb(14 20 19 / 0.68) 38%,
+    rgb(14 20 19 / 0.54) 55%, rgb(14 20 19 / 0.36) 70%, rgb(14 20 19 / 0.14) 84%,
+    rgb(14 20 19 / 0.28) 100%);
+}
+@media (min-width: 64rem) {
+  .kalk .kalk-schleier {
+    background: linear-gradient(to top,
+      rgb(14 20 19 / 0.90) 0%, rgb(14 20 19 / 0.76) 22%, rgb(14 20 19 / 0.48) 42%,
+      rgb(14 20 19 / 0.22) 62%, rgb(14 20 19 / 0.05) 80%, rgb(14 20 19 / 0.24) 100%);
+  }
+}
+.kalk .kalk-schleier-seite {
+  background: linear-gradient(to right,
+    rgb(14 20 19 / 0.74) 0%, rgb(14 20 19 / 0.56) 30%,
+    rgb(14 20 19 / 0.24) 52%, rgb(14 20 19 / 0) 72%);
+}
+.kalk .kalk-titel { text-shadow: 0 6px 60px rgb(14 20 19 / 0.52) }
+
+/* Die Raumfrage ist der eine Baustein der Schauseite, der aus dem Planer
+   kommt — und er soll dort unverändert bleiben. Hier bekommt er deshalb
+   keine neue Gestaltung, sondern nur zwei Angleichungen, damit er nicht
+   wie ein Fremdkörper wirkt: dieselbe Schrift wie die Seite um ihn herum,
+   und rechte Winkel statt der weichen 3 px. Farben und Aufbau: unberührt. */
+.kalk .raumfrage-huelle,
+.kalk .raumfrage-huelle * {
+  font-family: var(--schrift-kalk), ui-sans-serif, system-ui, sans-serif;
+}
+.kalk .raumfrage-huelle [class*="rounded-"] { border-radius: 0 }

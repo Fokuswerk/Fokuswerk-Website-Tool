@@ -37,26 +37,40 @@ const SAND = "rgb(236, 233, 227)"
 const KURVE = [0.22, 1, 0.36, 1] as const
 const U = (id: string, w = 420) => `https://images.unsplash.com/${id}?crop=entropy&cs=srgb&fm=webp&ixlib=rb-4.1.0&q=70&w=${w}`
 
+// Standbilder aus unseren eigenen Filmen (in Framer hochgeladen, 14.10.2026).
+const ANZEIGE_WAV = "https://framerusercontent.com/images/YE5Wug2D69nh6vuSislY7xg21WA.jpg?scale-down-to=512"
+
+const FILME = {
+    wandscher: "https://framerusercontent.com/images/dLNwhTwthfhClRZXYh9ssRHb1I.jpg",
+    patioBar: "https://framerusercontent.com/images/KFJhvU35SUv2NX4xlvJlXphlJh0.jpg?scale-down-to=1024",
+    patioQuer: "https://framerusercontent.com/images/87Grnj77YGDMWb5slw77CWmG08o.jpg?scale-down-to=1024",
+    thieme: "https://framerusercontent.com/images/taX1EdxFi6dzoDKEvtwkevkXCQk.jpg?scale-down-to=1024",
+    zwillis: "https://framerusercontent.com/images/zdq7SpKfJOcu50ewz7gUrN2XbuY.jpg?scale-down-to=1024",
+    euleLucid: "https://framerusercontent.com/images/1KzinGOD1FyMKn9hTGn8DiBrvqk.jpg?scale-down-to=1024",
+    euleLeffers: "https://framerusercontent.com/images/cIBe4JyRXLPKr8m6nYqR29qmM4.jpg",
+}
+
+// Zwei Aufnahmen aus einer eigenen Fahrzeugproduktion. Sie laufen im Streifen als Fotos mit:
+// kein Abspielknopf, keine Laufzeit — die Karte zeigt Fotos UND Videos.
+const AUTOS = {
+    halle: "https://framerusercontent.com/images/91BbbmW8PCYP80f0lJlQ3dKuIeI.jpg?scale-down-to=1024",
+    heck: "https://framerusercontent.com/images/sTxvHfMH8fXNnysQwdSPhnjKcak.jpg?scale-down-to=1024",
+}
+
 const BILDER = {
-    werkstatt: U("photo-1615906655593-ad0386982a0f", 600),
-    tischler: U("photo-1601058268499-e52658b8bb88", 520),
-    koch: U("photo-1705917893168-e03c7da62577"),
-    padel: U("photo-1657704227277-04e8accd079e"),
-    hotel: U("photo-1610392734074-02f696fd30a8"),
-    barista: U("photo-1670819916940-2db70584e3fc"),
-    kamera: U("photo-1587050265310-1a2d98ccce5f"),
-    werkzeug: U("photo-1608613304899-ea8098577e38"),
-    wav: "https://framerusercontent.com/images/ArC0EnCXXAPEbwWsXDR5b7YS2eg.webp",
-    glanzwerk: "https://framerusercontent.com/images/D5H2GC4EWAAp7sGmDPH80jVOXB4.webp",
+    wav: "https://framerusercontent.com/images/ArC0EnCXXAPEbwWsXDR5b7YS2eg.webp?scale-down-to=1024",
+    glanzwerk: "https://framerusercontent.com/images/D5H2GC4EWAAp7sGmDPH80jVOXB4.webp?scale-down-to=1024",
     // Handy-Ansicht von steinmetz-wandscher.de (echtes Kundenprojekt, Stand 14.10.2026).
     // Bewusst die Handy-Fassung: Die Karte verspricht "Fürs Handy gebaut", ein hineingequetschtes
     // Desktop-Layout im Telefonrahmen wäre das Gegenteil des Versprechens.
-    wandscher: "https://framerusercontent.com/images/0FBtQOHljxrUb6isSeWD4GvBo.jpg",
+    wandscher: "https://framerusercontent.com/images/0FBtQOHljxrUb6isSeWD4GvBo.jpg?scale-down-to=1024",
 }
 
 // Bilder erst laden, wenn die Bühne näherkommt. CSS-Hintergründe lädt der Browser sonst sofort beim
 // Seitenaufbau – PageSpeed rechnet alles, was vor dem ersten Inhalt startet, in den LCP ein.
-const BilderAn = createContext(false)
+// Schalter, ab wann Bilder geladen werden. Innerhalb der Leistungsbühne setzt ihn der
+// Sichtbarkeits-Beobachter; andere Bausteine (Szenenkarte) müssen ihn selbst setzen.
+export const BilderAn = createContext(false)
 const LEER = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
 const PLATZHALTER = "rgba(127,127,127,0.14)"
 function useHintergrund(url: string): string {
@@ -67,7 +81,7 @@ const STANDARD: Record<"performance" | "websites" | "content", Leistung> = {
     performance: {
         marke: "Online-Werbung",
         titel: "Werbung, die Kunden bringt",
-        text: "Anzeigen bei Google, Facebook und Instagram — für Anfragen, Termine oder neue Mitarbeiter. Jeden Monat sehen Sie schwarz auf weiß, was eine Anfrage gekostet hat.",
+        text: "Anzeigen bei Google, Facebook und Instagram — für Anfragen, Termine oder neue Mitarbeiter.",
         punkte: "Google-Anzeigen · Facebook & Instagram · Mitarbeiter finden · Monatsbericht",
         link: "/leistungen/performance-marketing",
         linkText: "Mehr zur Online-Werbung",
@@ -154,30 +168,6 @@ function Beispiel(props: { hell?: boolean }) {
 
 // ---------- Szene 1: Anzeigen-Stapel ----------
 
-function MetaKarte(props: { akzent: string }) {
-    const werkstatt = useHintergrund(BILDER.werkstatt)
-    return (
-        <div style={{ width: "100%", height: "100%", background: HELL, color: TINTE, display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px" }}>
-                <span style={{ width: 24, height: 24, borderRadius: 24, background: props.akzent, color: HELL, fontSize: 9, fontWeight: 600, display: "grid", placeItems: "center" }}>WH</span>
-                <div style={{ display: "grid", lineHeight: 1.15 }}>
-                    <span style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: "-0.01em" }}>Werkstatt Harms</span>
-                    <span style={{ fontSize: 9.5, color: "rgba(14,15,18,0.5)" }}>Gesponsert</span>
-                </div>
-            </div>
-            <div style={{ fontSize: 11.5, lineHeight: 1.4, padding: "0 12px 9px", letterSpacing: "-0.01em" }}>Inspektion vor dem Urlaub? Termin in zwei Minuten anfragen — auch am Samstag.</div>
-            <div style={{ flex: 1, background: werkstatt }} />
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 12px", background: "rgb(242,241,238)" }}>
-                <div style={{ display: "grid", lineHeight: 1.2, minWidth: 0 }}>
-                    <span style={{ fontSize: 9, color: "rgba(14,15,18,0.5)", letterSpacing: "0.04em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>WERKSTATT-HARMS.DE</span>
-                    <span style={{ fontSize: 11, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Termin anfragen</span>
-                </div>
-                <span style={{ fontSize: 10.5, fontWeight: 600, padding: "6px 10px", borderRadius: 6, background: "rgb(226,224,219)", whiteSpace: "nowrap", flexShrink: 0 }}>Anfragen</span>
-            </div>
-        </div>
-    )
-}
-
 function GoogleKarte() {
     return (
         <div style={{ width: "100%", height: "100%", background: HELL, color: TINTE, padding: "14px 14px", boxSizing: "border-box", display: "flex", flexDirection: "column", gap: 9 }}>
@@ -186,22 +176,22 @@ function GoogleKarte() {
                     <circle cx={11} cy={11} r={7} stroke="rgba(14,15,18,0.5)" strokeWidth={2.4} />
                     <path d="M16.5 16.5L21 21" stroke="rgba(14,15,18,0.5)" strokeWidth={2.4} strokeLinecap="round" />
                 </svg>
-                werkstatt oldenburg termin
+                werkstatt westerstede
             </div>
             <div style={{ display: "grid", gap: 3, marginTop: 2 }}>
                 <span style={{ fontSize: 10, fontWeight: 600 }}>Gesponsert</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                     <span style={{ width: 18, height: 18, borderRadius: 18, background: "rgb(238,236,232)", display: "grid", placeItems: "center", fontSize: 8, fontWeight: 700 }}>W</span>
                     <div style={{ display: "grid", lineHeight: 1.15 }}>
-                        <span style={{ fontSize: 10.5 }}>Werkstatt Harms</span>
-                        <span style={{ fontSize: 9.5, color: "rgba(14,15,18,0.55)" }}>werkstatt-harms.de</span>
+                        <span style={{ fontSize: 10.5 }}>WAV Westerstede</span>
+                        <span style={{ fontSize: 9.5, color: "rgba(14,15,18,0.55)" }}>wav-wst.de</span>
                     </div>
                 </div>
-                <span style={{ fontSize: 14, lineHeight: 1.25, color: "rgb(26, 13, 171)", letterSpacing: "-0.01em", marginTop: 3 }}>Kfz-Werkstatt in Oldenburg — Termin heute noch anfragen</span>
-                <span style={{ fontSize: 10.5, lineHeight: 1.45, color: "rgba(14,15,18,0.7)" }}>Inspektion, Reifen, TÜV-Vorbereitung. Festpreis vorab, Ersatzwagen auf Wunsch.</span>
+                <span style={{ fontSize: 14, lineHeight: 1.25, color: "rgb(26, 13, 171)", letterSpacing: "-0.01em", marginTop: 3 }}>WAV Westerstede — Alles für Dein Auto. Aus einer Hand.</span>
+                <span style={{ fontSize: 10.5, lineHeight: 1.45, color: "rgba(14,15,18,0.7)" }}>Freie Kfz-Werkstatt im Ammerland: Inspektion, Reparatur, Steinschlag und Autoglas. Für alle Marken.</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: "auto" }}>
-                {["Inspektion", "Reifenservice", "TÜV & AU", "Termin buchen"].map((t) => (
+                {["Termin anfragen", "Leistungen", "Steinschlag & Autoglas", "Karriere"].map((t) => (
                     <span key={t} style={{ fontSize: 10.5, color: "rgb(26, 13, 171)", padding: "7px 9px", borderRadius: 8, background: "rgb(245,244,241)" }}>
                         {t}
                     </span>
@@ -212,23 +202,16 @@ function GoogleKarte() {
 }
 
 function StoryKarte(props: { akzent: string }) {
-    const tischler = useHintergrund(BILDER.tischler)
+    // Die echte Stellenanzeige, die für WAV Westerstede bei Meta lief — kein Nachbau.
     return (
-        <div style={{ position: "relative", width: "100%", height: "100%", background: tischler, color: HELL }}>
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.75) 100%)" }} />
-            <div style={{ position: "absolute", left: 10, right: 10, top: 8, display: "flex", gap: 3 }}>
-                {[1, 0.35, 0.35].map((o, k) => (
-                    <span key={k} style={{ flex: 1, height: 2, borderRadius: 2, background: `rgba(255,255,255,${o})` }} />
-                ))}
-            </div>
-            <div style={{ position: "absolute", left: 12, top: 18, display: "flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 600 }}>
-                <span style={{ width: 20, height: 20, borderRadius: 20, background: TINTE, display: "grid", placeItems: "center", fontSize: 8 }}>TW</span>
-                Tischlerei Wübbens <span style={{ fontWeight: 400, opacity: 0.7 }}>Gesponsert</span>
-            </div>
-            <div style={{ position: "absolute", left: 14, right: 14, bottom: 14, display: "grid", gap: 10 }}>
-                <span style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.12, letterSpacing: "-0.03em" }}>Wir suchen Verstärkung: Tischler (m/w/d)</span>
-                <span style={{ fontSize: 11.5, fontWeight: 600, textAlign: "center", padding: "9px 10px", borderRadius: 999, background: props.akzent }}>In 60 Sekunden bewerben</span>
-            </div>
+        <div style={{ position: "relative", width: "100%", height: "100%", background: TINTE, overflow: "hidden" }}>
+            <img
+                src={ANZEIGE_WAV}
+                alt="Stellenanzeige für WAV Westerstede: Kfz-Mechatroniker in Vollzeit, Bewerbung in zwei Minuten"
+                loading="lazy"
+                decoding="async"
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+            />
         </div>
     )
 }
@@ -236,7 +219,7 @@ function StoryKarte(props: { akzent: string }) {
 export function Anzeigenstapel(props: { akzent: string; aktiv: boolean; los: boolean; schmal: boolean; statisch: boolean }) {
     const { akzent, aktiv, los, schmal, statisch } = props
     const reduziert = useReducedMotion()
-    const karten = [<MetaKarte key="m" akzent={akzent} />, <GoogleKarte key="g" />, <StoryKarte key="s" akzent={akzent} />]
+    const karten = [<GoogleKarte key="g" />, <StoryKarte key="s" akzent={akzent} />]
     const [vorn, setVorn] = useState(0)
     useEffect(() => {
         if (statisch || reduziert || !los) return
@@ -244,10 +227,11 @@ export function Anzeigenstapel(props: { akzent: string; aktiv: boolean; los: boo
         return () => window.clearInterval(t)
     }, [statisch, reduziert, los, aktiv])
 
+    // Belegte Zahlen aus dem Google-Ads-Konto von WAV Westerstede, 19.05.–12.10.2026.
     const kpis = [
-        { l: "Anfragen im Monat", w: "41", d: "+64 %" },
-        { l: "Kosten je Anfrage", w: "15,40 €", d: "−38 %" },
-        { l: "Bewerbungen", w: "23", d: "in 3 Wochen" },
+        { l: "Kontaktaufnahmen", w: "439", d: "in fünf Monaten" },
+        { l: "Kosten je Kontakt", w: "5,30 €", d: "Google Ads" },
+        { l: "Werbebudget", w: "2.328 €", d: "gesamt" },
     ]
     const kb = schmal ? 196 : 228
     const kh = schmal ? 262 : 300
@@ -427,14 +411,18 @@ export function Seitenschau(props: { aktiv: boolean; los: boolean; schmal: boole
 export function Filmstreifen(props: { aktiv: boolean; schmal: boolean; statisch: boolean; akzent: string }) {
     const { aktiv, schmal, statisch, akzent } = props
     const reduziert = useReducedMotion()
-    const clips = [
-        { b: BILDER.koch, t: "0:14", n: "Küche" },
-        { b: BILDER.padel, t: "0:09", n: "Padel" },
-        { b: BILDER.hotel, t: "0:21", n: "Hotel" },
-        { b: BILDER.barista, t: "0:12", n: "Café" },
-        { b: BILDER.tischler, t: "0:18", n: "Handwerk" },
-        { b: BILDER.kamera, t: "0:30", n: "Dreh" },
-        { b: BILDER.werkzeug, t: "0:11", n: "Werkstatt" },
+    // Standbilder aus echten Filmen von uns, mit ihrer wirklichen Länge. Die Karte verspricht
+    // "Keine Stockfotos" — dann darf hier auch keins laufen.
+    const clips: { b: string; t: string; n: string; foto?: boolean }[] = [
+        { b: FILME.wandscher, t: "0:53", n: "Steinmetz" },
+        { b: FILME.patioBar, t: "0:34", n: "Bar" },
+        { b: AUTOS.halle, t: "", n: "Sportwagen", foto: true },
+        { b: FILME.thieme, t: "0:24", n: "Augenoptik" },
+        { b: FILME.zwillis, t: "0:28", n: "Padel" },
+        { b: AUTOS.heck, t: "", n: "Showroom", foto: true },
+        { b: FILME.euleLucid, t: "0:46", n: "Club" },
+        { b: FILME.euleLeffers, t: "0:47", n: "Kaufhaus" },
+        { b: FILME.patioQuer, t: "0:25", n: "Gastronomie" },
     ]
     const w = schmal ? 118 : 150
     const h = Math.round((w * 16) / 9)
@@ -464,7 +452,7 @@ export function Filmstreifen(props: { aktiv: boolean; schmal: boolean; statisch:
                     <div key={i} style={{ position: "relative", width: w, height: h, borderRadius: 12, overflow: "hidden", flexShrink: 0, background: bilderAn ? `url(${c.b}) center/cover` : PLATZHALTER, boxShadow: "0 20px 30px -20px rgba(0,0,0,0.6)" }}>
                         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.6) 100%)" }} />
                         <span style={{ position: "absolute", left: 8, top: 8, fontSize: 9.5, fontWeight: 600, color: HELL, letterSpacing: "0.06em", textTransform: "uppercase", opacity: 0.9 }}>{c.n}</span>
-                        <div style={{ position: "absolute", left: 8, right: 8, bottom: 9, display: "flex", alignItems: "center", gap: 6 }}>
+                        {!c.foto && <div style={{ position: "absolute", left: 8, right: 8, bottom: 9, display: "flex", alignItems: "center", gap: 6 }}>
                             <svg width={9} height={10} viewBox="0 0 9 10">
                                 <path d="M0 0.8v8.4c0 .6.7 1 1.2.7l7-4.2c.5-.3.5-1.1 0-1.4l-7-4.2C.7-.2 0 .2 0 .8z" fill={HELL} />
                             </svg>
@@ -472,7 +460,7 @@ export function Filmstreifen(props: { aktiv: boolean; schmal: boolean; statisch:
                                 <span style={{ display: "block", width: `${30 + ((i * 17) % 55)}%`, height: "100%", background: i % 3 === 0 ? akzent : HELL }} />
                             </span>
                             <span style={{ fontSize: 9.5, color: HELL, fontVariantNumeric: "tabular-nums" }}>{c.t}</span>
-                        </div>
+                        </div>}
                     </div>
                 ))}
             </motion.div>
@@ -650,7 +638,7 @@ export default function Leistungsbuehne(props: LeistungsbuehneProps) {
                 akzent={akzent}
                 statisch={statisch}
                 verzug={0}
-                beispiel={beispielHinweis}
+                beispiel={false}
                 klein={!gross}
                 gridColumn={gross || mittel ? "span 6" : "span 12"}
                 szene={(aktiv, los) => <Anzeigenstapel akzent={akzent} aktiv={aktiv} los={los} schmal={!gross || breite < 1100} statisch={statisch} />}

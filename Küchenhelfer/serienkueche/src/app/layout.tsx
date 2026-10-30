@@ -37,6 +37,27 @@ const plein = localFont({
   display: "swap",
 });
 
+/*
+ * Und eine dritte, die nur die Schauseite traegt.
+ *
+ * Die Startseite ist jetzt in der Sprache von Aplomb gesetzt: kuehl,
+ * mineralisch, Mass vor Schmuck. Dazu gehoert Switzer (Fontshare, frei fuer
+ * kommerzielle Nutzung), selbst ausgeliefert wie die anderen beiden.
+ *
+ * Der Planer behaelt Plein und Geist Mono. Das ist kein Versehen: er soll
+ * sich nicht aendern, und eine Strecke, an der sechzehn Fragen haengen,
+ * baut man nicht um, waehrend man die Schauseite neu kleidet.
+ */
+const switzer = localFont({
+  src: [
+    { path: "../schriften/switzer-400.woff2", weight: "400", style: "normal" },
+    { path: "../schriften/switzer-500.woff2", weight: "500", style: "normal" },
+    { path: "../schriften/switzer-600.woff2", weight: "600", style: "normal" },
+  ],
+  variable: "--schrift-kalk",
+  display: "swap",
+});
+
 const geistMono = localFont({
   src: "../schriften/GeistMono-Variable.woff2",
   weight: "300 700",
@@ -52,7 +73,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="de" className={`${plein.variable} ${geistMono.variable}`}>
+    <html lang="de" className={`${plein.variable} ${geistMono.variable} ${switzer.variable}`}>
       <body>
         <Rahmen>{children}</Rahmen>
       </body>

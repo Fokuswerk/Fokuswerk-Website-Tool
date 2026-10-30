@@ -1,7 +1,7 @@
 import { addPropertyControls, ControlType, useIsStaticRenderer } from "framer"
 import { useInView } from "framer-motion"
 import { useEffect, useRef, useState, type CSSProperties } from "react"
-import { Anzeigenstapel, Seitenschau, Filmstreifen } from "./Leistungsbuehne.tsx"
+import { Anzeigenstapel, Seitenschau, Filmstreifen, BilderAn } from "./Leistungsbuehne.tsx"
 
 // Szenenkarte — eine Szene aus der Leistungsbühne als eigenständige Bildkarte für die Köpfe der
 // Unterseiten (statt Stockfoto): Anzeigen-Stapel (Performance), echte Kundenseiten (Websites),
@@ -87,9 +87,13 @@ export default function Szenenkarte(props: SzenenkarteProps) {
                         }}
                     />
                 )}
-                {szene === "anzeigen" && <Anzeigenstapel akzent={akzent} aktiv={aktiv} los={los} schmal={schmal} statisch={statisch} />}
-                {szene === "seiten" && <Seitenschau aktiv={aktiv} los={los} schmal={schmal} statisch={statisch} akzent={akzent} />}
-                {szene === "film" && <Filmstreifen aktiv={aktiv} schmal={schmal} statisch={statisch} akzent={akzent} />}
+                {/* Ohne diesen Schalter bleiben alle Motive grau: die Szenen laden ihre Bilder erst,
+                    wenn BilderAn wahr ist, und den setzt sonst nur die Leistungsbühne selbst. */}
+                <BilderAn.Provider value={los}>
+                    {szene === "anzeigen" && <Anzeigenstapel akzent={akzent} aktiv={aktiv} los={los} schmal={schmal} statisch={statisch} />}
+                    {szene === "seiten" && <Seitenschau aktiv={aktiv} los={los} schmal={schmal} statisch={statisch} akzent={akzent} />}
+                    {szene === "film" && <Filmstreifen aktiv={aktiv} schmal={schmal} statisch={statisch} akzent={akzent} />}
+                </BilderAn.Provider>
             </div>
             {(etikett || titel) && (
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 20, padding: schmal ? "18px 12px 10px" : "22px 24px 14px" }}>

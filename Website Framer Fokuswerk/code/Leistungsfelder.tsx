@@ -44,7 +44,7 @@ const STANDARD: Feld[] = [
         titel: "Kampagnen, die Anfragen bringen",
         text: "Meta und Google Ads für Anfragen, Bewerbungen und Verkäufe. Mit Tracking, das am Monatsende zeigt, was ein Auftrag tatsächlich gekostet hat.",
         leistungen: "Meta Ads · Google Ads · Kampagnenstrategie · Leadgenerierung · Tracking · Conversion-Optimierung",
-        bild: { src: "https://framerusercontent.com/images/OSy9xnJMKJd7tiAguEUK4SQ9e4.jpg", alt: "Auswertung einer Kampagne" },
+        bild: { src: "https://framerusercontent.com/images/OSy9xnJMKJd7tiAguEUK4SQ9e4.jpg?scale-down-to=1024", alt: "Auswertung einer Kampagne" },
     },
     {
         marke: "Websites & digitale Systeme",
@@ -52,7 +52,7 @@ const STANDARD: Feld[] = [
         titel: "Seiten, die verkaufen statt zu repräsentieren",
         text: "Unternehmenswebsites und Landingpages, die auf Anfragen hin gebaut sind — technisch sauber, schnell und für Google wie für KI-Assistenten auffindbar.",
         leistungen: "Webdesign · Development · Landingpages · SEO · Local SEO · GEO · Customer Journey",
-        bild: { src: "https://framerusercontent.com/images/r3QYK4OUE5KpRluELHXsYlm2g.jpg", alt: "Website Glanzwerk" },
+        bild: { src: "https://framerusercontent.com/images/r3QYK4OUE5KpRluELHXsYlm2g.jpg?scale-down-to=1024", alt: "Website Glanzwerk" },
     },
     {
         marke: "Content & Brand",
@@ -60,7 +60,7 @@ const STANDARD: Feld[] = [
         titel: "Material, das beides füttert",
         text: "Foto, Video und Social Content aus eigener Produktion — als Rohstoff für Website und Anzeigen, nicht als Selbstzweck.",
         leistungen: "Content-Strategie · Produktion · Social Media · Foto & Video · Kampagnenmotive",
-        bild: { src: "https://framerusercontent.com/images/xwE0W3OKmnzH3VwnzldtOoj4OB4.jpg", alt: "Dreh in einem Lokal" },
+        bild: { src: "https://framerusercontent.com/images/xwE0W3OKmnzH3VwnzldtOoj4OB4.jpg?scale-down-to=1024", alt: "Dreh in einem Lokal" },
     },
 ]
 
