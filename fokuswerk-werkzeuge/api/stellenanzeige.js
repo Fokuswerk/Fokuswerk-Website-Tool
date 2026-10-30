@@ -6,7 +6,9 @@
 // Fehler: 422 { "fehler": "seite_nicht_lesbar" | "beruf_unklar" | ... }
 
 import { liesBetrieb } from "../lib/seite-lesen.js";
-import { frageModell, BUDGETZEILE } from "../lib/modell.js";
+import { frageModell, budgetzeile } from "../lib/modell.js";
+import { anleitung, wochenplan, AUFWAND } from "../lib/mappe.js";
+import { marktlage, berufsgruppenListe } from "../lib/marktlage.js";
 import { pruefeAntwort, pruefeEingabe } from "../lib/vertrag.js";
 import { verarbeiteLead } from "../lib/lead.js";
 
@@ -61,6 +63,21 @@ function meldeLead(daten) {
     body: JSON.stringify({ ...daten, zeit: new Date().toISOString() }),
   }).catch(() => {});
 }
+
+// Ohne gültige Mailadresse gibt es die Befunde nicht. Die Seite fragt sie ab — durchsetzen
+// muss es aber der Endpunkt: Wer ihn direkt aufrief, bekam die komplette Auswertung
+// umsonst und löste dabei eine Lead-Meldung mit leerem Namen aus (gefunden am 28.10.2026,
+// durch einen eigenen Fehlaufruf). Ohne Kontakt verhält sich der Aufruf jetzt wie ein
+// Vorlauf: messen, ablegen, nur den Namen zurückgeben.
+const MAILMUSTER = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
+const hatKontakt = (k) => MAILMUSTER.test(String(k?.email || "").trim());
+
+// Trockenlauf: alles rechnen, nichts verschicken. Hinter demselben Diagnoseschluessel wie
+// der Versandbericht, damit er von aussen nicht benutzbar ist. Grund: Um eine Aenderung an
+// Vorlage, PDF oder Ergebnis zu pruefen, musste bisher eine echte Mail rausgehen — das
+// kostet Resend-Volumen und fuellt das Postfach mit immer demselben Probelauf.
+const trockenlauf = (req) =>
+  req.query?.trocken === "1" && req.query?.diagnose === DIAGNOSE;
 
 export default async function handler(req, res) {
   const herkunft = req.headers.origin;
@@ -119,7 +136,16 @@ export default async function handler(req, res) {
   // beantwortet. Zurueck kommt **nur** der Betriebsname — stuende hier das ganze Ergebnis,
   // haette man es, bevor man seine Daten eingetragen hat. Und kein Lead: Zu diesem Zeitpunkt
   // gibt es noch keine Kontaktdaten, eine Meldung an uns waere leer.
-  const nurVorlauf = req.query?.vorlauf === "1";
+  // Zwei Stufen. Stufe 1 laeuft direkt nach dem Beruf und liest nur die Seite: Sie sagt
+  // frueh, ob Adresse und Beruf taugen, und kostet keinen Modellaufruf. Stufe 2 laeuft nach
+  // der letzten Frage, wenn die Antworten vorliegen, und schreibt die Anzeigen in den
+  // Zwischenspeicher, waehrend der Besucher seine Kontaktdaten eintraegt. Beide geben nur
+  // den Betriebsnamen zurueck — stuende hier das Ergebnis, haette man es, bevor man seine
+  // Daten eingetragen hat. Und keinen Lead: Kontaktdaten gibt es zu dem Zeitpunkt nicht.
+  const vorlaufStufe = req.query?.vorlauf === "2" ? 2 : req.query?.vorlauf === "1" ? 1 : 0;
+  // Ohne Kontakt wie Stufe 2: schreiben und ablegen, aber nichts herausgeben und keinen
+  // Lead melden. Siehe die Wache oben.
+  const nurVorlauf = vorlaufStufe > 0 || !hatKontakt(koerper?.kontakt);
 
   const kennung =
     (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
@@ -127,15 +153,34 @@ export default async function handler(req, res) {
     "unbekannt";
   if (zuOft(kennung)) return res.status(429).json({ fehler: "zu_viele_abrufe" });
 
-  const schluessel = `${eingabe.domain.toLowerCase()}|${eingabe.beruf.toLowerCase()}`;
+  // Der Schlüssel muss alles enthalten, was das Ergebnis beeinflusst. Seit die Antworten
+  // in die Anzeigen einfließen, gehören sie dazu — sonst bekäme der zweite Betrieb mit
+  // derselben Domain und demselben Beruf die Anzeigen des ersten, mitsamt dessen Stärken.
+  const schluessel = [
+    eingabe.domain.toLowerCase(),
+    eingabe.beruf.toLowerCase(),
+    zusatz.dringlichkeit || "-",
+    zusatz.stellen || "-",
+    [...zusatz.staerken].sort().join(",") || "-",
+  ].join("|");
   const gemerkt = ausSpeicher(schluessel);
   if (gemerkt) {
     res.setHeader("X-Fokuswerk-Speicher", "treffer");
     if (nurVorlauf) return res.status(200).json({ bereit: true, betrieb: gemerkt.betrieb });
     // Der Zwischenspeicher gilt den Anzeigen, nicht dem Lead: Wer das Formular ausfüllt, ist
     // auch dann ein Lead, wenn die Texte für diese Domain schon einmal geschrieben wurden.
-    const bericht = await verarbeiteLead({ ...zusatz, betrieb: gemerkt.betrieb }, gemerkt);
-    return res.status(200).json(req.query?.diagnose === DIAGNOSE ? { ...gemerkt, _versand: bericht } : gemerkt);
+    // Die Budgetzeile hängt zusätzlich an der Werbeerfahrung, die nicht im Schlüssel
+    // steht — sie wird deshalb frisch gerechnet und nicht aus dem Speicher genommen.
+    const ausSpeicherMitBudget = { ...gemerkt, budget: budgetzeile(zusatz) };
+    const bericht = await verarbeiteLead(
+      { ...zusatz, betrieb: gemerkt.betrieb },
+      ausSpeicherMitBudget,
+    );
+    return res.status(200).json(
+      req.query?.diagnose === DIAGNOSE
+        ? { ...ausSpeicherMitBudget, _versand: bericht }
+        : ausSpeicherMitBudget,
+    );
   }
 
   let betrieb;
@@ -146,12 +191,23 @@ export default async function handler(req, res) {
   }
   if (!betrieb) return res.status(422).json({ fehler: "seite_nicht_lesbar" });
 
+  // Stufe 1 ist hier fertig. Alles darunter kostet einen Modellaufruf, und der lohnt sich
+  // erst, wenn die Antworten des Inhabers vorliegen — sonst schreibt das Modell Anzeigen
+  // ohne seine Staerken und der Lauf muesste spaeter ohnehin wiederholt werden.
+  if (vorlaufStufe === 1) {
+    return res.status(200).json({ bereit: true, betrieb: betrieb.titel || eingabe.domain });
+  }
+
   let roh = null;
   try {
     ({ antwort: roh } = await frageModell({
       beruf: eingabe.beruf,
       betrieb: betrieb.titel,
       text: betrieb.text,
+      dringlichkeit: zusatz.dringlichkeit,
+      stellen: zusatz.stellen,
+      staerken: zusatz.staerken,
+      berufsgruppen: berufsgruppenListe(),
     }));
   } catch (fehler) {
     console.error("Modellaufruf gescheitert:", fehler?.message);
@@ -165,11 +221,92 @@ export default async function handler(req, res) {
     return res.status(status).json({ fehler: geprueft.fehler });
   }
 
+  // Den Ort aus dem Seitentext ziehen — er steht fuer die Zielgruppen-Einstellung in der
+  // Anleitung. Findet sich keiner, bleibt die Anleitung allgemein statt falsch.
+  // Der Ort kommt vom Modell: Dieses Werkzeug liest nicht zwingend die Seite mit dem
+  // Impressum, im Text steht oft keine Postleitzahl. Die Textsuche bleibt als Rueckfall.
+  const plzOrt = (betrieb.text || "").match(
+    /\b\d{5}\s+([A-ZÄÖÜ][a-zäöüßA-ZÄÖÜ.-]{2,}(?:[ -][A-ZÄÖÜ][a-zäöüß.-]+)?)/,
+  );
+  const ort = geprueft.ort || (plzOrt ? plzOrt[1].replace(/[.,]$/, "") : null);
+
+  const mappe = [
+    {
+      id: "anleitung",
+      name: "So schalten Sie das",
+      wofuer:
+        "Der Weg durch den Werbeanzeigenmanager, mit Ihren Werten. Jeder Schritt einmal, in " +
+        "der Reihenfolge, in der er kommt.",
+      stuecke: [
+        {
+          titel: null,
+          felder: anleitung({ ort, beruf: eingabe.beruf, ...zusatz }).map((s) => ({
+            etikett: s.titel,
+            wert: s.text,
+            ohneKopie: true,
+          })),
+        },
+      ],
+    },
+    {
+      id: "drehbuch",
+      name: "Das Video",
+      wofuer:
+        "Eine Anzeige ohne Bewegtbild wird überscrollt. Vier Einstellungen mit dem Handy, " +
+        "hochkant, etwa zwanzig Minuten.",
+      stuecke: [
+        {
+          titel: null,
+          felder: [
+            { etikett: "Aufnahme", wert: geprueft.drehbuch.hinweis, ohneKopie: true },
+            ...geprueft.drehbuch.einstellungen.map((e, i) => ({
+              etikett: "Einstellung " + (i + 1) + (e.dauer ? " · " + e.dauer : ""),
+              wert: e.was + (e.hinweis ? "\n" + e.hinweis : ""),
+              ohneKopie: true,
+            })),
+            { etikett: "Was Sie in die Kamera sagen", wert: geprueft.drehbuch.ansage },
+          ],
+        },
+      ],
+    },
+    {
+      id: "antworten",
+      name: "Die ersten Antworten",
+      wofuer:
+        "Im Handwerk gehen die Guten verloren, weil zwei Tage niemand zurückruft. Diese drei " +
+        "Nachrichten gehen per WhatsApp raus, ohne dass Sie überlegen müssen.",
+      stuecke: [
+        {
+          titel: null,
+          felder: geprueft.antworten.map((a) => ({ etikett: a.anlass, wert: a.text })),
+        },
+      ],
+    },
+    {
+      id: "wochenplan",
+      name: "Der Wochenplan",
+      wofuer: "Von null bis zur ersten Bewerbung. " + AUFWAND,
+      stuecke: [
+        {
+          titel: null,
+          felder: wochenplan(zusatz).map((t) => ({ etikett: t.tag, wert: t.was, ohneKopie: true })),
+        },
+      ],
+    },
+  ];
+
+  // Die Marktlage eröffnet den Bericht: Erst wissen, wogegen man antritt, dann die Texte.
+  // Lässt sich der Beruf keiner amtlichen Berufsgruppe zuordnen, fällt der Block weg —
+  // lieber nichts als eine Zahl aus der falschen Gruppe.
+  const lage = marktlage({ berufsgruppe: geprueft.berufsgruppe, ort, beruf: eingabe.beruf });
+
   const ergebnis = {
     betrieb: geprueft.betrieb || betrieb.titel || eingabe.domain,
-    anzeigen: geprueft.anzeigen,
+    marktlage: lage,
+    kanaele: geprueft.kanaele,
+    mappe,
     fragen: geprueft.fragen,
-    budget: BUDGETZEILE,
+    budget: budgetzeile(zusatz),
   };
 
   SPEICHER.set(schluessel, { zeit: Date.now(), wert: ergebnis });
@@ -185,7 +322,9 @@ export default async function handler(req, res) {
   if (nurVorlauf) return res.status(200).json({ bereit: true, betrieb: ergebnis.betrieb });
 
   // Lead in die Datenbank, Meldung an uns, Zusendung an den Betrieb. Läuft nebenher.
-  const bericht = await verarbeiteLead({ ...zusatz, betrieb: ergebnis.betrieb }, ergebnis);
+  const bericht = trockenlauf(req)
+    ? { trockenlauf: "nichts verschickt, nichts gemeldet" }
+    : await verarbeiteLead({ ...zusatz, betrieb: ergebnis.betrieb }, ergebnis);
 
   return res.status(200).json(req.query?.diagnose === DIAGNOSE ? { ...ergebnis, _versand: bericht } : ergebnis);
 }

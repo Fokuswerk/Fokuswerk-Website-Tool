@@ -40,38 +40,75 @@ async function liesBegrenzt(antwort) {
   );
 }
 
-export async function holeSeite(adresse, { zeitgrenze = ZEITGRENZE } = {}) {
+// Zusatzfelder fuer die SEO- und GEO-Analyse: Sie muss auch messen, was ein Abruf *nicht*
+// liefert — Statuscode, Weiterleitungen, Dauer, Groesse. Der Stellenanzeiger liest davon
+// nichts, fuer ihn bleibt { adresse, inhalt } unveraendert.
+//   auchFehler  — 404 und 500 zurueckgeben statt null: fuer die Pruefung IST das das Ergebnis
+//   kennung     — als anderer Abrufer auftreten, um die Bot-Sicht zu messen
+//   folgen      — "manual", um die Weiterleitung selbst zu sehen statt ihr zu folgen
+export async function holeSeite(
+  adresse,
+  { zeitgrenze = ZEITGRENZE, auchFehler = false, kennung = KENNUNG, folgen = "follow" } = {},
+) {
   const abbruch = new AbortController();
   const uhr = setTimeout(() => abbruch.abort(), zeitgrenze);
+  const begonnen = Date.now();
   try {
     const antwort = await fetch(adresse, {
-      redirect: "follow",
+      redirect: folgen,
       signal: abbruch.signal,
-      headers: { "user-agent": KENNUNG, accept: "text/html,application/xml,*/*" },
+      headers: { "user-agent": kennung, accept: "text/html,application/xml,*/*" },
     });
-    if (!antwort.ok) return null;
-    const typ = antwort.headers.get("content-type") || "";
-    if (typ && !/html|xml|text/i.test(typ)) return null;
-    return { adresse: antwort.url, inhalt: await liesBegrenzt(antwort) };
-  } catch {
-    return null;
+    const kopf = {};
+    antwort.headers.forEach((wert, name) => { kopf[name] = wert; });
+    const umleitung = kopf.location || null;
+    // Bei 3xx mit folgen:"manual" gibt es keinen Koerper, der sich lesen liesse.
+    const istUmleitung = antwort.status >= 300 && antwort.status < 400;
+    if (!antwort.ok && !auchFehler) return null;
+    const typ = kopf["content-type"] || "";
+    if (!istUmleitung && typ && !/html|xml|text/i.test(typ)) return auchFehler
+      ? { adresse: antwort.url, inhalt: "", status: antwort.status, kopf, typ, dauer: Date.now() - begonnen, umleitung }
+      : null;
+    const inhalt = istUmleitung ? "" : await liesBegrenzt(antwort);
+    return {
+      adresse: antwort.url,
+      inhalt,
+      status: antwort.status,
+      kopf,
+      typ,
+      umleitung,
+      dauer: Date.now() - begonnen,
+      bytes: inhalt.length,
+    };
+  } catch (fehler) {
+    return auchFehler
+      ? { adresse, inhalt: "", status: 0, kopf: {}, fehler: String(fehler?.name || fehler), dauer: Date.now() - begonnen }
+      : null;
   } finally {
     clearTimeout(uhr);
   }
 }
 
-// Die erste der vier Varianten, die antwortet. Die effektive Adresse zählt, nicht die
-// eingegebene: wer auf www umleitet, hat sonst später keine einzige passende Unterseite.
-export async function findeErreichbareAdresse(domain) {
-  const rein = domain.trim().toLowerCase()
+// Die Adresse zur reinen Domain abschleifen. Steht hier, weil Pruefung und Abruf dieselbe
+// Regel brauchen — und weil die Sperre gegen das interne Netz an genau einer Stelle gehoert.
+export function reineDomain(domain) {
+  const rein = String(domain || "").trim().toLowerCase()
     .replace(/^https?:\/\//, "")
     .replace(/^www\./, "")
     .replace(/[/?#].*$/, "");
   if (!/^[a-z0-9ä-ü-]+(\.[a-z0-9ä-ü-]+)+$/i.test(rein)) return null;
-  // Die Domain kommt aus einem offenen Eingabefeld. Ohne diese Sperre könnte jemand den
-  // Server auf das interne Netz zeigen lassen (127.0.0.1, 169.254.169.254, firmen.local).
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(rein)) return null;
   if (/\.(local|internal|localhost|test|lan|home|arpa)$/i.test(rein)) return null;
+  return rein;
+}
+
+// Die erste der vier Varianten, die antwortet. Die effektive Adresse zählt, nicht die
+// eingegebene: wer auf www umleitet, hat sonst später keine einzige passende Unterseite.
+export async function findeErreichbareAdresse(domain) {
+  // Die Domain kommt aus einem offenen Eingabefeld. Die Sperre gegen das interne Netz
+  // (127.0.0.1, 169.254.169.254, firmen.local) sitzt in reineDomain.
+  const rein = reineDomain(domain);
+  if (!rein) return null;
 
   for (const versuch of [
     `https://${rein}`, `https://www.${rein}`,

@@ -109,6 +109,15 @@ function tabellenkopf(d) {
   d.y += 4;
 }
 
+// Text auf eine feste Breite bringen. Gemessen wird mit der Schrift, die gerade gesetzt ist.
+function kuerzen(d, text, breite) {
+  const t = String(text || "");
+  if (d.widthOfString(t) <= breite) return t;
+  let kurz = t;
+  while (kurz.length > 4 && d.widthOfString(kurz + "…") > breite) kurz = kurz.slice(0, -1);
+  return kurz.trimEnd() + "…";
+}
+
 function tabellenzeile(d, b, eigen) {
   const y = d.y;
   const hoehe = 19;
@@ -129,8 +138,12 @@ function tabellenzeile(d, b, eigen) {
     .fillColor(eigen ? AKZENT : STILL)
     .text(String(b.platz), RAND, y, { width: 20, align: "right", lineBreak: false });
 
+  // Selbst kuerzen statt pdfkit kuerzen zu lassen: `lineBreak: false` mit `ellipsis` liess
+  // „Chris Wassermann Kfz-Meisterbetrieb GmbH" trotzdem umbrechen, und die zweite Zeile lag
+  // quer ueber der naechsten Tabellenzeile (29.10.2026). Die Zeilenhoehe ist fest, also muss
+  // der Name hineinpassen.
   d.font(stift).fontSize(9).fillColor(tinte)
-    .text(b.name, RAND + 26, y - 0.5, { width: 196, lineBreak: false, ellipsis: true });
+    .text(kuerzen(d, b.name, 196), RAND + 26, y - 0.5, { width: 196, lineBreak: false });
 
   d.font(stift).fontSize(9).fillColor(tinte)
     .text(zahl(b.bewertungen), RAND + 222, y, { width: 54, align: "right", lineBreak: false });
@@ -144,8 +157,13 @@ function tabellenzeile(d, b, eigen) {
   d.font(SCHRIFT.normal).fontSize(8.5).fillColor(b.website ? GUT : MANGEL)
     .text(b.website ? "ja" : "fehlt", RAND + 362, y + 0.5, { width: 56, align: "right", lineBreak: false });
 
-  d.font(SCHRIFT.normal).fontSize(8.5).fillColor(b.anzeigen ? GUT : STILL)
-    .text(b.anzeigen ? b.anzeigenWort || "ja" : "keine", RAND + 418, y + 0.5, {
+  // Welcher Kanal, nicht nur ob. Seit der Google-Check dazugekommen ist, waere ein blosses
+  // „ja" die unwichtigere Haelfte der Auskunft.
+  const kanal = [b.anzeigen ? b.anzeigenWort || "Meta" : null, b.google ? "Google" : null]
+    .filter(Boolean)
+    .join(" + ");
+  d.font(SCHRIFT.normal).fontSize(8.5).fillColor(kanal ? GUT : STILL)
+    .text(kanal || "keine", RAND + 418, y + 0.5, {
       width: 69, align: "right", lineBreak: false,
     });
 
@@ -345,9 +363,16 @@ export function ranglistePdf(e) {
         }
       }
 
-      // Der Markt in vier Zahlen.
+      // Der Markt in Zahlen.
+      //
+      // Die Hoehe richtet sich nach der Zahl der Felder, der FUSS des Blocks bleibt fest.
+      // Vorher stand hier eine feste 686 fuer genau vier Felder. Als am 29.10.2026 die
+      // Google-Zahl dazukam, lief das fuenfte Feld ueber den Seitenrand: Der Wert landete
+      // auf Seite 2, die Beschriftung auf Seite 3, und dazwischen standen zwei fast leere
+      // Seiten. Wer eine Zahl ergaenzt, soll das Layout nicht von Hand nachrechnen muessen.
       const spalte = (BREITE - 24) / 2;
-      let yFeld = 686;
+      const reihen = Math.max(1, Math.ceil(e.kennzahlen.length / 2));
+      let yFeld = 724 - (reihen - 1) * 38;
       d.font(SCHRIFT.halbfett).fontSize(8).fillColor(P45)
         .text("DER ORT IN ZAHLEN", RAND, yFeld - 22, { characterSpacing: 1.2 });
       e.kennzahlen.forEach((k, i) => {
@@ -450,6 +475,12 @@ export function ranglistePdf(e) {
 
       d.moveDown(0.4);
       befund(d, zustand, e.anzeigen.befund);
+      // Google Ads daneben, seit 29.10.2026. Faellt weg, wenn kein Betrieb im Ort eine
+      // eigene Domain hat — dann gibt es nichts zu pruefen und nichts zu sagen.
+      if (e.anzeigen.googleBefund) {
+        platzPruefen(d, zustand, 120);
+        befund(d, zustand, e.anzeigen.googleBefund);
+      }
 
       // Der Schlussblock wird an den Befund davor gebunden. Allein auf einer Seite liest
       // er sich wie ein nachgeschobener Verkaufszettel.

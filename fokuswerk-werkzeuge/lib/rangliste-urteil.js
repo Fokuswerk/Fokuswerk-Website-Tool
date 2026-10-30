@@ -90,11 +90,37 @@ function rang(wert, alle) {
   return alle.filter((w) => w > wert).length + 1;
 }
 
+// Namen vergleichen, ohne an Groß- und Kleinschreibung, Umlauten oder Interpunktion zu
+// scheitern. Der Name kommt über drei Stationen herein — Eingabe des Besuchers, Treffer
+// der Places-Suche, Profil in der Messung —, und ein exakter Stringvergleich hat genau
+// dann „betrieb_unbekannt" gemeldet, wenn eine Station ein Komma oder ein „GmbH" mehr
+// hatte als die andere.
+export function nameGleich(a, b) {
+  const k = (w) =>
+    String(w || "")
+      .toLowerCase()
+      .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+      .replace(/[^a-z0-9]+/g, "");
+  const x = k(a);
+  const y = k(b);
+  if (!x || !y) return false;
+  // Enthalten statt gleich: „Fokuswerk" gegen „Fokuswerk Online Marketing" ist derselbe
+  // Betrieb. Die kürzere Seite muss dafür mindestens vier Zeichen haben, sonst trifft
+  // „Bau" auf jeden Bauunternehmer im Ort.
+  if (x === y) return true;
+  const kurz = x.length <= y.length ? x : y;
+  const lang = x.length <= y.length ? y : x;
+  return kurz.length >= 4 && lang.startsWith(kurz);
+}
+
 export function bewerte(messung, { eigenerName } = {}) {
   const liste = [...messung.betriebe].sort((a, b) => b.bewertungen - a.bewertungen);
   liste.forEach((b, i) => { b.platz = i + 1; });
 
-  const eigen = liste.find((b) => b.name === eigenerName) || null;
+  const eigen =
+    liste.find((b) => b.name === eigenerName) ||
+    liste.find((b) => nameGleich(b.name, eigenerName)) ||
+    null;
   const n = liste.length;
 
   const alleBewertungen = liste.map((b) => b.bewertungen);
@@ -105,14 +131,35 @@ export function bewerte(messung, { eigenerName } = {}) {
   const ohneWebsite = liste.filter((b) => !b.website).length;
   const nichtUebernommen = liste.filter((b) => !b.uebernommen).length;
 
-  // Wer wirbt, und worum. Ein Betrieb zählt als Werbetreibender, sobald ihm mindestens
-  // eine Anzeige sicher zugeordnet werden konnte.
+  // Wer wirbt, und worum — und vor allem: wirbt er JETZT oder hat er mal?
+  //
+  // ▲ Das ist der Unterschied, an dem die Glaubwuerdigkeit dieser Seite haengt. In allen
+  // neun vorgerechneten Orten lagen 55 Anzeigen, davon **keine einzige aktiv**; die
+  // juengste in Westerstede endete am 17.02.2026. Die Seite sagte trotzdem „Genau einer
+  // wirbt um Kunden". Ein Westersteder, der den Betrieb kennt, widerlegt das in zehn
+  // Sekunden — und damit auch alle anderen Zahlen.
   const werbende = liste.filter((b) => b.anzeigen.length > 0);
   const umKunden = werbende.filter((b) => b.anzeigen.some((a) => !a.personal));
+  const umKundenAktiv = werbende.filter((b) => b.anzeigen.some((a) => !a.personal && a.aktiv));
   const nurPersonal = werbende.filter((b) => b.anzeigen.every((a) => a.personal));
+  // Wann lief die letzte Anzeige, die um Kunden warb?
+  const letzteKundenwerbung = umKunden
+    .flatMap((b) => b.anzeigen.filter((a) => !a.personal).map((a) => a.bis || a.von))
+    .filter(Boolean)
+    .sort()
+    .at(-1) || null;
+
+  // Google Ads, seit 29.10.2026. Getrennt gezaehlt und nicht mit Meta verrechnet: Es sind
+  // zwei Kanaele mit zwei Entscheidungen dahinter, und wer bei Google wirbt, wirbt in aller
+  // Regel nicht bei Meta. Geprueft werden kann nur, wer eine eigene Domain hat — `googlePruefbar`
+  // sagt, auf wie viele Betriebe sich die Zahl ueberhaupt bezieht.
+  const googlePruefbar = liste.filter((b) => b.domain).length;
+  const beiGoogle = liste.filter((b) => (b.googleAnzeigen || []).length > 0);
 
   const markt = {
     anzahl: n,
+    googlePruefbar,
+    beiGoogle: beiGoogle.length,
     bewertungenGesamt: summe,
     medianBewertungen,
     medianFotos,
@@ -120,6 +167,8 @@ export function bewerte(messung, { eigenerName } = {}) {
     nichtUebernommen,
     werbende: werbende.length,
     umKunden: umKunden.length,
+    umKundenAktiv: umKundenAktiv.length,
+    letzteKundenwerbung,
     nurPersonal: nurPersonal.length,
     spitze: liste[0] || null,
   };
@@ -283,6 +332,15 @@ export function bewerte(messung, { eigenerName } = {}) {
   };
 }
 
+// „im Dezember 2025" aus einem ISO-Datum. Nur Monat und Jahr, weil der Tag, an dem eine
+// Anzeige endete, niemanden interessiert — das Jahr dagegen sehr wohl.
+export function monatJahr(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return "im " + d.toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+}
+
 function anzeigenlageBefund(messung, markt, eigen, n) {
   if (!messung.anzeigenVerfuegbar) return null;
 
@@ -313,10 +371,19 @@ function anzeigenlageBefund(messung, markt, eigen, n) {
     zahlText =
       `von ${n} Betrieben in ${messung.ort} hat überhaupt je bei Meta geworben. ` +
       "Um Kunden geworben hat keiner.";
-  } else {
+  } else if (!markt.umKundenAktiv) {
+    // Der haeufigste Fall, und der, den die Seite monatelang falsch beschrieben hat: Es gibt
+    // Anzeigen, aber keine laeuft noch. Praesens wird hier zur Falschaussage.
     zahl = String(markt.umKunden);
+    const wann = monatJahr(markt.letzteKundenwerbung);
     zahlText =
-      `von ${n} Betrieben in ${messung.ort} werben um Kunden.` +
+      `von ${n} Betrieben in ${messung.ort} haben schon einmal um Kunden geworben` +
+      (wann ? `, zuletzt ${wann}` : "") +
+      ". Gerade läuft keine Anzeige.";
+  } else {
+    zahl = String(markt.umKundenAktiv);
+    zahlText =
+      `von ${n} Betrieben in ${messung.ort} werben gerade um Kunden.` +
       (eigeneAnzeigen ? "" : " Sie nicht.");
   }
 
@@ -356,7 +423,54 @@ function anzeigenlageBefund(messung, markt, eigen, n) {
             folge: "Wer nicht wirbt, wartet.",
           };
 
-  return { zahl, zahlText, treffer, befund, unsicher: messung.anzeigenUnsicher || [] };
+  // Google Ads als eigener Befund, seit 29.10.2026. Nicht mit Meta verrechnet: Wer bei
+  // Google wirbt, kauft Leute ab, die gerade suchen — wer bei Meta wirbt, Leute, die nicht
+  // suchen. Das sind zwei Aussagen, und die zweite ist fuer einen Handwerksbetrieb
+  // regelmaessig die unangenehmere.
+  const pruefbar = markt.googlePruefbar || 0;
+  const eigenerBeiGoogle = eigen && (eigen.googleAnzeigen || []).length > 0;
+  const googleBefund = !pruefbar
+    ? null
+    : markt.beiGoogle === 0
+      ? {
+          art: "luecke",
+          titel: `Bei Google wirbt in ${messung.ort} niemand`,
+          messwert: `Geprüft: die ${pruefbar} Betriebe mit eigener Website. Gefunden: keiner.`,
+          klartext:
+            "Wer bei Google sucht, bekommt hier ausschließlich die unbezahlten Ergebnisse zu " +
+            "sehen. Über den Platz ganz oben entscheidet derzeit niemand mit Geld.",
+          folge: "Der Platz über dem ersten Ergebnis ist frei.",
+        }
+      : eigenerBeiGoogle
+        ? {
+            art: "gut",
+            titel: "Sie werben bei Google",
+            messwert: `Gemessen: ${markt.beiGoogle} von ${pruefbar} geprüften Betrieben werben bei Google, Sie gehören dazu.`,
+            klartext:
+              "Sie sind damit bei denen dabei, die über dem ersten Suchergebnis stehen, wenn " +
+              "jemand gerade nach Ihrer Leistung sucht.",
+            folge: "Die Frage ist nicht mehr ob, sondern zu welchem Preis je Anfrage.",
+          }
+        : {
+            art: "mangel",
+            titel: `${markt.beiGoogle} ${markt.beiGoogle === 1 ? "Betrieb wirbt" : "Betriebe werben"} bei Google über Ihnen`,
+            messwert: `Geprüft: die ${pruefbar} Betriebe mit eigener Website. ${markt.beiGoogle} ${markt.beiGoogle === 1 ? "davon wirbt" : "davon werben"} bei Google, Sie nicht.`,
+            klartext:
+              "Sucht jemand in Ihrer Gegend nach Ihrer Leistung, stehen diese Betriebe über dem " +
+              "ersten unbezahlten Ergebnis — also über Ihnen, unabhängig davon, wie gut Ihre " +
+              "Seite ist.",
+            folge: "Das trifft genau die Leute, die gerade einen Auftrag zu vergeben haben.",
+          };
+
+  return {
+    zahl,
+    zahlText,
+    treffer,
+    befund,
+    googleBefund,
+    unsicher: messung.anzeigenUnsicher || [],
+    googleUnsicher: messung.googleUnsicher || [],
+  };
 }
 
 // Der Einordnungssatz steht ganz oben auf dem Deckblatt und ist der erste, den jemand

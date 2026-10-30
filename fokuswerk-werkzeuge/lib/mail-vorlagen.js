@@ -12,21 +12,21 @@
 // keine Farbbalken, keine Symbole — die Mail soll aussehen wie von einer Agentur, die weiß,
 // was sie tut, und nicht wie ein Newsletter-Baukasten.
 
-const PAPIER = "#F5F3EF";
-const WEISS = "#FFFFFF";
-const TINTE = "#17161B";
-const LEISE = "#6B6A6E";
-const LINIE = "#E4E1DB";
-const AKZENT = "#B84116";
-const SCHRIFT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif";
+export const PAPIER = "#F5F3EF";
+export const WEISS = "#FFFFFF";
+export const TINTE = "#17161B";
+export const LEISE = "#6B6A6E";
+export const LINIE = "#E4E1DB";
+export const AKZENT = "#B84116";
+export const SCHRIFT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif";
 
-function escape(t) {
+export function escape(t) {
   return String(t == null ? "" : t)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 // Absätze eines Anzeigentextes (getrennt durch \n) zu <p> machen
-function absaetze(text, farbe = TINTE, groesse = "15px") {
+export function absaetze(text, farbe = TINTE, groesse = "15px") {
   return String(text || "")
     .split("\n")
     .map((z) => z.trim())
@@ -38,15 +38,15 @@ function absaetze(text, farbe = TINTE, groesse = "15px") {
     .join("");
 }
 
-function huelle(inhalt, vorschau) {
+export function huelle(inhalt, vorschau) {
   return `<!doctype html>
 <html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light only"></head>
-<body style="margin:0;padding:0;background:${PAPIER};">
+<body style="margin:0;padding:0;background:${PAPIER};word-break:break-word;">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escape(vorschau)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${PAPIER};padding:32px 16px;">
 <tr><td align="center">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;">
   <tr><td style="padding:0 4px 22px;">
     <span style="font:600 15px/1 ${SCHRIFT};letter-spacing:0.14em;color:${TINTE};">FOKUSWERK</span>
   </td></tr>
@@ -62,7 +62,7 @@ function huelle(inhalt, vorschau) {
 </body></html>`;
 }
 
-function karte(inhalt, polster = "24px") {
+export function karte(inhalt, polster = "24px") {
   return `<tr><td style="padding:0 0 14px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
       style="background:${WEISS};border:1px solid ${LINIE};border-radius:14px;">
@@ -71,8 +71,29 @@ function karte(inhalt, polster = "24px") {
   </td></tr>`;
 }
 
-function etikett(text) {
+export function etikett(text) {
   return `<p style="margin:0 0 12px;font:600 11px/1 ${SCHRIFT};letter-spacing:0.16em;color:${LEISE};text-transform:uppercase;">${escape(text)}</p>`;
+}
+
+// Eine Angabe der internen Meldungen: Beschriftung klein darüber, Wert darunter über die
+// ganze Breite. Vorher stand die Beschriftung links in einer Spalte mit fester Breite und
+// `white-space:nowrap` — auf dem Handy blieben dem Wert daneben rund 140 px, und jede
+// längere Mailadresse brach darin mitten im Wort um („…@icloud.co / m"). Gestapelt hat
+// jeder Wert die volle Zeile.
+//
+// `wert` ist immer Rohtext und wird hier maskiert. `link` macht daraus einen Verweis
+// (`tel:`, `mailto:` oder `https://`) — die drei Meldungen hatten dafür vorher drei
+// eigene Fassungen mit drei verschiedenen Verträgen.
+export function angabe(bezeichnung, wert, { hervor = false, link = "" } = {}) {
+  const text = wert == null ? "" : String(wert).trim();
+  if (!text) return "";
+  const inhalt = link
+    ? `<a href="${escape(link)}" style="color:${TINTE};text-decoration:none;border-bottom:1px solid ${LINIE};">${escape(text)}</a>`
+    : escape(text);
+  return `<tr><td style="padding:0 0 13px;">
+    <p style="margin:0 0 3px;font:600 10px/1.2 ${SCHRIFT};letter-spacing:0.13em;color:${LEISE};text-transform:uppercase;">${escape(bezeichnung)}</p>
+    <p style="margin:0;font:${hervor ? "600 17px" : "400 15px"}/1.45 ${SCHRIFT};color:${TINTE};">${inhalt}</p>
+  </td></tr>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -80,93 +101,97 @@ function etikett(text) {
 // ---------------------------------------------------------------------------
 
 export function anzeigenMail(daten, ergebnis) {
-  const name = daten?.kontakt?.name ? " " + daten.kontakt.name : "";
+  // Den Namen so nehmen, wie er eingetragen wurde. „Herr/Frau" waere Formularsprache,
+  // und das Geschlecht kennen wir nicht — geraten wird hier nicht.
+  const name = String(daten?.kontakt?.name || "").trim();
+  const anrede = name ? "Guten Tag " + name : "Guten Tag";
   const betrieb = ergebnis?.betrieb || daten?.domain || "Ihren Betrieb";
+  const beruf = daten?.beruf || "die offene Stelle";
+  const L = ergebnis?.marktlage;
 
-  const kopf = `<tr><td style="padding:0 4px 24px;">
-    <h1 style="margin:0 0 10px;font:600 26px/1.25 ${SCHRIFT};color:${TINTE};letter-spacing:-0.02em;">
-      Ihre drei Stellenanzeigen
-    </h1>
-    <p style="margin:0;font:400 15px/1.6 ${SCHRIFT};color:${LEISE};">
-      Guten Tag${escape(name)}, hier sind die Texte für ${escape(betrieb)}. Sie können sie
-      unverändert bei Facebook und Instagram einstellen oder anpassen.
-    </p>
-  </td></tr>`;
-
-  const anzeigen = (ergebnis?.anzeigen || [])
-    .map((a, i) =>
-      karte(
-        `<p style="margin:0 0 4px;font:600 11px/1 ${SCHRIFT};letter-spacing:0.16em;color:${AKZENT};text-transform:uppercase;">Anzeige ${i + 1}</p>
-         <p style="margin:0 0 14px;font:600 17px/1.35 ${SCHRIFT};color:${TINTE};">${escape(a.titel || "")}</p>
-         ${absaetze(a.text)}`
-      )
-    )
-    .join("");
-
-  const fragen = (ergebnis?.fragen || []).length
-    ? karte(
-        etikett("Vier Fragen für die Bewerbung") +
-          `<table role="presentation" cellpadding="0" cellspacing="0" width="100%">` +
-          ergebnis.fragen
-            .map(
-              (f, i) =>
-                `<tr>
-                   <td width="24" valign="top" style="font:600 15px/1.6 ${SCHRIFT};color:${AKZENT};padding:0 0 8px;">${i + 1}</td>
-                   <td style="font:400 15px/1.6 ${SCHRIFT};color:${TINTE};padding:0 0 8px;">${escape(f)}</td>
-                 </tr>`
-            )
-            .join("") +
-          `</table>`
-      )
+  // Oben einmal die Zahl als gestalteter Block — danach ein ganz normaler Brief.
+  // Vorher war die ganze Mail gebaut: Karten, Etiketten, Aufzählungen, ein Kasten mit
+  // dem Angebot. Das liest sich wie ein Prospekt, und man mag kein Prospekt.
+  const auftakt = L
+    ? `<tr><td style="padding:0 4px 26px;">
+         ${karte(
+           `<p style="margin:0 0 6px;font:600 11px/1 ${SCHRIFT};letter-spacing:0.16em;color:${AKZENT};text-transform:uppercase;">Die Lage in Ihrem Beruf</p>
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="font:500 42px/1 ${SCHRIFT};color:${TINTE};">${L.vakanzzeit}</td>
+              <td style="padding-left:10px;font:400 14px/1.35 ${SCHRIFT};color:${LEISE};">Tage bleibt eine<br>Stelle im Schnitt offen</td>
+            </tr></table>
+            <p style="margin:14px 0 0;font:400 12px/1.5 ${SCHRIFT};color:${LEISE};">
+              ${escape(L.berufsgruppe)} · ${escape(L.gebiet)} · ${escape(L.stand)} ·
+              <a href="${L.quelle.link}" style="color:${LEISE};">${escape(L.quelle.text)}</a>
+            </p>`,
+         )}
+       </td></tr>`
     : "";
 
-  const budget = ergebnis?.budget
-    ? karte(etikett("Budget") + absaetze(ergebnis.budget))
-    : "";
+  const absatz = (t) =>
+    `<p style="margin:0 0 16px;font:400 16px/1.7 ${SCHRIFT};color:${TINTE};">${t}</p>`;
 
-  const abschluss = `<tr><td style="padding:14px 4px 0;">
-    <p style="margin:0 0 16px;font:400 15px/1.65 ${SCHRIFT};color:${LEISE};">
-      Die Anzeige ist der kleinere Teil. Was darüber entscheidet, ob sich jemand meldet, ist die
-      Ausspielung: wer sie sieht, bei welchem Budget und wie die Bewerbung hereinkommt.
-    </p>
-    <a href="https://fokuswerk.de/kontakt"
-       style="display:inline-block;background:${TINTE};color:${PAPIER};text-decoration:none;
-              font:600 15px/1 ${SCHRIFT};padding:15px 26px;border-radius:999px;">
-      Darüber sprechen
-    </a>
-    <p style="margin:16px 0 0;font:400 14px/1.6 ${SCHRIFT};color:${LEISE};">
-      Oder antworten Sie einfach auf diese Mail.
+  const brief = `<tr><td style="padding:0 4px;">
+    ${absatz(escape(anrede) + ",")}
+    ${absatz(
+      `im Anhang finden Sie Ihre Stellenausschreibung als PDF. Darin stehen die Texte für
+       vier Kanäle — Kleinanzeigen, die Jobbörse der Arbeitsagentur, Facebook und Instagram
+       und Ihre eigene Seite —, jeweils so, wie der Kanal sie haben will. Dazu die vier
+       Fragen für die Bewerbung, eine Anleitung zum Schalten der Anzeige mit Ihrem Ort und
+       Ihrem Tagesbudget, ein kurzes Drehbuch für ein Handyvideo und die ersten Antworten
+       an Bewerber. Auf der ersten Seite steht, was wo zu finden ist.`,
+    )}
+    ${absatz(
+      `Am einfachsten drucken Sie das PDF aus oder leiten es an den weiter, der die
+       Anzeige einstellt. Die Texte können Sie unverändert übernehmen oder ändern, was
+       nicht passt — es ist Ihre Stelle, Sie kennen ${escape(betrieb)} besser als wir.`,
+    )}
+    ${absatz(
+      `Wenn Sie dabei Fragen haben oder irgendwo Hilfe brauchen, melden Sie sich gerne.
+       Einfach auf diese Mail antworten oder anrufen:
+       <a href="tel:+4917663307587" style="color:${TINTE};">0176 63307587</a>.`,
+    )}
+    <p style="margin:26px 0 0;font:400 16px/1.7 ${SCHRIFT};color:${TINTE};">
+      Viele Grüße<br>Thees Bodenstab
     </p>
   </td></tr>`;
 
   const text = [
-    `Guten Tag${name},`,
+    ...(L
+      ? [
+          `${L.vakanzzeit} Tage bleibt eine Stelle als ${beruf} in ${L.gebiet} im Schnitt offen.`,
+          `(${L.berufsgruppe} · ${L.stand} · ${L.quelle.text})`,
+          "",
+        ]
+      : []),
+    anrede + ",",
     "",
-    `hier sind die drei Anzeigentexte für ${betrieb}.`,
+    "im Anhang finden Sie Ihre Stellenausschreibung als PDF. Darin stehen die Texte für vier",
+    "Kanäle — Kleinanzeigen, die Jobbörse der Arbeitsagentur, Facebook und Instagram und Ihre",
+    "eigene Seite —, jeweils so, wie der Kanal sie haben will. Dazu die vier Fragen für die",
+    "Bewerbung, eine Anleitung zum Schalten der Anzeige mit Ihrem Ort und Ihrem Tagesbudget,",
+    "ein kurzes Drehbuch für ein Handyvideo und die ersten Antworten an Bewerber. Auf der",
+    "ersten Seite steht, was wo zu finden ist.",
     "",
-    ...(ergebnis?.anzeigen || []).flatMap((a, i) => [`— Anzeige ${i + 1}: ${a.titel || ""} —`, "", a.text || "", ""]),
-    "Vier Fragen für die Bewerbung:",
-    ...(ergebnis?.fragen || []).map((f, i) => `  ${i + 1}. ${f}`),
+    "Am einfachsten drucken Sie das PDF aus oder leiten es an den weiter, der die Anzeige",
+    `einstellt. Die Texte können Sie unverändert übernehmen oder ändern, was nicht passt —`,
+    `es ist Ihre Stelle, Sie kennen ${betrieb} besser als wir.`,
     "",
-    "Budget:",
-    ergebnis?.budget || "",
+    "Wenn Sie dabei Fragen haben oder irgendwo Hilfe brauchen, melden Sie sich gerne.",
+    "Einfach auf diese Mail antworten oder anrufen: 0176 63307587.",
     "",
-    "Die Anzeige ist der kleinere Teil. Was darüber entscheidet, ob sich jemand meldet, ist die",
-    "Ausspielung. Wenn Sie darüber sprechen möchten, antworten Sie einfach auf diese Mail.",
+    "Viele Grüße",
+    "Thees Bodenstab",
     "",
     "Fokuswerk — Abt & Bodenstab GbR · Schramperweg 90 · 26129 Oldenburg",
     "0176 63307587 · contact@fokuswerk.de · USt-IdNr. DE456629159",
   ].join("\n");
 
   return {
-    html: huelle(kopf + anzeigen + fragen + budget + abschluss, `Drei Anzeigentexte für ${betrieb}`),
+    html: huelle(auftakt + brief, `Ihre Stellenausschreibung für ${betrieb}`),
     text,
   };
 }
-
-// ---------------------------------------------------------------------------
-// 2. An uns: der Lead, zum Überfliegen gebaut
-// ---------------------------------------------------------------------------
 
 const DRINGLICH = { sofort: "so schnell wie möglich", wochen: "in den nächsten Wochen", planung: "plant vor" };
 const STELLEN = { eine: "eine", zwei_drei: "zwei bis drei", mehr: "mehr als drei" };
@@ -180,14 +205,6 @@ const STAERKEN = {
   team: "kleines, eingespieltes Team", technik: "moderne Ausrüstung",
   aufstieg: "Weiterbildung und Aufstieg", sicherheit: "sicherer Arbeitsplatz",
 };
-
-function zeile(bezeichnung, wert, hervor) {
-  if (!wert) return "";
-  return `<tr>
-    <td width="150" valign="top" style="font:400 13px/1.6 ${SCHRIFT};color:${LEISE};padding:0 12px 10px 0;white-space:nowrap;">${escape(bezeichnung)}</td>
-    <td valign="top" style="font:${hervor ? "600 16px" : "400 15px"}/1.5 ${SCHRIFT};color:${TINTE};padding:0 0 10px;">${wert}</td>
-  </tr>`;
-}
 
 export function leadMail(daten, lagerstand) {
   const k = daten?.kontakt || {};
@@ -206,21 +223,21 @@ export function leadMail(daten, lagerstand) {
   const kontakt = karte(
     etikett("Kontakt") +
       `<table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-        ${zeile("Ansprechpartner", escape(k.name), true)}
-        ${zeile("Telefon", k.telefon ? `<a href="tel:${escape(String(k.telefon).replace(/\s/g, ""))}" style="color:${TINTE};text-decoration:none;border-bottom:1px solid ${LINIE};">${escape(k.telefon)}</a>` : "", true)}
-        ${zeile("E-Mail", k.email ? `<a href="mailto:${escape(k.email)}" style="color:${TINTE};text-decoration:none;border-bottom:1px solid ${LINIE};">${escape(k.email)}</a>` : "")}
-        ${zeile("Website", daten?.domain ? `<a href="https://${escape(daten.domain)}" style="color:${TINTE};text-decoration:none;border-bottom:1px solid ${LINIE};">${escape(daten.domain)}</a>` : "")}
+        ${angabe("Ansprechpartner", k.name, { hervor: true })}
+        ${angabe("Telefon", k.telefon, { hervor: true, link: k.telefon ? "tel:" + String(k.telefon).replace(/\s/g, "") : "" })}
+        ${angabe("E-Mail", k.email, { link: k.email ? "mailto:" + k.email : "" })}
+        ${angabe("Website", daten?.domain, { link: daten?.domain ? "https://" + daten.domain : "" })}
       </table>`
   );
 
   const lage = karte(
     etikett("Was er gesagt hat") +
       `<table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-        ${zeile("Gesucht", escape(daten?.beruf))}
-        ${zeile("Dringlichkeit", escape(DRINGLICH[daten?.dringlichkeit] || ""))}
-        ${zeile("Offene Stellen", escape(STELLEN[daten?.stellen] || ""))}
-        ${zeile("Anzeigen bisher", escape(ERFAHRUNG[daten?.erfahrung] || ""))}
-        ${zeile("Stärken der Stelle", escape((daten?.staerken || []).map((s) => STAERKEN[s] || s).join(", ")))}
+        ${angabe("Gesucht", daten?.beruf, { hervor: true })}
+        ${angabe("Dringlichkeit", DRINGLICH[daten?.dringlichkeit] || "")}
+        ${angabe("Offene Stellen", STELLEN[daten?.stellen] || "")}
+        ${angabe("Anzeigen bisher", ERFAHRUNG[daten?.erfahrung] || "")}
+        ${angabe("Stärken der Stelle", (daten?.staerken || []).map((s) => STAERKEN[s] || s).join(", "))}
       </table>`
   );
 

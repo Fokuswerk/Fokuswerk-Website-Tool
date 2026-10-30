@@ -128,6 +128,98 @@ die `vercel.app`-Adresse.
 
 `.vercelignore` hält `.env`, den Ordner `test` und die Textdateien aus dem Paket heraus.
 
+## 30.10.2026 — Zeichen der Kanäle im PDF, und ein Abbruch kurz vor dem Ziel
+
+**Die Kanäle tragen jetzt ihre Zeichen.** Auf dem Deckblatt als Kachelreihe unter dem
+Titel, und jeder Abschnitt beginnt mit einem hellen Band über die ganze Breite: links die
+Bezeichnung, rechts das Zeichen. Vorher trennte dort eine Haarlinie — auf einer Seite mit
+vier Feldern, drei Fassungen und zehn Anleitungsschritten verschwindet die. Gezeichnet
+wird mit `svg-to-pdfkit` aus `lib/marken.js`, also als echte Pfade: Ein PNG müsste für den
+Druck in dreifacher Auflösung mitreisen und wäre an den Kanten trotzdem weich. Die Pfade
+stammen unverändert von kleinanzeigen.de und arbeitsagentur.de, die beiden Meta-Dienste
+aus simple-icons; „Ihre eigene Seite" bekommt ein selbst gezeichnetes Fenster. Der
+Markenhinweis steht auf dem Deckblatt über der Fußzeile.
+
+**Drei Satzfehler dabei gefunden:**
+
+- `d.page.margins` und `d.options.margins` sind in pdfkit **dieselbe Referenz**. Ein
+  `d.page.margins.top = 0` fürs Deckblatt machte jede spätere Seite randlos, der Kopftext
+  von Seite 2 lief in die Kopfzeile. Jetzt bekommt jede Seite ein eigenes Objekt.
+- `lineBreak: false` verhindert den Umbruch nicht, wenn ein Wort nicht mehr hineinpasst.
+  Im Wegweiser lief die Beschreibung dadurch in die Zeile darunter. `aufBreite()` misst
+  jetzt und kürzt mit „…".
+- „Fertig für einen Kanäle": Das Zahlwort war ungebeugt. Bei einem einzigen Kanal — wenn
+  die Jobbörse nicht taugt — stand das auf dem Blatt.
+
+**Und derselbe Tag noch einmal, eine Stufe feiner.** Nach „das geht noch geiler":
+
+- **Textkarten.** Was der Betrieb übernimmt — Titel, Anzeigentext, Primärtexte,
+  Überschriften — steht jetzt in einer hellen Karte mit schmaler Akzentkante links. Was er
+  nur liest (`ohneKopie`: Anleitung, Drehbuch, Wochenplan), steht frei im Satz. Die Karte
+  wird nur gezeichnet, wenn der Text auf die Seite passt; sonst hätte sie oben einen
+  Deckel und unten keinen.
+- **Laufender Kolumnentitel.** Oben links steht der Abschnitt, in dem die Seite beginnt —
+  gesetzt vom ersten Band der Seite, auf Folgeseiten fortgeführt.
+- **Eigener Zeilenumbruch** (`zeilenBrechen`). pdfkit trennt nach den Unicode-Regeln auch
+  am Schrägstrich: „Landschaftsgärtner (m/" am Zeilenende, „w/d)." in der nächsten. In
+  einem Text, der kopiert und als Anzeige eingestellt wird, liest sich das wie ein
+  Tippfehler. Zwei Alternativen verworfen: Der Wortbinder U+2060 fehlt in Inter und
+  erscheint als Kästchen, ein Bruchstrich (U+2044) statt Schrägstrich wäre im kopierten
+  Text das falsche Zeichen. Der Schnittmarker für Meta läuft jetzt über die selbst
+  gebrochenen Zeilen, mit der Grenze als Zeichenposition im Gesamtwert.
+- **Keine Trennlinien im Wegweiser.** Acht Haarlinien quer über das Deckblatt, die nichts
+  trugen — die Zuordnung macht die Spalte. Gegliedert wird über den Abstand, die vier
+  Kanäle tragen orange Nummern, danach eine Lücke für die Beigaben.
+- Die Fußzone des Deckblatts (Quelle, Markenhinweis, Absender) lag auf einem Zentimeter;
+  der Markenhinweis ist einzeilig und alle drei haben Abstand.
+
+**`betrieb_unbekannt` beim letzten Schritt des Wettbewerbs.** Gemeldet mit ausgefülltem
+Kontaktformular, also an der teuersten Stelle, die dieses Werkzeug hat. Zwei Ursachen,
+beide behoben:
+
+1. Die Namenssuche (`?suche=1`) legt das gefundene Profil in `inSpeicher(gesucht(...))` —
+   dem Prozessspeicher **einer** Lambda-Instanz. Der Abschluss traf eine andere, fand
+   nichts und hängte den Betrieb nicht in seine eigene Liste. `einhaengen` sucht das
+   Profil jetzt notfalls selbst über `betriebSuchen`.
+2. `bewerte` verglich den eigenen Namen per `===`. „Fokuswerk" gegen „Fokuswerk –
+   Marketing & Social Media" war damit ein anderer Betrieb. `nameGleich()` normalisiert
+   Groß- und Kleinschreibung, Umlaute und Interpunktion und erlaubt den kürzeren Namen als
+   Anfang des längeren (ab vier Zeichen).
+
+Gegengeprüft im Trockenlauf: Fokuswerk/Oldenburg liefert jetzt Platz 9 von 19 statt 422.
+
+## 29.10.2026 — vier Fehler aus einem eigenen Durchlauf
+
+**Doppeltes Impressum in der Kundenmail.** Die Absenderzeile stand einmal unter der
+Unterschrift im Brief und ein zweites Mal unter der Trennlinie der Hülle. Die im Brief
+ist raus — `huelle()` setzt sie ohnehin unter jede Mail. Dasselbe galt für die
+SEO-Auswertung.
+
+**Zeilenumbruch mitten in der Mailadresse.** Die internen Meldungen setzten Beschriftung
+und Wert zweispaltig, die Beschriftungsspalte mit fester Breite und `white-space:nowrap`.
+Auf dem Handy blieben dem Wert daneben rund 140 px, und `thees0901@icloud.com` brach zu
+`…icloud.co / m`. Jetzt steht die Beschriftung klein über dem Wert, der Wert hat die
+ganze Zeile: eine gemeinsame `angabe()` in `lib/mail-vorlagen.js`, benutzt von allen drei
+Meldungen (Stellenanzeige, SEO-Analyse, Wettbewerb). Sie maskiert selbst und baut auf
+Wunsch den `tel:`/`mailto:`-Verweis — vorher hatte jede der drei ihre eigene Fassung mit
+einem anderen Vertrag.
+
+**„… mehr" im PDF.** Die Nachbildung des Facebook-Knopfes sah auf Papier aus wie eine
+Schaltfläche, auf die man drücken soll. Die Grenze trägt jetzt ein grauer Strich, und
+einmal je Dokument steht darunter, was das Grau bedeutet.
+
+**Das Deckblatt ohne Inhaltsangabe.** Ohne Marktlage (Beruf keiner amtlichen
+Berufsgruppe zuzuordnen) standen dort drei Zeilen Fließtext und zwei Drittel Leere. Jetzt
+trägt es den Wegweiser „Was in diesem Dokument steht": jeder Kanal mit dem, was drinsteht,
+dazu Bewerberfragen, Anleitung und Budget, jeweils mit Seitenzahl. Gesetzt wird er
+zuletzt über `switchToPage(0)` — die Seitenzahlen stehen erst fest, wenn alles umbrochen
+ist. Ohne Marktlage kommt darunter noch der Umfang (Seiten, Kanäle, Fragen).
+
+Dazu: Die Überschrift „Ihre Texte, fertig für drei Kanäle" stand über vier Blöcken,
+seit die Jobbörse der Arbeitsagentur dazukam. Die Zahl kommt jetzt aus dem Ergebnis.
+
+Probelauf ohne Versand: `node test/stellen-pdf-probe.mjs <ordner> [ohne-marktlage]`.
+
 ## Was offen ist
 
 - **Erprobt am 26.10.2026** gegen `knolle-harpstedt.de` (Landschaftsgärtner) und

@@ -22,6 +22,9 @@
 const APIFY = "https://api.apify.com/v2/acts";
 const PLACES = "compass~crawler-google-places";
 const ADLIB = "curious_coder~facebook-ads-library-scraper";
+// Google Ads Transparency. Im Modus "advertisers" kostet eine Zeile 0,3 Cent — und es
+// entsteht nur eine Zeile fuer Betriebe, die wirklich werben. Wer nicht wirbt, kostet nichts.
+const GOOGLE_ADS = "scrapesage~google-ads-transparency-scraper";
 
 // Wörter, die in keinem Betriebsnamen etwas unterscheiden. Ein Treffer auf eines davon
 // ist kein Treffer.
@@ -40,7 +43,48 @@ const ALLERWELT = new Set([
   "pruefstelle", "ersatzteile", "teile", "dach", "dachdecker", "bedachung", "elektro",
   "elektrik", "sanitaer", "sanitär", "heizung", "klima", "maler", "malerei", "tischler",
   "tischlerei", "schreinerei", "garten", "landschaft", "bedachungen", "innenausbau",
+  // Nachtrag 28.10.2026. Jedes dieser Woerter war der EINZIGE Anker einer falschen
+  // Zuordnung in den ausgelieferten Daten: „ATT Autoteile Technik" traf den Onlinehandel
+  // „ATP-AUTOTEILE" (unterscheidend waren nur „att" und „atp", beide zu kurz), „L&B Motors"
+  // traf „SehgalMotors.PK", „KS Fahrzeughandel" traf „ELN_DasFahrzeughandelssystem".
+  "autoteile", "autoteil", "motors", "autoservice", "fahrzeughandel", "werkstatt",
+  // ▲ Hier gehoeren „hausverwaltung" und „landtechnik" ausdruecklich NICHT hinein, obwohl
+  // beide nach Gattung klingen. Sie kennzeichnen einen ANDEREN Betrieb derselben Familie,
+  // und genau daran erkennt die Pruefung unten den Unterschied: „Oeltjenbruns Landtechnik"
+  // ist nicht „H. Oeltjenbruns", und „bruenjeshausverwaltung" ist nicht „Auto Bruenjes".
+  // In der Allerwelt-Liste wuerden sie zu Rauschen — und beide Faelle wieder durchgehen.
 ]);
+
+// Welches Wort gehoert zu welchem Gewerk. Gebraucht fuer genau eine Frage: Nennt sich der
+// fremde Werbetreibende selbst nach einem ANDEREN Gewerk als dem gemessenen? „KFZ-Auto
+// Elektrik Goerlich" und „dachdecker_a.goerlich" teilen den Nachnamen — aber die eine Seite
+// sagt von sich, sie sei ein Dachdecker, und das ist keine Autowerkstatt.
+const GEWERKWORTE = {
+  auto: ["auto", "kfz", "autoteile", "motors", "autoservice", "fahrzeug", "fahrzeuge",
+    "fahrzeughandel", "automobile", "automobil", "reifen", "motor", "motoren", "getriebe",
+    "karosserie", "karosseriebau", "lackier", "lackiererei", "abschlepp", "nutzfahrzeuge",
+    "werkstatt", "mehrmarkenwerkstatt", "pkw", "lkw"],
+  dach: ["dach", "dachdecker", "bedachung", "bedachungen", "flachdach"],
+  elektro: ["elektro", "elektrik", "elektriker"],
+  shk: ["sanitaer", "heizung", "klima", "klempner", "installateur"],
+  maler: ["maler", "malerei", "lackierer"],
+  holz: ["tischler", "tischlerei", "schreiner", "schreinerei", "innenausbau"],
+  garten: ["garten", "landschaft", "gartenbau"],
+  // Landmaschinen sind kein Gartenbau. Eigene Gruppe, damit die Pruefung sie gegen jedes
+  // andere Gewerk stellt: „Oeltjenbruns Landtechnik" ist nicht „H. Oeltjenbruns" die
+  // Autowerkstatt, auch wenn der Nachname derselbe ist.
+  agrar: ["landtechnik", "landmaschinen", "agrar"],
+};
+
+/** Zu welcher Gewerkgruppe gehoert dieser Gewerkname? */
+function gewerkGruppe(gewerk) {
+  const g = normal(gewerk);
+  if (!g) return null;
+  for (const [gruppe, worte] of Object.entries(GEWERKWORTE)) {
+    if (worte.some((w) => g.includes(w))) return gruppe;
+  }
+  return null;
+}
 
 function normal(text) {
   return String(text || "")
@@ -77,7 +121,7 @@ export function kennwoerter(name, ort = "") {
  * Im Zweifel „unsicher". Ein verpasster Werbetreibender kostet eine Beobachtung, ein
  * erfundener kostet den Termin.
  */
-export function zuordnen(betriebsname, pageName, ort = "") {
+export function zuordnen(betriebsname, pageName, ort = "", gewerk = "") {
   const fremd = normal(pageName);
   if (!fremd) return "nein";
 
@@ -86,6 +130,12 @@ export function zuordnen(betriebsname, pageName, ort = "") {
   // Gattungswörtern und hat deshalb keines — obwohl Namensgleichheit der denkbar
   // beste Beleg ist.
   if (fremd === normal(betriebsname)) return "sicher";
+
+  // Gleiche Zeichen, andere Leerstellen. „König39" gegen „König 39": Das sind zwei
+  // Schreibweisen desselben Betriebs, aber die Kennwortpruefung darunter sieht einmal
+  // „koenig39" und einmal „koenig" plus eine Zahl, die als zu kurz herausfaellt — und
+  // verwarf den Treffer. Gefunden am 29.10.2026 beim ersten Google-Lauf in Oldenburg.
+  if (fremd.replace(/ /g, "") === normal(betriebsname).replace(/ /g, "")) return "sicher";
 
   const meine = kennwoerter(betriebsname, ort);
   // Bleibt nach Gattung und Ortsname nichts Unterscheidendes übrig — „Nutzfahrzeuge
@@ -99,7 +149,38 @@ export function zuordnen(betriebsname, pageName, ort = "") {
   // dann fehlen zwei eigene Kennwörter, ohne dass irgendetwas dagegen spräche.
   const seine = kennwoerter(pageName, ort);
   if (!seine.length) return "nein";
-  const passt = (w) => meine.some((m) => m === w || m.includes(w) || w.includes(m));
+  // Nennt der fremde Werbetreibende sich selbst nach einem anderen Gewerk, und kommt das
+  // gemessene in seinem Namen gar nicht vor, dann ist er ein anderer Betrieb — auch bei
+  // gleichem Nachnamen. „KFZ-Auto Elektrik Goerlich" gegen „dachdecker_a.goerlich": in den
+  // ausgelieferten Daten zaehlte das als werbende Autowerkstatt.
+  const meinGewerk = gewerkGruppe(gewerk);
+  if (meinGewerk) {
+    const fremdWorte = new Set(fremd.split(" "));
+    const nenntEigenes = GEWERKWORTE[meinGewerk].some((w) => fremdWorte.has(w));
+    const nenntFremdes = Object.entries(GEWERKWORTE)
+      .filter(([gruppe]) => gruppe !== meinGewerk)
+      .some(([, worte]) => worte.some((w) => fremdWorte.has(w)));
+    if (nenntFremdes && !nenntEigenes) return "nein";
+  }
+
+  // Ein fremdes Wort passt zu einem eigenen, wenn es dasselbe ist — oder wenn das eine im
+  // anderen steckt UND nach dem Herausnehmen nichts Eigenstaendiges stehen bleibt.
+  //
+  // ▲ Der Zusatz ist der ganze Unterschied. Ohne ihn genuegte es, dass ein fremder Name ein
+  // Kennwort ENTHAELT: „bruenjeshausverwaltung" enthaelt „bruenjes", und damit wurde die
+  // Hausverwaltung derselben Familie zur werbenden Autowerkstatt „Auto Bruenjes" —
+  // ausgeliefert und auf der Seite behauptet. Gattungswoerter zaehlen dabei nicht als
+  // eigenstaendig, denn „autohausmeyer" minus „meyer" ist „autohaus" und damit derselbe
+  // Betrieb, nur zusammengeschrieben.
+  const ohne = (lang, kurz) => lang.split(kurz).join("");
+  const passt = (w) =>
+    meine.some((m) => {
+      if (m === w) return true;
+      const laenger = w.includes(m) ? w : m.includes(w) ? m : null;
+      if (!laenger) return false;
+      const uebrig = ohne(laenger, laenger === w ? m : w);
+      return uebrig.length < 4 || ALLERWELT.has(uebrig);
+    });
   // Gar keine Überschneidung heißt: ein fremder Betrieb, der zufällig im Suchergebnis
   // stand. Das ist kein Zweifelsfall, sondern ein klares Nein — „Family Gifts D3" hat
   // mit „Dieter Schulz" nichts zu tun und gehört nicht einmal in die Vermerkliste.
@@ -179,10 +260,62 @@ export async function profileHolen({ gewerk, ort, hoechstens = 24, token }) {
       schnitt: Number.isFinite(p.totalScore) ? p.totalScore : null,
       fotos: Number.isFinite(p.imagesCount) ? p.imagesCount : 0,
       website: Boolean(p.website),
+      // Die Adresse selbst, nicht nur ob es eine gibt: Der Google-Ads-Check fragt nach
+      // Domains. Bis zum 29.10.2026 stand hier nur das Ja/Nein, und damit war der Vorrat
+      // fuer diese Frage blind.
+      domain: reineDomain(p.website),
       telefon: Boolean(p.phone),
       // Google bietet „Inhaber dieses Unternehmens?" nur an, wenn das Profil niemandem
       // gehört. Das Feld ist damit die einzige verlässliche Auskunft darüber, ob der
       // Betrieb sein eigenes Profil je in die Hand genommen hat.
+      uebernommen: p.claimThisBusiness !== true,
+      ort: p.city || ort,
+    }));
+}
+
+/**
+ * Einen einzelnen Betrieb bei Google suchen — über seinen NAMEN, nicht über eine Kategorie.
+ *
+ * Warum das der richtige Einstieg ist: Der Trichter fragte zuerst nach dem Gewerk, aber kein
+ * Betrieb kennt die Kategorie, unter der Google ihn führt. Die vergibt Google, nicht er.
+ * Fokuswerk steht dort als „Online-Marketing-Unternehmen" — auf den Begriff kommt niemand,
+ * und drei Anläufe mit Werbeagentur, Marketingagentur und Social-Media-Agentur gingen am
+ * 29.10.2026 alle ins Leere. Wer den Namen eingibt, braucht nicht zu raten, und die Rangliste
+ * entsteht anschließend in genau der Kategorie, in der Google ihn selbst einsortiert hat.
+ */
+export async function betriebSuchen({ betrieb, ort, token = process.env.APIFY_TOKEN }) {
+  const roh = await apify(
+    PLACES,
+    {
+      searchStringsArray: [String(betrieb).trim()],
+      locationQuery: `${ort}, Germany`,
+      // Drei statt einem: Bei „Müller" in einer Kleinstadt liegen mehrere nebeneinander,
+      // und der erste Treffer ist nicht zwingend der gemeinte. Die Auswahl trifft der Mensch.
+      maxCrawledPlacesPerSearch: 3,
+      language: "de",
+      countryCode: "de",
+    },
+    { token, grenze: 120000 },
+  );
+
+  return (Array.isArray(roh) ? roh : [])
+    .filter((p) => p?.title && p.categoryName && !p.permanentlyClosed && !p.temporarilyClosed)
+    // Dieselben Felder wie `profileHolen`: Der gefundene Betrieb muss sich in die Rangliste
+    // einhaengen lassen. Grund: Die Suche nach der Kategorie ist bei Google eine TEXTsuche,
+    // kein Filter — „Online-Marketing-Unternehmen" in Oldenburg lieferte 17 Betriebe und
+    // Fokuswerk war nicht dabei, obwohl Google genau diese Kategorie an seinem Profil
+    // fuehrt (29.10.2026). Wer sich selbst gesucht hat, muss in seiner eigenen Liste stehen.
+    .map((p) => ({
+      name: String(p.title).trim(),
+      kategorie: p.categoryName,
+      // Zum Wiedererkennen, wenn mehrere zur Auswahl stehen.
+      anschrift: p.address || p.street || null,
+      bewertungen: Number.isFinite(p.reviewsCount) ? p.reviewsCount : 0,
+      schnitt: Number.isFinite(p.totalScore) ? p.totalScore : null,
+      fotos: Number.isFinite(p.imagesCount) ? p.imagesCount : 0,
+      website: Boolean(p.website),
+      domain: reineDomain(p.website),
+      telefon: Boolean(p.phone),
       uebernommen: p.claimThisBusiness !== true,
       ort: p.city || ort,
     }));
@@ -194,7 +327,7 @@ export async function profileHolen({ gewerk, ort, hoechstens = 24, token }) {
  * Alle Suchen laufen in EINEM Actor-Aufruf. Einzeln wären es so viele Starts wie
  * Betriebe, und jeder Start kostet Zeit und Geld.
  */
-export async function anzeigenHolen(betriebe, { token, ort = "", jeBetrieb = 6 } = {}) {
+export async function anzeigenHolen(betriebe, { token, ort = "", gewerk = "", jeBetrieb = 6 } = {}) {
   const suchen = betriebe.map((b) => {
     // Gesucht wird mit den Kennwoertern OHNE Ortsnamen: „Auto Westerstede" findet jeden
     // Werbetreibenden des Ortes, der Betriebsname ohne Ort findet den Betrieb.
@@ -235,7 +368,7 @@ export async function anzeigenHolen(betriebe, { token, ort = "", jeBetrieb = 6 }
     const quelle = suchen.find((s) => s.url === a.url);
     if (!quelle) continue;
 
-    const urteil = zuordnen(quelle.betrieb, a.page_name, ort);
+    const urteil = zuordnen(quelle.betrieb, a.page_name, ort, gewerk);
     if (urteil === "nein") continue;
     if (urteil === "unsicher") {
       unsicher.push({ betrieb: quelle.betrieb, werbetreibender: a.page_name });
@@ -276,7 +409,10 @@ export async function sammle({ gewerk, ort, hoechstens = 24, ohneAnzeigen = fals
     betriebe = await profileHolen({ gewerk, ort, hoechstens, token });
   } catch (fehler) {
     console.error("Profile gescheitert:", fehler?.message);
-    return { fehler: "profile_nicht_lesbar" };
+    // Der Originaltext bleibt am Ergebnis haengen. Nach aussen gibt der Endpunkt weiter nur
+    // `profile_nicht_lesbar` heraus; fuer die Fehlersuche hinter dem Diagnoseschluessel ist
+    // der Unterschied zwischen "kein Guthaben" und "Actor kaputt" aber der ganze Unterschied.
+    return { fehler: "profile_nicht_lesbar", grund: String(fehler?.message || fehler).slice(0, 400) };
   }
   if (betriebe.length < 3) return { fehler: "zu_wenige_betriebe" };
 
@@ -300,7 +436,7 @@ export async function sammle({ gewerk, ort, hoechstens = 24, ohneAnzeigen = fals
   // 28,4 s für die Profile, 29,4 s für die Anzeigen. Wer beides in einem Zug abwartet,
   // sitzt eine Minute vor einem grauen Knopf, und genau dort bricht der Trichter ab.
   // Deshalb kann der Aufrufer die Profile allein holen und die Anzeigen nachreichen.
-  if (ohneAnzeigen) return { ...grund, anzeigenVerfuegbar: null, anzeigenUnsicher: [] };
+  if (ohneAnzeigen) return { ...grund, anzeigenVerfuegbar: null, anzeigenUnsicher: [], googleVerfuegbar: null, googleUnsicher: [] };
 
   return { ...grund, ...(await anzeigenErgaenzen(grund, token)) };
 }
@@ -313,12 +449,100 @@ export async function sammle({ gewerk, ort, hoechstens = 24, ohneAnzeigen = fals
  * seine vorhandene Messung.
  */
 export async function anzeigenErgaenzen(messung, token = process.env.APIFY_TOKEN) {
-  const anzeigen = await anzeigenHolen(messung.betriebe, { token, ort: messung.ort });
+  // Beide Kanaele nebeneinander. Nacheinander waeren es zwei Minuten; und keiner darf den
+  // anderen mitreissen — faellt Google aus, steht die Meta-Zahl trotzdem im Bericht.
+  const [meta, google] = await Promise.all([
+    anzeigenHolen(messung.betriebe, { token, ort: messung.ort, gewerk: messung.gewerk }),
+    googleAnzeigenHolen(messung.betriebe, { token, ort: messung.ort, gewerk: messung.gewerk }),
+  ]);
   return {
-    anzeigenVerfuegbar: anzeigen.verfuegbar,
-    anzeigenUnsicher: anzeigen.unsicher,
-    betriebe: messung.betriebe.map((b) => ({ ...b, anzeigen: anzeigen.je.get(b.name) || [] })),
+    anzeigenVerfuegbar: meta.verfuegbar,
+    anzeigenUnsicher: meta.unsicher,
+    googleVerfuegbar: google.verfuegbar,
+    googleUnsicher: google.unsicher,
+    betriebe: messung.betriebe.map((b) => ({
+      ...b,
+      anzeigen: meta.je.get(b.name) || [],
+      googleAnzeigen: google.je.get(b.name) || [],
+    })),
   };
+}
+
+// Aus der Website-Adresse die nackte Domain. Null, wenn nichts Brauchbares dasteht —
+// Facebook-Seiten und Branchenbucheintraege sind keine eigene Website.
+function reineDomain(url) {
+  if (typeof url !== "string" || !url.trim()) return null;
+  let host;
+  try {
+    host = new URL(url.includes("://") ? url : "https://" + url).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+  host = host.replace(/^www\./, "");
+  if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(host)) return null;
+  // Wer nur eine Facebook-Seite oder einen Eintrag im Branchenbuch hinterlegt hat, hat
+  // keine Domain, unter der er werben koennte.
+  if (/(facebook|instagram|google|business\.site|jimdo|wixsite|gelbeseiten|das-telefonbuch)\./.test(host)) return null;
+  return host;
+}
+
+/**
+ * Fuer jeden Betrieb: wirbt er bei Google?
+ *
+ * Gefragt wird mit der Domain, nicht mit dem Namen — die Transparenzdatenbank ordnet
+ * Werbetreibende ueber die beworbene Website zu. Betriebe ohne eigene Domain koennen
+ * deshalb nicht geprueft werden; das ist kein "wirbt nicht", sondern "unbekannt".
+ *
+ * Die Falle, im Probelauf am 29.10.2026 gesehen: Auf `euromaster.de` kamen fuenf
+ * Werbetreibende zurueck, vier davon fremde Agenturen und Partner aus AT, DK und SE, die
+ * auf dieselbe Seite werben. Ungefiltert haette der Bericht vier werbende Autowerkstaetten
+ * in Westerstede gemeldet, die es nicht gibt. Deshalb laeuft jede Zeile durch dieselbe
+ * Zuordnung wie bei Meta.
+ */
+export async function googleAnzeigenHolen(betriebe, { token, ort = "", gewerk = "" } = {}) {
+  const mitDomain = betriebe.filter((b) => b.domain);
+  if (!mitDomain.length) return { verfuegbar: true, je: new Map(), unsicher: [] };
+
+  let roh = [];
+  try {
+    roh = await apify(
+      GOOGLE_ADS,
+      {
+        domains: [...new Set(mitDomain.map((b) => b.domain))],
+        resultType: "advertisers",
+        region: "DE",
+      },
+      { token, grenze: 150000, maxItems: mitDomain.length * 8 },
+    );
+  } catch (fehler) {
+    // Wie bei Meta: Faellt der Abruf aus, bleibt die Rangliste stehen.
+    console.error("Google-Anzeigenlage gescheitert:", fehler?.message);
+    return { verfuegbar: false, je: new Map(), unsicher: [] };
+  }
+
+  const je = new Map();
+  const unsicher = [];
+  for (const zeile of Array.isArray(roh) ? roh : []) {
+    const domain = String(zeile?.matchedDomain || zeile?.matchedQuery || "").toLowerCase();
+    const betrieb = mitDomain.find((b) => b.domain === domain);
+    if (!betrieb) continue;
+    const werber = zeile?.legalName || zeile?.name || "";
+    const urteil = zuordnen(betrieb.name, werber, ort, gewerk);
+    if (urteil !== "sicher") {
+      if (urteil === "unsicher") unsicher.push({ betrieb: betrieb.name, werber, domain });
+      continue;
+    }
+    const bisher = je.get(betrieb.name) || [];
+    bisher.push({
+      werber,
+      anzahlVon: Number.isFinite(zeile?.approxAdCountLow) ? zeile.approxAdCountLow : null,
+      anzahlBis: Number.isFinite(zeile?.approxAdCountHigh) ? zeile.approxAdCountHigh : null,
+      land: zeile?.countryCode || null,
+      bestaetigt: zeile?.verified === true,
+    });
+    je.set(betrieb.name, bisher);
+  }
+  return { verfuegbar: true, je, unsicher };
 }
 
 function mehrheitskategorie(betriebe) {

@@ -18,8 +18,8 @@
 // Messung sofort und kostenlos — das Werkzeug wird mit jedem Abruf schneller und
 // billiger statt teurer.
 
-import { sammle, anzeigenErgaenzen } from "../lib/rangliste-messen.js";
-import { bewerte, plural } from "../lib/rangliste-urteil.js";
+import { sammle, anzeigenErgaenzen, betriebSuchen } from "../lib/rangliste-messen.js";
+import { bewerte, plural, nameGleich } from "../lib/rangliste-urteil.js";
 import { ausVorrat } from "../lib/rangliste-vorrat.js";
 import { verarbeiteRanglisteLead } from "../lib/rangliste-lead.js";
 
@@ -77,12 +77,69 @@ const MAILMUSTER = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 const hatKontakt = (k) => MAILMUSTER.test(String(k?.email || "").trim());
 
 // Was die Seite nach dem Nachholen braucht, um die Anzeigenzeile im Teaser zu ergaenzen.
+//
+// ▲ `werbendeAktiv` muss mit. Ohne diese Zahl kann der Teaser nur „wirbt" sagen, und das
+// ist in der Regel falsch: In allen neun vorgerechneten Orten lief am 28.10.2026 keine
+// einzige Anzeige, die juengste endete im Februar. Der Teaser ist die meistgelesene Stelle
+// des Werkzeugs — ein Praesens, das sich in zehn Sekunden widerlegen laesst, kostet dort
+// mehr als alle Zahlen daneben wert sind.
+// Schluessel, unter dem ein einzeln gesuchter Betrieb liegt.
+const gesucht = (name, ort) => `gesucht|${String(name).toLowerCase()}|${String(ort).toLowerCase()}`;
+
+// Den selbst gesuchten Betrieb in die Rangliste haengen, wenn die Kategoriesuche ihn nicht
+// mitgebracht hat.
+//
+// Warum das noetig ist: `searchStringsArray` ist bei Google eine Textsuche, kein Filter auf
+// die Kategorie. „Online-Marketing-Unternehmen" in Oldenburg lieferte 17 Betriebe — und
+// Fokuswerk war nicht dabei, obwohl genau diese Kategorie an seinem Profil steht. Ohne das
+// Einhaengen fuehrt der neue Einstieg ins selbe Leere wie der alte: Der Betrieb sucht sich
+// selbst, findet sich, und steht trotzdem nicht in seiner eigenen Liste.
+async function einhaengen(messung, betriebsname, ort) {
+  if (!betriebsname) return messung;
+  const schon = messung.betriebe.some((b) => nameGleich(b.name, betriebsname));
+  if (schon) return messung;
+  let eintrag = ausSpeicher(gesucht(betriebsname, ort))?.profil;
+  // ▲ Der Speicher ist der Prozessspeicher einer Instanz. Die Namenssuche (?suche=1) lief
+  // womöglich auf einer anderen — dann war hier nichts zu finden, der Betrieb fehlte in
+  // seiner eigenen Liste, und der letzte Schritt endete mit „Diesen Betrieb finden wir in
+  // der Liste nicht mehr". Gemeldet am 30.10.2026, mit ausgefülltem Kontaktformular: die
+  // teuerste Stelle, an der dieses Werkzeug abbrechen kann. Also notfalls selbst suchen.
+  if (!eintrag && betriebsname.length >= 3) {
+    try {
+      const treffer = await betriebSuchen({ betrieb: betriebsname, ort });
+      eintrag = treffer.find((t) => nameGleich(t.name, betriebsname)) || treffer[0] || null;
+      if (eintrag) inSpeicher(gesucht(eintrag.name, ort), { profil: eintrag });
+    } catch (fehler) {
+      console.error("Nachschlag für den eigenen Betrieb gescheitert:", fehler?.message);
+    }
+  }
+  if (!eintrag) return messung;
+  return {
+    ...messung,
+    betriebe: [...messung.betriebe, { ...eintrag, anzeigen: [], googleAnzeigen: [] }],
+    nachgetragen: eintrag.name,
+  };
+}
+
 function anzeigenZahlen(messung) {
   const werbende = messung.betriebe.filter((b) => b.anzeigen.length > 0);
+  const umKunden = werbende.filter((b) => b.anzeigen.some((a) => !a.personal));
   return {
     anzeigenGemessen: messung.anzeigenVerfuegbar === true,
-    werbendeUmKunden: werbende.filter((b) => b.anzeigen.some((a) => !a.personal)).length,
+    werbendeUmKunden: umKunden.length,
+    werbendeAktiv: werbende.filter((b) => b.anzeigen.some((a) => !a.personal && a.aktiv)).length,
+    letzteKundenwerbung:
+      umKunden
+        .flatMap((b) => b.anzeigen.filter((a) => !a.personal).map((a) => a.bis || a.von))
+        .filter(Boolean)
+        .sort()
+        .at(-1) || null,
     werbendeGesamt: werbende.length,
+    // Google Ads, seit 29.10.2026. `googlePruefbar` gehoert dazu: Ohne eigene Domain laesst
+    // sich ein Betrieb nicht pruefen, und "0 von 15" waere dann falsch.
+    googlePruefbar: messung.betriebe.filter((b) => b.domain).length,
+    beiGoogle: messung.betriebe.filter((b) => (b.googleAnzeigen || []).length > 0).length,
+    googleGemessen: messung.googleVerfuegbar === true,
   };
 }
 
@@ -100,6 +157,22 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).json({ fehler: "nur_post" });
 
+  // Probe-Abruf fuer den Google-Ads-Check. Laeuft nur mit dem Diagnoseschluessel und nur
+  // auf dem Server, weil der Apify-Token dort liegt. Gibt die Rohzeilen des Actors zurueck,
+  // damit sich die Form einmal ansehen laesst, bevor sie in den Bericht wandert.
+  // Warum scheitert eine frische Messung? Der Endpunkt macht aus jedem Fehler des
+  // Profil-Abrufs ein knappes `profile_nicht_lesbar` — fuer die Fehlersuche braucht es
+  // den Originaltext von Apify.
+  if (req.query?.placesprobe === "1" && req.query?.diagnose === DIAGNOSE) {
+    try {
+      const { sammle: s } = await import("../lib/rangliste-messen.js");
+      const m = await s({ gewerk: String(req.query?.gewerk || "Dachdecker"), ort: String(req.query?.ort || "Westerstede"), ohneAnzeigen: true });
+      return res.status(200).json({ ok: true, betriebe: m?.betriebe?.length ?? null, fehler: m?.fehler ?? null, grund: m?.grund ?? null });
+    } catch (f) {
+      return res.status(200).json({ ok: false, fehler: String(f?.message || f).slice(0, 500) });
+    }
+  }
+
   let koerper = req.body;
   if (typeof koerper === "string") {
     try { koerper = JSON.parse(koerper); } catch { koerper = null; }
@@ -107,13 +180,37 @@ export default async function handler(req, res) {
 
   const gewerk = text(koerper?.gewerk, 60);
   const ort = text(koerper?.ort, 60);
-  if (!gewerk || !ort) return res.status(422).json({ fehler: "gewerk_oder_ort_fehlt" });
 
   const kennung =
     (req.headers["x-forwarded-for"] || "").split(",")[0].trim() ||
     req.socket?.remoteAddress ||
     "unbekannt";
   if (zuOft(kennung)) return res.status(429).json({ fehler: "zu_viele_abrufe" });
+
+  // ── Den Betrieb über seinen Namen suchen (?suche=1) ──────────────────────
+  // Der neue Einstieg: Ort und Betriebsname statt Ort und Gewerk. Die Kategorie holen wir
+  // uns aus seinem Google-Profil, statt sie ihn raten zu lassen — siehe `betriebSuchen`.
+  if (req.query?.suche === "1") {
+    const name = text(koerper?.betrieb, 80);
+    if (!name || !ort) return res.status(422).json({ fehler: "name_oder_ort_fehlt" });
+    try {
+      const treffer = await betriebSuchen({ betrieb: name, ort });
+      if (!treffer.length) return res.status(200).json({ gefunden: [], fehler: "betrieb_nicht_gefunden" });
+      // Jeden Treffer merken, damit die Messung ihn gleich in die Liste haengen kann, falls
+      // die Kategoriesuche ihn nicht selbst findet — siehe `einhaengen`.
+      for (const t of treffer) inSpeicher(gesucht(t.name, ort), { profil: t });
+      // Die Oberflaeche bekommt nur, was sie zum Auswaehlen braucht. Bewertungszahlen und
+      // Fotos gehoeren zur Auswertung, nicht in eine Antwort vor dem Kontaktschritt.
+      return res.status(200).json({
+        gefunden: treffer.map((t) => ({ name: t.name, kategorie: t.kategorie, anschrift: t.anschrift })),
+      });
+    } catch (fehler) {
+      console.error("Betriebssuche gescheitert:", fehler?.message);
+      return res.status(200).json({ gefunden: [], fehler: "suche_gescheitert" });
+    }
+  }
+
+  if (!gewerk || !ort) return res.status(422).json({ fehler: "gewerk_oder_ort_fehlt" });
 
   const schluessel = `${gewerk.toLowerCase()}|${ort.toLowerCase()}`;
 
@@ -165,6 +262,13 @@ export default async function handler(req, res) {
     inSpeicher(schluessel, messung);
   }
 
+  // Wer sich selbst gesucht hat, gehoert in seine eigene Liste — auch wenn die
+  // Kategoriesuche ihn nicht mitgebracht hat. Siehe `einhaengen`.
+  const gesuchterName = text(koerper?.betrieb, 80);
+  const vorher = messung.betriebe.length;
+  messung = await einhaengen(messung, gesuchterName, ort);
+  if (messung.betriebe.length > vorher) res.setHeader("X-Fokuswerk-Nachgetragen", "1");
+
   // Beim vollen Aufruf duerfen die Anzeigen nicht fehlen: Dann hat der Nachhol-Aufruf
   // eine andere Instanz getroffen oder der Besucher war schneller als die Messung.
   if (!istVorlauf && messung.anzeigenVerfuegbar === null) {
@@ -197,6 +301,10 @@ export default async function handler(req, res) {
       ohneWebsite: m.ohneWebsite,
       nichtUebernommen: m.nichtUebernommen,
       werbendeUmKunden: m.umKunden,
+      werbendeAktiv: m.umKundenAktiv,
+      letzteKundenwerbung: m.letzteKundenwerbung,
+      googlePruefbar: m.googlePruefbar,
+      beiGoogle: m.beiGoogle,
       anzeigenGemessen: messung.anzeigenVerfuegbar,
       // Alphabetisch, nicht nach Rang: Die Reihenfolge würde die Rangliste verraten.
       namen: urteil.liste.map((b) => b.name).sort((a, b) => a.localeCompare(b, "de")),

@@ -7,9 +7,9 @@
 // Platz und Gesamtzahl — das ist der Gesprächseinstieg am Telefon.
 
 import { sendeMail, mitFrist, AN_UNS } from "./lead.js";
-import { escape, huelle, karte, etikett, WEISS, TINTE, LEISE, LINIE, AKZENT, SCHRIFT } from "./mail-vorlagen.js";
+import { escape, huelle, karte, etikett, angabe, WEISS, TINTE, LEISE, LINIE, AKZENT, SCHRIFT } from "./mail-vorlagen.js";
 import { ranglistePdf } from "./rangliste-pdf.js";
-import { plural } from "./rangliste-urteil.js";
+import { plural, monatJahr } from "./rangliste-urteil.js";
 
 const FREEBIE = "Wettbewerb";
 
@@ -27,7 +27,7 @@ const NEWSLETTER_EINWILLIGUNG =
 const dateiname = (e) =>
   `Wettbewerb-${String(e.betrieb || "Betrieb").replace(/[^\wÄÖÜäöüß-]+/g, "-").slice(0, 40)}.pdf`;
 
-export async function meldeAnFunnel(daten, e) {
+export async function meldeAnFunnel(daten, e, pdf = null) {
   const ziel = process.env.FUNNEL_ZIEL || "https://fokuswerk-outreach.vercel.app/api/funnel";
   const schluessel = process.env.FUNNEL_SCHLUESSEL;
   if (!schluessel) return { uebersprungen: "kein FUNNEL_SCHLUESSEL" };
@@ -67,6 +67,10 @@ export async function meldeAnFunnel(daten, e) {
         werbende_im_ort: e.markt?.umKunden ?? null,
         maengel: (e.befunde || []).filter((b) => b.art === "mangel").map((b) => b.titel).slice(0, 5),
       },
+      // Dasselbe Dokument, das der Betrieb bekommt — damit im Gespräch beide dieselbe
+      // Liste vor sich haben. Klemmt die Ablage drüben, kommt der Lead trotzdem an.
+      pdf: pdf ? pdf.toString("base64") : null,
+      pdf_name: pdf ? dateiname(e) : null,
     }),
   });
   if (!antwort.ok) throw new Error("Funnel " + antwort.status + ": " + (await antwort.text()).slice(0, 200));
@@ -84,8 +88,18 @@ export function meldungAnUns(daten, e) {
     `Profil:    ${e.eigen?.bewertungen} Bewertungen · Schnitt ${e.eigen?.schnitt ?? "—"} · ` +
       `${e.eigen?.fotos} Fotos · Website ${e.eigen?.website ? "ja" : "fehlt"} · ` +
       `Profil ${e.eigen?.uebernommen ? "übernommen" : "NICHT übernommen"}`,
-    `Markt:     ${e.markt?.anzahl} Betriebe · ${e.markt?.umKunden} werben um Kunden · ` +
-      `${e.markt?.ohneWebsite} ohne Website im Profil`,
+    // ▲ Auch hier die Zeitform, und hier ist sie am teuersten: Diese Zeilen liest der, der
+    // anruft. „1 werben um Kunden" hat ihn mit einer Tatsache ins Gespräch geschickt, die
+    // der Betrieb am Ort besser weiß als wir — in allen neun gemessenen Orten lief keine
+    // Anzeige mehr.
+    `Markt:     ${e.markt?.anzahl} Betriebe · ` +
+      (e.markt?.umKunden === 0
+        ? "keiner hat je um Kunden geworben"
+        : e.markt?.umKundenAktiv
+          ? `${e.markt.umKundenAktiv} ${e.markt.umKundenAktiv === 1 ? "wirbt" : "werben"} GERADE um Kunden`
+          : `${e.markt?.umKunden} ${e.markt?.umKunden === 1 ? "hat" : "haben"} je geworben, aktiv gerade keiner` +
+            (e.markt?.letzteKundenwerbung ? ` (letzte bis ${e.markt.letzteKundenwerbung})` : "")) +
+      ` · ${e.markt?.ohneWebsite} ohne Website im Profil`,
     "",
     maengel.length ? "Mängel:\n" + maengel.map((b) => "  · " + b.titel).join("\n") : "Keine schweren Mängel.",
     "",
@@ -95,10 +109,61 @@ export function meldungAnUns(daten, e) {
     "",
     daten?.newsletter === true ? "Newsletter: ja" : "Newsletter: nein",
   ];
+  // Dieselbe Karte wie bei der SEO-Analyse und beim Stellenanzeiger. Bis zum 29.10.2026
+  // ging diese eine Meldung als nackter Text mit ausgerichteten Doppelpunkten raus und sah
+  // zwischen den anderen beiden aus wie ein Serverprotokoll. Der Text bleibt als zweite
+  // Fassung erhalten — in Betrieben blockiert mancher Client HTML.
+  const platz = `${e.eigen?.platz} von ${e.liste?.length}`;
+  const inhalt = karte(`
+    ${etikett("Neuer Lead · Wettbewerb")}
+    <p style="margin:0 0 3px;font:500 21px/1.3 ${SCHRIFT};color:${TINTE};">${escape(k.name || "Ohne Namen")}</p>
+    <p style="margin:0 0 18px;font:400 14px/1.5 ${SCHRIFT};color:${LEISE};">${escape(e.betrieb || "")}</p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;table-layout:fixed;">
+      ${angabe("Telefon", k.telefon, { hervor: true, link: k.telefon ? "tel:" + String(k.telefon).replace(/\s/g, "") : "" })}
+      ${angabe("E-Mail", k.email, { link: k.email ? "mailto:" + k.email : "" })}
+      ${angabe("Gewerk", e.gewerk ? e.gewerk + " in " + e.ort : null)}
+      ${angabe("Profil", [
+        e.eigen?.bewertungen + " Bewertungen",
+        "Schnitt " + (e.eigen?.schnitt != null ? String(e.eigen.schnitt).replace(".", ",") : "—"),
+        e.eigen?.fotos + " Fotos",
+        "Website " + (e.eigen?.website ? "ja" : "fehlt"),
+        e.eigen?.uebernommen ? "Profil übernommen" : "Profil NICHT übernommen",
+      ].join(" · "))}
+      ${angabe("Markt", marktsatz(e))}
+    </table>
+
+    <p style="margin:18px 0 0;padding-top:14px;border-top:1px solid ${LINIE};font:400 14px/1.6 ${SCHRIFT};color:${TINTE};">
+      Platz <strong style="font-weight:600;">${escape(platz)}</strong> in ${escape(e.ort || "")}${
+        maengel.length ? escape(" · " + maengel.length + (maengel.length === 1 ? " schwerer Mangel" : " schwere Mängel")) : " · keine schweren Mängel"
+      }<br>
+      <span style="color:${LEISE};">„Ich hab die ${escape(plural(e.gewerk))} in ${escape(e.ort || "")} durchgezählt — es sind ${escape(String(e.liste?.length ?? "—"))}. Sie stehen auf Platz ${escape(String(e.eigen?.platz ?? "—"))}."</span>
+    </p>`);
+
   return {
     betreff: `Wettbewerb: ${e.betrieb} (Platz ${e.eigen?.platz}/${e.liste?.length}, ${e.ort})`,
+    html: huelle(inhalt, `${k.name || "Neuer Lead"} · Platz ${platz} in ${e.ort}`),
     text: zeilen.join("\n"),
   };
+}
+
+// Die Marktlage in einem Satz — dieselbe Vorsicht bei der Zeitform wie überall: „werben"
+// nur, wenn wirklich gerade jemand wirbt.
+function marktsatz(e) {
+  const m = e.markt || {};
+  const teile = [m.anzahl + " Betriebe"];
+  teile.push(
+    m.umKunden === 0
+      ? "keiner hat je bei Meta geworben"
+      : m.umKundenAktiv
+        ? `${m.umKundenAktiv} ${m.umKundenAktiv === 1 ? "wirbt" : "werben"} GERADE bei Meta`
+        : `${m.umKunden} ${m.umKunden === 1 ? "hat" : "haben"} bei Meta je geworben, aktiv keiner`,
+  );
+  if (m.googlePruefbar) {
+    teile.push(`${m.beiGoogle} von ${m.googlePruefbar} werben bei Google`);
+  }
+  teile.push(`${m.ohneWebsite} ohne Website im Profil`);
+  return teile.join(" · ");
 }
 
 // Dieselbe Huelle und dieselben Karten wie bei der SEO-Analyse: Tabellenlayout, Stile
@@ -141,19 +206,27 @@ export function auswertungMail(daten, e) {
     : "An Ihrem Profil selbst ist nichts zu beanstanden — das ist seltener, als Sie denken.";
 
   const ZAHLWORT = ["", "Einer", "Zwei", "Drei", "Vier", "Fünf", "Sechs", "Sieben", "Acht", "Neun", "Zehn"];
-  const wieViele = ZAHLWORT[e.markt.umKunden] || String(e.markt.umKunden);
+  // ▲ Hier hing die Glaubwuerdigkeit der ganzen Mail an einer Zeitform. In allen neun
+  // vorgerechneten Orten laeuft derzeit KEINE Anzeige, die juengste endete im Februar 2026.
+  // Der Satz sagte trotzdem „wirbt genau einer". Wer den Betrieb kennt, widerlegt das in
+  // zehn Sekunden in der Werbebibliothek — und glaubt danach auch die Rangliste nicht mehr.
+  const aktiv = e.markt.umKundenAktiv ?? e.markt.umKunden;
+  const wieViele = ZAHLWORT[aktiv] || String(aktiv);
+  const wann = monatJahr(e.markt.letzteKundenwerbung);
   const anzeigenSatz =
     e.markt.umKunden === 0
-      ? `Und eine Sache, die uns aufgefallen ist: In ${escape(e.ort)} wirbt bei Facebook und Instagram niemand um Kunden. Nicht ein einziger der ${gesamt} Betriebe.`
-      : e.markt.umKunden === 1
-        ? `Und eine Sache, die uns aufgefallen ist: Von den ${gesamt} Betrieben wirbt genau einer bei Facebook und Instagram um Kunden. Wer das ist, steht im PDF.`
-        : `${wieViele} der ${gesamt} Betriebe werben bei Facebook und Instagram um Kunden. Wer das ist, steht im PDF.`;
+      ? `Und eine Sache, die uns aufgefallen ist: In ${escape(e.ort)} hat bei Facebook und Instagram noch nie einer um Kunden geworben. Nicht ein einziger der ${gesamt} Betriebe.`
+      : aktiv === 0
+        ? `Und eine Sache, die uns aufgefallen ist: Bei Facebook und Instagram läuft in ${escape(e.ort)} gerade keine einzige Anzeige. ${e.markt.umKunden === 1 ? "Einer" : ZAHLWORT[e.markt.umKunden] || String(e.markt.umKunden)} der ${gesamt} Betriebe hat es schon einmal versucht${wann ? ", zuletzt " + wann : ""}. Wer das ist, steht im PDF.`
+        : aktiv === 1
+          ? `Und eine Sache, die uns aufgefallen ist: Von den ${gesamt} Betrieben wirbt gerade genau einer bei Facebook und Instagram um Kunden. Wer das ist, steht im PDF.`
+          : `${wieViele} der ${gesamt} Betriebe werben gerade bei Facebook und Instagram um Kunden. Wer das ist, steht im PDF.`;
 
   const brief = `<tr><td style="padding:26px 4px 0;">
     ${absatz(escape(anrede) + ",")}
     ${absatz(`im Anhang finden Sie Ihre Auswertung als PDF. Darin steht die vollständige Liste
       aller ${gesamt} ${escape(plural(e.gewerk))} in ${escape(e.ort)} — mit Namen, Bewertungen, Fotos
-      und der Frage, wer von ihnen gerade wirbt.`)}
+      und der Frage, wer von ihnen wirbt — und wer es schon einmal versucht hat.`)}
     ${zuerstHtml}
     ${absatz(anzeigenSatz)}
     ${absatz(`Alle Zahlen stammen aus den öffentlichen Google-Profilen und aus Metas
@@ -174,7 +247,7 @@ export function auswertungMail(daten, e) {
     "",
     anrede + ",",
     "",
-    roh(`im Anhang finden Sie Ihre Auswertung als PDF. Darin steht die vollständige Liste aller ${gesamt} ${plural(e.gewerk)} in ${e.ort} — mit Namen, Bewertungen, Fotos und der Frage, wer von ihnen gerade wirbt.`),
+    roh(`im Anhang finden Sie Ihre Auswertung als PDF. Darin steht die vollständige Liste aller ${gesamt} ${plural(e.gewerk)} in ${e.ort} — mit Namen, Bewertungen, Fotos und der Frage, wer von ihnen wirbt — und wer es schon einmal versucht hat.`),
     "",
     zuerstText,
     "",
@@ -206,25 +279,35 @@ export async function verarbeiteRanglisteLead(daten, e) {
   const bericht = {};
   const k = daten?.kontakt || {};
 
+  // Das PDF entsteht vor den drei Wegen, weil zwei davon es brauchen: der Funnel als
+  // base64 am Lead, der Betrieb als Mailanhang. Lieber die Mail ohne PDF als gar keine —
+  // der Betrieb hat auf der Seite gelesen, dass die Auswertung kommt.
+  let pdf = null;
+  try {
+    pdf = await ranglistePdf(pdfDaten(e));
+  } catch (fehler) {
+    console.error("PDF gescheitert:", fehler?.message);
+  }
+
   const [funnel, meldung, zusendung] = await Promise.allSettled([
-    mitFrist(meldeAnFunnel(daten, e), 8000, "Funnel"),
+    mitFrist(meldeAnFunnel(daten, e, pdf), 8000, "Funnel"),
     (async () => {
       const m = meldungAnUns(daten, e);
-      return mitFrist(sendeMail({ an: AN_UNS, betreff: m.betreff, text: m.text, antwortAn: k.email || undefined }), 8000, "Meldung");
+      return mitFrist(sendeMail({ an: AN_UNS, betreff: m.betreff, text: m.text, html: m.html, antwortAn: k.email || undefined }), 8000, "Meldung");
     })(),
     (async () => {
       if (!k.email) return { uebersprungen: "keine Adresse" };
-      let anhaenge;
-      try {
-        anhaenge = [{ name: dateiname(e), inhalt: await ranglistePdf(pdfDaten(e)) }];
-      } catch (fehler) {
-        // Lieber die Mail ohne PDF als gar keine: Der Betrieb hat auf der Seite gelesen,
-        // dass die Auswertung kommt.
-        console.error("PDF gescheitert:", fehler?.message);
-        anhaenge = undefined;
-      }
+      const anhaenge = pdf ? [{ name: dateiname(e), inhalt: pdf }] : undefined;
       const m = auswertungMail(daten, e);
-      return mitFrist(sendeMail({ an: k.email, betreff: m.betreff, text: m.text, html: m.html, anhaenge }), 15000, "Zusendung");
+      const versand = await mitFrist(
+        sendeMail({ an: k.email, betreff: m.betreff, text: m.text, html: m.html, anhaenge }),
+        15000,
+        "Zusendung",
+      );
+      // Das PDF gehört in den Bericht wie bei den anderen zwei Werkzeugen. Ohne diese Zeile
+      // stand im Diagnosebericht nur „verschickt" — und dass die Mail ihr eigenes
+      // Anhangversprechen brach, fiel wochenlang niemandem auf.
+      return { ...versand, pdf: anhaenge ? Math.round(anhaenge[0].inhalt.length / 1024) + " KB" : "keins" };
     })(),
   ]);
 
@@ -234,10 +317,144 @@ export async function verarbeiteRanglisteLead(daten, e) {
   return bericht;
 }
 
+// ───────────────────────────────────────────────────────────────────────────────
+// Warteliste: wenn für diese Kombination noch nicht gezählt ist
+// ───────────────────────────────────────────────────────────────────────────────
+//
+// Die Seite bietet sechs Betriebsarten und achtzehn Orte an, also 108 Möglichkeiten.
+// Vorgerechnet sind neun. Alles andere braucht eine frische Messung, und die kostet Geld,
+// das nicht immer da ist. Vorher endete dieser Fall in einem Satz ohne Ausgang — mit der
+// Rückfrage, ob der Besucher sich beim Ortsnamen vertippt habe, und ohne ein Feld, in das
+// er etwas hätte eintragen können. Er hatte seine Betriebsart gewählt, seinen Ort getippt
+// und gewartet. Dann ging er, und wir erfuhren nicht einmal, dass er da war.
+//
+// Jetzt ist genau das der Lead: Betriebsart und Ort sagen, was er sucht, und zusammen
+// sagen alle Einträge, welche Kombinationen wir als nächste vorrechnen sollten. Bisher
+// stand diese Reihenfolge in `test/vorrechnen.mjs` — nach meinem Gefühl sortiert.
+
+/** Die interne Meldung. Sie ist zugleich der Arbeitsauftrag fürs Vorrechnen. */
+export function wartelisteMeldung(daten) {
+  const k = daten?.kontakt || {};
+  return {
+    betreff: `Warteliste: ${daten.gewerk} in ${daten.ort}`,
+    text: [
+      `${daten.gewerk} in ${daten.ort} ist noch nicht gezählt — jemand wartet darauf.`,
+      "",
+      `Kontakt:   ${k.name || "—"} · ${k.email}`,
+      `Gesucht:   ${daten.gewerk} in ${daten.ort}`,
+      daten?.herkunft?.quelle ? `Herkunft:  ${daten.herkunft.quelle}${daten.herkunft.kampagne ? " · " + daten.herkunft.kampagne : ""}` : null,
+      "",
+      "So wird daraus eine Auswertung:",
+      `  node test/vorrechnen.mjs --los --max 1`,
+      "",
+      "Das rechnet die nächste offene Kombination der Liste. Steht diese hier nicht oben",
+      "in `ORTE`/`GEWERKE`, dann dort nach vorn ziehen — die Reihenfolge ist geraten, diese",
+      "Anfrage ist gemessen.",
+    ].filter((z) => z !== null).join("\n"),
+  };
+}
+
+/** Die Bestätigung an den Betrieb. Kurz, ohne Anhang — es gibt noch nichts zu schicken. */
+export function wartelisteBestaetigung(daten) {
+  const was = `${escape(daten.gewerk)} in ${escape(daten.ort)}`;
+  const inhalt = `
+    ${karte(`
+      ${etikett("Vormerkung")}
+      <div style="margin-top:12px;font:500 21px/1.3 ${SCHRIFT};letter-spacing:-0.03em;color:${TINTE};">
+        ${was}
+      </div>
+      <p style="margin:12px 0 0;font:400 15px/1.6 ${SCHRIFT};color:${LEISE};">
+        Diesen Vergleich haben wir noch nicht gezählt. Wir holen das nach und schicken Ihnen
+        die Liste, sobald sie steht.
+      </p>
+    `)}
+    <p style="margin:24px 0 0;font:400 16px/1.62 ${SCHRIFT};color:${TINTE};">
+      Was dann darin steht: alle Betriebe, die Google in ${escape(daten.ort)} unter
+      ${escape(daten.gewerk)} führt — mit Namen, Bewertungen, Fotos, Internetauftritt und der
+      Frage, wer von ihnen bei Facebook und Instagram wirbt oder geworben hat. Dazu Ihr Platz
+      in dieser Liste.
+    </p>
+    <p style="margin:18px 0 0;font:400 16px/1.62 ${SCHRIFT};color:${TINTE};">
+      Das Zählen machen wir von Hand nach, deshalb dauert es ein bis zwei Werktage. Wenn Sie
+      vorher etwas brauchen, antworten Sie einfach auf diese Mail.
+    </p>`;
+  return {
+    betreff: `Vormerkung: ${daten.gewerk} in ${daten.ort}`,
+    text:
+      `${daten.gewerk} in ${daten.ort} haben wir noch nicht gezählt.\n\n` +
+      "Wir holen das nach und schicken Ihnen die Liste, sobald sie steht — mit allen " +
+      "Betrieben, die Google dort führt, deren Bewertungen und Ihrem Platz darin. " +
+      "Das dauert ein bis zwei Werktage.\n\n" +
+      "Wenn Sie vorher etwas brauchen, antworten Sie einfach auf diese Mail.\n\n" +
+      "Fokuswerk, Abt & Bodenstab GbR, Schramperweg 90, 26129 Oldenburg",
+    html: huelle(inhalt),
+  };
+}
+
+/** Eintrag im Funnel — mit `warteliste: true`, damit der Vertrieb sie unterscheiden kann. */
+export async function wartelisteAnFunnel(daten) {
+  const ziel = process.env.FUNNEL_ZIEL || "https://fokuswerk-outreach.vercel.app/api/funnel";
+  const schluessel = process.env.FUNNEL_SCHLUESSEL;
+  if (!schluessel) return { uebersprungen: "kein FUNNEL_SCHLUESSEL" };
+  const k = daten?.kontakt || {};
+  if (!k.email) return { uebersprungen: "keine Adresse" };
+
+  const antwort = await fetch(ziel, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-funnel-schluessel": schluessel },
+    body: JSON.stringify({
+      name: k.name || null,
+      email: k.email,
+      telefon: k.telefon || null,
+      firma: k.betrieb || null,
+      freebie: FREEBIE,
+      newsletter: daten?.newsletter === true,
+      einwilligungstext:
+        daten?.newsletter === true
+          ? EINWILLIGUNG + " | Newsletter: " + NEWSLETTER_EINWILLIGUNG
+          : EINWILLIGUNG,
+      quelle: daten?.herkunft?.quelle || "funnel",
+      kampagne: daten?.herkunft?.kampagne || null,
+      anzeige: daten?.herkunft?.anzeige || null,
+      seite: "/wettbewerb",
+      antworten: {
+        gewerk: daten.gewerk || null,
+        ort: daten.ort || null,
+        // ▲ Daran erkennt der Vertrieb den Unterschied: Dieser Mensch hat noch KEINE
+        // Auswertung gesehen. Ihn anzurufen und nach seinem Platz zu fragen, geht schief.
+        warteliste: true,
+      },
+    }),
+  });
+  if (!antwort.ok) throw new Error("Funnel " + antwort.status + ": " + (await antwort.text()).slice(0, 200));
+  return await antwort.json().catch(() => ({ ok: true }));
+}
+
+/** Alle drei Wege der Warteliste. Keiner reißt einen anderen mit. */
+export async function verarbeiteWarteliste(daten) {
+  const k = daten?.kontakt || {};
+  const m = wartelisteMeldung(daten);
+  const b = wartelisteBestaetigung(daten);
+
+  const [funnel, meldung, bestaetigung] = await Promise.allSettled([
+    mitFrist(wartelisteAnFunnel(daten), 8000, "Funnel"),
+    // Die Wartelisten-Meldung hat (noch) keine HTML-Fassung — sie ist drei Zeilen lang.
+    mitFrist(sendeMail({ an: AN_UNS, betreff: m.betreff, text: m.text, antwortAn: k.email || undefined }), 8000, "Meldung"),
+    mitFrist(sendeMail({ an: k.email, betreff: b.betreff, text: b.text, html: b.html }), 10000, "Bestätigung"),
+  ]);
+
+  const wert = (r) => (r.status === "fulfilled" ? r.value : { fehler: String(r.reason?.message || r.reason) });
+  return { funnel: wert(funnel), meldung: wert(meldung), bestaetigung: wert(bestaetigung) };
+}
+
 /** Aus dem Urteil die Form, die der PDF-Satz erwartet. */
 export function pdfDaten(e) {
   const heute = new Date().toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" });
   const kurz = new Date().toLocaleDateString("de-DE");
+  // Wie viele gerade werben, nicht wie viele es je getan haben. Stand die Zahl hier nicht,
+  // flog die ganze Funktion mit „aktiv is not defined" — und weil der Aufrufer das abfängt,
+  // ging die Mail ohne das PDF raus, das sie im Text verspricht.
+  const aktiv = e.markt.umKundenAktiv;
 
   return {
     betrieb: e.betrieb,
@@ -253,7 +470,8 @@ export function pdfDaten(e) {
       fotos: b.fotos,
       website: b.website,
       anzeigen: b.anzeigen.length > 0,
-      anzeigenWort: b.anzeigen.length && b.anzeigen.every((a) => a.personal) ? "Stellen" : "ja",
+      anzeigenWort: b.anzeigen.length && b.anzeigen.every((a) => a.personal) ? "Stellen" : "Meta",
+      google: (b.googleAnzeigen || []).length > 0,
       eigen: b.name === e.betrieb,
     })),
     einordnung: e.einordnung,
@@ -262,9 +480,21 @@ export function pdfDaten(e) {
       { wert: new Intl.NumberFormat("de-DE").format(e.markt.bewertungenGesamt), text: `Bewertungen verteilen sich auf diese ${e.markt.anzahl}` },
       { wert: `${e.markt.ohneWebsite} von ${e.markt.anzahl}`, text: "ohne Internetauftritt im Google-Profil" },
       {
-        wert: `${e.markt.umKunden} von ${e.markt.anzahl}`,
-        text: "werben bei Meta um Kunden",
+        // Das Etikett muss zur Zahl passen: „werben" ist bei beendeten Anzeigen falsch.
+        wert: `${aktiv || e.markt.umKunden} von ${e.markt.anzahl}`,
+        text: aktiv ? "werben bei Meta um Kunden" : "haben bei Meta je um Kunden geworben",
       },
+      // Google Ads, seit 29.10.2026. Bezugsgroesse ist die Zahl der Betriebe MIT Domain,
+      // nicht die Gesamtzahl: Wer keine eigene Website hat, kann dort nicht geprueft werden,
+      // und „0 von 15" waere eine Behauptung ueber sieben Betriebe, die wir nicht geprueft haben.
+      ...(e.markt.googlePruefbar
+        ? [{
+            wert: `${e.markt.beiGoogle} von ${e.markt.googlePruefbar}`,
+            // Kurz halten: Die Beschriftung steht einzeilig unter der Zahl. Dass nur
+            // Betriebe mit eigener Website prüfbar sind, sagt schon die Bezugsgröße.
+            text: "werben bei Google",
+          }]
+        : []),
     ],
     listeEinleitung:
       `Alle Betriebe, die Google in ${e.ort} unter der Kategorie ${e.gewerk} führt, sortiert nach ` +
@@ -272,8 +502,9 @@ export function pdfDaten(e) {
     listeFussnote:
       "Bewertungen und Schnitt sind die von Google ausgewiesenen Werte, Fotos die Zahl der im " +
       "Profil hinterlegten Bilder. „Website: fehlt\" heißt, dass im Google-Profil kein " +
-      "Internetauftritt eingetragen ist — nicht, dass es keinen gibt. Die Anzeigenspalte ist " +
-      "über die Meta-Werbebibliothek geprüft, aktive und vergangene Anzeigen.",
+      "Internetauftritt eingetragen ist — nicht, dass es keinen gibt. Die Anzeigenspalte nennt " +
+      "den Kanal: „Meta\" für Facebook und Instagram, „Google\" für Suchanzeigen. Bei Google " +
+      "lassen sich nur Betriebe mit eigener Website prüfen.",
     befunde: e.befunde,
     anzeigen: e.anzeigen
       ? {
@@ -333,6 +564,15 @@ export function pdfDaten(e) {
           "Betriebsname. Die Bibliothek ist Metas eigenes öffentliches Verzeichnis aller Anzeigen.",
       },
       {
+        titel: "Google Ads Transparency",
+        text:
+          `Abgerufen am ${kurz}, Region Deutschland, Suche je Website. Googles eigenes ` +
+          "öffentliches Verzeichnis der Werbetreibenden. Geprüft werden konnten nur die " +
+          `${e.markt.googlePruefbar ?? 0} Betriebe mit eigener Website im Profil; ` +
+          "Werbetreibende, die auf eine fremde Seite werben — Hersteller, Agenturen, " +
+          "Vermittler — zählen nicht als Werbung des Betriebs.",
+      },
+      {
         titel: "Was hier nicht gemessen wurde",
         text:
           "Das Alter Ihrer letzten Bewertung, Ihre Antwortquote auf Bewertungen und Ihre " +
@@ -345,6 +585,8 @@ export function pdfDaten(e) {
 // Die drei Schritte hängen an der Lage, nicht an einer Vorlage: Wer sein Profil nicht
 // übernommen hat, braucht einen anderen ersten Schritt als jemand mit gepflegtem Eintrag.
 function schritte(e) {
+  // Dieselbe Zahl wie im PDF-Kopf: wie viele gerade werben, nicht wie viele es je taten.
+  const aktiv = e.markt.umKundenAktiv;
   const selbst = [];
   if (!e.eigen.uebernommen) selbst.push("das Google-Profil übernehmen");
   if (!e.eigen.website) selbst.push("den Internetauftritt eintragen");
@@ -373,9 +615,13 @@ function schritte(e) {
           ? `In ${e.ort} hat noch nie ein Betrieb dieser Art um Kunden geworben. Wer dort als ` +
             "Erster auftaucht, konkurriert mit niemandem um die Aufmerksamkeit — und erreicht " +
             "Leute, die heute gar nicht suchen."
-          : `${e.markt.umKunden} von ${e.markt.anzahl} Betrieben in ${e.ort} werben bereits um ` +
-            "Kunden und erreichen damit Leute, die gerade gar nicht suchen. Das ist der Teil des " +
-            "Marktes, den diese Liste nicht abbildet.",
+          : aktiv
+            ? `${aktiv} von ${e.markt.anzahl} Betrieben in ${e.ort} werben gerade um Kunden und ` +
+              "erreichen damit Leute, die heute nicht suchen. Das ist der Teil des Marktes, den " +
+              "diese Liste nicht abbildet."
+            : `In ${e.ort} läuft gerade keine Anzeige. ${e.markt.umKunden} von ${e.markt.anzahl} ` +
+              "Betrieben haben es schon einmal versucht und wieder aufgehört. Der Platz ist also " +
+              "frei — und er war es nicht immer.",
     },
   ];
 }

@@ -14,10 +14,14 @@
 // Fehlt eine, wird der betreffende Weg still übersprungen — sichtbar im Protokoll.
 
 import { anzeigenMail, leadMail } from "./mail-vorlagen.js";
+import { ausschreibungPdf } from "./stellen-pdf.js";
 
 // Verifiziert bei Resend ist email.fokuswerk.de (geprüft 26.10.2026) — nicht mail.fokuswerk.de.
 export const ABSENDER = "Fokuswerk <werkzeug@email.fokuswerk.de>";
-export const AN_UNS = "contact@fokuswerk.de";
+// ⚠ Solange die Werkzeuge im Aufbau sind, gehen alle Meldungen an die persönliche
+// Adresse statt ins gemeinsame Postfach — Probeläufe sollen dort niemanden stören.
+// VOR DEM LIVEGANG zurück auf contact@fokuswerk.de stellen (oder MAIL_AN_UNS setzen).
+export const AN_UNS = process.env.MAIL_AN_UNS || "bodenstab@fokuswerk.de";
 
 // Der Wortlaut, den der Besucher im letzten Schritt abhakt. Steht in `Stellenanzeiger.tsx`;
 // ändert er sich dort, gehört er auch hier geändert — am Datensatz soll stehen, wem der
@@ -36,7 +40,7 @@ const NEWSLETTER_EINWILLIGUNG =
 // 1. Sales-Funnel im Outreach-Werkzeug
 // ---------------------------------------------------------------------------
 
-export async function meldeAnFunnel(daten) {
+export async function meldeAnFunnel(daten, pdf = null, ergebnis = null) {
   const ziel = process.env.FUNNEL_ZIEL || "https://fokuswerk-outreach.vercel.app/api/funnel";
   const schluessel = process.env.FUNNEL_SCHLUESSEL;
   if (!schluessel) return { uebersprungen: "kein FUNNEL_SCHLUESSEL" };
@@ -78,6 +82,10 @@ export async function meldeAnFunnel(daten) {
         erfahrung: daten?.erfahrung || null,
         staerken: Array.isArray(daten?.staerken) ? daten.staerken : [],
       },
+      // Dieselbe Mappe, die der Betrieb bekommt — damit im Gespräch beide dieselben Texte
+      // vor sich haben. Klemmt die Ablage drüben, kommt der Lead trotzdem an.
+      pdf: pdf ? pdf.toString("base64") : null,
+      pdf_name: pdf ? dateiname(ergebnis, daten?.beruf) : null,
     }),
   });
   const inhalt = await antwort.json().catch(() => ({}));
@@ -89,7 +97,7 @@ export async function meldeAnFunnel(daten) {
 // 2. + 3. E-Mail
 // ---------------------------------------------------------------------------
 
-export async function sendeMail({ an, betreff, text, html, antwortAn }) {
+export async function sendeMail({ an, betreff, text, html, antwortAn, anhaenge }) {
   const schluessel = process.env.MAIL_API_KEY;
   if (!schluessel) return { uebersprungen: "kein MAIL_API_KEY" };
   const antwort = await fetch("https://api.resend.com/emails", {
@@ -104,6 +112,15 @@ export async function sendeMail({ an, betreff, text, html, antwortAn }) {
       ...(html ? { html } : {}),
       text,
       ...(antwortAn ? { reply_to: antwortAn } : {}),
+      // Anhänge als Base64. Resend nimmt bis 40 MB je Mail; unsere PDFs liegen bei 45 KB.
+      ...(anhaenge && anhaenge.length
+        ? {
+            attachments: anhaenge.map((a) => ({
+              filename: a.name,
+              content: Buffer.isBuffer(a.inhalt) ? a.inhalt.toString("base64") : a.inhalt,
+            })),
+          }
+        : {}),
     }),
   });
   if (!antwort.ok) {
@@ -124,17 +141,32 @@ export async function meldeAnUns(daten, lagerstand) {
   });
 }
 
-export async function schickeAnBetrieb(daten, ergebnis) {
+function dateiname(ergebnis, beruf) {
+  const roh = String(ergebnis?.betrieb || "Betrieb")
+    .replace(/[äÄ]/g, "ae").replace(/[öÖ]/g, "oe").replace(/[üÜ]/g, "ue").replace(/ß/g, "ss")
+    .replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  return "Stellenausschreibung-" + (roh || "Betrieb") + ".pdf";
+}
+
+// Das PDF kommt von außen herein, seit es auch an den Funnel geht: Die Funnel-Meldung läuft
+// vor dieser Funktion, und zweimal rechnen hieße zweimal dieselbe Mappe setzen.
+export async function schickeAnBetrieb(daten, ergebnis, pdf = null) {
   const an = daten?.kontakt?.email;
   if (!an) return { uebersprungen: "keine Adresse" };
+
   const { html, text } = anzeigenMail(daten, ergebnis);
-  return sendeMail({
+  const bericht = await sendeMail({
     an,
-    betreff: "Ihre Stellenanzeigen für " + (daten.beruf || "die offene Stelle"),
+    betreff:
+      "Ihre Stellenausschreibung für " +
+      (daten.beruf || "die offene Stelle") +
+      " — drei Kanäle und die Anleitung",
     html,
     text,
     antwortAn: AN_UNS,
+    anhaenge: pdf ? [{ name: dateiname(ergebnis, daten.beruf), inhalt: pdf }] : undefined,
   });
+  return { ...bericht, pdf: pdf ? Math.round(pdf.length / 1024) + " KB" : "keins" };
 }
 
 // ---------------------------------------------------------------------------
@@ -156,9 +188,21 @@ export function mitFrist(versprechen, ms, was) {
 export function verarbeiteLead(daten, ergebnis) {
   return (async () => {
     const bericht = {};
+
+    // Einmal setzen, zweimal benutzen: Der Funnel bekommt die Mappe als base64, der Betrieb
+    // als Mailanhang. Das PDF ist die Lieferung, die weitergereicht wird — an die Frau im
+    // Büro oder an den, der die Anzeige schaltet. Scheitert es, läuft alles weiter: Die Texte
+    // stehen auch in der Mail. Lieber ohne Anhang als gar nicht.
+    let pdf = null;
+    try {
+      pdf = await ausschreibungPdf(daten, ergebnis);
+    } catch (f) {
+      console.error("PDF gescheitert:", f?.message);
+    }
+
     let lagerstand;
     try {
-      lagerstand = await mitFrist(meldeAnFunnel(daten), 8000, "Funnel");
+      lagerstand = await mitFrist(meldeAnFunnel(daten, pdf, ergebnis), 8000, "Funnel");
       console.log("Funnel:", JSON.stringify(lagerstand));
     } catch (f) {
       lagerstand = { fehler: f?.message };
@@ -172,7 +216,7 @@ export function verarbeiteLead(daten, ergebnis) {
       console.error("Meldung an uns gescheitert:", f?.message);
     }
     try {
-      bericht.zusendung = await mitFrist(schickeAnBetrieb(daten, ergebnis), 8000, "Zusendung");
+      bericht.zusendung = await mitFrist(schickeAnBetrieb(daten, ergebnis, pdf), 8000, "Zusendung");
     } catch (f) {
       bericht.zusendung = { fehler: f?.message };
       console.error("Zusendung an den Betrieb gescheitert:", f?.message);

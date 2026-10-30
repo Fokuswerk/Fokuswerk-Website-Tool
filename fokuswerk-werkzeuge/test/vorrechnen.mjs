@@ -8,6 +8,7 @@
 //   node test/vorrechnen.mjs --los           — rechnet, bis das Guthaben knapp wird
 //   node test/vorrechnen.mjs --los --max 5   — höchstens fünf Läufe
 //   node test/vorrechnen.mjs --liste         — was liegt im Vorrat
+//   node test/vorrechnen.mjs --los --neu     — alles neu, auch was noch frisch ist
 //
 // Sinnvoll als monatlicher Lauf: Das Guthaben setzt sich am Monatsersten zurück, und nach
 // vier Wochen gilt eine Messung ohnehin als abgelaufen.
@@ -58,6 +59,11 @@ async function guthaben(token) {
 const args = process.argv.slice(2);
 const los = args.includes("--los");
 const grenze = Number(args[args.indexOf("--max") + 1]) || Infinity;
+// Alles neu rechnen, auch was noch frisch ist. Gebraucht, wenn sich die MESSUNG geaendert
+// hat und nicht nur gealtert ist: Am 29.10.2026 kam der Google-Ads-Check dazu, und die
+// vorhandenen Messungen hatten die Domains nicht, die er braucht. Ohne diesen Schalter
+// haette der Vorrat die neue Zahl bis zum Ablauf nach vier Wochen nicht gezeigt.
+const alleNeu = args.includes("--neu");
 
 if (args.includes("--liste")) {
   const v = vorratsListe();
@@ -78,7 +84,7 @@ if (!token) {
 
 const g = await guthaben(token);
 const moeglich = Math.max(0, Math.floor((g.frei - PUFFER) / KOSTEN_JE_LAUF));
-const offen = paare().filter(({ gewerk, ort }) => !ausVorrat(gewerk, ort));
+const offen = paare().filter(({ gewerk, ort }) => alleNeu || !ausVorrat(gewerk, ort));
 
 console.log(`Guthaben: ${g.verbraucht.toFixed(2)} von ${g.limit} USD verbraucht, ${g.frei.toFixed(2)} frei`);
 console.log(`Offen:    ${offen.length} Kombinationen, davon passen ${moeglich} ins Guthaben`);

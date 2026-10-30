@@ -15,12 +15,39 @@ const ERLAUBT = (process.env.ORIGINS ||
 
 const AN_UNS = "contact@fokuswerk.de";
 
+// Derselbe Schlüssel wie in api/rangliste.js. Damit lässt sich prüfen, ob ein Zeitfenster
+// angenommen wird, OHNE eine Mail auszulösen.
+//
+// ▲ Warum das hier sein muss: Dieser Endpunkt war einen Tag lang kaputt — die Komponente
+// schickte andere Schlüssel, als er kannte, und jeder Rückrufwunsch endete mit 422. Von
+// außen war das nicht nachweisbar, denn ein unvollständiger Aufruf antwortet genauso wie
+// ein unbekanntes Zeitfenster, und ein vollständiger hätte eine Mail verschickt. Genau
+// diese Blindstelle hat den Fehler so lange verdeckt.
+const DIAGNOSE = "fw-probe-2610";
+const trockenlauf = (req) => req.query?.trocken === "1" && req.query?.diagnose === DIAGNOSE;
+
+// ▲ Diese Schlüssel sind ein Vertrag mit `Stellenanzeiger.tsx`, nicht freie Wortwahl.
+// Die Komponente schickt `gleich`, `mittag`, `feierabend`, `frueh`; hier standen vier
+// andere Wörter. Folge: `FENSTER[k.fenster]` war immer undefiniert, jeder Rückrufwunsch
+// endete mit 422 und der Besucher las „Das hat nicht geklappt. Rufen Sie durch." — und
+// zwar genau nach dem Tippen auf „Gleich, ich bin am Handy". Der wärmste Moment des
+// Trichters war seit dem Bau tot. Wer hier Wörter ändert, ändert sie in beiden Dateien.
+//
+// Die vier alten Schlüssel bleiben als Zweitnamen stehen, damit eine noch im Browser
+// liegende ältere Fassung der Komponente nicht ins Leere läuft.
 const FENSTER = {
+  gleich: "jetzt gleich",
+  mittag: "in der Mittagspause",
+  feierabend: "nach Feierabend, ab 17 Uhr",
+  frueh: "morgen früh, vor 7:30 Uhr",
   heute: "heute noch",
   morgen_vormittag: "morgen vormittags",
   morgen_nachmittag: "morgen nachmittags",
   woche: "diese Woche, egal wann",
 };
+
+// Wer „gleich" tippt, hat das Handy in der Hand. Das muss im Postfach auffallen.
+const SOFORT = new Set(["gleich", "heute"]);
 
 const text = (w, max) => {
   const v = typeof w === "string" ? w.trim() : "";
@@ -70,10 +97,14 @@ export default async function handler(req, res) {
     "Die Anzeigen hat der Betrieb bereits bekommen. Gesprächsthema ist die Ausspielung.",
   ].filter((z) => z !== null);
 
+  if (trockenlauf(req)) {
+    return res.status(200).json({ ok: true, gemeldet: false, trockenlauf: fenster });
+  }
+
   try {
     await sendeMail({
       an: AN_UNS,
-      betreff: `Rückruf ${fenster}: ${betrieb}`,
+      betreff: `${SOFORT.has(k?.fenster) ? "SOFORT " : ""}Rückruf ${fenster}: ${betrieb}`,
       text: zeilen.join("\n"),
       antwortAn: email || undefined,
     });

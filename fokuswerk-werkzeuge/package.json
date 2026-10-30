@@ -2,8 +2,15 @@
   "name": "fokuswerk-werkzeuge",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "probe": "node test/lokal.mjs"
+    "probe": "node test/lokal.mjs",
+    "pdf": "node test/pdf-probe.mjs"
+  },
+  "dependencies": {
+    "pdfkit": "0.15.1",
+    "svg-to-pdfkit": "^0.1.8"
   }
 }
