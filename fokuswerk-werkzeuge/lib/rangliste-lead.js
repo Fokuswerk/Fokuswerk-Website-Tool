@@ -275,6 +275,19 @@ export function auswertungMail(daten, e) {
   };
 }
 
+// Was aus den drei Wegen wurde, gehoert ins Protokoll — nicht nur in den Diagnosebericht.
+// Der steht nur da, wo jemand den Schluessel anhaengt, und das tut niemand, waehrend ein
+// echter Lead durchlaeuft. SEO-Analyse und Stellenanzeiger schreiben diese Zeilen seit
+// jeher (`lib/lead.js`, `lib/seo-analyse-lead.js`); hier fehlten sie. Damit war der
+// Wettbewerb das einzige Werkzeug, bei dem eine geplatzte Uebergabe spurlos blieb: Der
+// Besucher bekam seine Rangliste, der Lead verschwand, und im Protokoll stand nichts.
+function protokolliere(werkzeug, bericht) {
+  for (const [weg, wert] of Object.entries(bericht)) {
+    if (wert && wert.fehler) console.error(`${werkzeug}: ${weg} gescheitert:`, wert.fehler);
+    else console.log(`${werkzeug}: ${weg}:`, JSON.stringify(wert));
+  }
+}
+
 export async function verarbeiteRanglisteLead(daten, e) {
   const bericht = {};
   const k = daten?.kontakt || {};
@@ -314,6 +327,7 @@ export async function verarbeiteRanglisteLead(daten, e) {
   bericht.funnel = funnel.status === "fulfilled" ? funnel.value : { fehler: String(funnel.reason?.message || funnel.reason) };
   bericht.meldung = meldung.status === "fulfilled" ? meldung.value : { fehler: String(meldung.reason?.message || meldung.reason) };
   bericht.zusendung = zusendung.status === "fulfilled" ? zusendung.value : { fehler: String(zusendung.reason?.message || zusendung.reason) };
+  protokolliere("Wettbewerb", bericht);
   return bericht;
 }
 
@@ -444,7 +458,9 @@ export async function verarbeiteWarteliste(daten) {
   ]);
 
   const wert = (r) => (r.status === "fulfilled" ? r.value : { fehler: String(r.reason?.message || r.reason) });
-  return { funnel: wert(funnel), meldung: wert(meldung), bestaetigung: wert(bestaetigung) };
+  const bericht = { funnel: wert(funnel), meldung: wert(meldung), bestaetigung: wert(bestaetigung) };
+  protokolliere("Warteliste", bericht);
+  return bericht;
 }
 
 /** Aus dem Urteil die Form, die der PDF-Satz erwartet. */

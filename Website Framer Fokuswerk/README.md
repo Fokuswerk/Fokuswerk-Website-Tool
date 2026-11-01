@@ -1,5 +1,101 @@
 # Fokuswerk — neue Website (Framer-Projekt „FW neu")
 
+## 02.11.2026 — Durchsicht: wo ein Lead ankommt und wo nicht
+
+Anlass war eine Anfrage, deren Benachrichtigung „New Submission" hieß und als Antwortadresse
+„Framer" trug. Sie kam von **`/kontakt`** — der einzigen Seite des Auftritts mit einem
+Framer-eigenen Formular (alle übrigen geprüft, `data-framer-form` kommt nur dort vor).
+
+**Die drei Freebies laufen vollständig.** Gegengeprüft am laufenden Dienst, jeweils im
+Trockenlauf (`?trocken=1&diagnose=…`, rechnet alles, verschickt nichts):
+
+| | Messung/Rechnung | Meldung an uns | Funnel |
+|---|---|---|---|
+| `/seo-analyse` | Note 100 für fokuswerk.de | `contact@fokuswerk.de` | `{"angelegt":true}` am 01.11., 21:39 |
+| `/stellenanzeige` | vier Kanäle, Mappe, Budget | dieselbe Adresse | `{"angelegt":true}` am 01.11., 12:52 |
+| `/wettbewerb` | 15 Plätze aus dem Vorrat | dieselbe Adresse | kein Beleg — siehe unten |
+| Warteliste + Rückruf | nehmen an | `meldungGinge: contact@fokuswerk.de` | — |
+
+Die beiden Funnel-Zeilen stammen aus dem Vercel-Protokoll der letzten sieben Tage und sind
+der Beweis, dass die Übergabe an das Outreach-Werkzeug wirklich greift: zwei echte Leads,
+beide angelegt, keine Fehlerzeile daneben. Der Funnel-Endpunkt antwortet ohne Schlüssel mit
+401, die Schlüssel stehen auf beiden Seiten.
+
+**Das Apify-Guthaben ist nicht mehr leer.** Eine frische Messung (Dachdecker/Westerstede)
+lieferte 6 Betriebe — der Eintrag vom 29.10. ist überholt, `/wettbewerb` kann wieder über
+die neun vorgerechneten Kombinationen hinaus.
+
+### Repariert: der Wettbewerb war das einzige Werkzeug ohne Protokoll
+
+`verarbeiteRanglisteLead` und `verarbeiteWarteliste` sammeln ihre drei Wege sauber mit
+`Promise.allSettled` ein — und schrieben das Ergebnis **nirgendwohin**. Der Bericht stand nur
+da, wo jemand den Diagnoseschlüssel anhängte, und das tut niemand, während ein echter Lead
+durchläuft. Eine geplatzte Übergabe wäre damit spurlos geblieben: Der Besucher bekommt seine
+Rangliste, der Lead verschwindet, im Protokoll steht nichts. Genau deshalb fehlt oben der
+Beleg für `/wettbewerb` — nicht, weil etwas kaputt ist, sondern weil es nichts zu sehen gäbe.
+
+SEO-Analyse und Stellenanzeiger schreiben diese Zeilen seit jeher (`lib/lead.js`,
+`lib/seo-analyse-lead.js`). Jetzt tut es `lib/rangliste-lead.js` auch, über ein gemeinsames
+`protokolliere()`. Ausgerollt.
+
+### Geschlossen: `/kontakt` geht jetzt denselben Weg wie die Freebies
+
+Das Formular dort gehört Framer, nicht uns. Seine Felder sind sauber benannt (Name,
+Unternehmen, E-Mail, Telefon, Website, Thema, Nachricht — dazu elf Spamfallen); unfertig ist,
+was Framer selbst drumherum setzt: Betreff „New Submission", Absender und Antwortadresse
+„Framer", Empfänger ein persönliches Postfach statt `contact@fokuswerk.de`. **Das steht in
+Framers Formulareinstellungen (Empfänger, Absendername, Betreff) und ist über die Agent-API
+nicht erreichbar** — die DSL kennt zu Formularen nur `formSubmitButtonId` und
+`formSubmitTrackingId`.
+
+Daneben hängt jetzt ein eigener Weg: Der Schnipsel `fokuswerk-kontakt-spiegel` (bodyEnd,
+Quelle in `code/custom/kontakt-spiegel-body-end.html`) hört in der Capture-Phase auf das
+`submit`-Ereignis des Formulars und schickt dieselben Werte an **`/api/kontakt`** im
+Werkzeug-Dienst. Von dort gehen sie in den Funnel (`freebie: "Kontaktformular"`) **und** als
+Meldung an `contact@fokuswerk.de` — mit `reply_to` auf den Absender, sodass „Antworten" beim
+Betrieb landet statt bei Framer.
+
+**Er greift in Framers Absendung nicht ein.** Kein `preventDefault`, kein Abwarten, kein
+Ersetzen — Framers Mail kommt weiter. Klemmt unser Weg, ist trotzdem nichts verloren; das
+ist der Grund für die Doppelung und der Grund, warum im Schnipsel alles in `try/catch` steht.
+`keepalive: true`, weil Framer nach dem Absenden die Ansicht wechselt und der Browser die
+Anfrage sonst genau in dem Moment abbricht, in dem der Lead entsteht.
+
+Die elf unsichtbaren Felder werden mitgereicht und serverseitig ausgewertet: Ist eines
+gefüllt, antwortet der Endpunkt `{ok:true}` und tut nichts — ein Bot soll nicht erfahren,
+woran er gescheitert ist.
+
+**Mitgenommen: die Herkunft überlebt den Seitenwechsel.** Die Freebies lesen die utm-Werte
+aus ihrer eigenen Adresse, weil man dort direkt einsteigt. Auf `/kontakt` kommt fast niemand
+direkt an — ohne Ablage trüge jede Anfrage von dort die Quelle „kontaktformular". Der
+Schnipsel legt die erste gesehene Herkunft in `sessionStorage` ab (erster Kontakt zählt, nicht
+letzter) und hängt sich dafür an `pushState`/`replaceState`, weil Framer Seiten teils ohne
+Neuladen wechselt. Gemessen: `/?utm_source=meta&utm_campaign=…` → Klick auf `/kontakt` → die
+Werte stehen noch.
+
+**Gegengeprüft.** Im Browser auf der Live-Seite mit abgefangenem `fetch` (nichts ging raus):
+Der Spiegel feuert vor Framers eigenem Aufruf und schickt alle sieben Felder richtig benannt.
+Danach ein echter Durchlauf gegen den Endpunkt — `{"funnel":{"angelegt":true},"meldung":
+{"gesendet":true}}`, beides auch im Vercel-Protokoll. Der Probelauf-Lead steht im Funnel und
+darf weg.
+
+**Zwei Mails je Anfrage, und das bleibt vorerst so.** Framers Absendung läuft unverändert
+weiter; unsere Mail kommt daneben. Entschieden am 02.11.2026: behalten. Solange Framers Mail
+läuft, ist sie das Netz unter unserem Weg — fällt der Endpunkt aus, merkt man es daran, dass
+nur noch die hässliche Mail kommt, und nicht daran, dass gar keine kommt. Abschalten ließe
+sie sich im Framer-Editor (Formulareinstellung weg von „E-Mail"); Empfänger, Absendername und
+Betreff stehen ebenfalls nur dort.
+
+**Und es gibt wirklich nur dieses eine Formular.** Alle 57 Seiten der Sitemap auf echte
+`<form>`-Tags durchgemessen — Treffer nur auf `/kontakt`, acht sichtbare Felder. Keine andere
+Seite hat auch nur ein Eingabefeld. Vorsicht beim Nachmessen: Der Spiegel-Schnipsel enthält
+selbst die Zeichenkette `data-framer-form` und steht auf jeder Seite; wer danach greppt, zählt
+57 Formulare. Nach `<form[^>]*data-framer-form` suchen.
+
+**Nebenbefund, noch nicht geändert:** Das Auswahlfeld „Thema" hat keine leere erste Option.
+Wer es nicht anfasst, schickt „Neue Website" mit — auch wenn er das gar nicht meint.
+
+
 ## 30.10.2026 — `/stellenanzeige` am Handy durchgemessen
 
 Gemessen wurde auf 375 × 667 (iPhone SE, das kleinste Gerät, das noch zählt), nicht nach
@@ -1210,3 +1306,352 @@ Werkstattkunden ist als Rechenbeispiel auszuweisen, nicht als Zusage.
 lassen sich über den Agenten nicht hochladen — nur direkt im Framer-Editor. Die sieben
 vercel.app-Entwürfe in der Arbeitenliste brauchen eine Entscheidung, bevor sie wieder
 prominent gezeigt werden.
+
+## Meta-Pixel hinter dem Einwilligungstor (30.10.2026, Fassung `5183e2d53`)
+
+Der Pixel „Fokuswerk Website" (`1213729510417925`) existierte seit Monaten im Werbekonto,
+war aber **auf keiner Seite eingebaut** — Events Manager meldete 106 Tage ohne Signal,
+`curl` fand null `fbq`. Die Meta-Anzeigengruppe optimierte damit auf ein Ereignis, das
+nie gemeldet wurde.
+
+**Warum anders gelöst als bei Google Ads:** Der Ads-Tag darf auf jeder Seite laufen, weil
+sein Einwilligungsmodus mit der Vorgabe „abgelehnt" keine Cookies setzt und nur
+kennungslose Pings sendet — § 25 TDDDG greift dann nicht. **Meta hat keinen
+Einwilligungsmodus.** Der Pixel setzt ab dem ersten Treffer `_fbp`. Also wird gar nichts
+geladen, solange niemand zugestimmt hat: kein `fbevents.js`, kein Treffer, kein Cookie.
+
+| Datei | Was sie tut |
+|---|---|
+| `code/custom/meta-pixel-body-end.html` | Lädt den Pixel erst bei Einwilligung, feuert `PageView` und `Lead` |
+| `code/custom/einwilligung-body-end.html` | Gibt die Einwilligung in `einwilligungMelden()` an `window.fwMetaEinwilligung` weiter; der Hinweistext nennt jetzt Meta |
+
+**Das Skript prüft die Einwilligung selbst**, statt sich rufen zu lassen. Grund ist die
+Reihenfolge im bodyEnd: Wer beim Laden schon zugestimmt hatte, durchläuft `analytics()`
+im Einwilligungs-Skript darüber — das läuft, bevor der Pixel-Block gelesen ist. Ein
+Aufruf von dort ginge ins Leere.
+
+**`Lead` nur bei einem echten Abschluss.** Alle drei Freebies wechseln per
+`location.assign()` auf eine eigene Ergebnisseite und legen den Befund vorher im
+`sessionStorage` ab. Der Schlüssel ist das genauere Signal als der Pfad: Wer die Adresse
+aus einem Lesezeichen aufruft, hat nichts abgeschlossen.
+
+| Ergebnisseite | Schlüssel |
+|---|---|
+| `/seo-analyse/ergebnis` | `fw-seo-ergebnis` |
+| `/stellenanzeige/ergebnis` | `fw-stellen-ergebnis` |
+| `/wettbewerb/ergebnis` | `fw-wettbewerb-ergebnis` |
+
+Frist 30 Minuten wie in den Bausteinen. Gezählt wird **einmal je Übergabe**, nicht je
+Seitenaufruf — die Zeitmarke der Übergabe dient als `eventID`, womit später die
+Conversions API dazukommen kann, ohne doppelt zu zählen.
+
+**Gemessen im Browser, nicht angenommen:**
+
+| Lage | `fbq` | `fbevents.js` | `_fbp` |
+|---|---|---|---|
+| ohne Einwilligung | nicht da | nicht geladen | nicht gesetzt |
+| nach Zustimmung | geladen | geladen | gesetzt |
+| nach Widerruf | stillgelegt | — | gelöscht |
+
+Ablauf auf der Ergebnisseite mit frischer Übergabe: **1 × PageView, 1 × Lead**. Zwei
+weitere Seitenwechsel danach: 2 × PageView, **0 × Lead**. Lesezeichen-Aufruf ohne
+Übergabe: nichts.
+
+**Falle beim Nachmessen:** Wer `window.fbq` zum Mitschreiben umhüllt und die Hülle beim
+zweiten Versuch noch einmal darüberlegt, sieht jeden Treffer doppelt und hält das für
+einen Fehler im Pixel. Erst neu laden, dann genau eine Hülle setzen.
+
+Der Einwilligungs-Hinweis nennt Meta beim Namen, die Zustimmung deckt den Pixel also ab.
+Die Datenschutzabschnitte dazu kamen am 31.10.2026 dazu — siehe unten.
+
+## Datenschutzabschnitte 12 und 13 (31.10.2026, Fassung `3d6fd412a`)
+
+Live auf `/datenschutz`: **12. Werbemessung mit Google Ads** (der Tag lief seit Wochen auf
+jeder Seite und stand nirgends in der Erklärung) und **13. Meta-Pixel für Facebook und
+Instagram**. Abschnitt 8 nennt beim Widerruf jetzt alle drei Dienste statt nur Analytics.
+Der Wortlaut und die Belege stehen in `Dokumente/Datenschutz-Meta-Pixel.md`.
+
+Zwei Dinge nebenbei richtiggestellt: Abschnitt 11 (Werkzeug zur Stellenanzeige) stand
+**ohne Schriftwerte** in der Seite — andere Größe, andere Laufweite, schwarz statt
+Textmarke — und ihm fehlte die Leerzeile, die zwischen allen anderen Abschnitten steht.
+Beides angeglichen. Live geprüft: 45 Absätze, 13 Überschriften, **kein** Absatz ohne
+`--framer-font-size`.
+
+### Was dabei schiefging, und warum es hier steht
+
+Die Annahme vom 30.10., der Agent könne keine Absätze anlegen, war falsch: `applyChanges`
+kennt `+TextBlock`, `+TextRun`, `+TextLineBreak` und `DEL`. Nur `replaceText` kann es
+nicht — das schluckt Zeilenumbrüche.
+
+Der erste Lauf mischte `+`-Befehle mit `SET` auf positionsbasierte Kennungen
+(`v:UyQEDhY64:24:0`). Die `SET`s meldeten **„Virtual rich text child no longer exists"** —
+und der Knoten verlor dabei **alle 34 bestehenden Absätze**. Übrig blieben die 11 neu
+erzeugten. Der Rechtstext war weg.
+
+Zurückgeholt aus dem **Live-HTML**: Solange nicht neu veröffentlicht wurde, liefert
+`curl -s --compressed https://fokuswerk.de/datenschutz` den kompletten alten Text samt
+Tags, Schriftwerten und Links. Daraus 34 Absätze zeichengenau neu gebaut, Abweichungen
+null. Die Quelle liegt als `werkzeuge/sicherung/ds-rechtstext-vor-31-10.html`, der
+Sollstand als `ds-bloecke-45.json`, das Aufbauskript als `ds-aufbau-31-10.js`.
+
+**Vier Regeln für das nächste Mal:**
+
+- **Nie `SET` auf `v:…`-Kennungen.** Was sich ändern soll, wird als vollständiger neuer
+  Absatz erzeugt.
+- **Immer den ganzen Soll-Inhalt** in einem Lauf beschreiben, mit `index="0"`, `"1"`, …
+  Die Schriftwerte gehören in jeden `+TextBlock`-Befehl einzeln.
+- **Nach jedem Lauf die Absatzzahl gegenprüfen.** „Commands applied cleanly" sagt nichts
+  darüber: derselbe Befehlssatz hat einmal ersetzt und einmal angehängt (79 statt 45
+  Absätze). Überzählige mit `DEL` entfernen — **immer den letzten, ein `DEL` pro
+  `applyChanges`-Aufruf**, weil jede Änderung die Positionen verschiebt.
+- **Texte nicht durch die DSL schicken.** Als Platzhalter (`#T07_0#`) erzeugen, danach je
+  Platzhalter ein `replaceText` — dann trifft kein Semikolon und kein Anführungszeichen
+  den Parser.
+
+Die drei Breakpoint-Zwillinge (`UyQEDhY64`, `qMzMX4mzEUyQEDhY64`, `oMYgIhBjIUyQEDhY64`)
+teilen den Inhalt: alle drei zeigten danach dieselben 45 Absätze.
+
+
+## Trichtermessung: wo die Leute hängen bleiben (31.10.2026, Fassung `ca0746109`)
+
+**Die Frage war: Es klicken Leute, aber sie schließen nicht ab — woran liegt das?**
+Die Antwort steckte zur Hälfte schon im Code und zur Hälfte fehlte sie.
+
+### Was es schon gab
+
+`Stellenanzeiger.tsx` meldet seit jeher neun Ereignisse, darunter `trichter_gesehen`,
+`trichter_schritt` (mit `schritt` und sprechendem `name`), `trichter_fehler` (mit `code`)
+und `trichter_abgeschlossen`. In GA4 standen am 31.10. über 28 Tage:
+
+| Ereignis | Anzahl | Nutzer |
+|---|---|---|
+| `trichter_gesehen` | 9 | 3 |
+| `trichter_schritt` | 14 | 3 |
+| `trichter_abgeschlossen` | 1 | 1 |
+| `werkzeug_abschluss` | 6 | 4 |
+
+Drei Leute haben einen Trichter angefangen, einer hat ihn beendet. Die Mechanik stimmt,
+die Menge ist noch zu klein für eine Aussage.
+
+### Die drei Lücken, die zu waren
+
+**1. GA4 hatte null benutzerdefinierte Dimensionen.** `schritt` und `name` gingen zwar
+raus, aber GA4 zeigt Ereignisparameter in Berichten nur, wenn sie als Dimension
+registriert sind. Ohne das sieht man, *dass* jemand einen Schritt gemacht hat, nie
+*welchen*. Angelegt (Anwendungsbereich jeweils „Ereignis"):
+
+| Dimension | Parameter |
+|---|---|
+| Trichterschritt | `schritt` |
+| Trichterschritt Name | `name` |
+| Werkzeug | `werkzeug` |
+| Herkunft | `herkunft` |
+| Trichterfehler | `code` |
+
+**GA4 füllt nicht rückwirkend.** Diese Dimensionen sammeln ab dem Zeitpunkt ihrer
+Anlage, nicht davor. Jeder Tag ohne sie ist verloren.
+
+**2. `SeoAnalyse.tsx` und `Rangliste.tsx` meldeten keine Schritte.** SeoAnalyse kannte
+nur `werkzeug_abschluss`, Rangliste gar nichts — ausgerechnet SeoAnalyse ist die Seite,
+auf die die Anzeigen C und D künftig zeigen. Beide haben jetzt dieselbe `melde()`-Funktion
+wie der Stellenanzeiger, wortgleich, unterschieden am Feld `werkzeug`
+(`seo-analyse` / `stellenanzeige` / `wettbewerb`).
+
+Die Stufennamen: SeoAnalyse `adresse` → `anfragen` → `ziel` → `kontakt`.
+Rangliste `auftakt` → `betrieb` → `ort` → `auswahl` → `kontakt` → `ergebnis`.
+
+**3. `trichter_gesehen` feuerte auch auf der Ergebnisseite.** Damit zählte jeder
+Abschluss zusätzlich als Einstieg und die Quote sah besser aus, als sie ist. In allen
+drei Bausteinen jetzt mit `if (aufErgebnisseite) return` abgeriegelt.
+
+Nebenbei: `herkunftLesen()` in `Rangliste.tsx` las nur `utm_*`. Ein Anzeigenklick, der
+nur `fbclid` oder `gclid` mitbringt, galt damit als „ohne Quelle". Liest jetzt auch die
+Klick-Kennungen, wie die beiden anderen.
+
+### Was man trotzdem nicht sieht
+
+- **Wer das Einwilligungsbanner wegklickt, ist in GA4 unsichtbar.** Die Ereignisse gehen
+  zwar in die `dataLayer`, aber ohne Zustimmung lädt `gtag` nicht, und nichts wird
+  gesendet. Der Banner selbst ist damit ein Absprungpunkt, den GA4 nicht messen kann.
+- **Die Standardberichte hinken rund einen Tag hinterher.** Am 31.10. zeigte der
+  Ereignisbericht für „heute" noch 0, während die Kurve darüber schon 20 auswies. Für
+  den laufenden Tag hilft nur Echtzeit (30 Minuten) oder DebugView.
+
+### Live gegengeprüft
+
+Alle drei Pakete neu gebaut (neue Hashes), Ereignisnamen in allen dreien vorhanden. Im
+Browser auf `/seo-analyse` nach dem Laden in der `dataLayer`:
+
+```
+{ event: "trichter_gesehen", werkzeug: "seo-analyse", herkunft: "direkt" }
+{ event: "trichter_schritt", werkzeug: "seo-analyse", schritt: 0, name: "adresse" }
+```
+
+Der Schrittwechsel selbst wurde nicht durchgespielt — der nächste Schritt löst den
+Vorlauf am Endpunkt aus, und dafür gibt es keinen Grund, einen echten Messlauf zu
+verbrennen. Die Stufenlogik ist dieselbe wie im Stellenanzeiger, der seit Wochen
+`trichter_schritt` über mehrere Stufen liefert.
+
+**Falle beim Veröffentlichen:** Es waren reine Code-Änderungen, also hat
+`werkzeuge/publizieren.js` wie vorgesehen gestoppt („Leinwand unberührt"). Ausgelöst
+wurde der Neubau mit einer Umbenennung: die Instanz `mCbAlXLNH` auf `/seo-analyse` heißt
+jetzt „SEO- und GEO-Analyse (Trichter)" statt „… (Werkzeug)".
+
+## Trichterbefund 01.11.2026
+
+Stand der Abfrage: 01.11.2026, gegen 11 Uhr. Exploration „Freebie-Trichter" in GA4:
+https://analytics.google.com/analytics/web/#/analysis/a364667271p500533180/edit/zY96w6gJQuKj6X3pRCBXHw
+
+**Ergebnis: Die Abbruchstufe lässt sich noch nicht bestimmen.** GA4 enthält bis zum 31.10.
+keinen einzigen Trichterlauf mit Werkzeug-Wert. Von den 83 Link-Klicks ist in GA4 bisher
+keine Sitzung aus Meta angekommen.
+
+### Aufbau der Exploration
+
+- Tab „Explorative Trichteranalyse 1": `trichter_gesehen` → `trichter_schritt` →
+  `trichter_abgeschlossen` → `werkzeug_abschluss`, aufgeschlüsselt nach **Werkzeug**.
+- Tab „Freies Format 1": Ereignisname × Werkzeug × Trichterschritt Name, aktive Nutzer.
+- Tab „Freies Format 2": Sitzung – Quelle/Medium, Sitzungen.
+- Zeitraum: rollend „Letzte 14 Tage". Alle fünf Dimensionen sind auswählbar.
+- GA4 füllt nicht rückwirkend: Vor dem 31.10. haben die Dimensionen keine Werte.
+
+### GA4: Trichter 18.–31.10.
+
+| Schritt | Aktive Nutzer | Werkzeug |
+|---|---:|---|
+| `trichter_gesehen` | 3 | (nicht festgelegt) |
+| `trichter_schritt` | 3 | (nicht festgelegt) |
+| `trichter_abgeschlossen` | 1 | (nicht festgelegt) |
+| `werkzeug_abschluss` | 4 (als Trichterstufe: 1) | (nicht festgelegt) |
+
+- Die Menge ist für eine Aussage zu klein (unter 30 je Stufe), deshalb steht hier keine Quote.
+- Stufen je Werkzeug (`Trichterschritt Name`): durchgehend (nicht festgelegt), also nicht gemessen.
+- `trichter_fehler` kommt im Zeitraum nicht vor. Ein Defekt lässt sich daraus weder belegen
+  noch ausschließen, weil kein Lauf aus der Kampagne erfasst ist.
+- Am 31.10. selbst: 9 Nutzer, 10 Sitzungen, kein einziges `trichter_*`-Ereignis und kein
+  `werkzeug_abschluss`.
+- Für den 01.11. liefert die Exploration noch keine Daten. Die Echtzeit-Ansicht zeigte bei der
+  Abfrage 0 aktive Nutzer.
+
+### Gegenrechnung Meta gegen GA4
+
+Kampagne „Fokuswerk | Freebies | Leads", Link-Klicks laut Werbeanzeigenmanager:
+
+| Anzeige | Impressionen | Link-Klicks |
+|---|---:|---:|
+| A – Mitarbeiter 2 | 348 | 20 |
+| B – Mitarbeiter 1 | 143 | 18 |
+| C – SEO Region | 1.094 | 38 |
+| D – SEO Google | 337 | 7 |
+| **Summe** | **1.922** | **83** |
+
+Sitzungen in GA4 am 31.10.: google/organic 5, (direct)/(none) 2, chatgpt.com/ai-assistant 2,
+wav-wst.de/referral 1, zusammen 10. Aus `utm_source=meta`: **0**. Auch unter den 96 Sitzungen
+vom 18.–31.10. steht keine Quelle `meta`. Landingpage-Aufrufe zeigt Meta ebenfalls nicht an.
+
+Differenz: 83 Klicks gegen 0 Sitzungen. Die Ursache ist nicht gemessen. Infrage kommen das
+Einwilligungsbanner und die Verarbeitungszeit von GA4, weil der 31.10. erst gestern war. Dass
+wirklich alle 83 Klicks am Banner hängen, ist damit nicht belegt. Wie viele Klicks die Seite
+überhaupt erreicht haben, ist ebenfalls nicht gemessen.
+
+### Zustand der Kampagne
+
+Laut Verlauf im Werbekonto:
+
+- Auslieferung gestartet am 31.10.: D 15:38, A 15:40, B 15:45, C 15:50.
+- **Am 01.11. um 00:10 wurde die Kampagne von Hand abgeschaltet**, Status „Inaktiv"
+  (geändert von: Julius Abt). Sie läuft also nicht mehr. Die Laufzeit betrug rund achteinhalb
+  Stunden.
+- Das Tagesbudget steht auf **21 €**, nicht auf 15 €: am 31.10. um 14:20 von 15 € erhöht.
+- Im Konto liegen **7 unveröffentlichte Entwürfe**, darunter die Kampagne
+  „Fokuswerk | Freebies | Leads 2026-11" mit den Anzeigen A–D als Entwurf.
+
+### Ziel-URLs C und D
+
+**C und D zeigen jetzt auf `/seo-analyse`.** Die Änderung ging am 31.10. um 18:35 raus und war
+um 18:38 (C) und 18:39 (D) wieder aktiv. Die ersten knapp drei Stunden liefen sie also noch mit
+dem alten Ziel; laut Stand vom 31.10. war das `/stellenanzeige`. Wie sich die 45 Klicks von C
+und D auf vorher und nachher verteilen, ist nicht gemessen. Eine Auswertung je Werkzeug wäre
+für diese Klicks entsprechend verzerrt.
+
+### Was daraus folgt
+
+1. Die Exploration am 02.11. und 03.11. erneut ansehen. Erst dann ist klar, ob die Sitzungen
+   vom 31.10. nur verspätet kommen. Bleibt es bei 0 aus Meta, liegt es nicht an der
+   Verarbeitungszeit.
+2. In diesem Fall einen Testklick mit den echten Anzeigen-Parametern machen, mit und ohne
+   Einwilligung, und prüfen, ob `utm_source=meta` und `trichter_gesehen` in GA4 ankommen.
+3. Um die Abbruchstufe zu messen, braucht es wieder Auslieferung. Das ist die Entscheidung von
+   Thees. Im Konto wurde nichts geändert und nichts veröffentlicht.
+
+---
+
+## Messung auf den Trichterseiten ohne Einwilligung (1.11.2026)
+
+**Entscheidung von Thees, nachdem die Rechtslage benannt war.** Auf `/seo-analyse`,
+`/stellenanzeige` und `/wettbewerb` (samt Unterseiten) erscheint kein Einwilligungs-
+hinweis, und Google Analytics, Google Ads und der Meta-Pixel laden ab dem ersten Bild
+mit vollen Cookies. Auf allen übrigen Seiten bleibt alles wie bisher.
+
+### Die Weiche
+
+`window.fwSofortMessen` wird in `einwilligungsmodus-head-start.html` gesetzt — dem ersten
+Skript der Seite. Alle anderen Bausteine lesen sie nur ab:
+
+| Baustein | Was sich ändert |
+|---|---|
+| `einwilligungsmodus-head-start.html` | setzt die Weiche; Google Ads startet mit `granted` statt `denied` |
+| `schleuse-head-ende.html` | lässt Framers Analytics-Tag durch, statt es im `<noscript>` zu verschlucken |
+| `einwilligung-body-end.html` | zeigt keinen Hinweis, ruft stattdessen `analytics()` |
+| `meta-pixel-body-end.html` | startet selbst, statt auf die Zustimmung zu warten |
+
+```js
+var TRICHTER = /^\/(seo-analyse|stellenanzeige|wettbewerb)(\/|$)/;
+window.fwSofortMessen = TRICHTER.test(location.pathname) && wahl !== "nein";
+```
+
+**Ein ausdrückliches „Ablehnen" bleibt gültig.** Wer auf einer anderen Seite widersprochen
+hat, wird auch im Trichter nicht gemessen. Das kostet praktisch nichts — auf den
+Trichterseiten erscheint der Hinweis ja gar nicht — und verhindert den Fall, dass ein
+erklärter Widerspruch übergangen wird.
+
+**Seitenwechsel ohne Neuladen** werden mitgenommen: Das Einwilligungs-Skript hängt sich in
+`pushState`, `replaceState` und `popstate` und schaltet nach, wenn der Pfad in den Trichter
+wechselt. Sonst liefe die Messung nur bei Direkteinstiegen, nicht bei einem Klick aus dem
+Menü. Zugeschaltet wird dabei nur, nie abgeschaltet.
+
+### Gegengeprüft, alle vier Fälle
+
+| Fall | Ergebnis |
+|---|---|
+| `/seo-analyse` direkt aufgerufen | kein Hinweis; `fbq` geladen, PageView gefeuert, `_fbp` und `_fbc` gesetzt; GA4 mit drei Treffern, `_ga` gesetzt; Ads-Tag mit `_gcl_au` |
+| Startseite | Hinweis erscheint weiterhin, nichts geladen |
+| Startseite → Trichter ohne Neuladen | Hinweis verschwindet, alles schaltet nach |
+| Zuvor „Ablehnen" geklickt | im Trichter nichts geladen, keine Cookies |
+
+Fassung `76a151095`.
+
+### Datenschutzerklärung nachgezogen
+
+Sie behauptete das Gegenteil („Ohne Ihre Zustimmung wird der Pixel nicht geladen"). Acht
+Stellen über `framer.agent.replaceText` geändert — Abschnitte 5, 8, 12 und 13. Struktur
+unverändert: 45 Blöcke, 40 TextRuns, wie vorher. Fassung `def0ce735`.
+
+**`replaceText` ist der sichere Weg für Textänderungen im Rich-Text.** Es tastet die
+Struktur nicht an, anders als `applyChanges` mit `+TextBlock`/`+TextRun`, bei dem am
+31.10. alle 34 Absätze verloren gingen. Signatur:
+`framer.agent.replaceText({ id, searchText, replaceText }, { pagePath })`, gibt `true`
+zurück, wenn ersetzt wurde.
+
+### Was damit nicht aus der Welt ist
+
+Das Setzen der Cookies ohne Einwilligung bleibt ein Verstoß gegen § 25 Abs. 1 TDDDG, und
+Metas EU-Nutzereinwilligungsrichtlinie verlangt für Pixeldaten aus der EU eine
+Einwilligung; ein Verstoß kann zur Sperre des Werbekontos führen. Die Datenschutzerklärung
+beschreibt den Zustand jetzt zutreffend und stützt ihn auf das berechtigte Interesse
+(Art. 6 Abs. 1 lit. f DSGVO) — das deckt die DSGVO-Seite ab, nicht die des TDDDG.
+
+Der cookiefreie Weg bleibt möglich: Google Analytics in den Einwilligungsmodus wie Google
+Ads, Meta über die Conversions API vom Server (`fokuswerk-werkzeuge`, die `eventID` liegt
+im Pixel-Baustein bereit). Zurückdrehen heißt: die vier Stellen mit `fwSofortMessen`
+entfernen.

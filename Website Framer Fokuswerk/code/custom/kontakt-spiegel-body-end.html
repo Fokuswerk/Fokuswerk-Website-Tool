@@ -1,0 +1,129 @@
+<script id="fokuswerk-kontakt-spiegel">
+// Die Anfrage von /kontakt zusätzlich an unseren eigenen Endpunkt spiegeln.
+//
+// WARUM: Das Formular dort gehört Framer. Es schickt seine Felder an Framers Dienst, der
+// daraus eine Mail mit dem Betreff „New Submission" macht — Absender und Antwortadresse
+// „Framer" — und legt sie ins eingetragene Postfach. Dort endet der Weg. Kein Eintrag im
+// Sales-Funnel, keine Adresse, an die „Antworten" wirklich geht.
+//
+// Damit war /kontakt der einzige Lead-Weg der Seite, der NICHT im Outreach-Werkzeug
+// ankam, während die drei Freebies jeden einzelnen dort anlegen.
+//
+// WAS DIESES SKRIPT NICHT TUT: Es greift in Framers Absendung nicht ein. Kein
+// preventDefault, kein Abwarten, kein Ersetzen. Es hört in der Capture-Phase zu und
+// schickt nebenher dieselben Werte an /api/kontakt. Framers Mail kommt weiter — klemmt
+// also unser Weg, ist trotzdem nichts verloren. Das ist der Grund für die Doppelung,
+// und der Grund, warum hier alles in try/catch steht: Ein Fehler in diesem Skript darf
+// die Anfrage eines Betriebs nicht kosten.
+(function () {
+  "use strict";
+  if (window.fwKontaktSpiegel) return;
+  window.fwKontaktSpiegel = true;
+
+  var ZIEL = "https://fokuswerk-werkzeuge.vercel.app/api/kontakt";
+  // Die unsichtbaren Felder, die Framer selbst ins Formular hängt. Achtung auf die
+  // Schreibweise: Die echten Felder sind groß ("Website"), die Fallen klein ("website").
+  var FALLEN = ["website", "company", "message", "subject", "title", "description",
+                "feedback", "notes", "details", "remarks", "comments"];
+
+  // ---- Herkunft über den Seitenwechsel hinweg merken ----------------------
+  // Die Freebies lesen die utm-Werte aus ihrer eigenen Adresse, weil man dort direkt
+  // einsteigt. Auf /kontakt kommt fast niemand direkt an — wer über eine Anzeige kam,
+  // war vorher auf der Startseite, und dann steht in der Adresse nichts mehr. Ohne diese
+  // Ablage trüge jede Anfrage von hier die Quelle „kontaktformular", und keine Anzeige
+  // ließe sich einem Abschluss zuordnen.
+  function herkunftLesen() {
+    try {
+      var p = new URLSearchParams(location.search);
+      var ers = function () {
+        for (var i = 0; i < arguments.length; i++) {
+          var w = p.get(arguments[i]);
+          if (w && w.length <= 80) return w;
+        }
+        return null;
+      };
+      var klick = ers("gclid", "gbraid", "wbraid") ? "google"
+        : p.get("fbclid") ? "meta"
+        : p.get("ttclid") ? "tiktok"
+        : p.get("msclkid") ? "microsoft"
+        : null;
+      var h = { quelle: ers("utm_source") || klick, kampagne: ers("utm_campaign"), anzeige: ers("utm_content", "utm_term") };
+      return h.quelle || h.kampagne || h.anzeige ? h : null;
+    } catch (e) { return null; }
+  }
+  function herkunftMerken() {
+    try {
+      var neu = herkunftLesen();
+      // Der erste Kontakt zählt, nicht der letzte: Wer über eine Anzeige kam und später
+      // noch einmal über Google sucht, bleibt der Anzeige zugeordnet.
+      if (neu && !sessionStorage.getItem("fw-herkunft")) {
+        sessionStorage.setItem("fw-herkunft", JSON.stringify(neu));
+      }
+    } catch (e) {}
+  }
+  function herkunftHolen() {
+    try { return JSON.parse(sessionStorage.getItem("fw-herkunft") || "null") || herkunftLesen(); }
+    catch (e) { return herkunftLesen(); }
+  }
+  herkunftMerken();
+  // Framer wechselt Seiten teils ohne Neuladen. Ohne das hier stünde die Herkunft nur,
+  // wenn jemand direkt auf der beworbenen Seite einsteigt und nirgends hinklickt.
+  try {
+    ["pushState", "replaceState"].forEach(function (n) {
+      var alt = history[n];
+      history[n] = function () { var r = alt.apply(this, arguments); herkunftMerken(); return r; };
+    });
+    addEventListener("popstate", herkunftMerken);
+  } catch (e) {}
+
+  // ---- Die Absendung mitlesen ---------------------------------------------
+  var zuletzt = "";
+  var zuletztAm = 0;
+
+  addEventListener("submit", function (e) {
+    try {
+      var form = e.target;
+      if (!form || !form.matches || !form.matches("form[data-framer-form]")) return;
+      if (!/^\/kontakt\/?$/.test(location.pathname)) return;
+
+      var d = new FormData(form);
+      var w = function (n) { var v = d.get(n); return typeof v === "string" ? v.trim() : ""; };
+
+      // Ohne Adresse schickt Framer ohnehin nicht ab (das Feld ist `required`), und ohne
+      // Namen auch nicht. Kommt hier trotzdem etwas Leeres an, war es kein Mensch.
+      var email = w("E-Mail");
+      var name = w("Name");
+      if (!email || !name) return;
+
+      // Derselbe Datensatz zweimal in zehn Sekunden ist ein Doppelklick, kein zweiter Lead.
+      var kennung = email + "|" + w("Nachricht");
+      var jetzt = Date.now();
+      if (kennung === zuletzt && jetzt - zuletztAm < 10000) return;
+      zuletzt = kennung; zuletztAm = jetzt;
+
+      var fallen = {};
+      FALLEN.forEach(function (n) { var v = d.get(n); if (typeof v === "string" && v.trim()) fallen[n] = v.trim(); });
+
+      // `keepalive`, weil Framer nach dem Absenden die Ansicht wechselt. Ohne das bricht
+      // der Browser die Anfrage ab, sobald das Formular aus dem Bild ist — und der Lead
+      // wäre genau in dem Moment weg, in dem er entsteht.
+      fetch(ZIEL, {
+        method: "POST",
+        keepalive: true,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: name,
+          unternehmen: w("Unternehmen"),
+          email: email,
+          telefon: w("Telefon"),
+          website: w("Website"),
+          thema: w("Thema"),
+          nachricht: w("Nachricht"),
+          fallen: fallen,
+          herkunft: herkunftHolen() || {},
+        }),
+      }).catch(function () {});
+    } catch (f) {}
+  }, true);
+})();
+</script>
