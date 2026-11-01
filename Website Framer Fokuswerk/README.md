@@ -92,8 +92,27 @@ Seite hat auch nur ein Eingabefeld. Vorsicht beim Nachmessen: Der Spiegel-Schnip
 selbst die Zeichenkette `data-framer-form` und steht auf jeder Seite; wer danach greppt, zählt
 57 Formulare. Nach `<form[^>]*data-framer-form` suchen.
 
-**Nebenbefund, noch nicht geändert:** Das Auswahlfeld „Thema" hat keine leere erste Option.
-Wer es nicht anfasst, schickt „Neue Website" mit — auch wenn er das gar nicht meint.
+### Das Auswahlfeld „Thema" fragt jetzt, statt zu raten
+
+Es hatte keine leere erste Option. Wer es nicht anfasste, schickte „Neue Website" mit — und
+im Funnel stand eine Vorqualifizierung, die niemand gegeben hatte. Jetzt steht „Worum geht
+es?" davor, Wert leer; wer nichts wählt, schickt nichts. Die Meldung schreibt dann
+„ohne Angabe".
+
+**Zwei Fallen auf dem Weg dahin, beide erst im Browser sichtbar:**
+
+- **`disabled="false"` ist in der DSL wahr.** Nach dem ersten Lauf waren *alle sechs*
+  Optionen gesperrt. Für „nicht gesperrt" gehört `"null"` dort hin, nicht `"false"`.
+- **Eine gesperrte erste Option löst das Problem nicht.** Der Browser überspringt sie bei
+  der Vorauswahl und nimmt die nächste wählbare — also wieder „Neue Website". Der
+  Platzhalter muss wählbar sein; seinen Dienst tut der leere Wert, nicht die Sperre.
+- **`formSelectOptions.<i>` schreibt die ganze Liste, nicht ein Element.** Ein Lauf mit nur
+  `formSelectOptions.0.disabled="null"` ließ live **eine** Option übrig, die anderen fünf
+  waren weg. Die Liste wird auf den höchsten genannten Index gekürzt. Also immer alle
+  Einträge in einem Lauf schreiben — dieselbe Lehre wie beim Rich-Text.
+
+Gegengeprüft auf der Live-Seite: sechs Optionen, keine gesperrt, unberührt steht
+`selectedIndex 0` mit Wert `""`, und eine Absendung ohne Antippen schickt `thema: ""`.
 
 
 ## 30.10.2026 — `/stellenanzeige` am Handy durchgemessen
