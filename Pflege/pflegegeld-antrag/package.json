@@ -1,0 +1,35 @@
+{
+  "name": "pflegegeld-antrag",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3210",
+    "build": "next build",
+    "start": "next start -p 3210",
+    "pruefen": "node --no-warnings src/lib/nba.test.ts && node pruefung/klassen.mjs && node pruefung/kontrast.mjs",
+    "prebuild": "rm -rf .next",
+    "klassen": "node pruefung/klassen.mjs",
+    "kontrast": "node pruefung/kontrast.mjs",
+    "seiten": "node pruefung/seiten.mjs",
+    "bilder": "node werkzeug/bilder.mjs"
+  },
+  "dependencies": {
+    "next": "^16.4.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "@types/react": "19.0.2",
+    "@types/react-dom": "19.0.2",
+    "playwright": "^1.64.1",
+    "typescript": "5.7.2"
+  },
+  "browserslist": [
+    "> 0.3%",
+    "last 3 versions",
+    "Safari >= 15",
+    "iOS >= 15",
+    "not dead"
+  ]
+}
