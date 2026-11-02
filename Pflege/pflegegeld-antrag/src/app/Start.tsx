@@ -161,8 +161,8 @@ export default function Start({ tage }: { tage: number }) {
                 name="hero"
                 breiten={[900, 1500]}
                 sizes="(min-width: 980px) 44vw, 100vw"
-                hoehe={[1200, 1999]}
-                alt="Die Hände einer älteren Person ruhen auf dem Griff eines Gehstocks"
+                hoehe={[1200, 2000]}
+                alt="Ein älterer Mann beugt sich im Wohnzimmer zu seiner Frau, die im Sessel sitzt"
                 prioritaet
               />
             </div>

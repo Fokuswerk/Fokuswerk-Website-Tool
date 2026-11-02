@@ -138,12 +138,12 @@ h2 { margin-bottom: var(--s-4); }
 h3 { margin-bottom: var(--s-2); }
 p { margin: 0 0 1.1em; }
 
-/* Lange deutsche Woerter ("Begutachtungsmappe", "Pflegeneuordnungsgesetz")
-   sprengen sonst schmale Schirme. Getrennt wird aber nur da, wo es die Zeile
-   wirklich rettet: auf einem breiten Schirm liest sich ein "Ange-hoerigen" in
-   der Schlagzeile wie ein Fehler. */
+/* Lange deutsche Woerter brechen nur, wenn sie sonst ueber den Rand liefen.
+   Silbentrennung ist bewusst AUS: nachgemessen passen auch
+   "Begutachtungsmappe" und "Pflegeneuordnungsgesetz" bei 320 px ohne sie - die
+   Schriftgroesse schrumpft ja mit. Eingeschaltet trennte Chrome dagegen die
+   Schlagzeile zu "An-gehoerigen", und das liest sich wie ein Fehler. */
 h1, h2, h3 { overflow-wrap: break-word; text-wrap: balance; }
-@media (max-width: 420px) { h1, h2, h3 { hyphens: auto; } }
 p, li { text-wrap: pretty; }
 a { color: inherit; text-underline-offset: 3px; }
 strong { font-weight: 600; }
