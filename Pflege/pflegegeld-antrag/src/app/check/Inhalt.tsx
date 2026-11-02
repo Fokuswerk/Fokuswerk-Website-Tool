@@ -18,6 +18,7 @@ import { melden } from "@/lib/messen";
 const MODULE: ModulId[] = [1, 2, 3, 4, 5, 6];
 const STELLE = "pflegegeld-antrag.stelle";
 const SPEICHER = "pflegegeld-antrag.antworten";
+const KIND = "pflegegeld-antrag.kind";
 
 const MODUL_EINLEITUNG: Record<ModulId, string> = {
   1: "Es geht nur um die Bewegung, nicht um die Gründe. Gewertet wird, was ohne Hilfe gelingt.",
@@ -62,6 +63,12 @@ function pflegegeldEntwurf(grad: number): string {
 export default function Inhalt_Check() {
   const [index, setIndex] = useState(0);
   const [a, setA] = useState<Antworten>({});
+  /**
+   * Kinder bis 18 Monate werden nach § 15 Abs. 7 SGB XI anders eingestuft.
+   * Das war vorher nur eine Warnung - der Rechner gab fuer Saeuglinge ein zu
+   * niedriges Ergebnis aus und sagte das auch. Jetzt rechnet er richtig.
+   */
+  const [kind, setKind] = useState(false);
   const [geladen, setGeladen] = useState(false);
   const [fehlend, setFehlend] = useState<string[]>([]);
   /** Ziel fuer den Fokus nach einem Modulwechsel. */
@@ -72,6 +79,7 @@ export default function Inhalt_Check() {
     try {
       const roh = localStorage.getItem(SPEICHER);
       if (roh) setA(JSON.parse(roh) as Antworten);
+      setKind(localStorage.getItem(KIND) === "ja");
     } catch {}
     setGeladen(true);
   }, []);
@@ -86,6 +94,11 @@ export default function Inhalt_Check() {
     if (!geladen) return;
     try { localStorage.setItem(SPEICHER, JSON.stringify(a)); } catch {}
   }, [a, geladen]);
+
+  useEffect(() => {
+    if (!geladen) return;
+    try { localStorage.setItem(KIND, kind ? "ja" : "nein"); } catch {}
+  }, [kind, geladen]);
 
   /**
    * Jeder Teil bekommt eine eigene Adresse (#teil-3). Ohne das verlaesst der
@@ -124,12 +137,12 @@ export default function Inhalt_Check() {
   const fertig = index >= MODULE.length;
   const modul = MODULE[Math.min(index, MODULE.length - 1)];
   const kriterien = useMemo(
-    () => KRITERIEN.filter((k) => k.modul === modul && sichtbar(k.id, a)),
-    [modul, a],
+    () => KRITERIEN.filter((k) => k.modul === modul && sichtbar(k.id, a, kind)),
+    [modul, a, kind],
   );
 
-  const alt = useMemo(() => berechne(a, "2026"), [a]);
-  const neu = useMemo(() => berechne(a, "2027"), [a]);
+  const alt = useMemo(() => berechne(a, "2026", kind), [a, kind]);
+  const neu = useMemo(() => berechne(a, "2027", kind), [a, kind]);
 
   function setzen(id: string, w: number) {
     setA((alt) => {
@@ -146,7 +159,7 @@ export default function Inhalt_Check() {
    */
   function alleUnauffaellig() {
     const bereitsBeantwortet = KRITERIEN.filter(
-      (k) => k.modul === modul && sichtbar(k.id, a) && a[k.id] !== undefined && a[k.id] !== 0,
+      (k) => k.modul === modul && sichtbar(k.id, a, kind) && a[k.id] !== undefined && a[k.id] !== 0,
     ).length;
     if (bereitsBeantwortet > 0) {
       const sicher = window.confirm(
@@ -211,27 +224,49 @@ export default function Inhalt_Check() {
 
   if (!geladen) return <main className="band"><div className="huelle-schmal" role="status">Lädt …</div></main>;
 
-  if (fertig) return <Auswertung alt={alt} neu={neu} a={a} zurueck={() => geheZu(MODULE.length - 1)} />;
+  if (fertig) return <Auswertung alt={alt} neu={neu} a={a} kind={kind} zurueck={() => geheZu(MODULE.length - 1)} />;
 
-  const beantwortet = KRITERIEN.filter((k) => sichtbar(k.id, a) && a[k.id] !== undefined).length;
-  const gesamt = KRITERIEN.filter((k) => sichtbar(k.id, a)).length;
+  const beantwortet = KRITERIEN.filter((k) => sichtbar(k.id, a, kind) && a[k.id] !== undefined).length;
+  const gesamt = KRITERIEN.filter((k) => sichtbar(k.id, a, kind)).length;
+  /** Offene Fragen in genau diesem Modul - danach richtet sich der Knopf oben. */
+  const imModulOffen = kriterien.filter((k) => a[k.id] === undefined).length;
 
   return (
     <main className="band">
       <div className="huelle-schmal">
-        <div className="schritt-kopf">
-          <span className="schritt-zahl">
-            Modul {index + 1} von 6 · {beantwortet} Fragen beantwortet
-          </span>
-          {index > 0 && (
-            <button type="button" onClick={() => { geheZu(index - 1); window.scrollTo({ top: 0 }); }}
-              className="knopf-still">
-              zurück
-            </button>
-          )}
-        </div>
-        <div className="fortschritt" style={{ marginBottom: 18 }}>
-          <div style={{ width: `${(beantwortet / gesamt) * 100}%` }} />
+        {/*
+          Mitlaufende Leiste. Modul 5 hat sechzehn Fragen und war ueber 9.000 px
+          lang — der Weiter-Knopf stand ganz unten, und waehrend des Scrollens
+          stand nirgends, wie weit man ist. Jetzt bleibt beides am Schirm.
+
+          Bewusst OHNE Zwischenpunktzahl: ein mitlaufendes Ergebnis laedt dazu
+          ein, so lange nachzubessern, bis die gewuenschte Stufe dasteht. Genau
+          davor warnt die Seite an jeder anderen Stelle.
+        */}
+        <div className="modulleiste">
+          <div className="modulleiste-innen">
+            <div className="modulleiste-zeile">
+              <span className="schritt-zahl">
+                Modul {index + 1} von 6 · {beantwortet} von {gesamt} beantwortet
+              </span>
+              <span className="modulleiste-knoepfe">
+                {index > 0 && (
+                  <button type="button" onClick={() => { geheZu(index - 1); window.scrollTo({ top: 0 }); }}
+                    className="knopf-still">
+                    zurück
+                  </button>
+                )}
+                {imModulOffen === 0 && (
+                  <button type="button" className="knopf knopf-klein" onClick={weiter}>
+                    {index === MODULE.length - 1 ? "Ergebnis" : "Weiter"}
+                  </button>
+                )}
+              </span>
+            </div>
+            <div className="fortschritt">
+              <div style={{ width: `${(beantwortet / gesamt) * 100}%` }} />
+            </div>
+          </div>
         </div>
 
         <h1 className="nur-vorlesen">Pflegegrad genau berechnen</h1>
@@ -242,14 +277,34 @@ export default function Inhalt_Check() {
         </p>
         <p className="vorspann" style={{ marginTop: 12 }}>{MODUL_EINLEITUNG[modul]}</p>
 
+        {/*
+          Frueher stand hier eine Warnung: fuer Saeuglinge rechne das Werkzeug
+          falsch. Das war ehrlich, aber kein Ersatz dafuer, es richtig zu
+          rechnen. Jetzt ist es eine Frage, und der Rechenweg folgt ihr.
+        */}
         {index === 0 && (
+          <div className="karte abstand-s">
+            <div className="frage-titel">Ist die pflegebedürftige Person jünger als 18 Monate?</div>
+            <div className="frage-hilfe">
+              Für Säuglinge gilt ein eigenes Verfahren (§ 15 Abs. 7 SGB XI): dieselben Punkte
+              ergeben jeweils eine Stufe mehr, in Modul 4 wird nur nach der Nahrungsaufnahme
+              gefragt, und in Modul 5 kommt die Frühförderung dazu.
+            </div>
+            <Wahlgruppe
+              name="Jünger als 18 Monate"
+              optionen={["nein", "ja, jünger als 18 Monate"]}
+              wert={kind ? 1 : 0}
+              onWahl={(w) => setKind(w === 1)}
+            />
+          </div>
+        )}
+
+        {index === 0 && kind && (
           <div className="hinweis hinweis-gelb abstand-s">
-            <div className="hinweis-titel">Nicht für Kinder bis 18 Monate</div>
-            Für Säuglinge und Kleinkinder bis 18 Monate gilt ein eigenes Verfahren: In Modul 4
-            ersetzt ein einzelnes Kriterium alle anderen, und schon ab 12,5 Punkten gibt es
-            Pflegegrad 2 statt 1 (§ 15 Abs. 7 SGB XI). Dieser Rechner bildet das nicht ab und
-            würde ein zu niedriges Ergebnis zeigen. Stellen Sie den Antrag in diesem Fall direkt –
-            die <Link href="/antrag">Anleitung dafür</Link> gilt unverändert.
+            <div className="hinweis-titel">Gerechnet wird nach dem Kinderverfahren</div>
+            Modul 4 enthält deshalb nur eine Frage statt vierzehn, in Modul 5 kommt eine dazu,
+            und Pflegegrad 1 kann nicht herauskommen – für Kinder bis 18 Monate beginnt die
+            Einstufung bei Pflegegrad 2.
           </div>
         )}
 
@@ -361,8 +416,19 @@ export default function Inhalt_Check() {
 }
 
 /** Inkontinenz-Folgekriterien erst zeigen, wenn das Tor gesetzt ist. */
-function sichtbar(id: string, a: Antworten): boolean {
-  if (id === "4.11" || id === "4.12") return (a["4.inko"] ?? 0) >= 1;
+/**
+ * Welche Kriterien ueberhaupt gefragt werden.
+ *
+ * Bei Kindern bis 18 Monate ersetzt 4.K in Modul 4 alle anderen Kriterien
+ * (Anlage 1 zu § 15 SGB XI), und 5.K kommt in Modul 5 dazu. Umgekehrt sind
+ * die beiden bei allen anderen gar nicht zu stellen.
+ */
+function sichtbar(id: string, a: Antworten, kind = false): boolean {
+  if (id === "4.K") return kind;
+  if (id === "5.K") return kind;
+  if (kind && /^4\.\d+$/.test(id)) return false;
+  if (id === "4.inko") return !kind;
+  if (id === "4.11" || id === "4.12") return !kind && (a["4.inko"] ?? 0) >= 1;
   return true;
 }
 
@@ -374,7 +440,7 @@ function gewichtung(m: ModulId): string {
   return "15 Prozent";
 }
 
-function Auswertung({ alt, neu, a, zurueck }: { alt: Ergebnis; neu: Ergebnis; a: Antworten; zurueck: () => void }) {
+function Auswertung({ alt, neu, a, kind, zurueck }: { alt: Ergebnis; neu: Ergebnis; a: Antworten; kind: boolean; zurueck: () => void }) {
   const gemeldet = useRef(false);
   /**
    * Nach "Ergebnis anzeigen" fiel der Fokus auf den Body: ein Screenreader las
@@ -403,7 +469,7 @@ function Auswertung({ alt, neu, a, zurueck }: { alt: Ergebnis; neu: Ergebnis; a:
    * gestellt wird - nach dem Entwurf zu optimieren, waere ein Rat fuer einen
    * Antrag, den niemand stellen sollte.
    */
-  const meineHebel = useMemo(() => hebel(a, "2026"), [a]);
+  const meineHebel = useMemo(() => hebel(a, "2026", 4, kind), [a, kind]);
   /** Einmal je Aufbau gerechnet - ueber Mitternacht hinweg ist das egal. */
   const tage = useMemo(() => tageBisStichtag(), []);
   const stichtag = useMemo(
@@ -420,7 +486,7 @@ function Auswertung({ alt, neu, a, zurueck }: { alt: Ergebnis; neu: Ergebnis; a:
       KRITERIEN.filter(
         (k) =>
           /^[1-6]\.\d+$/.test(k.id) &&
-          sichtbar(k.id, a) &&
+          sichtbar(k.id, a, kind) &&
           a[k.id] !== undefined &&
           a[k.id] < k.optionen.length - 1,
       ).length,

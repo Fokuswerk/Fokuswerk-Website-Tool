@@ -327,6 +327,22 @@ export const KRITERIEN: Kriterium[] = [
     punkte: [0, 6, 3],
   },
 
+  /*
+   * Nur fuer Kinder bis 18 Monate. Ersetzt in Modul 4 die Kriterien 4.1 bis
+   * 4.13 vollstaendig (Anlage 1 zu § 15 SGB XI, "Einzelpunkte fuer das
+   * Kriterium der Ziffer 4.K"). Keine Stufung: trifft es zu, sind es pauschal
+   * 20 Einzelpunkte. Der Grund ist einleuchtend - ein Saeugling ist bei der
+   * Selbstversorgung ohnehin auf Hilfe angewiesen, das unterscheidet ihn nicht
+   * von anderen Saeuglingen. Gefragt wird deshalb nur nach dem, was darueber
+   * hinausgeht.
+   */
+  {
+    id: "4.K", modul: 4, titel: "Gravierende Probleme bei der Nahrungsaufnahme",
+    hilfe: "Nur bei Kindern bis 18 Monate: ein außergewöhnlich pflegeintensiver Hilfebedarf beim Essen und Trinken, etwa Sondenernährung oder stundenlanges Füttern.",
+    optionen: ["nein", "ja"],
+    punkte: [0, 20],
+  },
+
   // ---------- Modul 5: krankheits- und therapiebedingte Anforderungen (20 %) ----------
   {
     id: "5.1", modul: 5, titel: "Medikamente einnehmen",
@@ -413,6 +429,19 @@ export const KRITERIEN: Kriterium[] = [
     optionen: SKALA_SELBST, punkte: P_SELBST,
   },
 
+  /*
+   * Nur fuer Kinder bis 18 Monate. Erweitert in Modul 5 die Haeufigkeitsgruppe
+   * 5.12 bis 5.15 um die Fruehfoerderung (Anlage 1). Gerechnet wird wie dort:
+   * monatlich 1, woechentlich 4,3 - die Summe der Gruppe wird danach in
+   * Einzelpunkte uebersetzt.
+   */
+  {
+    id: "5.K", modul: 5, titel: "Besuche von Einrichtungen zur Frühförderung",
+    hilfe: "Nur bei Kindern bis 18 Monate: Termine zur Frühförderung, die begleitet werden müssen. Wie oft?",
+    optionen: ["entfällt", "monatlich", "wöchentlich"],
+    punkte: [0, 0, 0],
+  },
+
   // ---------- Modul 6: Alltagsleben und soziale Kontakte (15 %) ----------
   {
     id: "6.1", modul: 6, titel: "Tagesablauf gestalten und anpassen",
@@ -483,6 +512,20 @@ const SCHWELLEN: Record<Rechtsstand, number[]> = {
   "2027": [15, 30, 50, 70, 90],
 };
 
+/**
+ * Kinder bis 18 Monate, § 15 Abs. 7 SGB XI. Dieselben Punktzahlen, aber je
+ * eine Stufe hoeher - und Pflegegrad 1 gibt es dort nicht. Der Entwurf
+ * verschiebt sie im Gleichschritt mit den uebrigen mit (Art. 1 Nr. 16
+ * Buchstabe b: 15/30/50/70 statt 12,5/27/47,5/70); die Begruendung nennt das
+ * ausdruecklich eine "systematisch bedingte Folgeanpassung".
+ */
+const SCHWELLEN_KIND: Record<Rechtsstand, number[]> = {
+  "2026": [12.5, 27, 47.5, 70],
+  "2027": [15, 30, 50, 70],
+};
+/** Der erste Pflegegrad, den ein Saeugling erreichen kann. */
+const ERSTER_GRAD_KIND = 2;
+
 export const MODUL_NAMEN: Record<ModulId, string> = {
   1: "Mobilität",
   2: "Kognitive und kommunikative Fähigkeiten",
@@ -521,13 +564,29 @@ function schweregrad(summe: number, grenzen: number[]): number {
   return grad;
 }
 
-/** Zaehlt die Einzelpunkte eines Moduls aus den Antworten. */
-function einzelpunkte(modul: ModulId, a: Antworten): number {
-  if (modul === 5) return modul5Punkte(a);
+/**
+ * Zaehlt die Einzelpunkte eines Moduls aus den Antworten.
+ *
+ * Bei Kindern bis 18 Monate weicht Anlage 1 an zwei Stellen ab, und zwar
+ * unveraendert auch nach dem Entwurf:
+ * - Modul 4: die Kriterien 4.1 bis 4.13 werden durch das eine Kriterium 4.K
+ *   ersetzt. Ein Saeugling ist bei der Selbstversorgung naturgemaess
+ *   unselbstaendig; gefragt wird deshalb nur nach gravierenden Problemen bei
+ *   der Nahrungsaufnahme, und die zaehlen pauschal 20 Einzelpunkte.
+ * - Modul 5: die Gruppe 5.12 bis 5.15 wird um 5.K erweitert (Frühförderung).
+ */
+function einzelpunkte(modul: ModulId, a: Antworten, kind = false): number {
+  if (modul === 5) return modul5Punkte(a, kind);
+  if (modul === 4 && kind) {
+    const k = KRITERIEN.find((x) => x.id === "4.K");
+    return k?.punkte[a["4.K"] ?? 0] ?? 0;
+  }
   let summe = 0;
   for (const k of KRITERIEN) {
     if (k.modul !== modul) continue;
     if (k.id === "4.inko") continue;
+    // Die Kinder-Sonderkriterien zaehlen nur im Kinderverfahren mit.
+    if (k.id === "4.K" || k.id === "5.K") continue;
     if (k.nurWenn) {
       const tor = a[k.nurWenn.id];
       if (tor === undefined || tor < k.nurWenn.mindestens) continue;
@@ -582,7 +641,7 @@ export const GRUPPE_B = ["5.8", "5.9", "5.10", "5.11"];
  *
  * Gesetzliches Maximum: 3 + 3 + 6 + 3 = 15 Einzelpunkte.
  */
-function modul5Punkte(a: Antworten): number {
+function modul5Punkte(a: Antworten, kind = false): number {
   const ausA = punkteGruppeA(massnahmenSumme(GRUPPE_A, a));
   const ausB = punkteGruppeB(massnahmenSumme(GRUPPE_B, a));
 
@@ -591,7 +650,10 @@ function modul5Punkte(a: Antworten): number {
     [0, 2, 8.6, 60][a["5.12"] ?? 0] +
     [0, 1, 4.3, 8.6][a["5.13"] ?? 0] +
     [0, 1, 4.3, 8.6][a["5.14"] ?? 0] +
-    [0, 2, 8.6, 17.2][a["5.15"] ?? 0];
+    [0, 2, 8.6, 17.2][a["5.15"] ?? 0] +
+    // 5.K kommt nur bei Kindern bis 18 Monate dazu: Besuche von Einrichtungen
+    // zur Fruehfoerderung, monatlich 1, woechentlich 4,3.
+    (kind ? [0, 1, 4.3][a["5.K"] ?? 0] : 0);
 
   let ausHaeufigkeit = 0;
   if (haeufigkeit >= 60) ausHaeufigkeit = 6;
@@ -607,7 +669,7 @@ function modul5Punkte(a: Antworten): number {
 export type Rohpunkte = Record<ModulId, number>;
 
 /** Bewertet fertige Einzelpunkt-Summen. Beide Rechenwege laufen hierdurch. */
-export function bewerte(p: Rohpunkte, rechtsstand: Rechtsstand): Ergebnis {
+export function bewerte(p: Rohpunkte, rechtsstand: Rechtsstand, kind = false): Ergebnis {
   const g = GRENZEN[rechtsstand];
 
   const s1 = schweregrad(p[1], g[1]);
@@ -637,33 +699,36 @@ export function bewerte(p: Rohpunkte, rechtsstand: Rechtsstand): Ergebnis {
     GEWICHTET["5"][s5] +
     GEWICHTET["6"][s6];
 
-  const sw = SCHWELLEN[rechtsstand];
+  const sw = kind ? SCHWELLEN_KIND[rechtsstand] : SCHWELLEN[rechtsstand];
+  const ersterGrad = kind ? ERSTER_GRAD_KIND : 1;
+
   let pflegegrad = 0;
   for (let i = 0; i < sw.length; i++) {
-    if (gesamtpunkte >= sw[i]) pflegegrad = i + 1;
+    if (gesamtpunkte >= sw[i]) pflegegrad = i + ersterGrad;
   }
 
-  const naechsteStufe = pflegegrad < 5 ? pflegegrad + 1 : null;
+  const naechsteStufe = pflegegrad < 5 ? Math.max(pflegegrad + 1, ersterGrad) : null;
   const bisNaechsteStufe =
     naechsteStufe === null
       ? null
-      : Math.round((sw[naechsteStufe - 1] - gesamtpunkte) * 100) / 100;
+      : Math.round((sw[naechsteStufe - ersterGrad] - gesamtpunkte) * 100) / 100;
 
   return { rechtsstand, module, gesamtpunkte, pflegegrad, bisNaechsteStufe, naechsteStufe };
 }
 
 /** Rechnet aus den Antworten zu allen Kriterien. */
-export function berechne(a: Antworten, rechtsstand: Rechtsstand): Ergebnis {
+export function berechne(a: Antworten, rechtsstand: Rechtsstand, kind = false): Ergebnis {
   return bewerte(
     {
-      1: einzelpunkte(1, a),
-      2: einzelpunkte(2, a),
-      3: einzelpunkte(3, a),
-      4: einzelpunkte(4, a),
-      5: einzelpunkte(5, a),
-      6: einzelpunkte(6, a),
+      1: einzelpunkte(1, a, kind),
+      2: einzelpunkte(2, a, kind),
+      3: einzelpunkte(3, a, kind),
+      4: einzelpunkte(4, a, kind),
+      5: einzelpunkte(5, a, kind),
+      6: einzelpunkte(6, a, kind),
     },
     rechtsstand,
+    kind,
   );
 }
 

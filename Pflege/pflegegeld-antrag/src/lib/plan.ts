@@ -52,20 +52,23 @@ const TATSACHEN = new Set(["4.13"]);
  * anzukreuzen. Es ist die Liste der Stellen, an denen sich ein genauer
  * Hinsehen lohnt, weil dort überhaupt etwas davon abhängt.
  */
-export function hebel(a: Antworten, rechtsstand: Rechtsstand, hoechstens = 4): Hebel[] {
-  const basis = berechne(a, rechtsstand).gesamtpunkte;
+export function hebel(a: Antworten, rechtsstand: Rechtsstand, hoechstens = 4, kind = false): Hebel[] {
+  const basis = berechne(a, rechtsstand, kind).gesamtpunkte;
   const gefunden: Hebel[] = [];
 
   for (const k of KRITERIEN) {
     // Das interne Tor zur Inkontinenz ist kein Kriterium der Anlage 1.
-    if (!/^[1-6]\.\d+$/.test(k.id)) continue;
+    const istKindkriterium = k.id === "4.K" || k.id === "5.K";
+    if (!/^[1-6]\.\d+$/.test(k.id) && !istKindkriterium) continue;
+    if (kind && /^4\.\d+$/.test(k.id)) continue;
+    if (!kind && istKindkriterium) continue;
 
     const jetzt = a[k.id];
     if (jetzt === undefined) continue;
     if (jetzt >= k.optionen.length - 1) continue;
 
     const probe = { ...a, [k.id]: jetzt + 1 };
-    const gewinn = berechne(probe, rechtsstand).gesamtpunkte - basis;
+    const gewinn = berechne(probe, rechtsstand, kind).gesamtpunkte - basis;
     if (gewinn <= 0) continue;
 
     gefunden.push({

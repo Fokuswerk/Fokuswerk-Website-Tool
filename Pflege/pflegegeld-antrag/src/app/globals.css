@@ -41,8 +41,10 @@
   /* Schriftstaffel. Vorher lagen hier 34 Groessen, davon 15 in einer Spanne
      von 0,14rem - das ist keine Staffel, das ist Rauschen. Neun Stufen, jede
      mit einer Aufgabe. */
-  --t-1: 0.75rem;     /* 12 - Tabellenkopf mobil, Mikro-Etiketten */
-  --t-2: 0.8125rem;   /* 13 - Quellen, Notizen */
+  /* Kleiner als 13 px wird es nirgends. Die Leserinnen und Leser sind
+     ueberwiegend zwischen 55 und 75, und die kleinste Stufe trug ausgerechnet
+     die Fussnoten, in denen die Zweckbindung erklaert wird. */
+  --t-2: 0.8125rem;   /* 13 - Tabellenkopf, Quellen, Etiketten */
   --t-3: 0.875rem;    /* 14 - Etiketten, Bildunterschriften, Fuss */
   --t-4: 0.9375rem;   /* 15 - Nebentext, Tabellen, Navigation */
   --t-5: 1rem;        /* 16 - Eingabefelder, Knoepfe */
@@ -150,7 +152,7 @@ strong { font-weight: 600; }
 
 .marke-klein {
   font-family: var(--font-text), sans-serif;
-  font-size: var(--t-1); font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
+  font-size: var(--t-2); font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase;
   color: var(--tinte-3);
 }
 .vorspann {
@@ -549,8 +551,8 @@ table.daten tfoot td { font-weight: 700; border-top: 1px solid var(--linie-stark
 @media (max-width: 599px) {
   table.daten { font-size: var(--t-3); }
   table.daten th, table.daten td { padding: 12px 8px; }
-  table.daten thead th { font-size: var(--t-1); white-space: normal; }
-  table.daten td .quelle { font-size: var(--t-1); }
+  table.daten thead th { font-size: var(--t-2); white-space: normal; }
+  table.daten td .quelle { font-size: var(--t-2); }
 }
 
 /* ---------- Kennzahlen ---------- */
@@ -696,7 +698,7 @@ select {
 .gewicht-nr { display: none; font-size: var(--t-3); color: var(--tinte-3); font-weight: 600; font-variant-numeric: tabular-nums; }
 @media (min-width: 760px) { .gewicht-nr { display: block; } }
 .gewicht-name { font-size: var(--t-4); line-height: 1.35; }
-.gewicht-notiz { font-size: var(--t-1); color: var(--akzent); background: var(--akzent-weich); padding: 4px 8px; border-radius: var(--r-pille); margin-left: 8px; font-weight: 600; }
+.gewicht-notiz { font-size: var(--t-2); color: var(--akzent); background: var(--akzent-weich); padding: 4px 8px; border-radius: var(--r-pille); margin-left: 8px; font-weight: 600; }
 .gewicht-balken { display: block; grid-column: 1 / -1; height: 6px; background: var(--papier-2); border-radius: var(--r-pille); overflow: hidden; }
 .gewicht-balken span { display: block; height: 100%; background: var(--akzent); border-radius: var(--r-pille); }
 .gewicht-wert { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
@@ -1337,3 +1339,39 @@ html { scroll-padding-top: calc(var(--kopf-h) + 16px); }
   .stichtagblock-paar > div + div { margin-top: var(--s-2); }
   .stichtagblock-gegen { display: block; text-align: center; padding: var(--s-2) 0; }
 }
+
+/* ---------------------------------------------------------------------------
+   Die mitlaufende Leiste im Rechner. Modul 5 hat sechzehn Fragen und war ueber
+   9.000 px lang; der Weiter-Knopf stand ganz unten und der Fortschritt scrollte
+   oben aus dem Bild. Beides bleibt jetzt stehen.
+   --------------------------------------------------------------------------- */
+.modulleiste {
+  position: sticky;
+  top: var(--kopf-h);
+  z-index: 20;
+  /* Bis an den Rand, damit beim Scrollen nichts seitlich durchscheint. */
+  margin: 0 calc(var(--rand) * -1) var(--s-5);
+  padding: 0 var(--rand);
+  background: color-mix(in srgb, var(--papier) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--linie);
+}
+.modulleiste-innen { padding: var(--s-3) 0; }
+.modulleiste-zeile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  margin-bottom: var(--s-2);
+  min-height: 44px;
+}
+/* Schmaler als ein voller Knopf - er sitzt in einer Leiste, nicht im Fliesstext. */
+.knopf-klein { padding: 12px 20px; min-height: 44px; font-size: var(--t-4); flex: none; }
+
+/* Ohne das verschwindet die angesprungene Frage unter der Leiste. */
+.frage[id] { scroll-margin-top: calc(var(--kopf-h) + 96px); }
+
+@supports not (backdrop-filter: blur(10px)) {
+  .modulleiste { background: var(--papier); }
+}
+.modulleiste-knoepfe { display: flex; align-items: center; gap: var(--s-4); flex: none; }

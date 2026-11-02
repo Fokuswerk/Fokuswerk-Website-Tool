@@ -98,6 +98,19 @@ console.log("\n5b) Tatsachen stehen hinter Einschaetzungen");
   stimmt("4.13 ist als Tatsache erkannt", h.every((x) => (x.id === "4.13") === (x.art === "tatsache")));
 }
 
+console.log("\n5c) Im Kinderverfahren gibt es keine Modul-4-Hebel");
+{
+  const a = Object.fromEntries(IDS.map((id, i) => [id, i % 3 === 0 ? 1 : 0]));
+  const h = hebel(a, "2026", 20, true);
+  stimmt(
+    "kein Kriterium aus 4.1 bis 4.13",
+    h.every((x) => !/^4\.\d+$/.test(x.id)),
+    h.filter((x) => /^4\.\d+$/.test(x.id)).map((x) => x.id).join(", "),
+  );
+  const ohne = hebel(a, "2026", 20, false);
+  stimmt("ohne Kinderverfahren taucht 4.K nicht auf", ohne.every((x) => x.id !== "4.K"));
+}
+
 console.log("\n6) Die Schritte stehen in der richtigen Reihenfolge");
 {
   const a = alle(1);

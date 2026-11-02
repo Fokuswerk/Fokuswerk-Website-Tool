@@ -316,6 +316,46 @@ sofort sieben, darunter einen echten Fehler: `.stempel` wurde in Markenfarbe def
 *vor* seiner Grundregel, die Überschreibung war also wirkungslos und der Stempel grün statt
 petrol. Alle sieben sind zusammengeführt.
 
+## 3e. Kinder bis 18 Monate werden jetzt richtig gerechnet
+
+Das war der letzte Ort, an dem der Rechner ein **falsches** Ergebnis lieferte. Bisher stand dort
+nur eine Warnung — ehrlich, aber kein Ersatz dafür, es richtig zu rechnen.
+
+**Was gilt (am Gesetzestext nachgelesen, nicht aus dem Gedächtnis):**
+
+- **§ 15 Abs. 7 SGB XI:** dieselben Punktzahlen, je eine Stufe höher — und **Pflegegrad 1 gibt
+  es für Säuglinge nicht**, die Einstufung beginnt bei Pflegegrad 2.
+- **Anlage 1, Modul 4:** die Kriterien 4.1 bis 4.13 werden durch **4.K** ersetzt (gravierende
+  Probleme bei der Nahrungsaufnahme, pauschal 20 Einzelpunkte). Ein Säugling ist bei der
+  Selbstversorgung ohnehin auf Hilfe angewiesen; gefragt wird nur, was darüber hinausgeht.
+- **Anlage 1, Modul 5:** die Häufigkeitsgruppe 5.12 bis 5.15 wird um **5.K** erweitert
+  (Frühförderung, monatlich 1, wöchentlich 4,3). Das hatte die alte Warnung nicht einmal
+  erwähnt.
+
+**Der Entwurf verschiebt die Kinder-Grenzen mit** — Artikel 1 Nummer 16 Buchstabe b:
+15/30/50/70 statt 12,5/27/47,5/70. Die Begründung nennt es „systematisch bedingte
+Folgeanpassung". **Anlage 1 bleibt unverändert**, 4.K und 5.K gelten also weiter.
+
+Aus der Warnung ist eine **Frage** auf der ersten Seite geworden. Danach richtet sich alles:
+Modul 4 zeigt eine Frage statt zwölf, Modul 5 eine zusätzliche, die Schwellen verschieben sich,
+und die Hebel-Liste im Ergebnis schlägt keine Modul-4-Kriterien mehr vor, die gar nicht
+gestellt wurden.
+
+**Ein Fall, von Hand nachgerechnet** (Säugling mit Sondenernährung, wöchentlicher
+Frühförderung, täglicher Medikamentengabe, deutlich eingeschränkter Mobilität):
+
+| | Modul 1 | Modul 4 | Modul 5 | Summe | Pflegegrad |
+|---|---|---|---|---|---|
+| heute | 12 EP → 10 | 20 EP → 30 | 2 EP → 10 | 50 | **4** |
+| nach dem Entwurf | 12 EP → 10 | 20 EP → **20** | 2 EP → 10 | 40 | **3** |
+
+Der Doppeleffekt ist hier gut zu sehen: Dieselben 20 Einzelpunkte in Modul 4 ergeben ab 2027
+nur noch Schweregrad 2 statt 3 — *und* die Schwelle steigt. Zusammen eine volle Stufe.
+
+**88 Prüfungen im Rechenkern** (vorher 75), darunter: Pflegegrad 1 kann im Kinderverfahren
+nie herauskommen, 4.K und 5.K bleiben außerhalb des Kinderverfahrens wirkungslos, und 4.1 bis
+4.13 zählen im Kinderverfahren nicht mit.
+
 ## 4. Das Backend
 
 `/admin`, passwortgeschützt. Zeigt:

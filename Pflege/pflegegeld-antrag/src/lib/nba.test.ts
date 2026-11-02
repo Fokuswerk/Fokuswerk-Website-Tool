@@ -13,6 +13,16 @@ function gleich(was: string, ist: unknown, soll: unknown) {
   }
 }
 
+function stimmt(was: string, bedingung: boolean, warum = "") {
+  geprueft++;
+  if (!bedingung) {
+    fehler++;
+    console.error(`  FEHLER  ${was}${warum ? " — " + warum : ""}`);
+  } else {
+    console.log(`  ok      ${was}`);
+  }
+}
+
 function alle(wahl: number): Antworten {
   const a: Antworten = {};
   for (const k of KRITERIEN) a[k.id] = Math.min(wahl, k.optionen.length - 1);
@@ -207,6 +217,69 @@ console.log("\n11) Hebel und Bedarf sind nicht dasselbe");
   // Umgekehrt: nur Mobilitaet eingeschraenkt -> Bedarf bei Modul 1
   const m = bewerte({ 1: 15, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }, "2026");
   gleich("Bedarf bei Mobilitaet", groesstesBedarfsmodul(m), 1);
+}
+
+console.log("\n12) Kinder bis 18 Monate, § 15 Abs. 7 SGB XI");
+{
+  const leer: Antworten = {};
+  for (const k of KRITERIEN) if (/^[1-6]\./.test(k.id)) leer[k.id] = 0;
+
+  // 12a) Dieselben Punkte, eine Stufe hoeher - und kein Pflegegrad 1.
+  //      Modul 1 allein brächte nur 10 gewichtete Punkte; mit Modul 6 sind es
+  //      25 und damit sicher zwischen 12,5 und 27.
+  const knapp = {
+    ...leer,
+    "1.1": 3, "1.2": 3, "1.3": 3, "1.4": 3, "1.5": 3,
+    "6.1": 3, "6.2": 3, "6.3": 3, "6.4": 3, "6.5": 3, "6.6": 3,
+  };
+  const erwachsen = berechne(knapp, "2026").pflegegrad;
+  const saeugling = berechne(knapp, "2026", true).pflegegrad;
+  gleich("gleiche Angaben, Erwachsener", erwachsen, 1);
+  gleich("gleiche Angaben, Kind bis 18 Monate", saeugling, 2);
+
+  // 12b) Pflegegrad 1 kann bei Kindern nie herauskommen.
+  let nieEins = true;
+  for (let n = 0; n <= 5; n++) {
+    const a = { ...leer };
+    KRITERIEN.filter((k) => /^[1-6]\./.test(k.id)).slice(0, n * 6).forEach((k) => { a[k.id] = 2; });
+    for (const stand of ["2026", "2027"] as const) {
+      if (berechne(a, stand, true).pflegegrad === 1) nieEins = false;
+    }
+  }
+  stimmt("Pflegegrad 1 kommt bei Kindern nie vor", nieEins);
+
+  // 12c) Modul 4: 4.K ersetzt die Kriterien 4.1 bis 4.13.
+  const mitAllem = { ...leer };
+  KRITERIEN.filter((k) => k.modul === 4 && /^4\.\d+$/.test(k.id)).forEach((k) => { mitAllem[k.id] = k.optionen.length - 1; });
+  const m4Erwachsen = berechne(mitAllem, "2026").module.find((m) => m.modul === 4)!.einzelpunkte;
+  const m4Kind = berechne(mitAllem, "2026", true).module.find((m) => m.modul === 4)!.einzelpunkte;
+  stimmt("bei Erwachsenen zaehlen 4.1 bis 4.13", m4Erwachsen > 0, `war ${m4Erwachsen}`);
+  gleich("bei Kindern zaehlen sie nicht, 4.K steht auf nein", m4Kind, 0);
+  gleich("4.K auf ja gibt pauschal 20", berechne({ ...leer, "4.K": 1 }, "2026", true).module.find((m) => m.modul === 4)!.einzelpunkte, 20);
+
+  // 12d) 4.K zaehlt bei Erwachsenen NICHT mit.
+  gleich("4.K bleibt bei Erwachsenen wirkungslos", berechne({ ...leer, "4.K": 1 }, "2026").module.find((m) => m.modul === 4)!.einzelpunkte, 0);
+
+  // 12e) Modul 5: 5.K erweitert die Haeufigkeitsgruppe, aber nur bei Kindern.
+  const m5 = (a: Antworten, kind: boolean) => berechne(a, "2026", kind).module.find((m) => m.modul === 5)!.einzelpunkte;
+  gleich("5.K woechentlich hebt Modul 5 bei Kindern", m5({ ...leer, "5.K": 2 }, true), 1);
+  gleich("5.K bleibt bei Erwachsenen wirkungslos", m5({ ...leer, "5.K": 2 }, false), 0);
+
+  // 12f) Die Schwellen des Entwurfs gelten auch fuer Kinder.
+  const an15 = { ...leer, "1.1": 3, "1.2": 3, "1.3": 3, "1.4": 3, "1.5": 3, "6.1": 3, "6.2": 3 };
+  const p26 = berechne(an15, "2026", true), p27 = berechne(an15, "2027", true);
+  stimmt(
+    "ab 2027 braucht ein Kind mehr Punkte fuer dieselbe Stufe",
+    p27.pflegegrad <= p26.pflegegrad,
+    `2026 PG${p26.pflegegrad} bei ${p26.gesamtpunkte}, 2027 PG${p27.pflegegrad}`,
+  );
+
+  // 12g) Der Abstand zur naechsten Stufe stimmt auch im Kinderverfahren.
+  const e = berechne(leer, "2026", true);
+  gleich("ohne Punkte ist die naechste Stufe Pflegegrad 2", e.naechsteStufe, 2);
+  gleich("und es fehlen 12,5 Punkte", e.bisNaechsteStufe, 12.5);
+  const e27 = berechne(leer, "2027", true);
+  gleich("nach dem Entwurf fehlen 15", e27.bisNaechsteStufe, 15);
 }
 
 console.log(`\n${fehler === 0 ? "ALLES GRUEN" : "NICHT GRUEN"}: ${geprueft - fehler} von ${geprueft} Pruefungen bestanden.\n`);
