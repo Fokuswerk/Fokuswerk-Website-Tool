@@ -112,7 +112,24 @@ es?" davor, Wert leer; wer nichts wählt, schickt nichts. Die Meldung schreibt d
   Einträge in einem Lauf schreiben — dieselbe Lehre wie beim Rich-Text.
 
 Gegengeprüft auf der Live-Seite: sechs Optionen, keine gesperrt, unberührt steht
-`selectedIndex 0` mit Wert `""`, und eine Absendung ohne Antippen schickt `thema: ""`.
+`selectedIndex 0` mit Wert `""`.
+
+**Und das Themenfeld ist jetzt Pflicht — die Nachricht bewusst nicht.** Gefragt war, ob die
+Nachricht zum Pflichtfeld wird. Dagegen spricht die Stelle, an der so etwas wirkt: Name und
+Mail sind Mechanik, ein Pflicht-Freitext verlangt dagegen, dass jemand sein Anliegen
+*formuliert* — genau in dem Moment, in dem er am ehesten abschicken würde. Es entsteht dann
+auch keine Information, sondern Füllsel („Bitte um Rückruf."). Das Thema leistet dasselbe für
+einen Fingertipp: „Performance Marketing" ist ein anderes Gespräch als „Noch unklar". Der
+einzige echte Eingang bisher (Golden Eye Sicherheitsdienst, 01.11.) hatte die Nachricht leer
+**und** „Noch unklar" gewählt — der Mann wollte schlicht einen Rückruf.
+
+`formInputRequired="true"` greift sauber auf dem leeren ersten Wert. Gemessen auf der
+Live-Seite: ohne Themenwahl ist das Formular ungültig („Wähle ein Element in der Liste
+aus."), mit Wahl gültig. **Wichtiger Nebenbefund:** Ein geblockter Absendeversuch feuert
+gar kein `submit`-Ereignis — weder unser Spiegel noch Framers Handler laufen, es entstehen
+also keine halben Leads. Drei abgefangene Aufrufe im Test: Google-Tag, unser `/api/kontakt`
+mit dem richtigen Thema, Framers eigener. Die Browsermeldung ist Du-Form und kommt vom
+Browser, nicht von uns — dasselbe gilt schon für Name und E-Mail.
 
 
 ## 30.10.2026 — `/stellenanzeige` am Handy durchgemessen
