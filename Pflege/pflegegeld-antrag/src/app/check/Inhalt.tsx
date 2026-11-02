@@ -8,6 +8,8 @@ import {
 } from "@/lib/nba";
 import { punkte, euro, BETRAEGE_2026, BETRAEGE_2027 } from "@/lib/leistungen";
 import { angeboteFuer } from "@/lib/partner";
+import { hebel, schritte } from "@/lib/plan";
+import { tageBisStichtag } from "@/lib/recht";
 import Wahlgruppe from "@/components/Wahlgruppe";
 import Lead from "@/components/Lead";
 import { melden } from "@/lib/messen";
@@ -391,13 +393,31 @@ function Auswertung({ alt, neu, a, zurueck }: { alt: Ergebnis; neu: Ergebnis; a:
     });
   }, [alt.pflegegrad, neu.pflegegrad]);
 
-  const hebel = schwaechstesModul(alt);
   // Angebote richten sich nach dem gemessenen Bedarf, nicht nach der Punktluecke
   const angebote = angeboteFuer(groesstesBedarfsmodul(alt));
   const verliert = alt.pflegegrad > neu.pflegegrad;
-  // Nur Kriterien, die der Nutzer gesehen und mit null beantwortet hat.
-  const offeneImHebel = KRITERIEN.filter(
-    (k) => k.modul === hebel && k.id !== "4.inko" && sichtbar(k.id, a) && a[k.id] === 0,
+
+  /**
+   * Der Plan. Gerechnet wird gegen das heutige Recht, weil der Antrag heute
+   * gestellt wird - nach dem Entwurf zu optimieren, waere ein Rat fuer einen
+   * Antrag, den niemand stellen sollte.
+   */
+  const meineHebel = useMemo(() => hebel(a, "2026"), [a]);
+  const meinPlan = useMemo(
+    () => schritte(alt, meineHebel, tageBisStichtag()),
+    [alt, meineHebel],
+  );
+  /** Wie viele Kriterien ueberhaupt hoeher gingen - die Bezugsgroesse im Text. */
+  const steigerbar = useMemo(
+    () =>
+      KRITERIEN.filter(
+        (k) =>
+          /^[1-6]\.\d+$/.test(k.id) &&
+          sichtbar(k.id, a) &&
+          a[k.id] !== undefined &&
+          a[k.id] < k.optionen.length - 1,
+      ).length,
+    [a],
   );
 
   return (
@@ -472,8 +492,10 @@ function Auswertung({ alt, neu, a, zurueck }: { alt: Ergebnis; neu: Ergebnis; a:
         {!verliert && neu.bisNaechsteStufe !== null && neu.bisNaechsteStufe <= 5 && (
           <div className="hinweis hinweis-gelb abstand-s">
             <div className="hinweis-titel">Knapp unter der nächsten Stufe</div>
-            Es fehlen {punkte(neu.bisNaechsteStufe)} Punkte zu Pflegegrad {neu.naechsteStufe}. Prüfen Sie die
-            Kriterien im Modul {hebel} noch einmal.
+            Es fehlen {punkte(neu.bisNaechsteStufe)} Punkte zu Pflegegrad {neu.naechsteStufe}.
+            {meineHebel.length > 0
+              ? " Weiter unten steht, an welchen Kriterien bei Ihnen überhaupt etwas davon abhängt."
+              : " An keinem einzelnen Kriterium hängt daran etwas — das Ergebnis steht stabil."}
           </div>
         )}
 
@@ -545,30 +567,71 @@ function Auswertung({ alt, neu, a, zurueck }: { alt: Ergebnis; neu: Ergebnis; a:
           </button>
         </div>
 
-        <h2 className="abstand-l">Wo noch Punkte fehlen könnten</h2>
-        <div className="karte" style={{ marginTop: 10 }}>
-          <h3>Modul {hebel}: {MODUL_NAMEN[hebel]}</h3>
-          <p style={{ color: "var(--tinte-2)", fontSize: "var(--t-4)" }}>
-            Hier ist rechnerisch der größte Abstand zum möglichen Höchstwert dieses Moduls. Das
-            heißt nicht, dass dort etwas fehlt – es heißt nur, dass eine zweite Überlegung sich
-            hier am ehesten auszahlt. <strong>Ändern Sie nichts, was nicht stimmt.</strong> Bei
-            der Begutachtung wird nachgefragt, und eine Angabe, die nicht trägt, schadet dem
-            ganzen Antrag.
-          </p>
-          {offeneImHebel.length > 0 && (
-            <>
-              <p style={{ fontSize: "var(--t-4)", marginBottom: 6 }}>
-                <strong>Diese Punkte haben Sie mit „keine Hilfe nötig" beantwortet.</strong> Wenn
-                Sie dabei etwas doch regelmäßig übernehmen, lohnt ein zweiter Blick:
-              </p>
-              <ul style={{ margin: 0, paddingLeft: 20, fontSize: "var(--t-4)", color: "var(--tinte-2)" }}>
-                {offeneImHebel.slice(0, 6).map((k) => (
-                  <li key={k.id}>{k.titel}</li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
+        <h2 className="abstand-l">Wo es bei Ihnen wirklich hängt</h2>
+        <p style={{ color: "var(--tinte-2)", fontSize: "var(--t-4)", maxWidth: "62ch" }}>
+          Zwischen Ihren Antworten und der Endpunktzahl liegen zwei Übersetzungstabellen. Durch
+          die fällt der größte Teil jeder Änderung heraus:{" "}
+          <strong>von {steigerbar} Kriterien, die Sie höher einstufen könnten, bewegen nur{" "}
+          {meineHebel.length === 0 ? "keine" : meineHebel.length} das Gesamtergebnis.</strong>{" "}
+          Welche das sind, lässt sich nicht erraten – wir haben es für Ihren Fall durchgerechnet.
+        </p>
+
+        {meineHebel.length > 0 ? (
+          <>
+            <ul className="hebel-liste abstand-s">
+              {meineHebel.map((h) => (
+                <li key={h.id}>
+                  <span className="hebel-gewinn">+{punkte(h.gewinn)}</span>
+                  <span className="hebel-text">
+                    <strong>{h.titel}</strong>
+                    <span className="hebel-wo">Modul {h.modul} · {h.modulName}</span>
+                    <span className="hebel-hilfe">{h.hilfe}</span>
+                    <span className="hebel-stufe">
+                      Sie haben „{h.jetzt}“ angegeben. Eine Stufe darüber wäre „{h.naechste}“.
+                      {h.art === "tatsache" && (
+                        <>
+                          {" "}
+                          <strong>Das ist keine Einschätzung, sondern eine Gegebenheit</strong> –
+                          wenn sie zutrifft, gehört sie hier hin; wenn nicht, lassen Sie es so.
+                        </>
+                      )}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="hinweis hinweis-gelb abstand-s">
+              <div className="hinweis-titel">Das ist keine Aufforderung, höher anzukreuzen</div>
+              Es ist die Liste der Stellen, an denen genaues Hinsehen überhaupt etwas ändert.
+              Bei der Begutachtung wird nachgefragt, und eine Angabe, die nicht trägt, schadet
+              dem ganzen Antrag. <strong>Ändern Sie nichts, was nicht stimmt</strong> – prüfen
+              Sie nur, ob Sie hier etwas für selbstverständlich gehalten haben.
+            </div>
+          </>
+        ) : (
+          <div className="hinweis abstand-s">
+            An keinem einzelnen Kriterium hängt bei Ihnen eine Änderung der Gesamtpunktzahl.
+            Das Ergebnis steht also stabil – eine zweite Überlegung an einer einzelnen Stelle
+            würde daran nichts drehen.
+          </div>
+        )}
+
+        <h2 className="abstand-l">Ihre nächsten Schritte</h2>
+        <ol className="plan">
+          {meinPlan.map((s) => (
+            <li key={s.nummer}>
+              <span className="plan-nr">{s.nummer}</span>
+              <div>
+                <h3>{s.titel}</h3>
+                <span className="plan-wann">{s.wann}</span>
+                <p>{s.text}</p>
+                {s.ziel && (
+                  <Link className="textlink" href={s.ziel.pfad}>{s.ziel.text}</Link>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
 
         <h2 className="abstand-l">Was jetzt hilft</h2>
         <div className="gitter gitter-2" style={{ marginTop: 10 }}>
@@ -626,7 +689,7 @@ function Auswertung({ alt, neu, a, zurueck }: { alt: Ergebnis; neu: Ergebnis; a:
               pflegegradNeu: neu.pflegegrad,
               punkteAlt: alt.gesamtpunkte,
               punkteNeu: neu.gesamtpunkte,
-              hebelmodul: hebel,
+              hebel: meineHebel.length,
             }}
           />
         </div>
