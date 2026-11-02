@@ -368,9 +368,14 @@ durchgespielt: Anmeldung über den echten Endpunkt → Eintrag unbestätigt mit 
 → Bestätigungslink → `bestaetigt = true` mit Zeitpunkt und IP → Token verbraucht. Probeeintrag
 danach gelöscht. Verschickt wurde nichts.
 
-**Live noch nicht.** Bei Vercel steht keine Umgebungsvariable, `/api/lead` antwortet dort
-weiterhin mit 503. Secrets zu schreiben war mir gesperrt. Ein Befehl erledigt alle drei auf
-einmal, er liest die Werte aus `.env.local`:
+**Live läuft es seit dem 2. November auch.** Nachgewiesen gegen die Produktion: eine
+Anmeldung über `https://pflegegeld-antrag.vercel.app/api/lead` landete mit echter IP und
+64-Zeichen-Token in der Datenbank (danach wieder gelöscht, die Tabelle ist leer). Der Zugang
+zur Auswertung stimmt ebenfalls — falsches Passwort 401 mit Bremse, richtiges 200, und
+`/admin` zeigt die echten Zahlen statt der Demo-Daten.
+
+Falls die Variablen einmal neu gesetzt werden müssen, erledigt ein Befehl alle drei; er liest
+die Werte aus `.env.local`:
 
 ```bash
 cd "/Users/thees/Desktop/Claude/Pflege/pflegegeld-antrag" && for V in SUPABASE_URL SUPABASE_DIENSTSCHLUESSEL ADMIN_PASSWORT; do grep "^$V=" .env.local | cut -d= -f2- | tr -d '\n' | npx vercel env add "$V" production; done && npx vercel --prod
