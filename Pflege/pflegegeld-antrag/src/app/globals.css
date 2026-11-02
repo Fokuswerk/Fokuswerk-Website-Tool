@@ -48,11 +48,14 @@
   --t-5: 1rem;        /* 16 - Eingabefelder, Knoepfe */
   --t-6: 1.0625rem;   /* 17 - Fliesstext in Karten und Listen */
   --t-7: 1.125rem;    /* 18 - Fliesstext */
-  --t-vorspann: clamp(1.05rem, 1.5vw, 1.22rem);
+  /* Muss groesser bleiben als der Fliesstext (1,125rem), sonst fuehrt der
+     Vorspann nicht mehr. Die alte Untergrenze lag mit 1,05rem darunter. */
+  --t-vorspann: clamp(1.1875rem, 1.1vw + 0.95rem, 1.375rem);
   --t-h3: clamp(1.3rem, 2.4vw, 1.5rem);
   --t-frage: clamp(1.35rem, 2.8vw, 1.85rem);
   --t-h2: clamp(1.75rem, 3.6vw, 2.55rem);
-  --t-gross: clamp(2rem, 3.6vw, 2.6rem);
+  /* Deutlich ueber der h2, sonst wirkt der Unterschied versehentlich. */
+  --t-gross: clamp(2.2rem, 4.2vw, 3rem);
   --t-h1: clamp(2.35rem, 5.4vw, 3.75rem);
   --t-zahl: clamp(2.6rem, 9vw, 3.6rem);
 
@@ -124,7 +127,24 @@ h2 { font-size: var(--t-h2); line-height: 1.1; letter-spacing: -0.03em; }
 h3 {
   font-size: var(--t-h3); line-height: 1.25; letter-spacing: -0.02em; font-weight: 600;
 }
+/*
+ * Ueberschriften brauchen einen Abstand nach unten. Ohne ihn standen an rund
+ * fuenfzehn Stellen Ueberschrift und Text auf 0 px aufeinander - "Jedes Modul
+ * einzeln", "Was jetzt hilft", fast jede Karten-h3. Der Abstand kollabiert mit
+ * dem margin-top des Folgeelements, die vorhandenen 20 und 24 px bleiben also
+ * wirksam; nur wo gar nichts stand, kommt etwas hinzu.
+ */
+h2 { margin-bottom: var(--s-4); }
+h3 { margin-bottom: var(--s-2); }
 p { margin: 0 0 1.1em; }
+
+/* Lange deutsche Woerter ("Begutachtungsmappe", "Pflegeneuordnungsgesetz")
+   sprengen sonst schmale Schirme. Getrennt wird aber nur da, wo es die Zeile
+   wirklich rettet: auf einem breiten Schirm liest sich ein "Ange-hoerigen" in
+   der Schlagzeile wie ein Fehler. */
+h1, h2, h3 { overflow-wrap: break-word; text-wrap: balance; }
+@media (max-width: 420px) { h1, h2, h3 { hyphens: auto; } }
+p, li { text-wrap: pretty; }
 a { color: inherit; text-underline-offset: 3px; }
 strong { font-weight: 600; }
 
@@ -957,3 +977,58 @@ select {
   color: var(--tinte-2);
 }
 .korridor-geld strong { color: var(--akzent); font-variant-numeric: tabular-nums; }
+
+/* ---------------------------------------------------------------------------
+   Nachtraege aus dem dritten Pruefdurchlauf
+   --------------------------------------------------------------------------- */
+
+/* Der Fokusring hatte auf den petrolfarbenen Baendern exakt die Farbe des
+   Hintergrunds - 1:1, also unsichtbar. Wer mit der Tastatur bedient, sah auf
+   den beiden neuen Handlungsaufrufen gar nichts. */
+.zwischenruf :focus-visible,
+.antragsruf :focus-visible { outline-color: var(--weiss); }
+
+/* Der Ring machte aus jedem Pillenknopf beim Fokussieren ein 10-px-Rechteck. */
+:focus-visible { border-radius: inherit; }
+.knopf:focus-visible { border-radius: var(--r-pille); }
+
+/* Bei <summary> lag der Ring ausserhalb des Elements und wurde vom
+   overflow: hidden der Huelle abgeschnitten - sieben Aufklapper ohne
+   sichtbaren Fokus. Nach innen gezogen ist er wieder da. */
+.erklaerung > summary:focus-visible,
+.faq summary:focus-visible { outline-offset: -5px; }
+
+/* Beim Rueckwaerts-Tabben verschwanden Ziele unter der festen Kopfleiste. */
+html { scroll-padding-top: calc(var(--kopf-h) + 16px); }
+
+/* Zwischenruf und Antragsruf brachen den Knopf unter den Text, weil der Text
+   keine Breitenbegrenzung hatte. space-between lief dadurch ins Leere. */
+.zwischenruf-reihe > p { flex: 1 1 300px; min-width: 0; max-width: 52ch; }
+.antragsruf > div { flex: 1 1 300px; min-width: 0; }
+.antragsruf p { max-width: 46ch; }
+
+/* Der Preis war groesser als die Ueberschrift direkt darueber. */
+.preis { font-size: var(--t-h3); }
+
+/* Die Erklaerung im Geldblock stand auf 50 ch gequetscht in einer 700-px-Karte. */
+.geldblock .quelle { max-width: none; }
+
+/* Karten hatten unten mehr Luft als oben, weil der letzte Absatz seinen
+   Abstand mitbrachte. */
+.karte > :last-child,
+.hinweis > :last-child,
+.geldblock > :last-child,
+.ablauf-schritt > :last-child { margin-bottom: 0; }
+
+/* Die Augenbraue des dunklen Bandes stand 214 px ueber ihrer Ueberschrift,
+   weil die Spalten mittig ausgerichtet sind und die h2 allein in der linken
+   Zelle steht. */
+.nacht .spalten { align-items: start; }
+
+/* Die Ergebnistabelle war am Handy abgeschnitten, ohne Hinweis aufs Wischen.
+   Die erste Spalte ist die Bremse: lange Woerter wie "therapiebedingte"
+   erzwingen eine Mindestbreite. */
+@media (max-width: 599px) {
+  table.daten th, table.daten td { padding: 12px 6px; }
+  table.daten td:first-child { hyphens: auto; overflow-wrap: anywhere; }
+}

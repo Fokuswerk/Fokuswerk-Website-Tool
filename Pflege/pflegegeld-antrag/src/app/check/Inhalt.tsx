@@ -218,7 +218,7 @@ export default function Inhalt_Check() {
       <div className="huelle-schmal">
         <div className="schritt-kopf">
           <span className="schritt-zahl">
-            Modul {index + 1} von 6 · {beantwortet} von {gesamt} Fragen
+            Modul {index + 1} von 6 · {beantwortet} Fragen beantwortet
           </span>
           {index > 0 && (
             <button type="button" onClick={() => { geheZu(index - 1); window.scrollTo({ top: 0 }); }}
@@ -253,7 +253,7 @@ export default function Inhalt_Check() {
         {index === 0 && (
           <div className="hinweis abstand-s">
             <div className="hinweis-titel">Sie können jederzeit aufhören</div>
-            Insgesamt {gesamt} Fragen in sechs Teilen, zusammen etwa zehn bis fünfzehn Minuten.
+            Die 64 Kriterien aus Anlage 1, in sechs Teilen, zusammen etwa zehn bis fünfzehn Minuten.
             Jede Antwort wird sofort in diesem Browser gesichert, zusammen mit der Stelle, an der
             Sie aufgehört haben. Beim nächsten Aufruf geht es dort weiter – solange Sie denselben
             Browser benutzen und die Daten nicht löschen.
@@ -373,6 +373,13 @@ function gewichtung(m: ModulId): string {
 
 function Auswertung({ alt, neu, a, zurueck }: { alt: Ergebnis; neu: Ergebnis; a: Antworten; zurueck: () => void }) {
   const gemeldet = useRef(false);
+  /**
+   * Nach "Ergebnis anzeigen" fiel der Fokus auf den Body: ein Screenreader las
+   * danach gar nichts vor, obwohl sich die ganze Seite ausgetauscht hat. Die
+   * Ueberschrift ist das richtige Ziel - sie nennt das Ergebnis.
+   */
+  const kopf = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { kopf.current?.focus({ preventScroll: true }); }, []);
   useEffect(() => {
     if (gemeldet.current) return;
     gemeldet.current = true;
@@ -397,19 +404,19 @@ function Auswertung({ alt, neu, a, zurueck }: { alt: Ergebnis; neu: Ergebnis; a:
     <main className="band">
       <div className="huelle-schmal">
         <div className="auge">Ergebnis nach allen amtlichen Kriterien</div>
-        <h1>
+        <h1 ref={kopf} tabIndex={-1}>
           {verliert ? "Der Antragstag entscheidet über eine Stufe" : "Ihre Punkte im Vergleich"}
         </h1>
 
         <div className="ergebnis-paar abstand-m">
           <div className="ergebnis-feld jetzt">
             <div className="label">Antrag bis 31.12.2026</div>
-            <div className="zahl-gross">{alt.pflegegrad === 0 ? "–" : `PG ${alt.pflegegrad}`}</div>
+            <div className="zahl-gross">{alt.pflegegrad === 0 ? "Kein Pflegegrad" : `Pflegegrad ${alt.pflegegrad}`}</div>
             <div className="zahl-zusatz">{punkte(alt.gesamtpunkte)} von 100 Punkten</div>
           </div>
           <div className="ergebnis-feld kuenftig">
             <div className="label">Antrag ab 1.1.2027 – nach Entwurf</div>
-            <div className="zahl-gross">{neu.pflegegrad === 0 ? "–" : `PG ${neu.pflegegrad}`}</div>
+            <div className="zahl-gross">{neu.pflegegrad === 0 ? "Kein Pflegegrad" : `Pflegegrad ${neu.pflegegrad}`}</div>
             <div className="zahl-zusatz">{punkte(neu.gesamtpunkte)} von 100 Punkten</div>
           </div>
         </div>
@@ -422,7 +429,7 @@ function Auswertung({ alt, neu, a, zurueck }: { alt: Ergebnis; neu: Ergebnis; a:
                statt der Aufzaehlung, die sonst zweimal "kein Pflegegeld" sagt. */
             <p className="geldblock-zeile">
               <b>Pflegegrad 1:</b> heute kein Pflegegeld, aber bis zu 131 € Entlastungsbetrag
-              im Monat, gegen Beleg. Nach dem Entwurf entfällt auch der – ersatzlos. Ein
+              im Monat, gegen Beleg. Nach dem Entwurf entfällt auch der Entlastungsbetrag, ohne Ersatz. Ein
               Sozialraumbudget ist erst ab Pflegegrad 2 vorgesehen.
             </p>
           ) : alt.pflegegrad === neu.pflegegrad ? (

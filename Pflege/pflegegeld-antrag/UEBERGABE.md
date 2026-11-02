@@ -103,6 +103,113 @@ Nach allen Änderungen habe ich die Seite noch einmal von vier Seiten durchprüf
 
 ---
 
+## 3b. Dritte Runde: Bilder, Staffel, Antragsweg
+
+### Bilder
+
+Vorher lagen vier Fotos aus vier Lichtsituationen auf der Seite: ein ausgebranntes
+Fensterbild, ein Sepia-Motiv aus dem Bestattungsgewerbe, ein Sofa mit grünem Kissen in einer
+Seite, die sonst nur Petrol und Hellblau kennt. Nebeneinander lesen sich die als vier
+Einkäufe, nicht als eine Bildsprache.
+
+Jetzt sind es **zwei** dokumentarische Motive durch **dieselbe Duotone-Rechnung** — Tiefen
+Petrol `rgb(10 43 64)`, Lichter fast neutral, Kontrast 1,08. Das reine Dekoband mit dem
+schwächsten Motiv ist ersatzlos weg. Neu bauen mit `npm run bilder`; die Originale liegen in
+`.bilder-roh/` und bleiben außerhalb des Repos.
+
+Dazu kam ein **Vorschaubild für geteilte Links** (`npm run vorschau`, 1200 × 630, 87 kB).
+Gerendert wird es mit Playwright aus einer kleinen HTML-Datei, damit dieselben Schriften
+greifen wie auf der Seite. Als PNG lag es bei 308 kB — WhatsApp lädt Vorschaubilder über rund
+300 kB gar nicht erst, deshalb JPEG. **Achtung:** solange die Seite auf `noindex` steht, zeigt
+WhatsApp trotzdem keine Vorschau. Das wird erst mit der Veröffentlichung sichtbar.
+
+### Staffel
+
+34 Schriftgrößen, davon 15 in einer Spanne von 0,14 rem, auf **neun Stufen** gezogen
+(`--t-1` bis `--t-7` plus die Display-Größen). 35 verschiedene px-Abstände mit Einzelgängern
+wie 7, 13, 26, 42 und 52 auf eine **Skala** gesnappt — 91 Werte, meist um 1 bis 4 px. Beides
+steht als Token am Anfang von `globals.css`.
+
+### Der Knopf in der Mitte
+
+Zwischen dem Ende des Schnellchecks und dem nächsten Handlungsaufruf lagen **7.860 px**,
+knapp zehn Handyschirme Lesestoff ohne eine Möglichkeit zu handeln. Das neue Band
+`.zwischenruf` sitzt direkt hinter der Reform-Erklärung und bietet beide Wege an: den
+genauen Rechner und den 90-Sekunden-Schnellcheck.
+
+### Was die Prüfagents fanden — und was davon ein Fehler von mir war
+
+**Pflegegrad 1 bekommt nach dem Entwurf kein Sozialraumbudget.** Das gibt es erst ab
+Pflegegrad 2 (§ 45b Abs. 1 Satz 1 neu). Ich hatte „175 € Sozialraumbudget" aus dem Gedächtnis
+geschrieben, obwohl der eigene Datensatz zwei Dateien weiter `sozialraumbudget: [0, 175, …]`
+sagt und `/reform` das Gegenteil erklärt. Das ist der Fehlertyp, der am teuersten ist: eine
+Rechtsaussage aus dem Kopf statt aus der Quelle.
+
+**Die Geldbeträge hängen nicht am Antragstag.** § 142b schützt den Pflegegrad, gezahlt wird
+nach dem Recht des Leistungsmonats. Eine Euro-Zahl im Kasten „Antrag bis 31.12.2026" behauptet
+das Gegenteil — und nebenbei, ein späterer Antrag bringe mehr Geld. Die Beträge stehen jetzt
+in einem eigenen Block unter dem Paar, mit dem Hinweis, dass die höhere Zahl ab 2027 nicht
+mehr Geld bedeutet: Verbrauchshilfsmittel und Verhinderungspflege entfallen als eigene
+Ansprüche.
+
+**Das Ergebnis verwies nirgends auf `/antrag`.** Bei einer Seite, deren Kernbotschaft „der
+Antragstag entscheidet" lautet, führten die ersten Knöpfe unter dem Ergebnis zur
+39-Euro-Mappe und zu Partnerangeboten. Jetzt steht der kostenlose Antrag bei y = 1.581 statt
+des Produkts bei y = 2.997.
+
+**Der Kopfknopf war auf `/check` tot** — er zeigte auf `/check`, während man dort stand. Er
+führt jetzt zum Antrag.
+
+Dazu: „90 Sekunden" im Zwischenruf war für den 63-Fragen-Rechner unwahr. Anlage 1 hat
+**64** Kriterien, nicht 65; der Zähler im Rechner sagt jetzt „Fragen", weil er die sichtbaren
+zählt (63 am Anfang, 65 mit den Inkontinenz-Folgefragen). Die Partnerzeilen nannten
+2027er-Beträge ohne Entwurfskennzeichnung und den Pflegegrad-5-Höchstwert als Regelfall.
+
+**Ein Agent lag daneben:** Die Werkzeugkarten seien nicht klickbar. Gemessen ist die ganze
+Karte ein Ziel von 335 × 252 px (`.ablauf-schritt a::after { inset: 0 }`). Geändert habe ich
+nur das dreifache nichtssagende „Öffnen" — drei gleiche Linktexte sind für einen Screenreader,
+der sich die Links auflisten lässt, dreimal dasselbe.
+
+### Ein Fehler, den nur der Simulator zeigte
+
+Beim Laden von `/check` lag ein Fokusrahmen um die Überschrift „Mobilität". Grund: `ersterAufbau`
+taugte nicht als Wache, weil der Hash-Effekt die Marke löscht, bevor `geladen` umspringt. Jetzt
+merkt sich der Effekt den zuletzt gezeigten Teil und fokussiert nur bei einem echten Wechsel.
+Im Browserfenster war davon nichts zu sehen.
+
+### Was der dritte Prüflauf noch fand
+
+Zwei Agents fanden unabhängig voneinander denselben Fehler, und das war der schwerste:
+**Der Fokusring war auf den beiden neuen petrolfarbenen Bändern unsichtbar** — der Ring hat die
+Farbe `--akzent`, und die Bänder haben `--akzent` als Hintergrund. 1:1. Wer mit der Tastatur
+bedient, sah auf genau den Handlungsaufrufen nichts, die ich gerade erst eingebaut hatte. Dazu
+kam: bei allen sieben Aufklappern (`<summary>`) lag der Ring außerhalb des Elements und wurde
+vom `overflow: hidden` der Hülle abgeschnitten.
+
+Weiter behoben:
+
+- **Überschriften klebten an ihrem Inhalt.** `h1, h2, h3 { margin: 0 }` ohne Abstand nach unten
+  ergab an rund fünfzehn Stellen 0 px zwischen Überschrift und Text. Jetzt 16 px unter der h2,
+  8 px unter der h3 — die kollabieren mit vorhandenen Abständen, es wird also nirgends doppelt.
+- **Zwei Regressionen meiner eigenen Staffel:** `.vorspann` war mit 16,8 px *kleiner* geworden
+  als der Fließtext, den er einleitet (18 px), und `.preis` war auf 32 px gewachsen und damit
+  größer als die Überschrift darüber.
+- Zwischenruf und Antragsruf brachen den Knopf unter den Text, weil der Text keine
+  Breitenbegrenzung hatte.
+- Die Augenbraue des dunklen Bandes stand 214 px über ihrer Überschrift (`align-items: center`).
+- Nach „Ergebnis anzeigen" fiel der Fokus auf den Body — ein Screenreader las nichts vor,
+  obwohl sich die ganze Seite ausgetauscht hatte.
+- „PG 2" steht jetzt als „Pflegegrad 2" da, und „kein Pflegegrad" statt eines Gedankenstrichs,
+  den ein Screenreader als „Strich" vorliest.
+- Der Nenner im Rechner wuchs mitten im Durchgang von 63 auf 65, sobald die Inkontinenz-
+  Folgefragen dazukamen. Jetzt zählt er nur noch die beantworteten Fragen.
+
+**Was ich bewusst nicht gemacht habe:** Die Seite ist mit rund 12.400 px weiterhin lang, und
+`/check` hat im Modul 5 eine Strecke von 9.200 px ohne Knopf. Das sind Inhaltsentscheidungen —
+welche Bänder zusammengelegt werden, gehört dir. Ebenso offen: ein zweites, kurzes
+Mailfeld direkt am Schnellcheck-Ergebnis (dort ist die Absicht am höchsten, das Formular steht
+aber bei 92 % Seitentiefe), und ein Zwischenergebnis nach Modul 4.
+
 ## 4. Das Backend
 
 `/admin`, passwortgeschützt. Zeigt:
@@ -186,6 +293,18 @@ Lokal ansehen:
 cd "/Users/thees/Desktop/Claude/Pflege/pflegegeld-antrag" && npm run build && npx next start -p 3311
 ```
 
+Bilder neu bauen (laedt die Originale und legt die Duotone darueber):
+
+```bash
+cd "/Users/thees/Desktop/Claude/Pflege/pflegegeld-antrag" && npm run bilder
+```
+
+Vorschaubild fuer geteilte Links neu bauen:
+
+```bash
+cd "/Users/thees/Desktop/Claude/Pflege/pflegegeld-antrag" && npm run vorschau
+```
+
 Ausrollen:
 
 ```bash
@@ -198,8 +317,8 @@ cd "/Users/thees/Desktop/Claude/Pflege/pflegegeld-antrag" && npx vercel --prod
 
 | Datei | Wofür |
 |---|---|
-| `src/lib/nba.ts` | Rechenkern, 65 Kriterien, beide Rechtsstände |
-| `src/lib/nba.test.ts` | 70 Prüfungen, mit `node --no-warnings` ausführbar |
+| `src/lib/nba.ts` | Rechenkern, 64 Kriterien aus Anlage 1 plus ein internes Tor, beide Rechtsstände |
+| `src/lib/nba.test.ts` | 75 Prüfungen, mit `node --no-warnings` ausführbar |
 | `src/lib/recht.ts` | Zitierte Rechtsfakten, Wortlaut gekennzeichnet |
 | `src/lib/leistungen.ts` | Leistungsbeträge 2026 und 2027 |
 | `src/lib/speicher.ts` | Datenbank oder Demo — eine Stelle entscheidet das |
@@ -208,4 +327,7 @@ cd "/Users/thees/Desktop/Claude/Pflege/pflegegeld-antrag" && npx vercel --prod
 | `pruefung/klassen.mjs` | Findet CSS-Klassen im Markup ohne Regel |
 | `pruefung/kontrast.mjs` | Rechnet alle Farbpaare nach |
 | `pruefung/seiten.mjs` | Lädt alle zehn Seiten im Browser, meldet jeden Absturz |
+| `werkzeug/bilder.mjs` | Duotone-Pipeline, eine Graduierung für alle Fotos |
+| `werkzeug/vorschaubild.mjs` | Vorschaubild für geteilte Links, 1200 × 630 |
+| `public/bilder/HERKUNFT.md` | Bildquellen und die Werte der Graduierung |
 | `../Strategie-Pflege-zu-Hause.md` | Die Analyse, auf der das Produkt beruht |
