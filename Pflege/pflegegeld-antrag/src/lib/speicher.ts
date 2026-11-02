@@ -51,9 +51,12 @@ export async function leadSchreiben(l: Lead): Promise<void> {
     console.warn(`Kein Datenbankziel: Lead (${l.anlass}) wurde NICHT gespeichert.`);
     throw new Error("kein-speicherziel");
   }
-  const antwort = await rest("leads", {
+  // on_conflict + ignore-duplicates: eine Adresse steht je Anlass einmal in der
+  // Liste. Ein zweiter Versuch laeuft ins Leere, statt eine Dublette anzulegen
+  // oder einen schon bestaetigten Eintrag wieder auf unbestaetigt zu setzen.
+  const antwort = await rest("leads?on_conflict=mail,anlass", {
     method: "POST",
-    headers: { prefer: "return=minimal" },
+    headers: { prefer: "return=minimal,resolution=ignore-duplicates" },
     body: JSON.stringify({
       zeit: l.zeit, anlass: l.anlass, mail: l.mail, name: l.name,
       befund: l.befund ?? {}, quelle: l.quelle, sitzung: l.sitzung ?? null,

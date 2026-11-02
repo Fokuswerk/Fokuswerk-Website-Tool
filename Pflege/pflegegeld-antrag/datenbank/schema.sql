@@ -1,6 +1,17 @@
 -- Schema für Pflegegeld-Antrag.
--- In Supabase unter "SQL Editor" einmal ausführen, dann die Zugangsdaten
--- als Umgebungsvariablen in Vercel hinterlegen (siehe README).
+--
+-- So wird es eingespielt:
+--   1. In Supabase ein Projekt anlegen, Region Frankfurt (eu-central-1).
+--      Das Ergebnis enthält Pflegegrade, also Gesundheitsangaben nach
+--      Art. 9 DSGVO — die gehören in die EU und nicht in eine Datenbank,
+--      die nebenbei ein anderes Produkt bedient.
+--   2. Diese Datei im SQL-Editor einmal vollständig ausführen.
+--   3. Unter "Project Settings → API" die Projekt-URL und den
+--      service_role-Schlüssel holen (NICHT den anon-Schlüssel: die Tabellen
+--      stehen unter Row Level Security ohne jede Policy, der anon-Schlüssel
+--      sieht dadurch nichts).
+--   4. Beide Werte bei Vercel hinterlegen, siehe README.
+--   5. `npm run datenbank` beweist, dass es wirklich funktioniert.
 
 create table if not exists ereignisse (
   id          uuid primary key default gen_random_uuid(),
@@ -31,6 +42,15 @@ create table if not exists leads (
 create index if not exists leads_zeit_idx   on leads (zeit desc);
 create index if not exists leads_anlass_idx on leads (anlass);
 
--- Zugriff nur über den Dienstschlüssel, nicht über den öffentlichen.
+-- Dieselbe Adresse soll je Anlass nur einmal in der Liste stehen. Wer das
+-- Formular zweimal abschickt, weil keine Mail ankam, erzeugt sonst Dubletten.
+-- Der Schreibvorgang nutzt dazu "resolution=ignore-duplicates": der zweite
+-- Versuch laeuft ins Leere, statt einen schon bestaetigten Eintrag wieder auf
+-- unbestaetigt zurueckzusetzen.
+create unique index if not exists leads_mail_anlass_idx on leads (mail, anlass);
+
+-- Row Level Security an, aber bewusst OHNE Policy: damit kommt ausschliesslich
+-- der service_role-Schluessel an die Daten, der RLS umgeht. Der oeffentliche
+-- anon-Schluessel sieht nichts, selbst wenn er einmal im Browser landet.
 alter table ereignisse enable row level security;
 alter table leads      enable row level security;

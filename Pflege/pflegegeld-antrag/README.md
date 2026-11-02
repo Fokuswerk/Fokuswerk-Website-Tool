@@ -38,7 +38,7 @@ Kein anderer Rechner im Netz kennt heute die neuen Werte. Das ist das Zeitfenste
 - die Regel „höchster Wert aus Modul 2 oder 3", die gemeinsam mit 15 Prozent gewichtet wird
 - **beide Fassungen der Anlage 2**, also die heutigen und die künftigen Punktspannen
 
-`npm run pruefen` fährt 55 Prüfungen gegen handgerechnete Fälle, darunter die Grenzfälle
+`npm run pruefen` fährt 75 Prüfungen gegen handgerechnete Fälle, darunter die Grenzfälle
 der Reform (etwa: acht Einzelpunkte in Modul 4 ergeben heute 20, künftig 10 gewichtete
 Punkte). Node 24 führt die TypeScript-Datei direkt aus, dafür braucht es kein Testpaket.
 
@@ -96,21 +96,71 @@ Abschluss, Vergleichsportale rund 30 Prozent Umsatzanteil.
 |---|---|
 | Impressum nach § 5 DDG und Datenschutzerklärung nach Art. 13 DSGVO | ohne das darf die Seite nicht öffentlich sein |
 | `robots` in `src/app/layout.tsx` von `noindex` befreien | erst nach den Rechtstexten |
-| `LEAD_WEBHOOK` als Umgebungsvariable setzen | sonst stehen Leads nur im Vercel-Log |
+| Datenbank einrichten (siehe unten) | ohne sie weist `/api/lead` jede Adresse mit 503 ab |
 | Bezahlvorgang für die Mappe | derzeit nur Vormerkung |
 | Kooperationsvertrag mit einer Kanzlei | `/widerspruch` ist bis dahin als „noch nicht freigeschaltet" gekennzeichnet |
 | Partnerverträge mit Vergütung je Lead | `/anfrage` sammelt sonst Anfragen ohne Abnehmer |
 | Nach dem 31. Dezember: Texte auf den neuen Stand ziehen | der Stichtagshinweis schaltet automatisch um, die Fließtexte nicht |
 | Nach dem Bundestagsbeschluss: Werte gegen das verkündete Gesetz prüfen | alle 2027er-Zahlen stammen aus dem Regierungsentwurf |
 
+## Datenbank einrichten
+
+Ohne Datenbank laeuft die Seite vollstaendig, aber `/api/lead` antwortet mit 503 und das
+Formular sagt ehrlich, dass die Adresse **nicht** gespeichert wurde. `/admin` zeigt dann
+Demo-Zahlen. Das ist Absicht: ein Formular, das "Notiert." sagt, waehrend die Adresse
+verfaellt, ist schlimmer als eine Fehlermeldung.
+
+1. **Projekt anlegen** bei Supabase, Region **Frankfurt (eu-central-1)**. Das Ergebnis
+   enthaelt Pflegegrade, also Gesundheitsangaben nach Art. 9 DSGVO — die gehoeren in die EU
+   und in eine eigene Datenbank, nicht in eine, die nebenbei ein anderes Produkt bedient.
+2. **`datenbank/schema.sql`** im SQL-Editor einmal vollstaendig ausfuehren.
+3. Unter **Project Settings → API** die Projekt-URL und den **`service_role`**-Schluessel
+   holen. Nicht den `anon`-Schluessel: beide Tabellen stehen unter Row Level Security ohne
+   Policy, der oeffentliche Schluessel sieht dadurch nichts.
+4. Beide Werte bei Vercel hinterlegen:
+
+```bash
+npx vercel env add SUPABASE_URL production
+```
+
+```bash
+npx vercel env add SUPABASE_DIENSTSCHLUESSEL production
+```
+
+5. Fuer die Auswertung unter `/admin` zusaetzlich das Zugangspasswort. Ohne diesen Wert
+   bleibt der Bereich zu — `angemeldet()` gibt dann immer `false` zurueck, es kann also
+   nichts versehentlich offenstehen.
+
+```bash
+npx vercel env add ADMIN_PASSWORT production
+```
+
+6. Neu ausrollen und **nachweisen**, dass es wirklich geht:
+
+```bash
+npm run datenbank
+```
+
+Das Skript schreibt einen Probeeintrag, liest ihn zurueck und loescht ihn wieder. Erst damit
+ist belegt, dass der Schluessel auch schreiben darf — ein Schluessel mit zu wenig Rechten
+faellt sonst erst auf, wenn der erste echte Lead verlorengeht.
+
+**Noch offen, bevor Mails rausgehen duerfen:** Jeder Eintrag steht auf `bestaetigt = false`.
+Die Bestaetigungsmail (Double Opt-in) gibt es noch nicht, und ohne sie darf an diese Adressen
+nichts verschickt werden.
+
 ## Arbeiten am Projekt
 
 ```
 npm install
-npm run pruefen   # 55 Prüfungen des Rechenkerns
+npm run pruefen    # 75 Prüfungen des Rechenkerns, Klassen, Kontraste
+npm run seiten     # lädt alle zehn Seiten im echten Browser, meldet Abstürze
+npm run datenbank  # beweist, dass die Datenbank Leads annimmt und zurückgibt
+npm run bilder     # baut die Fotos neu, eine Duotone für alle
+npm run vorschau   # baut das Vorschaubild für geteilte Links
 npm run build
-npm start         # Port 3210
-npx vercel --prod # rollt aus, ohne Git-Bindung
+npm start          # Port 3210
+npx vercel --prod  # rollt aus, ohne Git-Bindung
 ```
 
 Das Projekt hängt bewusst nicht am Sammelrepo, sondern wird direkt aus dem Ordner

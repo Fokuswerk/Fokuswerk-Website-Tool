@@ -287,6 +287,46 @@ Bis dahin ist `/admin` im Demo-Modus und zeigt grundsätzlich keine echten Daten
 
 ---
 
+## 4a. Datenbank: was vorbereitet ist und was du tun musst
+
+Das Supabase-Projekt konnte ich nicht anlegen. Der Free-Tarif erlaubt **zwei aktive Projekte
+je Besitzer**, und beide Plätze sind belegt: „Gigis Gourmet Kitchen" (in Betrieb — 8
+Presseartikel, Kurse, eine Anfrage) und „Wohnsitzmelder" (zwei Tabellen, zusammen ein
+Eintrag). Du legst dafür ein eigenes Konto an — für Gesundheitsangaben nach Art. 9 DSGVO ist
+eine eigene Datenbank ohnehin die sauberere Lösung als eine geteilte.
+
+**Deine vier Schritte:**
+
+1. Projekt anlegen, Region **Frankfurt (eu-central-1)**.
+2. `datenbank/schema.sql` im SQL-Editor einmal ausführen.
+3. Unter *Project Settings → API* die Projekt-URL und den **`service_role`**-Schlüssel holen
+   — nicht den `anon`-Schlüssel. Beide Tabellen stehen unter Row Level Security **ohne**
+   Policy; der öffentliche Schlüssel sieht dadurch nichts, selbst wenn er im Browser landet.
+4. Drei Werte bei Vercel hinterlegen (Secrets zu schreiben war mir in dieser Sitzung
+   gesperrt): `SUPABASE_URL`, `SUPABASE_DIENSTSCHLUESSEL`, `ADMIN_PASSWORT`. Das
+   Admin-Passwort steht in `.env.local`. Die Befehle stehen in der README.
+
+**Danach beweist `npm run datenbank`, dass es wirklich läuft.** Das Skript schreibt einen
+Probeeintrag auf eine `.invalid`-Adresse, liest ihn zurück, schickt ihn ein zweites Mal
+(der Dublettenschutz muss greifen) und löscht ihn wieder. Der Unterschied zu „die Variablen
+sind gesetzt": ein Schlüssel mit zu wenig Rechten fällt sonst erst auf, wenn der erste echte
+Lead verlorengeht.
+
+**Neu dazugekommen:** ein Dublettenschutz. Eine Adresse steht je Anlass nur einmal in der
+Liste (`leads_mail_anlass_idx` plus `resolution=ignore-duplicates`). Wer zweimal abschickt,
+weil keine Mail ankam, erzeugt keine zweite Zeile — und ein schon bestätigter Eintrag wird
+dabei nicht wieder auf unbestätigt zurückgesetzt.
+
+**Was sofort danach dringend wird:** Jeder Eintrag steht auf `bestaetigt = false`, und die
+Bestätigungsmail gibt es nicht. Sobald die Datenbank läuft, tragen sich Leute ein und hören
+nichts. Das ist die sichere Richtung — es geht nichts Unverlangtes raus — aber die Schleife
+ist offen. Das ist der nächste Baustein.
+
+**Geprüft:** `/admin` bleibt ohne gesetztes `ADMIN_PASSWORT` zu; `angemeldet()` gibt dann
+immer `false` zurück, es kann also nichts versehentlich offenstehen. Und `/api/lead`
+antwortet ohne Datenbank mit `{"ok":false,"grund":"speicher"}` und 503, das Formular sagt
+ehrlich, dass die Adresse **nicht** gespeichert wurde.
+
 ## 5. Was vor der Veröffentlichung noch fehlt
 
 Die Seite steht auf `noindex`. Das muss so bleiben, bis diese drei Punkte erledigt sind:

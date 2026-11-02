@@ -12,7 +12,8 @@
     "kontrast": "node pruefung/kontrast.mjs",
     "seiten": "node pruefung/seiten.mjs",
     "bilder": "node werkzeug/bilder.mjs",
-    "vorschau": "node werkzeug/vorschaubild.mjs"
+    "vorschau": "node werkzeug/vorschaubild.mjs",
+    "datenbank": "node pruefung/datenbank.mjs"
   },
   "dependencies": {
     "next": "^16.4.3",
