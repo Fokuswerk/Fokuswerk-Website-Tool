@@ -7,7 +7,6 @@ import { FAKTEN } from "@/lib/recht";
 import { euro, BETRAEGE_2026 } from "@/lib/leistungen";
 import Wahlgruppe from "@/components/Wahlgruppe";
 import Lead from "@/components/Lead";
-import Vertrauen from "@/components/Vertrauen";
 import Schwellenband from "@/components/Schwellenband";
 import Bild from "@/components/Bild";
 import { Schloss, Paragraf, Uhr, Haken } from "@/components/Icon";
@@ -356,13 +355,11 @@ export default function Start({ tage }: { tage: number }) {
               <span className="bezeichnung">weniger anerkannte Erstbegutachtungen, wenn man die neuen Werte auf das heutige Versichertenkollektiv anwendet</span>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Satz mit Bild */}
-      <section className="abschnitt">
-        <div className="huelle">
-          <div className="bildblock">
+          {/* Stand vorher in einem eigenen Band mit eigener Augenbraue und
+              eigener h2 - 761 px fuer 35 Woerter. Es geht um dieselbe Stunde,
+              also gehoert es hierhin. */}
+          <div className="bildblock" style={{ marginTop: "clamp(40px, 5vw, 80px)" }}>
             <div className="bildrahmen">
               <Bild
                 name="gespraech"
@@ -373,9 +370,8 @@ export default function Start({ tage }: { tage: number }) {
               />
             </div>
             <div>
-              <span className="auge auge-strich">Der häufigste Fehler</span>
-              <h2>Nicht Übertreibung. Bescheidenheit.</h2>
-              <p className="vorspann abstand-s">
+              <h3>Der häufigste Fehler: Bescheidenheit</h3>
+              <p className="abstand-s">
                 Angehörige halten für selbstverständlich, was im Gutachten als Unselbständigkeit
                 zählt – das Richten der Medikamente, die Hand beim Aufstehen, das Erinnern an
                 Termine. Genau diese Hilfe bringt die Punkte.
@@ -385,23 +381,20 @@ export default function Start({ tage }: { tage: number }) {
         </div>
       </section>
 
-      {/* 03 — Was sich ändert */}
-      <section className="abschnitt nacht">
+      {/* 04 — Nachprüfbar */}
+      <section className="abschnitt">
         <div className="huelle">
-          <span className="auge">Was zum 1. Januar 2027 gilt</span>
-          <div className="spalten">
-            <div><h2>Drei Änderungen, die zusammen wirken</h2></div>
+          <span className="auge auge-strich">Was zum 1. Januar 2027 gilt</span>
+          <div className="spalten schmal-links">
             <div>
-              <ul className="marken-liste">
+              <h2>Die Grenzen verschieben sich, nicht Ihr Zustand</h2>
+              <p className="vorspann" style={{ marginTop: 22 }}>{FAKTEN.schwellen.satz}</p>
+              {/* Die beiden Aenderungen, die die Tabelle daneben NICHT zeigt.
+                  Die dritte - die hoeheren Schwellen - stand vorher in einem
+                  eigenen Band als Fliesstext und noch einmal in dieser Tabelle. */}
+              <ul className="marken-liste abstand-s">
                 <li>
                   <span className="ziffer">01</span>
-                  <span>
-                    <strong>Höhere Schwellen.</strong> Pflegegrad 1 ab 15 statt 12,5 Punkten,
-                    Pflegegrad 2 ab 30 statt 27, Pflegegrad 3 ab 50 statt 47,5.
-                  </span>
-                </li>
-                <li>
-                  <span className="ziffer">02</span>
                   <span>
                     <strong>Verschobene Punktspannen</strong> in den Modulen Mobilität,
                     Selbstversorgung und Alltagsleben. Dieselbe Hilfe ergibt dort weniger
@@ -409,7 +402,7 @@ export default function Start({ tage }: { tage: number }) {
                   </span>
                 </li>
                 <li>
-                  <span className="ziffer">03</span>
+                  <span className="ziffer">02</span>
                   <span>
                     <strong>Keine Entscheidungsfrist</strong> von Januar bis April 2027. Die 25
                     Arbeitstage sind dann unbeachtlich – außer bei besonders dringlichem
@@ -417,7 +410,27 @@ export default function Start({ tage }: { tage: number }) {
                   </span>
                 </li>
               </ul>
-              <p className="quelle" style={{ marginTop: 26 }}>{FAKTEN.verfahren.satz}</p>
+              <p className="quelle abstand-s">{FAKTEN.verfahren.satz}</p>
+            </div>
+            <div>
+              <Schwellenband />
+            </div>
+          </div>
+
+          <div style={{ marginTop: "clamp(32px, 4vw, 56px)" }}>
+            <div className="quellen-leiste">
+              <a className="quellen-badge" href="https://www.gesetze-im-internet.de/sgb_11/anlage_2.html" target="_blank" rel="noopener noreferrer">
+                <span className="marker" aria-hidden="true" />
+                Anlage 2 zu § 15 SGB XI
+              </a>
+              <a className="quellen-badge" href="https://www.bundesgesundheitsministerium.de/fileadmin/Dateien/3_Downloads/Gesetze_und_Verordnungen/GuV/P/Kabinett-GE_Pflegeneuordnungsgesetz_PNOG.pdf" target="_blank" rel="noopener noreferrer">
+                <span className="marker" aria-hidden="true" />
+                Kabinettsentwurf PNOG
+              </a>
+              <span className="stempel">
+                <Haken size={14} />
+                Rechtsstand geprüft am 2. November 2026
+              </span>
             </div>
           </div>
         </div>
@@ -447,40 +460,6 @@ export default function Start({ tage }: { tage: number }) {
                   kurzen Weg noch einmal - zehn Minuten sind an dieser Stelle
                   fuer manche die zu hohe Huerde. */}
               <a className="zwischenruf-kurz" href="#rechner">oder in 90 Sekunden schätzen</a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 04 — Nachprüfbar */}
-      <section className="abschnitt">
-        <div className="huelle">
-          <span className="auge auge-strich">Nachprüfbar</span>
-          <div className="spalten schmal-links">
-            <div>
-              <h2>Die Grenzen verschieben sich, nicht Ihr Zustand</h2>
-              <p className="vorspann" style={{ marginTop: 22 }}>{FAKTEN.schwellen.satz}</p>
-            </div>
-            <div>
-              <Schwellenband />
-            </div>
-          </div>
-
-          <div style={{ marginTop: "clamp(48px, 6vw, 92px)" }}>
-            <Vertrauen />
-            <div className="quellen-leiste">
-              <a className="quellen-badge" href="https://www.gesetze-im-internet.de/sgb_11/anlage_2.html" target="_blank" rel="noopener noreferrer">
-                <span className="marker" aria-hidden="true" />
-                Anlage 2 zu § 15 SGB XI
-              </a>
-              <a className="quellen-badge" href="https://www.bundesgesundheitsministerium.de/fileadmin/Dateien/3_Downloads/Gesetze_und_Verordnungen/GuV/P/Kabinett-GE_Pflegeneuordnungsgesetz_PNOG.pdf" target="_blank" rel="noopener noreferrer">
-                <span className="marker" aria-hidden="true" />
-                Kabinettsentwurf PNOG
-              </a>
-              <span className="stempel">
-                <Haken size={14} />
-                Rechtsstand geprüft am 2. November 2026
-              </span>
             </div>
           </div>
         </div>
@@ -523,21 +502,25 @@ export default function Start({ tage }: { tage: number }) {
         </div>
       </section>
 
-      {/* 07 — Werkzeuge */}
-      <section className="abschnitt himmelbett">
+      {/*
+        Drei Werkzeuge. Vorher drei hohe Karten mit 1.123 px fuer 48 Woerter -
+        und alle drei Ziele sind oben im Hero, in der Kopfleiste und im
+        Zwischenruf schon verlinkt. Als Zeile bleibt alles erreichbar und
+        beschrieben, kostet aber ein Viertel der Hoehe.
+      */}
+      <section className="abschnitt himmelbett schmal">
         <div className="huelle">
-          <span className="auge auge-strich">Drei Werkzeuge</span>
-          <h2 style={{ maxWidth: "16ch" }}>Rechnen, prüfen, vergleichen</h2>
-          <div className="ablauf" style={{ marginTop: "clamp(32px, 4vw, 60px)" }}>
+          <h2 className="werkzeugzeile-titel">Rechnen, prüfen, vergleichen</h2>
+          <ul className="werkzeugzeile">
             {WERKZEUGE.map((w) => (
-              <div className="ablauf-schritt" key={w.nr}>
-                <span className="ablauf-nr">{w.nr}</span>
-                <h3>{w.titel}</h3>
-                <p style={{ marginBottom: 22 }}>{w.text}</p>
-                <Link className="textlink" href={w.ziel}>{w.tu}</Link>
-              </div>
+              <li key={w.nr}>
+                <Link href={w.ziel}>
+                  <strong>{w.titel}</strong>
+                  <span>{w.text}</span>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 

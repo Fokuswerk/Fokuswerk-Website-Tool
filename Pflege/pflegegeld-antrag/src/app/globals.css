@@ -90,7 +90,7 @@
   --max: 1240px;
   --lese: 62ch;
   --rand: clamp(20px, 4vw, 40px);
-  --abschnitt: clamp(64px, 8vw, 128px);
+  --abschnitt: clamp(48px, 6.5vw, 112px);
   --kopf-h: 72px;
 
   /* Bewegung */
@@ -624,20 +624,6 @@ table.daten tfoot td { font-weight: 700; border-top: 1px solid var(--linie-stark
 }
 .nacht .marken-liste strong, .band-tinte .marken-liste strong { color: var(--auf-nacht); }
 
-/* ---------- Vertrauen (Liste) ---------- */
-.vertrauen { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
-@media (min-width: 760px) { .vertrauen { grid-template-columns: 1fr 1fr; } }
-.vertrauen li {
-  display: flex; gap: 16px; align-items: flex-start;
-  background: var(--weiss); border: 1px solid var(--linie); border-radius: var(--r-l); padding: 20px;
-}
-.vertrauen strong { display: block; font-size: var(--t-4); font-weight: 600; margin-bottom: 4px; }
-.vertrauen-text { display: block; font-size: var(--t-3); color: var(--tinte-2); line-height: 1.5; }
-.vertrauen-icon {
-  flex: 0 0 auto; width: 36px; height: 36px; border-radius: var(--r-s);
-  background: var(--akzent-weich); color: var(--akzent); display: grid; place-items: center;
-}
-
 /* ---------- Quellen ---------- */
 .quellen-leiste { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 24px; }
 .quellen-badge {
@@ -1031,4 +1017,36 @@ html { scroll-padding-top: calc(var(--kopf-h) + 16px); }
 @media (max-width: 599px) {
   table.daten th, table.daten td { padding: 12px 6px; }
   table.daten td:first-child { hyphens: auto; overflow-wrap: anywhere; }
+}
+
+/* ---------------------------------------------------------------------------
+   Werkzeugzeile. Ersetzt drei hohe Karten, die 1.123 px fuer 48 Woerter
+   brauchten und dabei nur Ziele wiederholten, die der Hero, die Kopfleiste und
+   der Zwischenruf schon anbieten.
+   --------------------------------------------------------------------------- */
+.abschnitt.schmal { padding: clamp(40px, 5vw, 72px) 0; }
+.werkzeugzeile-titel { margin-bottom: var(--s-5); }
+.werkzeugzeile { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); }
+.werkzeugzeile a {
+  /* Am Handy untereinander. Nebeneinander entschied sonst die Laenge des
+     Titels, ob der Text daneben oder darunter steht - "Bescheid pruefen"
+     stand neben seinem Text, die anderen beiden darueber. */
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-4);
+  border-radius: var(--r-m);
+  background: var(--weiss);
+  border: 1px solid var(--linie);
+  text-decoration: none;
+  transition: border-color var(--t) var(--expo), box-shadow var(--t) var(--expo);
+}
+.werkzeugzeile a:hover { border-color: var(--himmel-rand); box-shadow: var(--schatten-1); }
+.werkzeugzeile strong { font-size: var(--t-6); font-weight: 600; color: var(--akzent); flex: none; }
+.werkzeugzeile span { font-size: var(--t-4); color: var(--tinte-2); }
+@media (min-width: 760px) {
+  .werkzeugzeile { gap: var(--s-1); }
+  .werkzeugzeile a { flex-direction: row; align-items: baseline; gap: var(--s-4); }
+  .werkzeugzeile span { flex: 1 1 16ch; }
+  .werkzeugzeile strong { min-width: 15rem; }
 }

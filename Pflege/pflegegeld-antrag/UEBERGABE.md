@@ -210,6 +210,40 @@ welche Bänder zusammengelegt werden, gehört dir. Ebenso offen: ein zweites, ku
 Mailfeld direkt am Schnellcheck-Ergebnis (dort ist die Absicht am höchsten, das Formular steht
 aber bei 92 % Seitentiefe), und ein Zwischenergebnis nach Modul 4.
 
+## 3c. Vierte Runde: gekürzt
+
+Von **12.658 px auf 10.630 px** (15,6 → 13,1 Handyschirme), **elf Bänder auf neun**. Dabei ist
+kein Inhalt verlorengegangen, nur Dopplung.
+
+**Was zusammengelegt wurde:**
+
+- **„Drei Änderungen" und „Die Grenzen verschieben sich" sagten dasselbe.** Punkt 01 des einen
+  Bandes nannte im Fließtext „Pflegegrad 1 ab 15 statt 12,5, Pflegegrad 2 ab 30 statt 27" — und
+  die Tabelle im anderen Band zeigte genau diese Zahlen noch einmal. Zusammen 2.621 px für eine
+  Tatsache. Jetzt ein Band: die Tabelle als Beleg, daneben die beiden Änderungen, die sie
+  *nicht* zeigt (verschobene Punktspannen, ausgesetzte Entscheidungsfrist).
+- **„Nicht Übertreibung. Bescheidenheit."** war ein eigenes Band mit eigener Augenbraue und
+  eigener Überschrift: 761 px für 35 Wörter. Es geht um dieselbe Stunde am Küchentisch wie das
+  Band davor, also steht es jetzt darin.
+- **Der Vertrauensblock war eine Dopplung des Heros.** Drei seiner vier Punkte standen oben
+  schon fast wortgleich („Sieben Fragen, keine Anmeldung", „Gerechnet wird im Browser",
+  „Anlage 1 zu § 15 SGB XI"). Den vierten — „Quellen offen" — beweist die Quellenleiste direkt
+  darunter, statt ihn zu behaupten. Raus, samt totem CSS.
+- **„Drei Werkzeuge" waren drei hohe Karten für 1.123 px und 48 Wörter**, und alle drei Ziele
+  sind im Hero, in der Kopfleiste und im Zwischenruf ohnehin verlinkt. Jetzt eine Zeile mit
+  349 px — alles bleibt erreichbar und beschrieben.
+- Das Abschnittspolster am Handy von 64 auf 48 px.
+
+**Eine Falle dabei, falls du das Muster wiederverwendest:** In einem Flex-Container mit
+`flex-direction: column` ist `flex-basis` die **Höhe**. Ein `flex: 1 1 16ch` am Text machte aus
+jeder Zeile einen Kasten mit 16 Zeichenbreiten Leerraum darunter. Die Regel gehört in die
+Breitenabfrage, nicht davor.
+
+**Was weiterhin lang ist und warum:** Der Hero (1.255 px) trägt das Bild unter der Falz, der
+Schnellcheck (1.226 px) ist das Produkt, und „So wird gerechnet" (1.187 px) zeigt die sechs
+Modulgewichte. Das sind drei Dinge, die ihren Platz verdienen. Kürzer geht nur noch, indem man
+Inhalt streicht — nicht Dopplung.
+
 ## 4. Das Backend
 
 `/admin`, passwortgeschützt. Zeigt:
