@@ -73,3 +73,10 @@ alter table leads add column if not exists bestaetigt_ip       text;
 -- Der Token muss eindeutig sein, sonst bestaetigt ein Link den falschen Eintrag.
 create unique index if not exists leads_token_idx
   on leads (bestaetigung_token) where bestaetigung_token is not null;
+
+-- Beim Einloesen wandert der Token hierher. Der Bestaetigungsweg liest nur
+-- bestaetigung_token, der Link ist also verbraucht - aber ein zweiter Klick
+-- laesst sich noch als "war schon bestaetigt" erkennen statt als "unbekannt".
+alter table leads add column if not exists token_eingeloest text;
+create index if not exists leads_token_eingeloest_idx
+  on leads (token_eingeloest) where token_eingeloest is not null;

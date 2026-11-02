@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
-import { leadSchreiben } from "@/lib/speicher";
+import { leadSchreiben, abgelaufeneVerwerfen } from "@/lib/speicher";
 import { bestaetigungsMail, senden, versandScharf } from "@/lib/mail";
 
 export const runtime = "nodejs";
@@ -88,6 +88,12 @@ export async function POST(req: Request) {
       : new URL(req.url).origin);
 
   const stand = await senden(bestaetigungsMail(mail, `${basis}/bestaetigen?t=${token}`, anlass));
+
+  // Nebenbei: was nie bestaetigt wurde und abgelaufen ist, fliegt raus. Die
+  // Mail verspricht genau das, und eine Liste mit Adressen ohne Einwilligung
+  // waere auch rechtlich nichts wert. Fehler hier duerfen die Anmeldung nicht
+  // scheitern lassen, deshalb ohne await auf das Ergebnis zu warten.
+  void abgelaufeneVerwerfen();
 
   // Bewusst ohne Adresse: ein Treffer im Log soll keine Person nennen.
   console.log(`LEAD eingegangen, Anlass ${anlass}, Bestaetigungsmail ${stand}`);

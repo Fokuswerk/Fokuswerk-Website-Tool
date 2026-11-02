@@ -64,6 +64,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/reform">Leistungsvergleich</Link>
               <Link href="/mappe">Begutachtungsmappe</Link>
               <Link href="/rechtliches">Rechtliches und Quellen</Link>
+              <Link href="/impressum">Impressum</Link>
+              <Link href="/datenschutz">Datenschutz</Link>
             </nav>
             <p style={{ maxWidth: "58ch" }}>
               Pflegegeld-Antrag ist ein Rechner, keine Behörde und keine Rechtsberatung. Die

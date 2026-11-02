@@ -72,6 +72,33 @@ export async function leadSchreiben(l: Lead): Promise<void> {
   }
 }
 
+/**
+ * Loescht unbestaetigte Anmeldungen, deren Link abgelaufen ist.
+ *
+ * Die Bestaetigungsmail sagt woertlich: "Solange Sie nicht bestaetigen,
+ * schicken wir Ihnen nichts und loeschen den Eintrag danach wieder." Ohne
+ * diesen Aufraeumschritt waere das eine Luege - und eine Liste voller
+ * Adressen, fuer die keine Einwilligung vorliegt.
+ *
+ * Laeuft nebenbei bei jeder neuen Anmeldung. Das reicht: die Menge waechst nur
+ * dann, wenn auch neue dazukommen.
+ */
+export async function abgelaufeneVerwerfen(): Promise<number> {
+  if (!datenbankVorhanden()) return 0;
+  try {
+    const antwort = await rest(
+      `leads?bestaetigt=is.false&token_gueltig_bis=lt.${new Date().toISOString()}`,
+      { method: "DELETE", headers: { prefer: "return=representation" } },
+    );
+    if (!antwort.ok) return 0;
+    const weg = (await antwort.json()) as unknown[];
+    if (weg.length) console.log(`Aufgeraeumt: ${weg.length} unbestaetigte Anmeldung(en) abgelaufen.`);
+    return weg.length;
+  } catch {
+    return 0;
+  }
+}
+
 export type BestaetigungsErgebnis = "bestaetigt" | "schon-bestaetigt" | "abgelaufen" | "unbekannt" | "fehler";
 
 /**
@@ -92,7 +119,19 @@ export async function leadBestaetigen(token: string, ip: string | null): Promise
     );
     if (!suche.ok) return "fehler";
     const treffer = (await suche.json()) as Array<{ id: string; bestaetigt: boolean; token_gueltig_bis: string | null }>;
-    if (treffer.length === 0) return "unbekannt";
+
+    if (treffer.length === 0) {
+      // Nichts unter den offenen Token. Vielleicht wurde dieser hier schon
+      // eingeloest - wer zweimal auf denselben Link in seiner Mail klickt,
+      // soll nicht "kennen wir nicht" lesen, sondern dass alles in Ordnung ist.
+      try {
+        const alt = await rest(`leads?token_eingeloest=eq.${token}&select=id&limit=1`);
+        if (alt.ok && ((await alt.json()) as unknown[]).length > 0) return "schon-bestaetigt";
+      } catch {
+        // Spalte gibt es nicht - dann bleibt es bei "unbekannt".
+      }
+      return "unbekannt";
+    }
 
     const eintrag = treffer[0];
     if (eintrag.bestaetigt) return "schon-bestaetigt";
@@ -112,7 +151,23 @@ export async function leadBestaetigen(token: string, ip: string | null): Promise
         token_gueltig_bis: null,
       }),
     });
-    return schreiben.ok ? "bestaetigt" : "fehler";
+    if (!schreiben.ok) return "fehler";
+
+    // Kuer, bewusst getrennt und fehlertolerant: den verbrauchten Token
+    // merken, damit ein zweiter Klick "war schon bestaetigt" liest statt
+    // "kennen wir nicht". Fehlt die Spalte token_eingeloest in einer aelteren
+    // Datenbank, laeuft das hier ins Leere - die Bestaetigung selbst ist schon
+    // geschrieben und darf daran nicht scheitern.
+    try {
+      await rest(`leads?id=eq.${eintrag.id}`, {
+        method: "PATCH",
+        headers: { prefer: "return=minimal" },
+        body: JSON.stringify({ token_eingeloest: token }),
+      });
+    } catch {
+      // ohne Folgen
+    }
+    return "bestaetigt";
   } catch (fehler) {
     console.error("Bestaetigung fehlgeschlagen:", fehler);
     return "fehler";

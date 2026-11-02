@@ -121,13 +121,14 @@ export default function Rechtliches() {
           ))}
         </ul>
 
-        <h2 className="abstand-l">Impressum</h2>
-        <div className="hinweis hinweis-signal">
-          <div className="hinweis-titel">Vor der Veröffentlichung einzutragen</div>
-          Anbieterkennzeichnung nach § 5 DDG, Datenschutzerklärung nach Art. 13 DSGVO und das
-          Verzeichnis der Verarbeitungstätigkeiten fehlen noch. Ohne diese Angaben darf die Seite
-          nicht öffentlich erreichbar sein. Die Seite ist deshalb auf „noindex“ gestellt.
-        </div>
+        <h2 className="abstand-l">Anbieter und Datenschutz</h2>
+        <p>
+          Wer hinter dieser Seite steht, steht im <a href="/impressum">Impressum</a>. Was an
+          Daten verarbeitet wird, wozu und wie lange, steht in der{" "}
+          <a href="/datenschutz">Datenschutzerklärung</a> – einschließlich des Punktes, der hier
+          am meisten zählt: Ihre Antworten zu Gesundheit und Selbständigkeit verlassen Ihren
+          Browser nicht.
+        </p>
       </div>
     </main>
   );
