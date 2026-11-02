@@ -30,6 +30,12 @@ export const metadata: Metadata = {
       "Ab 1. Januar 2027 gelten neue Punktgrenzen. Dieser Rechner zeigt beide Rechtsstände nebeneinander.",
     locale: "de_DE",
     type: "website",
+    images: [{ url: "/vorschau.jpg", width: 1200, height: 630,
+               alt: "Pflegegeld-Antrag – Welcher Pflegegrad kommt heraus?" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/vorschau.jpg"],
   },
 };
 

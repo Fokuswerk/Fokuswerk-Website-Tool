@@ -48,7 +48,10 @@ export const ANGEBOTE: Record<ModulId, Angebot[]> = {
       id: "betreuung24",
       titel: "Betreuung im Haushalt",
       grund: "Bei nachlassender Orientierung bleibt ein Haushalt selten allein tragfähig.",
-      kasse: "Pflegegeld und ab 2027 das Sozialraumbudget können angerechnet werden.",
+      kasse:
+        "Pflegegeld kann dafür eingesetzt werden. Das Sozialraumbudget, das der Entwurf " +
+        "ab 2027 vorsieht, nur bei anerkannten Angeboten zur Unterstützung im Alltag " +
+        "(ab Pflegegrad 2).",
       wert: 180,
       bezahlt: true,
     },
@@ -66,7 +69,10 @@ export const ANGEBOTE: Record<ModulId, Angebot[]> = {
       id: "betreuung24",
       titel: "Betreuung im Haushalt",
       grund: "Verhaltensauffälligkeiten und nächtliche Unruhe überlasten Angehörige zuerst.",
-      kasse: "Pflegegeld und ab 2027 das Sozialraumbudget können angerechnet werden.",
+      kasse:
+        "Pflegegeld kann dafür eingesetzt werden. Das Sozialraumbudget, das der Entwurf " +
+        "ab 2027 vorsieht, nur bei anerkannten Angeboten zur Unterstützung im Alltag " +
+        "(ab Pflegegrad 2).",
       wert: 180,
       bezahlt: true,
     },
@@ -76,7 +82,9 @@ export const ANGEBOTE: Record<ModulId, Angebot[]> = {
       id: "pflegedienst",
       titel: "Ambulanter Pflegedienst",
       grund: "Bei der Selbstversorgung liegt der größte Teil des Hilfebedarfs.",
-      kasse: "Sachleistungsbudget, ab 2027 bis 2.530 Euro im Monat.",
+      kasse:
+        "Sachleistungsbudget, heute 796 bis 2.299 Euro im Monat je nach Pflegegrad. " +
+        "Der Entwurf sieht ab 2027 890 bis 2.530 Euro vor.",
       wert: 70,
       bezahlt: true,
     },
@@ -104,7 +112,10 @@ export const ANGEBOTE: Record<ModulId, Angebot[]> = {
       id: "alltagsbegleitung",
       titel: "Alltagsbegleitung",
       grund: "Beschäftigung und Kontakte lassen nach, das ist der klassische Einsatzbereich.",
-      kasse: "Entlastungsbetrag 131 Euro, ab 2027 Sozialraumbudget 175 Euro im Monat.",
+      kasse:
+        "Bis zu 131 Euro Entlastungsbetrag im Monat, gegen Beleg. Der Entwurf ersetzt ihn " +
+        "ab 2027 durch ein Sozialraumbudget von 175 Euro – aber erst ab Pflegegrad 2, und " +
+        "300 Euro für Pflegebedürftige unter 25 Jahren.",
       wert: 50,
       bezahlt: true,
     },

@@ -6,7 +6,7 @@ import {
   KRITERIEN, berechne, MODUL_NAMEN, schwaechstesModul, groesstesBedarfsmodul,
   type Antworten, type ModulId, type Ergebnis,
 } from "@/lib/nba";
-import { punkte, BETRAEGE_2026, BETRAEGE_2027 } from "@/lib/leistungen";
+import { punkte, euro, BETRAEGE_2026, BETRAEGE_2027 } from "@/lib/leistungen";
 import { angeboteFuer } from "@/lib/partner";
 import Wahlgruppe from "@/components/Wahlgruppe";
 import Lead from "@/components/Lead";
@@ -26,20 +26,34 @@ const MODUL_EINLEITUNG: Record<ModulId, string> = {
 };
 
 /**
- * Was der Pflegegrad monatlich an Pflegegeld bedeutet - das ist die Zahl, wegen
- * der jemand hier ist. Pflegegrad 1 bekommt keines, nur den Entlastungsbetrag;
- * das muss dastehen, sonst liest sich eine fehlende Zahl wie ein Fehler. Die
- * Betraege ab 2027 stehen bisher nur im Kabinettsentwurf, also mit Hinweis.
+ * Was ein Pflegegrad monatlich an Pflegegeld bedeutet.
+ *
+ * Der Punkt, den man hier leicht falsch macht: Die Geldbetraege haengen NICHT
+ * am Antragstag. § 142b des Entwurfs schuetzt den Pflegegrad, nicht die
+ * Betraege - gezahlt wird nach dem Recht des jeweiligen Monats. Eine Euro-Zahl
+ * im Kasten "Antrag bis 31.12.2026" wuerde also behaupten, ein frueher Antrag
+ * friere 347 € ein, und nebenbei, ein spaeterer Antrag bringe mehr Geld.
+ * Beides ist falsch und widerspricht der Kernaussage dieser Seite. Deshalb
+ * stehen die Betraege unter dem Paar, nicht darin.
  */
-function geldsatz(grad: number, stand: "alt" | "neu") {
-  if (grad === 0) return "Kein Anspruch auf Pflegegeld";
-  const betrag = (stand === "alt" ? BETRAEGE_2026 : BETRAEGE_2027).pflegegeld[grad - 1];
-  if (betrag === 0) {
-    return stand === "alt"
-      ? "Kein Pflegegeld, 131 € Entlastungsbetrag"
-      : "Kein Pflegegeld, 175 € Sozialraumbudget (Entwurf)";
-  }
-  return `${betrag} € im Monat${stand === "neu" ? " (Entwurf)" : ""}`;
+function pflegegeldHeute(grad: number): string {
+  if (grad === 0) return "kein Anspruch";
+  const betrag = BETRAEGE_2026.pflegegeld[grad - 1];
+  // Pflegegrad 1 hat kein Pflegegeld (§ 37 Abs. 1 SGB XI gilt ab Pflegegrad 2).
+  return betrag === 0
+    ? "kein Pflegegeld, bis zu 131 € Entlastungsbetrag gegen Beleg"
+    : `${euro(betrag)} Pflegegeld`;
+}
+
+function pflegegeldEntwurf(grad: number): string {
+  if (grad === 0) return "kein Anspruch";
+  const betrag = BETRAEGE_2027.pflegegeld[grad - 1];
+  // Pflegegrad 1 verliert im Entwurf den Entlastungsbetrag ersatzlos. Ein
+  // Sozialraumbudget gibt es erst ab Pflegegrad 2 (§ 45b Abs. 1 Satz 1 neu) -
+  // siehe auch BETRAEGE_2027.sozialraumbudget, dessen erster Wert 0 ist.
+  return betrag === 0
+    ? "kein Pflegegeld, kein Entlastungsbetrag mehr"
+    : `${euro(betrag)} Pflegegeld`;
 }
 
 export default function Inhalt_Check() {
@@ -204,7 +218,7 @@ export default function Inhalt_Check() {
       <div className="huelle-schmal">
         <div className="schritt-kopf">
           <span className="schritt-zahl">
-            Modul {index + 1} von 6 · {beantwortet} von {gesamt} Kriterien
+            Modul {index + 1} von 6 · {beantwortet} von {gesamt} Fragen
           </span>
           {index > 0 && (
             <button type="button" onClick={() => { geheZu(index - 1); window.scrollTo({ top: 0 }); }}
@@ -392,20 +406,58 @@ function Auswertung({ alt, neu, a, zurueck }: { alt: Ergebnis; neu: Ergebnis; a:
             <div className="label">Antrag bis 31.12.2026</div>
             <div className="zahl-gross">{alt.pflegegrad === 0 ? "–" : `PG ${alt.pflegegrad}`}</div>
             <div className="zahl-zusatz">{punkte(alt.gesamtpunkte)} von 100 Punkten</div>
-            <div className="zahl-geld">{geldsatz(alt.pflegegrad, "alt")}</div>
           </div>
           <div className="ergebnis-feld kuenftig">
-            <div className="label">Antrag ab 1.1.2027</div>
+            <div className="label">Antrag ab 1.1.2027 – nach Entwurf</div>
             <div className="zahl-gross">{neu.pflegegrad === 0 ? "–" : `PG ${neu.pflegegrad}`}</div>
             <div className="zahl-zusatz">{punkte(neu.gesamtpunkte)} von 100 Punkten</div>
-            <div className="zahl-geld">{geldsatz(neu.pflegegrad, "neu")}</div>
           </div>
+        </div>
+
+        <div className="geldblock abstand-s">
+          <div className="geldblock-titel">Was das monatlich bedeutet</div>
+          {alt.pflegegrad === 1 && neu.pflegegrad === 1 ? (
+            /* Pflegegrad 1 ist der haerteste Fall: heute eine kleine Leistung,
+               nach dem Entwurf keine mehr. Das verdient einen eigenen Satz
+               statt der Aufzaehlung, die sonst zweimal "kein Pflegegeld" sagt. */
+            <p className="geldblock-zeile">
+              <b>Pflegegrad 1:</b> heute kein Pflegegeld, aber bis zu 131 € Entlastungsbetrag
+              im Monat, gegen Beleg. Nach dem Entwurf entfällt auch der – ersatzlos. Ein
+              Sozialraumbudget ist erst ab Pflegegrad 2 vorgesehen.
+            </p>
+          ) : alt.pflegegrad === neu.pflegegrad ? (
+            <p className="geldblock-zeile">
+              <b>{alt.pflegegrad === 0 ? "Ohne Pflegegrad" : `Pflegegrad ${alt.pflegegrad}`}:</b>{" "}
+              heute {pflegegeldHeute(alt.pflegegrad)}, ab 2027 laut Entwurf{" "}
+              {pflegegeldEntwurf(neu.pflegegrad)}.
+            </p>
+          ) : (
+            <>
+              <p className="geldblock-zeile">
+                <b>Antrag bis 31.12.2026 – {alt.pflegegrad === 0 ? "ohne Pflegegrad" : `Pflegegrad ${alt.pflegegrad}`}:</b>{" "}
+                bis Dezember 2026 {pflegegeldHeute(alt.pflegegrad)}, ab Januar 2027 laut Entwurf{" "}
+                {pflegegeldEntwurf(alt.pflegegrad)}.
+              </p>
+              <p className="geldblock-zeile">
+                <b>Antrag ab 1.1.2027 – {neu.pflegegrad === 0 ? "ohne Pflegegrad" : `Pflegegrad ${neu.pflegegrad}`}:</b>{" "}
+                laut Entwurf {pflegegeldEntwurf(neu.pflegegrad)}.
+              </p>
+            </>
+          )}
+          <p className="quelle" style={{ marginTop: 12, marginBottom: 0 }}>
+            Pflegegeld gibt es, wenn die Pflege von Angehörigen oder Bekannten übernommen wird
+            (§ 37 Abs. 1 SGB XI); bei einem Pflegedienst tritt das Sachleistungsbudget an seine
+            Stelle. <b>Die Beträge hängen am Recht des jeweiligen Monats, nicht am Antragstag</b> –
+            geschützt ist nur der Pflegegrad. Und die höhere Zahl ab 2027 bedeutet nicht mehr Geld
+            insgesamt: Verbrauchshilfsmittel und Verhinderungspflege entfallen im Entwurf als
+            eigene Ansprüche. <Link href="/reform">Was sich für Ihren Haushalt ändert</Link>
+          </p>
         </div>
 
         {verliert && (
           <div className="hinweis hinweis-signal abstand-s">
             <div className="hinweis-titel">Gleiche Angaben, unterschiedliche Stufe</div>
-            Nach heutigem Recht {alt.pflegegrad === 0 ? "kein Pflegegrad" : `Pflegegrad ${alt.pflegegrad}`}, nach neuem Recht{" "}
+            Nach heutigem Recht {alt.pflegegrad === 0 ? "kein Pflegegrad" : `Pflegegrad ${alt.pflegegrad}`}, nach dem Entwurf{" "}
             {neu.pflegegrad === 0 ? "kein Pflegegrad" : `Pflegegrad ${neu.pflegegrad}`}. Maßgeblich ist das Recht am Tag
             der Antragstellung.
           </div>
@@ -417,6 +469,17 @@ function Auswertung({ alt, neu, a, zurueck }: { alt: Ergebnis; neu: Ergebnis; a:
             Kriterien im Modul {hebel} noch einmal.
           </div>
         )}
+
+        <div className="antragsruf abstand-s">
+          <div>
+            <div className="antragsruf-titel">Der Antragstag zählt – nicht der Bescheidtag</div>
+            <p>
+              Maßgeblich ist das Recht an dem Tag, an dem der Antrag bei der Pflegekasse
+              eingeht. Ein Satz genügt, Begründung und Unterlagen kommen später.
+            </p>
+          </div>
+          <Link className="knopf" href="/antrag">Antrag stellen</Link>
+        </div>
 
         <h2 className="abstand-l">Jedes Modul einzeln</h2>
         <p style={{ color: "var(--tinte-2)", fontSize: "var(--t-4)" }}>

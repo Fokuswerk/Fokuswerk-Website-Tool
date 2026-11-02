@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { SCHNELL_FRAGEN, bewerte, MODUL_NAMEN, type Rohpunkte } from "@/lib/nba";
 import { FAKTEN } from "@/lib/recht";
+import { euro, BETRAEGE_2026 } from "@/lib/leistungen";
 import Wahlgruppe from "@/components/Wahlgruppe";
 import Lead from "@/components/Lead";
 import Vertrauen from "@/components/Vertrauen";
@@ -32,9 +33,9 @@ const GEWICHTE = [
 ];
 
 const WERKZEUGE = [
-  { nr: "01", titel: "Genauer Punkterechner", text: "Alle amtlichen Kriterien, beide Rechtsstände nebeneinander.", ziel: "/check" },
-  { nr: "02", titel: "Bescheid prüfen", text: "Punkte aus dem Gutachten eintragen und die Abweichung sehen.", ziel: "/bescheid" },
-  { nr: "03", titel: "Leistungen vergleichen", text: "Was heute gezahlt wird und was ab Januar bleibt, in Euro im Monat.", ziel: "/reform" },
+  { nr: "01", titel: "Genauer Punkterechner", text: "Alle amtlichen Kriterien, beide Rechtsstände nebeneinander.", ziel: "/check", tu: "Punkte ausrechnen" },
+  { nr: "02", titel: "Bescheid prüfen", text: "Punkte aus dem Gutachten eintragen und die Abweichung sehen.", ziel: "/bescheid", tu: "Bescheid eintragen" },
+  { nr: "03", titel: "Leistungen vergleichen", text: "Was heute gezahlt wird und was ab Januar bleibt, in Euro im Monat.", ziel: "/reform", tu: "Leistungen vergleichen" },
 ];
 
 export default function Start({ tage }: { tage: number }) {
@@ -64,7 +65,7 @@ export default function Start({ tage }: { tage: number }) {
   }, [wahl]);
 
   /**
-   * Sieben grobe Angaben können 65 Kriterien nicht ersetzen. Deshalb geben wir
+   * Sieben grobe Angaben können 64 Kriterien nicht ersetzen. Deshalb geben wir
    * einen Korridor aus statt einer einzelnen Stufe.
    */
   function korridor(grad: number): string {
@@ -72,6 +73,22 @@ export default function Start({ tage }: { tage: number }) {
     const unten = Math.max(1, grad - 1);
     const oben = Math.min(5, grad + 1);
     return unten === oben ? `Pflegegrad ${grad}` : `Pflegegrad ${unten} bis ${oben}`;
+  }
+
+  /**
+   * Das Geld zum Korridor. Eine einzelne Zahl waere hier falsch: die Schaetzung
+   * gibt eine Spanne aus, also muss der Betrag auch eine sein. Angesetzt wird
+   * das heutige Pflegegeld, weil das der einzige Betrag ist, der schon gilt.
+   */
+  function geldKorridor(grad: number): string | null {
+    if (grad === 0) return null;
+    const unten = Math.max(1, grad - 1);
+    const oben = Math.min(5, grad + 1);
+    const vonBetrag = BETRAEGE_2026.pflegegeld[unten - 1];
+    const bisBetrag = BETRAEGE_2026.pflegegeld[oben - 1];
+    // Pflegegrad 1 hat kein Pflegegeld, die Spanne beginnt dann bei null.
+    const von = vonBetrag === 0 ? "kein Pflegegeld" : euro(vonBetrag);
+    return `${von} bis ${euro(bisBetrag)} im Monat`;
   }
 
   const alt = useMemo(() => bewerte(rohpunkte, "2026"), [rohpunkte]);
@@ -268,12 +285,18 @@ export default function Start({ tage }: { tage: number }) {
                     </div>
                   </div>
                   <p className="korridor-hinweis">
-                    Sieben Angaben können 65 Kriterien nicht ersetzen. Realistisch liegt das
+                    Sieben Angaben können 64 Kriterien nicht ersetzen. Realistisch liegt das
                     Ergebnis bei einem Antrag noch in diesem Jahr im Bereich{" "}
                     <strong>{korridor(alt.pflegegrad)}</strong>, ab Januar bei{" "}
                     <strong>{korridor(neu.pflegegrad)}</strong>. Der genaue Rechner geht alle
                     Kriterien durch und engt das ein.
                   </p>
+                  {geldKorridor(alt.pflegegrad) && (
+                    <p className="korridor-geld">
+                      Pflegegeld in diesem Bereich: <strong>{geldKorridor(alt.pflegegrad)}</strong>,
+                      wenn Angehörige die Pflege übernehmen.
+                    </p>
+                  )}
 
                   <div className={`hinweis ${lage.stil}`} style={{ marginTop: 34 }}>
                     <div className="hinweis-titel">{lage.titel}</div>
@@ -413,9 +436,18 @@ export default function Start({ tage }: { tage: number }) {
           <div className="zwischenruf-reihe">
             <p>
               Und bei Ihrem Angehörigen?
-              <span>90 Sekunden, beide Rechtsstände nebeneinander.</span>
+              <span>
+                Beide Punktstände nebeneinander, nach allen 64 Kriterien – etwa zehn Minuten.
+                {tage > 0 && ` Noch ${tage} Tage, in denen die heutigen Grenzen gelten.`}
+              </span>
             </p>
-            <Link className="knopf" href="/check">Punkte ausrechnen</Link>
+            <div className="zwischenruf-wege">
+              <Link className="knopf" href="/check">Punkte ausrechnen</Link>
+              {/* Wer den Schnellcheck oben uebersprungen hat, bekommt hier den
+                  kurzen Weg noch einmal - zehn Minuten sind an dieser Stelle
+                  fuer manche die zu hohe Huerde. */}
+              <a className="zwischenruf-kurz" href="#rechner">oder in 90 Sekunden schätzen</a>
+            </div>
           </div>
         </div>
       </section>
@@ -502,7 +534,7 @@ export default function Start({ tage }: { tage: number }) {
                 <span className="ablauf-nr">{w.nr}</span>
                 <h3>{w.titel}</h3>
                 <p style={{ marginBottom: 22 }}>{w.text}</p>
-                <Link className="textlink" href={w.ziel}>Öffnen</Link>
+                <Link className="textlink" href={w.ziel}>{w.tu}</Link>
               </div>
             ))}
           </div>

@@ -11,10 +11,14 @@ export default function Kopf() {
   const pfad = usePathname();
   /**
    * Auf der Startseite fuehrt der Knopf in den 90-Sekunden-Schnellcheck, nicht
-   * in den langen Rechner. Wer oben landet, soll nicht mit 65 Fragen anfangen.
+   * in den langen Rechner. Wer oben landet, soll nicht mit 64 Fragen anfangen.
+   *
+   * Auf /check selbst zeigte der Knopf auf /check - ein Klick tat nichts. Wer
+   * schon rechnet, hat als naechsten Schritt den Antrag, nicht den Rechner.
    */
   const aufStart = pfad === "/";
-  const ziel = aufStart ? "/#rechner" : "/check";
+  const aufRechner = pfad === "/check";
+  const ziel = aufStart ? "/#rechner" : aufRechner ? "/antrag" : "/check";
 
   useEffect(() => {
     const pruefen = () => setFest(window.scrollY > 12);
@@ -31,8 +35,12 @@ export default function Kopf() {
           <Link href="/bescheid">Bescheid prüfen</Link>
           <Link href="/reform">Leistungen</Link>
           <Link href={ziel} className="haupt">
-            <span className="lang">{aufStart ? "Pflegegrad schätzen" : "Pflegegrad rechnen"}</span>
-            <span className="kurz">{aufStart ? "Schätzen" : "Rechnen"}</span>
+            <span className="lang">
+              {aufStart ? "Pflegegrad schätzen" : aufRechner ? "Antrag stellen" : "Pflegegrad rechnen"}
+            </span>
+            <span className="kurz">
+              {aufStart ? "Schätzen" : aufRechner ? "Antrag" : "Rechnen"}
+            </span>
           </Link>
         </nav>
       </div>

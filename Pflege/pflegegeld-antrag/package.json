@@ -11,7 +11,8 @@
     "klassen": "node pruefung/klassen.mjs",
     "kontrast": "node pruefung/kontrast.mjs",
     "seiten": "node pruefung/seiten.mjs",
-    "bilder": "node werkzeug/bilder.mjs"
+    "bilder": "node werkzeug/bilder.mjs",
+    "vorschau": "node werkzeug/vorschaubild.mjs"
   },
   "dependencies": {
     "next": "^16.4.3",
