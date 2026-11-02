@@ -361,6 +361,30 @@ Ohne den letzten Wert zeigen die Links in der Mail auf `*.vercel.app`.
 
 **Ich habe keine einzige Mail verschickt.** Geprüft wurde über den Trockenlauf.
 
+## 4c. Stand der Datenbank (2. November 2026)
+
+**Lokal läuft alles.** `npm run datenbank` ist grün, und der komplette Weg wurde einmal
+durchgespielt: Anmeldung über den echten Endpunkt → Eintrag unbestätigt mit 64-Zeichen-Token
+→ Bestätigungslink → `bestaetigt = true` mit Zeitpunkt und IP → Token verbraucht. Probeeintrag
+danach gelöscht. Verschickt wurde nichts.
+
+**Live noch nicht.** Bei Vercel steht keine Umgebungsvariable, `/api/lead` antwortet dort
+weiterhin mit 503. Secrets zu schreiben war mir gesperrt. Ein Befehl erledigt alle drei auf
+einmal, er liest die Werte aus `.env.local`:
+
+```bash
+cd "/Users/thees/Desktop/Claude/Pflege/pflegegeld-antrag" && for V in SUPABASE_URL SUPABASE_DIENSTSCHLUESSEL ADMIN_PASSWORT; do grep "^$V=" .env.local | cut -d= -f2- | tr -d '\n' | npx vercel env add "$V" production; done && npx vercel --prod
+```
+
+Der Neuaufbau am Ende ist nötig: Vercel zieht geänderte Variablen erst mit dem nächsten
+Deployment.
+
+**Eine Spalte fehlt in der Datenbank, mit Absicht liegengelassen:** `token_eingeloest`. Ohne
+sie liest jemand, der den Bestätigungslink ein zweites Mal anklickt, „Diesen Link kennen wir
+nicht" statt „war schon bestätigt". Die Bestätigung selbst ist davon nicht betroffen — der
+Code ist so gebaut, dass die fehlende Spalte folgenlos bleibt (geprüft gegen die echte
+Datenbank). Falls es dich später stört, sind es zwei Zeilen am Ende von `datenbank/schema.sql`.
+
 ## 5. Was vor der Veröffentlichung noch fehlt
 
 Die Seite steht auf `noindex`. Das muss so bleiben, bis diese drei Punkte erledigt sind:
