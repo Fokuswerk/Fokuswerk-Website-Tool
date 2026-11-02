@@ -390,6 +390,22 @@ nicht" statt „war schon bestätigt". Die Bestätigung selbst ist davon nicht b
 Code ist so gebaut, dass die fehlende Spalte folgenlos bleibt (geprüft gegen die echte
 Datenbank). Falls es dich später stört, sind es zwei Zeilen am Ende von `datenbank/schema.sql`.
 
+## 4d. Ein Rest aus meinen Prüfläufen
+
+In `ereignisse` stehen 68 Seitenaufrufe vom 2. November, alle aus meinen Prüfläufen gegen die
+Produktion (`npm run seiten` lädt dreizehn Seiten pro Durchgang). Leads sind keine drin, die
+Tabelle ist leer.
+
+Löschen durfte ich sie nicht — eine Massenlöschung in der Cloud ist in meiner Sitzung gesperrt,
+und das habe ich nicht umgangen. Stört dich die Zahl in der Auswertung, ist es eine Zeile im
+SQL-Editor:
+
+```sql
+delete from ereignisse where zeit < '2026-11-03';
+```
+
+Nötig ist es nicht: Die Auswertung zeigt die letzten 30 Tage, danach fällt es von allein raus.
+
 ## 5. Was vor der Veröffentlichung noch fehlt
 
 Die Seite steht auf `noindex`. Das muss so bleiben, bis diese drei Punkte erledigt sind:
