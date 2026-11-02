@@ -35,6 +35,26 @@ let fehler = 0;
 const browser = await chromium.launch();
 const seite = await browser.newPage({ viewport: { width: 375, height: 812 } });
 
+// Durch die Schleuse. Ohne das landet jeder Aufruf auf der Passwortseite und
+// die Pruefung meldet reihenweise fehlende Texte statt echter Fehler.
+{
+  await seite.goto(BASIS + "/schleuse", { waitUntil: "domcontentloaded" });
+  const antwort = await seite.evaluate(async (pw) => {
+    const a = await fetch("/api/schleuse", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ passwort: pw }),
+    });
+    return a.status;
+  }, process.env.SEITEN_PASSWORT ?? "qwer1234");
+  if (antwort !== 200) {
+    console.error(`\n  Die Schleuse hat das Passwort nicht angenommen (HTTP ${antwort}).`);
+    console.error("  Richtiges Passwort ueber SEITEN_PASSWORT setzen.\n");
+    await browser.close();
+    process.exit(1);
+  }
+}
+
 for (const { pfad, erwartet } of SEITEN) {
   const meldungen = [];
   const auf = (t) => {

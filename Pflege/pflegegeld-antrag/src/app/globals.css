@@ -652,7 +652,8 @@ table.daten tfoot td { font-weight: 700; border-top: 1px solid var(--linie-stark
 /* ---------- Formular ---------- */
 label.feld { display: block; margin-bottom: 16px; font-size: var(--t-4); font-weight: 600; color: var(--tinte); }
 label.feld span.frei { font-weight: 400; color: var(--tinte-3); }
-input[type="text"], input[type="email"], input[type="tel"], input[type="number"], select {
+input[type="text"], input[type="email"], input[type="tel"], input[type="number"],
+input[type="password"], input[type="date"], select {
   display: block; width: 100%; margin-top: 8px; padding: 16px 16px; font: inherit; font-size: var(--t-5);
   border: 1px solid var(--linie-stark); border-radius: var(--r-m);
   background: var(--weiss); color: var(--tinte); min-height: 54px;

@@ -196,6 +196,23 @@ Mail zu verschicken.
 **Nachweis der Einwilligung:** Die Tabelle hält Zeitpunkt und IP der Anmeldung *und* der
 Bestätigung (Art. 7 Abs. 1 DSGVO). Ohne diese Felder ist die Liste im Streitfall wertlos.
 
+## Schleuse vor der Seite
+
+Die ganze Seite liegt hinter einem Passwort (`src/proxy.ts`). Grund: Solange Impressum und
+Datenschutzerklärung fehlen, darf sie nicht öffentlich erreichbar sein — und `noindex` allein
+hält nur Suchmaschinen fern, nicht jemanden, der die Adresse kennt.
+
+**Passwort:** `qwer1234`, überschreibbar über die Umgebungsvariable `SEITEN_PASSWORT`.
+Der Keks hält nicht das Passwort, sondern dessen SHA-256-Merkmal, und gilt 30 Tage.
+
+Frei bleiben nur die Schleuse selbst, ihr Endpunkt, das Seitensymbol und das Vorschaubild —
+Letzteres, damit die Linkvorschau beim Teilen funktioniert, ohne die Seite zu öffnen. Aufrufe
+der Schnittstellen bekommen `401` statt einer HTML-Seite.
+
+**Zum Abschalten reicht es, `src/proxy.ts` zu löschen.** Sonst nichts.
+
+`npm run seiten` meldet sich selbst an; mit abweichendem Passwort `SEITEN_PASSWORT` setzen.
+
 ## Arbeiten am Projekt
 
 ```
