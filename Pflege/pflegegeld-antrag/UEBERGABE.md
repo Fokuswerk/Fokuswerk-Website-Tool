@@ -327,6 +327,40 @@ immer `false` zurück, es kann also nichts versehentlich offenstehen. Und `/api/
 antwortet ohne Datenbank mit `{"ok":false,"grund":"speicher"}` und 503, das Formular sagt
 ehrlich, dass die Adresse **nicht** gespeichert wurde.
 
+## 4b. Bestätigungsmail (Double Opt-in)
+
+Gebaut und geprüft, aber **bewusst noch nicht scharf**.
+
+**Wie es läuft:** Jede Anmeldung erzeugt einen Zufallstoken aus 32 Byte, speichert ihn mit
+sieben Tagen Gültigkeit und löst die Bestätigungsmail aus. `/bestaetigen?t=…` löst sie ein,
+setzt `bestaetigt = true` und **löscht den Token** — ein Link, der zweimal funktioniert, lässt
+sich aus einem weitergeleiteten Postfach erneut einlösen.
+
+**Der Schalter:** Ohne `FEATURE_MAILVERSAND=true` wird der Text nur gerendert und
+protokolliert, es geht nichts raus. Das Formular sagt dann auch nicht „achten Sie auf unsere
+Mail", sondern nur, dass die Adresse notiert ist — der Endpunkt meldet zurück, was wirklich
+passiert ist, und die Oberfläche richtet sich danach.
+
+**Was am Text wichtig ist:** keine Werbung. Eine Bestätigungsanfrage mit Werbung darin ist
+selbst die unerlaubte Zusendung, die das Verfahren verhindern soll (BGH, 10.02.2011,
+I ZR 164/09). `npm run mailtext` zeigt alle drei Varianten und prüft genau darauf — ohne eine
+Mail zu verschicken. Der Text nennt außerdem die Gültigkeit und sagt denen, die sich nicht
+angemeldet haben, ausdrücklich, dass sie nichts tun müssen.
+
+**Nachweis:** Die Tabelle hält Zeitpunkt und IP von Anmeldung *und* Bestätigung
+(Art. 7 Abs. 1 DSGVO). Ohne diese Felder ist die Liste im Streitfall wertlos.
+
+**Eine Entscheidung liegt bei dir: von welcher Domain.** Bei Resend ist bisher nur
+`email.fokuswerk.de` verifiziert — die Subdomain für Kaltakquise. Eine Bestätigungsmail geht
+an jemanden, der sie erwartet; die gehört nicht auf dieselbe Reputation. Besser eine eigene
+Subdomain, sobald `pflegegeld-antrag.de` steht.
+
+**Vier Werte bei Vercel**, wenn es scharf werden soll: `RESEND_SCHLUESSEL`, `MAIL_ABSENDER`,
+`FEATURE_MAILVERSAND=true` und — sobald eine eigene Domain davorsteht — `OEFFENTLICHE_ADRESSE`.
+Ohne den letzten Wert zeigen die Links in der Mail auf `*.vercel.app`.
+
+**Ich habe keine einzige Mail verschickt.** Geprüft wurde über den Trockenlauf.
+
 ## 5. Was vor der Veröffentlichung noch fehlt
 
 Die Seite steht auf `noindex`. Das muss so bleiben, bis diese drei Punkte erledigt sind:

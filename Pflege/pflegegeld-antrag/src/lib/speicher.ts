@@ -61,11 +61,61 @@ export async function leadSchreiben(l: Lead): Promise<void> {
       zeit: l.zeit, anlass: l.anlass, mail: l.mail, name: l.name,
       befund: l.befund ?? {}, quelle: l.quelle, sitzung: l.sitzung ?? null,
       bestaetigt: l.bestaetigt ?? false,
+      bestaetigung_token: l.bestaetigungToken ?? null,
+      token_gueltig_bis: l.tokenGueltigBis ?? null,
+      anmelde_ip: l.anmeldeIp ?? null,
     }),
   });
   if (!antwort.ok) {
     console.error("Lead nicht gespeichert:", antwort.status, await antwort.text());
     throw new Error("speichern-fehlgeschlagen");
+  }
+}
+
+export type BestaetigungsErgebnis = "bestaetigt" | "schon-bestaetigt" | "abgelaufen" | "unbekannt" | "fehler";
+
+/**
+ * Loest einen Bestaetigungslink ein.
+ *
+ * Der Token wird dabei geloescht: ein Link, der zweimal funktioniert, ist ein
+ * Link, der aus einem weitergeleiteten Postfach noch einmal eingeloest werden
+ * kann. "schon-bestaetigt" erkennen wir deshalb nicht am Token, sondern daran,
+ * dass zur Adresse bereits ein bestaetigter Eintrag gehoert.
+ */
+export async function leadBestaetigen(token: string, ip: string | null): Promise<BestaetigungsErgebnis> {
+  if (!/^[a-f0-9]{48,96}$/.test(token)) return "unbekannt";
+  if (!datenbankVorhanden()) return "fehler";
+
+  try {
+    const suche = await rest(
+      `leads?bestaetigung_token=eq.${token}&select=id,bestaetigt,token_gueltig_bis&limit=1`,
+    );
+    if (!suche.ok) return "fehler";
+    const treffer = (await suche.json()) as Array<{ id: string; bestaetigt: boolean; token_gueltig_bis: string | null }>;
+    if (treffer.length === 0) return "unbekannt";
+
+    const eintrag = treffer[0];
+    if (eintrag.bestaetigt) return "schon-bestaetigt";
+    if (eintrag.token_gueltig_bis && new Date(eintrag.token_gueltig_bis) < new Date()) {
+      return "abgelaufen";
+    }
+
+    const jetzt = new Date().toISOString();
+    const schreiben = await rest(`leads?id=eq.${eintrag.id}`, {
+      method: "PATCH",
+      headers: { prefer: "return=minimal" },
+      body: JSON.stringify({
+        bestaetigt: true,
+        bestaetigt_am: jetzt,
+        bestaetigt_ip: ip,
+        bestaetigung_token: null,
+        token_gueltig_bis: null,
+      }),
+    });
+    return schreiben.ok ? "bestaetigt" : "fehler";
+  } catch (fehler) {
+    console.error("Bestaetigung fehlgeschlagen:", fehler);
+    return "fehler";
   }
 }
 

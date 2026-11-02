@@ -22,6 +22,8 @@ const SEITEN = [
   { pfad: "/rechtliches", erwartet: "Medizinischen Dienst" },
   { pfad: "/anfrage", erwartet: "Anfrage" },
   { pfad: "/admin", erwartet: "Auswertung" },
+  // Ohne Token muss die Seite den Unbekannt-Fall zeigen, nicht abstuerzen.
+  { pfad: "/bestaetigen", erwartet: "Diesen Link kennen wir nicht" },
 ];
 
 /** Meldungen, die nichts mit der Seite zu tun haben. */

@@ -31,6 +31,16 @@ export type Lead = {
   sitzung?: string | null;
   /** false, bis die Bestaetigungsmail beantwortet ist (Double Opt-in) */
   bestaetigt?: boolean;
+  /** Zufallswert aus dem Bestaetigungslink. Nach der Bestaetigung geloescht. */
+  bestaetigungToken?: string | null;
+  tokenGueltigBis?: string | null;
+  bestaetigtAm?: string | null;
+  /**
+   * Nachweis der Einwilligung nach Art. 7 Abs. 1 DSGVO: ohne Zeitpunkt und
+   * Herkunft beider Schritte laesst sich im Streitfall nichts belegen.
+   */
+  anmeldeIp?: string | null;
+  bestaetigtIp?: string | null;
 };
 
 export type Kennzahlen = {

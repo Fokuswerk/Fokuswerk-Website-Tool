@@ -46,6 +46,7 @@ export default function Lead({ anlass, titel, text, knopf = "Erinnerung anforder
   const [datum, setDatum] = useState("");
   const [einwilligung, setEinwilligung] = useState(false);
   const [stand, setStand] = useState<"offen" | "sendet" | "fertig" | "fehler">("offen");
+  const [mailStand, setMailStand] = useState<"verschickt" | "offen">("offen");
 
   async function senden(e: React.FormEvent) {
     e.preventDefault();
@@ -68,7 +69,18 @@ export default function Lead({ anlass, titel, text, knopf = "Erinnerung anforder
         }),
       });
       setStand(antwort.ok ? "fertig" : "fehler");
-      if (antwort.ok) melden("lead", { anlass });
+      if (antwort.ok) {
+        // Der Endpunkt sagt, ob die Bestaetigungsmail wirklich rausging. Ein
+        // "achten Sie auf unsere Mail", obwohl der Versand aus ist, waere ein
+        // Versprechen, das niemand einloest.
+        try {
+          const daten = (await antwort.json()) as { mail?: string };
+          setMailStand(daten.mail === "verschickt" ? "verschickt" : "offen");
+        } catch {
+          setMailStand("offen");
+        }
+        melden("lead", { anlass });
+      }
     } catch {
       setStand("fehler");
     } finally {
@@ -83,8 +95,18 @@ export default function Lead({ anlass, titel, text, knopf = "Erinnerung anforder
         {BESTAETIGUNG[anlass] ?? BESTAETIGUNG_STANDARD}
         <br />
         <br />
-        Ihre Adresse ist notiert. Bevor wir Ihnen etwas schicken, lassen wir Sie die Anmeldung
-        per Mail bestätigen.
+        {mailStand === "verschickt" ? (
+          <>
+            Zum Schluss noch ein Schritt: Wir haben Ihnen eine Mail geschickt. Bitte
+            bestätigen Sie darin die Anmeldung, sonst schicken wir Ihnen nichts. Der Link
+            gilt sieben Tage.
+          </>
+        ) : (
+          <>
+            Ihre Adresse ist notiert. Bevor wir Ihnen etwas schicken, lassen wir Sie die
+            Anmeldung per Mail bestätigen.
+          </>
+        )}
       </div>
     );
   }

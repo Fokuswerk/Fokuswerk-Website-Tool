@@ -625,7 +625,7 @@ export default function Start({ tage }: { tage: number }) {
                 <a className="knopf knopf-hell" href="#rechner">Kostenlos prüfen</a>
               </div>
             </div>
-            <div>
+            <div id="erinnerung">
               <Lead
                 anlass="startseite"
                 titel="Soll ich Sie an die Frist erinnern?"

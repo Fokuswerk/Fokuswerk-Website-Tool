@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
 import { leadSchreiben } from "@/lib/speicher";
+import { bestaetigungsMail, senden, versandScharf } from "@/lib/mail";
 
 export const runtime = "nodejs";
 
@@ -48,6 +50,16 @@ export async function POST(req: Request) {
 
   const anlass = (daten.anlass ?? "unbekannt").slice(0, 64);
 
+  // 32 Byte aus dem Zufallsgenerator des Betriebssystems. Ein ratbarer Token
+  // waere eine Einladung, fremde Adressen zu bestaetigen - und damit genau die
+  // Luecke, die Double Opt-in schliessen soll.
+  const token = randomBytes(32).toString("hex");
+  const gueltigBis = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  // Nachweis der Einwilligung nach Art. 7 Abs. 1 DSGVO. Vercel setzt die
+  // echte Adresse in x-forwarded-for; der erste Eintrag ist der Client.
+  const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || null;
+
   try {
     await leadSchreiben({
       zeit: new Date().toISOString(),
@@ -57,17 +69,30 @@ export async function POST(req: Request) {
       befund: befundSaeubern(daten.befund),
       quelle: req.headers.get("referer")?.slice(0, 200) ?? null,
       sitzung: (daten.sitzung ?? "").slice(0, 48) || null,
-      // Vor dem ersten Mailversand muss die Bestaetigungsmail laufen. Bis dahin
-      // ist jeder Eintrag unbestaetigt, und das zeigt die Auswertung auch so an.
       bestaetigt: false,
+      bestaetigungToken: token,
+      tokenGueltigBis: gueltigBis,
+      anmeldeIp: ip,
     });
   } catch {
     // Lieber eine ehrliche Fehlermeldung als ein "Notiert." ins Leere.
     return NextResponse.json({ ok: false, grund: "speicher" }, { status: 503 });
   }
 
-  // Bewusst ohne Adresse: ein Treffer im Log soll keine Person nennen.
-  console.log(`LEAD eingegangen, Anlass ${anlass}`);
+  // Der Link muss auf die Adresse zeigen, unter der die Seite wirklich laeuft -
+  // sonst fuehrt die Mail bei jeder Vorschau-Bereitstellung ins Leere.
+  const basis =
+    process.env.OEFFENTLICHE_ADRESSE?.replace(/\/$/, "") ??
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : new URL(req.url).origin);
 
-  return NextResponse.json({ ok: true });
+  const stand = await senden(bestaetigungsMail(mail, `${basis}/bestaetigen?t=${token}`, anlass));
+
+  // Bewusst ohne Adresse: ein Treffer im Log soll keine Person nennen.
+  console.log(`LEAD eingegangen, Anlass ${anlass}, Bestaetigungsmail ${stand}`);
+
+  // "trocken" ist kein Fehler fuer die Person vor dem Bildschirm - der Eintrag
+  // steht, er wartet nur auf die Bestaetigung. Das Formular sagt genau das.
+  return NextResponse.json({ ok: true, mail: stand });
 }

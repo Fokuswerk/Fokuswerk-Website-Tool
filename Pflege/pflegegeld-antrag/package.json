@@ -6,14 +6,15 @@
     "dev": "next dev -p 3210",
     "build": "next build",
     "start": "next start -p 3210",
-    "pruefen": "node --no-warnings src/lib/nba.test.ts && node pruefung/klassen.mjs && node pruefung/kontrast.mjs",
+    "pruefen": "node --no-warnings src/lib/nba.test.ts && node pruefung/klassen.mjs && node pruefung/kontrast.mjs && node pruefung/mailtext.mjs",
     "prebuild": "rm -rf .next",
     "klassen": "node pruefung/klassen.mjs",
     "kontrast": "node pruefung/kontrast.mjs",
     "seiten": "node pruefung/seiten.mjs",
     "bilder": "node werkzeug/bilder.mjs",
     "vorschau": "node werkzeug/vorschaubild.mjs",
-    "datenbank": "node pruefung/datenbank.mjs"
+    "datenbank": "node pruefung/datenbank.mjs",
+    "mailtext": "node pruefung/mailtext.mjs"
   },
   "dependencies": {
     "next": "^16.4.3",

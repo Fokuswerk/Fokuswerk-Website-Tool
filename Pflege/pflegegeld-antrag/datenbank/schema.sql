@@ -54,3 +54,22 @@ create unique index if not exists leads_mail_anlass_idx on leads (mail, anlass);
 -- anon-Schluessel sieht nichts, selbst wenn er einmal im Browser landet.
 alter table ereignisse enable row level security;
 alter table leads      enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- Double Opt-in. Nachtraeglich hinzugefuegt; dieser Block laesst sich gefahrlos
+-- erneut ausfuehren, auch wenn der obere Teil schon lief.
+--
+-- Warum die beiden IP-Spalten: Wer behauptet, eine Einwilligung zu haben, muss
+-- sie nachweisen koennen (Art. 7 Abs. 1 DSGVO). Fuer Double Opt-in heisst das:
+-- Zeitpunkt der Anmeldung, Zeitpunkt der Bestaetigung und von wo. Ohne diesen
+-- Nachweis ist die Liste im Streitfall wertlos.
+-- ---------------------------------------------------------------------------
+alter table leads add column if not exists bestaetigung_token  text;
+alter table leads add column if not exists token_gueltig_bis   timestamptz;
+alter table leads add column if not exists bestaetigt_am       timestamptz;
+alter table leads add column if not exists anmelde_ip          text;
+alter table leads add column if not exists bestaetigt_ip       text;
+
+-- Der Token muss eindeutig sein, sonst bestaetigt ein Link den falschen Eintrag.
+create unique index if not exists leads_token_idx
+  on leads (bestaetigung_token) where bestaetigung_token is not null;

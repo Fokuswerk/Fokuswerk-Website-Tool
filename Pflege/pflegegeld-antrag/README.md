@@ -149,6 +149,53 @@ faellt sonst erst auf, wenn der erste echte Lead verlorengeht.
 Die Bestaetigungsmail (Double Opt-in) gibt es noch nicht, und ohne sie darf an diese Adressen
 nichts verschickt werden.
 
+## Bestätigungsmail scharf schalten
+
+Double Opt-in ist gebaut: Jede Anmeldung erzeugt einen Zufallstoken (32 Byte), bekommt eine
+Bestätigungsmail und steht bis zum Klick auf `bestaetigt = false`. Der Link gilt sieben Tage,
+und beim Einlösen wird der Token gelöscht — ein Link, der zweimal funktioniert, lässt sich aus
+einem weitergeleiteten Postfach erneut einlösen.
+
+**Ohne `FEATURE_MAILVERSAND=true` geht keine Mail raus.** Der Text wird dann nur gerendert und
+protokolliert. Das ist Absicht: so lässt sich der ganze Weg prüfen, ohne Kontingent zu
+verbrauchen oder fremde Postfächer zu belasten. Das Formular sagt in diesem Zustand auch nicht
+„achten Sie auf unsere Mail", sondern nur, dass die Adresse notiert ist.
+
+Vier Werte bei Vercel, wenn es scharf werden soll:
+
+```bash
+npx vercel env add RESEND_SCHLUESSEL production
+```
+
+```bash
+npx vercel env add MAIL_ABSENDER production
+```
+
+```bash
+npx vercel env add FEATURE_MAILVERSAND production
+```
+
+```bash
+npx vercel env add OEFFENTLICHE_ADRESSE production
+```
+
+`MAIL_ABSENDER` im Format `Pflegegeld-Antrag <hallo@…>`. `OEFFENTLICHE_ADRESSE` ist optional —
+ohne sie nimmt der Code die Produktionsadresse von Vercel; gesetzt werden muss sie erst, wenn
+eine eigene Domain davorsteht, sonst zeigen die Links in der Mail auf `*.vercel.app`.
+
+**Eine Entscheidung steht noch aus: von welcher Domain.** Bei Resend ist bisher
+`email.fokuswerk.de` verifiziert, aber das ist die Subdomain für Kaltakquise. Eine
+Bestätigungsmail ist eine ausgelöste Nachricht an jemanden, der sie erwartet — die gehört nicht
+auf dieselbe Reputation. Besser eine eigene Subdomain, sobald `pflegegeld-antrag.de` steht.
+
+**Was der Mailtext nicht enthalten darf:** Werbung. Eine Bestätigungsanfrage mit Werbung darin
+ist selbst die unerlaubte Zusendung, die das Verfahren verhindern soll (BGH, 10.02.2011,
+I ZR 164/09). `npm run mailtext` zeigt alle drei Varianten und prüft genau darauf — ohne eine
+Mail zu verschicken.
+
+**Nachweis der Einwilligung:** Die Tabelle hält Zeitpunkt und IP der Anmeldung *und* der
+Bestätigung (Art. 7 Abs. 1 DSGVO). Ohne diese Felder ist die Liste im Streitfall wertlos.
+
 ## Arbeiten am Projekt
 
 ```
@@ -156,6 +203,7 @@ npm install
 npm run pruefen    # 75 Prüfungen des Rechenkerns, Klassen, Kontraste
 npm run seiten     # lädt alle zehn Seiten im echten Browser, meldet Abstürze
 npm run datenbank  # beweist, dass die Datenbank Leads annimmt und zurückgibt
+npm run mailtext   # zeigt die Bestätigungsmail, ohne eine zu verschicken
 npm run bilder     # baut die Fotos neu, eine Duotone für alle
 npm run vorschau   # baut das Vorschaubild für geteilte Links
 npm run build
