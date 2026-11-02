@@ -244,6 +244,54 @@ Schnellcheck (1.226 px) ist das Produkt, und „So wird gerechnet" (1.187 px) ze
 Modulgewichte. Das sind drei Dinge, die ihren Platz verdienen. Kürzer geht nur noch, indem man
 Inhalt streicht — nicht Dopplung.
 
+## 3d. Fünfte Runde: aus einer Seite wird ein Verfahren
+
+Dein Einwand war „es ist nur diese eine Seite". Technisch stimmte das nicht — es gab vierzehn.
+Als Erlebnis stimmte es: eine lange Scrollseite, die Werkzeuge im Fuß, und nirgends stand, wo
+man gerade steht.
+
+### Das Ergebnis ist jetzt ein Plan
+
+Der Kern ist eine Empfindlichkeitsrechnung: Für **jedes** Kriterium wird durchgerechnet, ob
+eine Stufe höher die Gesamtpunktzahl überhaupt bewegt. Zwischen Einzelpunkten und gewichteten
+Punkten liegen zwei Übersetzungstabellen, durch die der größte Teil jeder Änderung
+herausfällt — in einem typischen Fall bewegen **von 62 steigerungsfähigen Kriterien nur 4**
+das Ergebnis. Welche das sind, kann niemand raten. Das ist der eigentliche Gegenwert.
+
+Dabei getrennt: **Einschätzungen und Tatsachen.** „Hilfe beim Essen" kann man für
+selbstverständlich gehalten haben, Sondenernährung weiß man. Beide sind Hebel, aber „Haben Sie
+die Sonde vergessen?" ist keine sinnvolle erste Frage — Tatsachen stehen deshalb hinter den
+Einschätzungen, auch wenn ihr Hebel größer ist.
+
+Dazu fünf Schritte in der Reihenfolge, in der sie zu tun sind. Der Antrag steht **vorn**:
+maßgeblich ist das Recht am Tag des Eingangs, alles andere kann danach kommen.
+
+**Was ich bewusst nicht gebaut habe:** den teilbaren Link zum Ergebnis. Er müsste die Antworten
+enthalten — also Gesundheitsangaben in einer URL, die in Browserverlauf und Server-Logs landet.
+Das widerspricht der Zusage, dass die Antworten den Browser nicht verlassen. Der Plan ist
+stattdessen sauber druckbar, und fürs Küchentischgespräch ist Papier ohnehin das bessere Format.
+
+### Der Wegweiser
+
+`/weg` fragt einmal „Wo stehen Sie?" — fünf Lagen — und zeigt danach das ganze Verfahren als
+Kette von sechs Stationen, mit der eigenen Position darauf, dem was erledigt ist und dem einen
+nächsten Schritt. Die Lage wird im Browser gemerkt; beim nächsten Besuch steht man gleich auf
+seinem Weg.
+
+Erreichbar aus der Kopfleiste, dem Fuß und als erster Block über den Werkzeugen auf der
+Startseite — dort heißt es jetzt „Oder direkt zu einem Werkzeug", weil die Liste eben nicht
+beantwortet, was als Nächstes dran ist.
+
+**55 neue Prüfungen** für beides (18 für den Plan, 37 für den Weg), darunter: jeder genannte
+Punktgewinn wird im jeweiligen Rechtsstand nachgerechnet, in jedem Weg gibt es genau ein
+„hier", und keine Station zeigt auf eine Seite, die es nicht gibt.
+
+### Was noch offen ist von den drei Richtungen
+
+Der Stichtag ist noch ein Nebensatz. Gemeint war: aus dem Zähler oben eine echte
+Gegenüberstellung machen — Antrag bis 31.12. gegen Antrag danach, in Euro, über fünf Jahre,
+mit allem was im Entwurf wegfällt. Das ist der dramatischste Inhalt, den die Seite hat.
+
 ## 4. Das Backend
 
 `/admin`, passwortgeschützt. Zeigt:

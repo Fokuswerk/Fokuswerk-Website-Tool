@@ -32,6 +32,7 @@ export default function Kopf() {
       <div className="kopf-innen">
         <Marke />
         <nav className="kopf-nav">
+          <Link href="/weg">Wo stehen Sie?</Link>
           <Link href="/bescheid">Bescheid prüfen</Link>
           <Link href="/reform">Leistungen</Link>
           <Link href={ziel} className="haupt">

@@ -510,7 +510,23 @@ export default function Start({ tage }: { tage: number }) {
       */}
       <section className="abschnitt himmelbett schmal">
         <div className="huelle">
-          <h2 className="werkzeugzeile-titel">Rechnen, prüfen, vergleichen</h2>
+          {/*
+            Der Wegweiser steht ueber den Werkzeugen, nicht daneben. Wer hier
+            ankommt, weiss meistens nicht, was als Naechstes dran ist - eine
+            Liste von drei Werkzeugen beantwortet das nicht, ein Weg schon.
+          */}
+          <div className="wegruf">
+            <div>
+              <div className="wegruf-titel">Sie wissen nicht, was als Nächstes dran ist?</div>
+              <p>
+                Eine Frage, und Sie sehen den ganzen Weg vom Antrag bis zum Bescheid – mit der
+                Stelle, an der Sie stehen.
+              </p>
+            </div>
+            <Link className="knopf" href="/weg">Wo stehen Sie?</Link>
+          </div>
+
+          <h2 className="werkzeugzeile-titel abstand-l">Oder direkt zu einem Werkzeug</h2>
           <ul className="werkzeugzeile">
             {WERKZEUGE.map((w) => (
               <li key={w.nr}>

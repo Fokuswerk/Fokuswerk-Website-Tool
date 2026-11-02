@@ -58,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="huelle">
             <Marke alsLink={false} />
             <nav className="fuss-nav">
+              <Link href="/weg">Wo stehen Sie?</Link>
               <Link href="/antrag">Antrag stellen</Link>
               <Link href="/check">Punkterechner</Link>
               <Link href="/bescheid">Bescheid prüfen</Link>

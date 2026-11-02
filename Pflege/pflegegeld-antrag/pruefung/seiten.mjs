@@ -24,6 +24,7 @@ const SEITEN = [
   { pfad: "/admin", erwartet: "Auswertung" },
   // Ohne Token muss die Seite den Unbekannt-Fall zeigen, nicht abstuerzen.
   { pfad: "/bestaetigen", erwartet: "Diesen Link kennen wir nicht" },
+  { pfad: "/weg", erwartet: "Wo stehen Sie" },
   { pfad: "/impressum", erwartet: "Anbieter" },
   { pfad: "/datenschutz", erwartet: "Verantwortlich" },
 ];

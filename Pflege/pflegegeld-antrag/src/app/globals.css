@@ -1135,3 +1135,138 @@ html { scroll-padding-top: calc(var(--kopf-h) + 16px); }
   .hebel-liste li, .plan li { break-inside: avoid; border: 1px solid #999; }
   .plan-nr { background: #eee; color: #000; }
 }
+
+/* ---------------------------------------------------------------------------
+   Der Wegweiser. Die Seite hat dreizehn Unterseiten und fuehlte sich trotzdem
+   wie eine an — hier steht das Verfahren als Kette, mit der eigenen Position
+   darauf.
+   --------------------------------------------------------------------------- */
+.lagen { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-3); }
+.lagen button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: var(--t-6);
+  font-weight: 600;
+  color: var(--tinte);
+  background: var(--weiss);
+  border: 1px solid var(--linie-stark);
+  border-radius: var(--r-l);
+  padding: 20px;
+  min-height: 64px;
+  cursor: pointer;
+  transition: border-color var(--t-schnell) var(--soft), box-shadow var(--t-schnell) var(--soft);
+}
+.lagen button:hover { border-color: var(--akzent); box-shadow: var(--schatten-1); }
+
+.weg-zahl {
+  display: block;
+  font-family: var(--font-text), sans-serif;
+  font-size: var(--t-3);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--tinte-2);
+  margin-top: var(--s-2);
+}
+
+.weg { list-style: none; margin: var(--s-5) 0 0; padding: 0; }
+.weg li { display: flex; gap: var(--s-4); padding-bottom: var(--s-6); position: relative; }
+/* Die Linie, die die Stationen verbindet - ohne sie sind es nur Kaesten. */
+.weg li:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 32px;
+  bottom: 0;
+  width: 2px;
+  background: var(--linie-stark);
+  opacity: 0.25;
+}
+.weg-marke {
+  flex: none;
+  width: 32px; height: 32px;
+  border-radius: var(--r-pille);
+  border: 2px solid var(--linie-stark);
+  background: var(--papier);
+  display: grid; place-items: center;
+  color: var(--weiss);
+  position: relative;
+  z-index: 1;
+}
+.weg li > div { min-width: 0; padding-top: 3px; }
+.weg h3 { font-size: var(--t-6); margin-bottom: 2px; }
+.weg-dauer { display: block; font-size: var(--t-3); color: var(--tinte-2); margin-bottom: var(--s-2); }
+.weg p { font-size: var(--t-4); line-height: 1.55; color: var(--tinte-2); margin: 0 0 var(--s-3); }
+
+.weg-erledigt .weg-marke { background: var(--akzent); border-color: var(--akzent); }
+.weg-erledigt h3, .weg-erledigt .weg-dauer, .weg-erledigt p { color: var(--tinte-3); }
+
+.weg-hier .weg-marke { border-color: var(--akzent); background: var(--weiss); }
+.weg-hier .weg-marke::after {
+  content: "";
+  width: 12px; height: 12px;
+  border-radius: var(--r-pille);
+  background: var(--akzent);
+}
+.weg-hier > div {
+  background: var(--weiss);
+  border: 1px solid var(--himmel-rand);
+  border-radius: var(--r-l);
+  padding: 20px;
+  margin-top: -6px;
+  box-shadow: var(--schatten-1);
+}
+.weg-hier h3 { color: var(--tinte); }
+.weg-hier-marke { display: none; }
+.weg-hier span.weg-hier {
+  display: inline-block;
+  margin-left: var(--s-2);
+  font-family: var(--font-text), sans-serif;
+  font-size: var(--t-2);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--akzent);
+  vertical-align: 2px;
+}
+/* Noch nicht erreicht - bewusst ohne eigene Auszeichnung, damit der Weg nicht
+   dreifach gestaltet wirkt. Die Regel steht trotzdem hier, damit die
+   Klassenpruefung vollstaendig bleibt. */
+.weg-offen { /* keine Abweichung vom Grundzustand */ }
+
+/* Der Einstieg in den Wegweiser auf der Startseite. Steht ueber den
+   Werkzeugen: wer hier ankommt, weiss meistens nicht, was als Naechstes dran
+   ist, und eine Liste von Werkzeugen beantwortet das nicht. */
+.wegruf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-6);
+  flex-wrap: wrap;
+  background: var(--weiss);
+  border: 1px solid var(--himmel-rand);
+  border-radius: var(--r-l);
+  padding: 24px;
+  box-shadow: var(--schatten-1);
+}
+.wegruf > div { flex: 1 1 300px; min-width: 0; }
+.wegruf-titel {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: var(--t-h3);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.wegruf p {
+  margin: var(--s-2) 0 0;
+  font-size: var(--t-4);
+  line-height: 1.5;
+  color: var(--tinte-2);
+  max-width: 48ch;
+}
+.wegruf .knopf { flex: none; }
+@media (max-width: 640px) {
+  .wegruf { display: block; }
+  .wegruf .knopf { display: flex; width: 100%; margin-top: var(--s-5); }
+}
