@@ -48,7 +48,7 @@ const seite = `<!doctype html><html lang="de"><head><meta charset="utf-8">
       <h1>Welcher Pflegegrad kommt heraus?</h1>
       <p>Nach den amtlichen Kriterien gerechnet – nach heutigem Recht und nach den Punktgrenzen ab 2027.</p>
     </div>
-    <div class="fuss">Kostenlos · ohne Anmeldung · 63 Kriterien</div>
+    <div class="fuss">Kostenlos · ohne Anmeldung · 64 Kriterien</div>
   </div>
   <div class="bild"><img src="${foto}" alt=""></div>
 </body></html>`;
