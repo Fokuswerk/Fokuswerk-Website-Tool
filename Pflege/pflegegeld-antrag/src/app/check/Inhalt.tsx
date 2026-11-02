@@ -9,6 +9,7 @@ import {
 import { punkte, euro, BETRAEGE_2026, BETRAEGE_2027 } from "@/lib/leistungen";
 import { angeboteFuer } from "@/lib/partner";
 import { hebel, schritte } from "@/lib/plan";
+import { stichtagslage, OHNE_GELD_TROTZDEM } from "@/lib/stichtag";
 import { tageBisStichtag } from "@/lib/recht";
 import Wahlgruppe from "@/components/Wahlgruppe";
 import Lead from "@/components/Lead";
@@ -403,9 +404,15 @@ function Auswertung({ alt, neu, a, zurueck }: { alt: Ergebnis; neu: Ergebnis; a:
    * Antrag, den niemand stellen sollte.
    */
   const meineHebel = useMemo(() => hebel(a, "2026"), [a]);
+  /** Einmal je Aufbau gerechnet - ueber Mitternacht hinweg ist das egal. */
+  const tage = useMemo(() => tageBisStichtag(), []);
+  const stichtag = useMemo(
+    () => stichtagslage(alt.pflegegrad, neu.pflegegrad),
+    [alt.pflegegrad, neu.pflegegrad],
+  );
   const meinPlan = useMemo(
-    () => schritte(alt, meineHebel, tageBisStichtag()),
-    [alt, meineHebel],
+    () => schritte(alt, meineHebel, tage),
+    [alt, meineHebel, tage],
   );
   /** Wie viele Kriterien ueberhaupt hoeher gingen - die Bezugsgroesse im Text. */
   const steigerbar = useMemo(
@@ -440,6 +447,60 @@ function Auswertung({ alt, neu, a, zurueck }: { alt: Ergebnis; neu: Ergebnis; a:
             <div className="zahl-zusatz">{punkte(neu.gesamtpunkte)} von 100 Punkten</div>
           </div>
         </div>
+
+        {stichtag.machtUnterschied && tage > 0 && (
+          <div className="stichtagblock abstand-s">
+            <div className="stichtagblock-kopf">
+              <span className="stichtagblock-zaehler">{tage}</span>
+              <span>
+                <strong>Tage, in denen das bei Ihnen zählt</strong>
+                <span>Danach wird nach den neuen Schwellenwerten begutachtet.</span>
+              </span>
+            </div>
+
+            <div className="stichtagblock-paar">
+              <div>
+                <span className="stichtagblock-wann">Antrag bis 31.12.2026</span>
+                <span className="stichtagblock-grad">
+                  {stichtag.frueh === 0 ? "kein Pflegegrad" : `Pflegegrad ${stichtag.frueh}`}
+                </span>
+              </div>
+              <span className="stichtagblock-gegen" aria-hidden="true">gegen</span>
+              <div>
+                <span className="stichtagblock-wann">Antrag ab 1.1.2027</span>
+                <span className="stichtagblock-grad">
+                  {stichtag.spaet === 0 ? "kein Pflegegrad" : `Pflegegrad ${stichtag.spaet}`}
+                </span>
+              </div>
+            </div>
+
+            {stichtag.nurSachleistung ? (
+              <p className="stichtagblock-folge">
+                In Euro ist der Unterschied null – nach dem Entwurf bekommt Pflegegrad 1 kein
+                Pflegegeld und auch keinen Entlastungsbetrag mehr. Der Unterschied liegt
+                woanders, und er ist nicht klein:
+                <span className="stichtagblock-liste">
+                  {OHNE_GELD_TROTZDEM.map((x) => <span key={x}>{x}</span>)}
+                </span>
+              </p>
+            ) : (
+              <p className="stichtagblock-folge">
+                Das sind <strong>{euro(stichtag.proMonat)} im Monat</strong> – und weil der
+                einmal zuerkannte Pflegegrad bleibt, über fünf Jahre{" "}
+                <strong>{euro(stichtag.fuenfJahre)}</strong>.
+              </p>
+            )}
+
+            <p className="quelle" style={{ marginTop: 12, marginBottom: 0 }}>
+              Gerechnet mit den Sätzen, die der Entwurf ab 2027 vorsieht – für{" "}
+              <em>beide</em> Seiten. Am Antragstag hängt nicht die Höhe der Leistung, sondern allein, nach
+              welchen Schwellenwerten begutachtet wird. Der so zuerkannte Pflegegrad bleibt
+              dann bestehen (§ 142b Abs. 2 des Entwurfs). Angenommen ist Pflege durch
+              Angehörige; <Link href="/reform">der vollständige Vergleich</Link> steht
+              gesondert.
+            </p>
+          </div>
+        )}
 
         <div className="geldblock abstand-s">
           <div className="geldblock-titel">Was das monatlich bedeutet</div>

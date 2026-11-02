@@ -154,8 +154,8 @@ strong { font-weight: 600; }
   color: var(--tinte-3);
 }
 .vorspann {
-  font-size: var(--t-vorspann); line-height: 1.5; color: var(--tinte-2);
-  max-width: 46ch; font-weight: 400;
+  font-size: var(--t-vorspann); line-height: 1.6; color: var(--tinte-2);
+  max-width: 54ch; font-weight: 400;
 }
 .lauftext { max-width: var(--lese); color: var(--tinte-2); }
 
@@ -192,14 +192,8 @@ strong { font-weight: 600; }
 .nacht .marke-klein, .nacht .auge, .band-tinte .auge {
   background: rgba(255, 255, 255, 0.09); color: #8fc6e8;
 }
-.vorspann {
-  font-size: var(--t-vorspann); line-height: 1.6; color: var(--tinte-2);
-  max-width: 54ch;
-}
 .quelle { font-size: var(--t-3); line-height: 1.65; color: var(--tinte-3); max-width: 50ch; }
 .text-leise { color: var(--tinte-2); font-size: var(--t-4); line-height: 1.55; }
-.lauftext { max-width: var(--lese); color: var(--tinte-2); }
-
 .kapitel { display: none; }
 
 /* Statt der neunten gleichen Pille: eine kurze Akzentlinie ueber der Ueberschrift */
@@ -222,8 +216,6 @@ strong { font-weight: 600; }
 @media (max-width: 899px) { .vollbild-band { aspect-ratio: 16 / 10; } }
 
 /* Markenfarbe statt Gruen: der Pruefstempel ist ein Markenelement */
-.stempel { background: var(--akzent-weich); border-color: var(--himmel-rand); color: var(--akzent); }
-.stempel svg { color: var(--akzent); }
 
 /* 1d: Am Handy brach die erste Tabellenspalte mitten im Wort */
 @media (max-width: 599px) {
@@ -304,15 +296,14 @@ table.daten tbody tr:hover td { background: var(--papier); }
 }
 /* Bei grosser Systemschrift lief die Leiste ueber den Bildschirm hinaus */
 .kopf-innen > .wortmarke { min-width: 0; overflow: hidden; }
-.wortmarke-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kopf-nav { flex: 0 0 auto; }
 @media (max-width: 400px) {
   .kopf-nav a.haupt { padding: 12px 16px; }
 }
 .wortmarke { text-decoration: none; display: inline-flex; align-items: center; gap: 8px; color: inherit; }
 .wortmarke-text {
   font-family: var(--font-text), sans-serif; font-weight: 650; font-size: var(--t-6);
-  letter-spacing: -0.02em; color: var(--tinte); white-space: nowrap;
+  letter-spacing: -0.02em; color: var(--tinte);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .zeichen {
   width: 32px; height: 32px; border-radius: var(--r-s); background: var(--akzent);
@@ -326,7 +317,7 @@ table.daten tbody tr:hover td { background: var(--papier); }
 .flagge span:nth-child(1) { background: #111111; }
 .flagge span:nth-child(2) { background: #dd0000; }
 .flagge span:nth-child(3) { background: #ffce00; }
-.kopf-nav { display: flex; gap: 24px; margin-left: auto; align-items: center; }
+.kopf-nav { display: flex; flex: 0 0 auto; gap: 24px; margin-left: auto; align-items: center; }
 .kopf-nav a {
   font-size: var(--t-4); font-weight: 500; text-decoration: none; color: var(--tinte-2);
   transition: color var(--t-schnell) var(--soft);
@@ -633,10 +624,14 @@ table.daten tfoot td { font-weight: 700; border-top: 1px solid var(--linie-stark
 }
 .quellen-badge:hover { border-color: var(--linie-stark); color: var(--tinte); }
 .quellen-badge .marker { width: 6px; height: 6px; border-radius: 50%; background: var(--akzent); flex: 0 0 auto; }
+/* In Markenfarbe. Stand frueher als eigene Regel WEITER OBEN und war dadurch
+   wirkungslos - der Stempel war gruen statt petrol. */
 .stempel {
-  display: inline-flex; align-items: center; gap: 8px; font-size: var(--t-3); color: var(--tinte-2);
-  background: var(--gut-weich); border: 1px solid #c8e0d5; border-radius: var(--r-pille); padding: 8px 16px;
+  display: inline-flex; align-items: center; gap: 8px; font-size: var(--t-3);
+  background: var(--akzent-weich); border: 1px solid var(--himmel-rand);
+  border-radius: var(--r-pille); padding: 8px 16px; color: var(--akzent);
 }
+.stempel svg { color: var(--akzent); }
 .stempel svg { color: var(--gut); }
 
 /* ---------- Schwellen als Tabelle ---------- */
@@ -684,7 +679,9 @@ select {
 .nacht .karte :focus-visible, .band-tinte .karte :focus-visible { outline-color: var(--akzent); }
 
 /* ---------- Preis ---------- */
-.preis { font-family: var(--font-display), system-ui, sans-serif; font-size: var(--t-gross); font-weight: 600; letter-spacing: -0.03em; margin-top: 16px; }
+/* Bewusst kleiner als eine h2 - sonst ist der Preis groesser als die
+   Ueberschrift darueber. */
+.preis { font-family: var(--font-display), system-ui, sans-serif; font-size: var(--t-h3); font-weight: 600; letter-spacing: -0.03em; margin-top: 16px; }
 .preis-zusatz { font-size: var(--t-3); color: var(--tinte-2); margin-top: 4px; }
 
 /* ---------- Gewichte ---------- */
@@ -694,14 +691,13 @@ select {
 }
 .gewicht { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px 16px; padding: 16px 20px; border-bottom: 1px solid var(--linie); }
 @media (min-width: 760px) { .gewicht { grid-template-columns: 28px 1fr 1fr auto; gap: 20px; } }
-.gewicht-balken { grid-column: 1 / -1; }
 @media (min-width: 760px) { .gewicht-balken { grid-column: auto; } }
 .gewicht:last-child { border-bottom: 0; }
 .gewicht-nr { display: none; font-size: var(--t-3); color: var(--tinte-3); font-weight: 600; font-variant-numeric: tabular-nums; }
 @media (min-width: 760px) { .gewicht-nr { display: block; } }
 .gewicht-name { font-size: var(--t-4); line-height: 1.35; }
 .gewicht-notiz { font-size: var(--t-1); color: var(--akzent); background: var(--akzent-weich); padding: 4px 8px; border-radius: var(--r-pille); margin-left: 8px; font-weight: 600; }
-.gewicht-balken { display: block; height: 6px; background: var(--papier-2); border-radius: var(--r-pille); overflow: hidden; }
+.gewicht-balken { display: block; grid-column: 1 / -1; height: 6px; background: var(--papier-2); border-radius: var(--r-pille); overflow: hidden; }
 .gewicht-balken span { display: block; height: 100%; background: var(--akzent); border-radius: var(--r-pille); }
 .gewicht-wert { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
 
@@ -994,9 +990,6 @@ html { scroll-padding-top: calc(var(--kopf-h) + 16px); }
 .antragsruf > div { flex: 1 1 300px; min-width: 0; }
 .antragsruf p { max-width: 46ch; }
 
-/* Der Preis war groesser als die Ueberschrift direkt darueber. */
-.preis { font-size: var(--t-h3); }
-
 /* Die Erklaerung im Geldblock stand auf 50 ch gequetscht in einer 700-px-Karte. */
 .geldblock .quelle { max-width: none; }
 
@@ -1269,4 +1262,78 @@ html { scroll-padding-top: calc(var(--kopf-h) + 16px); }
 @media (max-width: 640px) {
   .wegruf { display: block; }
   .wegruf .knopf { display: flex; width: 100%; margin-top: var(--s-5); }
+}
+
+/* ---------------------------------------------------------------------------
+   Der Stichtag im Ergebnis. Erscheint nur, wenn der Antragstag beim eigenen
+   Ergebnis tatsaechlich den Pflegegrad aendert — sonst waere es Dramatik ohne
+   Inhalt, und das merkt man.
+   --------------------------------------------------------------------------- */
+.stichtagblock {
+  background: var(--nacht);
+  color: var(--auf-nacht);
+  border-radius: var(--r-l);
+  padding: 24px;
+}
+.stichtagblock-kopf { display: flex; align-items: center; gap: var(--s-4); }
+.stichtagblock-zaehler {
+  flex: none;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: var(--t-gross);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--akzent-hell);
+  font-variant-numeric: tabular-nums;
+}
+.stichtagblock-kopf strong { display: block; font-size: var(--t-6); font-weight: 600; }
+.stichtagblock-kopf span span { display: block; font-size: var(--t-4); color: var(--auf-nacht-2); margin-top: 2px; }
+
+.stichtagblock-paar {
+  display: flex;
+  align-items: stretch;
+  gap: var(--s-3);
+  margin-top: var(--s-6);
+}
+.stichtagblock-paar > div {
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--nacht-2);
+  border-radius: var(--r-m);
+  padding: 16px;
+}
+.stichtagblock-wann { display: block; font-size: var(--t-3); color: var(--auf-nacht-2); font-weight: 600; }
+.stichtagblock-grad {
+  display: block;
+  margin-top: var(--s-2);
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: var(--t-h3);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.stichtagblock-gegen {
+  align-self: center;
+  flex: none;
+  font-size: var(--t-3);
+  color: var(--auf-nacht-3);
+  font-weight: 600;
+}
+.stichtagblock-folge {
+  margin: var(--s-5) 0 0;
+  font-size: var(--t-6);
+  line-height: 1.55;
+  color: var(--auf-nacht);
+}
+.stichtagblock-folge strong { color: var(--akzent-hell); font-variant-numeric: tabular-nums; }
+.stichtagblock-liste { display: grid; gap: 4px; margin-top: var(--s-3); }
+.stichtagblock-liste span { font-size: var(--t-4); color: var(--auf-nacht-2); padding-left: 16px; position: relative; }
+.stichtagblock-liste span::before { content: "·"; position: absolute; left: 4px; color: var(--akzent-hell); }
+.stichtagblock .quelle { color: var(--auf-nacht-3); }
+.stichtagblock .quelle a { color: var(--akzent-hell); }
+
+@media (max-width: 560px) {
+  .stichtagblock-paar { display: block; }
+  .stichtagblock-paar > div + div { margin-top: var(--s-2); }
+  .stichtagblock-gegen { display: block; text-align: center; padding: var(--s-2) 0; }
 }

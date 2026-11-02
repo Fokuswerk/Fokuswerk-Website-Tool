@@ -286,11 +286,35 @@ beantwortet, was als Nächstes dran ist.
 Punktgewinn wird im jeweiligen Rechtsstand nachgerechnet, in jedem Weg gibt es genau ein
 „hier", und keine Station zeigt auf eine Seite, die es nicht gibt.
 
-### Was noch offen ist von den drei Richtungen
+### Der Stichtag
 
-Der Stichtag ist noch ein Nebensatz. Gemeint war: aus dem Zähler oben eine echte
-Gegenüberstellung machen — Antrag bis 31.12. gegen Antrag danach, in Euro, über fünf Jahre,
-mit allem was im Entwurf wegfällt. Das ist der dramatischste Inhalt, den die Seite hat.
+Im Ergebnis steht jetzt die Gegenüberstellung — aber **nur, wenn der Antragstag beim eigenen
+Ergebnis tatsächlich den Pflegegrad ändert.** Sonst wäre es Dramatik ohne Inhalt, und das
+merkt man.
+
+**Der Punkt, an dem fast jede Darstellung dieses Themas schummelt:** Die Geldbeträge hängen
+nicht am Antragstag. Ab Januar 2027 gelten die neuen Sätze für alle. Am Antragstag hängt
+allein, nach welchen Schwellenwerten begutachtet wird — und damit, welcher Pflegegrad
+herauskommt. Der bleibt dann (§ 142b Abs. 2). Gerechnet wird deshalb die Differenz zwischen
+zwei Pflegegraden, **beide mit den Sätzen ab 2027**, nicht die Differenz zwischen altem und
+neuem Satz. Ein Test prüft genau das ab.
+
+**Der härteste Fall ist Pflegegrad 1 gegen keinen Pflegegrad:** In Euro ist der Unterschied
+null — nach dem Entwurf bekommt Pflegegrad 1 weder Pflegegeld noch Entlastungsbetrag. Das
+steht so da, statt eine Zahl zu erfinden; genannt wird stattdessen, was wirklich dranhängt
+(Beratungseinsätze, Hilfsmittel, Hausnotruf, Wohnraumzuschuss bis 4.180 €, Pflegekurse).
+
+### Zwei Funde beim Prüfen
+
+**Namenskollision im CSS.** Mein neuer Block hiess `.stichtag` — so hiess aber schon die
+Zähler-Pille im Hero, mit `display: inline-flex`. Mein Block setzte kein `display`, also galt
+das der Pille, und das Layout lief über den Rand. Im Browser sofort sichtbar, in der CSS-Datei
+800 Zeilen auseinander und deshalb nicht.
+
+Deshalb prüft `npm run klassen` jetzt auch auf **doppelt definierte Klassen**. Der Lauf fand
+sofort sieben, darunter einen echten Fehler: `.stempel` wurde in Markenfarbe definiert — aber
+*vor* seiner Grundregel, die Überschreibung war also wirkungslos und der Stempel grün statt
+petrol. Alle sieben sind zusammengeführt.
 
 ## 4. Das Backend
 

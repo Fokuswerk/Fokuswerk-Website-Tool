@@ -33,10 +33,37 @@ for (const datei of dateien("src")) {
 }
 
 const fehlend = [...benutzt].filter(([k]) => !definiert.has(k));
-if (fehlend.length === 0) {
-  console.log(`ALLES GRUEN: ${benutzt.size} Klassen, alle mit Regel.`);
+
+/*
+ * Zweite Pruefung: derselbe Klassenname zweimal als eigenstaendige Regel.
+ *
+ * Das ist die Luecke, die die Pruefung oben nicht sieht - beide Namen HABEN
+ * ja eine Regel. Passiert ist es mit `.stichtag`: erst die Zaehler-Pille im
+ * Hero (inline-flex), spaeter ein ganzer Block auf der Ergebnisseite. Der
+ * neue Block setzte kein `display`, also galt das inline-flex der Pille, und
+ * das Layout lief ueber den Rand. Im Browser sofort sichtbar, in der CSS-Datei
+ * 800 Zeilen auseinander und deshalb nicht.
+ *
+ * Gemeldet wird nur die Wiederholung als ALLEINSTEHENDER Selektor
+ * (`.name {`) - Varianten wie `.name:hover` oder `.a .name` sind Absicht.
+ */
+const alleinstehend = new Map();
+for (const treffer of css.matchAll(/^\.([a-zA-Z][\w-]*)\s*\{/gm)) {
+  const name = treffer[1];
+  alleinstehend.set(name, (alleinstehend.get(name) ?? 0) + 1);
+}
+const doppelt = [...alleinstehend].filter(([, n]) => n > 1);
+
+if (fehlend.length === 0 && doppelt.length === 0) {
+  console.log(`ALLES GRUEN: ${benutzt.size} Klassen, alle mit Regel, keine doppelt.`);
 } else {
-  console.error("Klassen ohne CSS-Regel:");
-  for (const [k, wo] of fehlend) console.error(`  ${k.padEnd(22)} ${[...wo].join(", ")}`);
+  if (fehlend.length) {
+    console.error("Klassen ohne CSS-Regel:");
+    for (const [k, wo] of fehlend) console.error(`  ${k.padEnd(22)} ${[...wo].join(", ")}`);
+  }
+  if (doppelt.length) {
+    console.error("Klassen mit mehr als einer eigenstaendigen Regel:");
+    for (const [k, n] of doppelt) console.error(`  .${k.padEnd(21)} ${n}x — spaetere Regel erbt stillschweigend von der frueheren`);
+  }
   process.exit(1);
 }
