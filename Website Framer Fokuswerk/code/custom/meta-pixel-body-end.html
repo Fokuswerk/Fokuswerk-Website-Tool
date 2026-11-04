@@ -1,0 +1,146 @@
+<script id="fokuswerk-meta-pixel">
+/* Meta-Pixel (Facebook/Instagram) — lädt nach der Einwilligung, auf den Trichterseiten
+   dagegen ohne Nachfrage (Entscheidung vom 1.11.2026, siehe `fwSofortMessen` im
+   Einwilligungsmodus-Skript).
+
+   Warum anders als bei Google Ads: Der Ads-Tag darf auf jeder Seite laufen, weil sein
+   Einwilligungsmodus mit der Vorgabe „abgelehnt" keine Cookies setzt und nur kennungslose
+   Pings sendet — § 25 TDDDG greift dann nicht. Meta hat so etwas NICHT. Der Pixel setzt
+   ab dem ersten Treffer `_fbp` und liest es wieder aus. Also wird hier gar nichts geladen,
+   solange niemand zugestimmt hat: kein fbevents.js, kein Treffer, kein Cookie.
+
+   Dieses Skript prüft die Einwilligung SELBST, statt sich rufen zu lassen. Grund ist die
+   Reihenfolge im bodyEnd: Wer beim Laden schon zugestimmt hatte, durchläuft analytics()
+   im Einwilligungs-Skript darüber — und das läuft, bevor dieses hier überhaupt gelesen
+   ist. Ein Aufruf von dort würde ins Leere gehen. Umgekehrt meldet das Einwilligungs-
+   Skript jede spätere Änderung an `window.fwMetaEinwilligung`. */
+(function () {
+  var PIXEL = "1213729510417925";
+  var SCHLUESSEL = "fw-einwilligung";
+
+  // Dieselbe Frist wie in den drei Trichter-Bausteinen (SeoAnalyse, Stellenanzeiger,
+  // Rangliste). Steht der Befund länger als 30 Minuten im sessionStorage, war es kein
+  // frischer Abschluss, sondern ein Aufruf aus dem Verlauf.
+  var FRIST = 30 * 60 * 1000;
+
+  // Die Abschlussseiten sind nur nach dem Absenden erreichbar — der Trichter wechselt per
+  // location.assign() dorthin, also mit echtem Seitenaufruf. Der Übergabeschlüssel ist
+  // das genauere Signal als der Pfad allein: Wer die Adresse aus einem Lesezeichen
+  // aufruft, hat nichts abgeschlossen.
+  //
+  // `/kontakt/danke` kam am 04.11.2026 dazu. Dorthin leitet der Kontakt-Spiegel weiter,
+  // sobald Framers Formulardienst die Anfrage angenommen hat — siehe
+  // `kontakt-spiegel-body-end.html`. Das ist kein Freebie, sondern eine Anfrage, deshalb
+  // die eigene Kategorie.
+  var ERGEBNISSEITEN = {
+    "/seo-analyse/ergebnis":    { schluessel: "fw-seo-ergebnis",        name: "seo-analyse" },
+    "/stellenanzeige/ergebnis": { schluessel: "fw-stellen-ergebnis",    name: "stellenanzeige" },
+    "/wettbewerb/ergebnis":     { schluessel: "fw-wettbewerb-ergebnis", name: "wettbewerb" },
+    "/kontakt/danke":           { schluessel: "fw-kontakt-gesendet",    name: "kontakt", kategorie: "anfrage" }
+  };
+
+  function lesen() { try { return localStorage.getItem(SCHLUESSEL); } catch (e) { return null; } }
+
+  function pixelLaden() {
+    if (window.fbq) return;
+    /* Metas eigener Schnipsel, nur umformatiert. Die Warteschlange ist der Grund, warum
+       direkt nach init() schon getrackt werden darf: Aufrufe sammeln sich, bis
+       fbevents.js da ist. */
+    var n = (window.fbq = function () {
+      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+    });
+    if (!window._fbq) window._fbq = n;
+    n.push = n; n.loaded = true; n.version = "2.0"; n.queue = [];
+    var s = document.createElement("script");
+    s.async = true; s.src = "https://connect.facebook.net/en_US/fbevents.js";
+    document.head.appendChild(s);
+  }
+
+  function abschlussMelden() {
+    if (!window.fbq) return;
+    var pfad = (location.pathname || "/").replace(/\/+$/, "") || "/";
+    var seite = ERGEBNISSEITEN[pfad];
+    if (!seite) return;
+
+    var d = null;
+    try { d = JSON.parse(sessionStorage.getItem(seite.schluessel) || "null"); } catch (e) {}
+    if (!d || typeof d.zeit !== "number" || Date.now() - d.zeit > FRIST) return;
+
+    // Einmal je Übergabe, nicht einmal je Seitenaufruf: Wer die Ergebnisseite neu lädt,
+    // soll nicht als zweiter Lead gezählt werden. Die Zeitmarke der Übergabe ist die
+    // Kennung — ein neuer Durchlauf bekommt eine neue und zählt wieder.
+    var marke = "fw-meta-lead-" + seite.name + "-" + d.zeit;
+    try {
+      if (sessionStorage.getItem(marke)) return;
+      sessionStorage.setItem(marke, "1");
+    } catch (e) {}
+
+    // eventID macht später die Conversions API möglich, ohne doppelt zu zählen: Schickt
+    // der Server denselben Wert, erkennt Meta beide Meldungen als dasselbe Ereignis.
+    window.fbq("track", "Lead", {
+      content_name: seite.name,
+      content_category: seite.kategorie || "freebie"
+    }, { eventID: marke });
+  }
+
+  function starten() {
+    if (window.__fwMeta) return; window.__fwMeta = 1;
+    pixelLaden();
+    window.fbq("init", PIXEL);
+    window.fbq("track", "PageView");
+    abschlussMelden();
+    seitenwechselBeobachten();
+  }
+
+  // Framer wechselt Seiten teils ohne Neuladen. Ohne das hier zählte Meta nur den ersten
+  // Aufruf einer Sitzung. Die Ergebnisseiten kommen zwar per location.assign() und damit
+  // als echter Seitenaufruf — aber jeder andere Weg durch die Seite nicht.
+  function seitenwechselBeobachten() {
+    if (window.__fwMetaWege) return; window.__fwMetaWege = 1;
+    var letzter = location.pathname;
+    function pruefen() {
+      if (location.pathname === letzter) return;
+      letzter = location.pathname;
+      if (!window.fbq) return;
+      window.fbq("track", "PageView");
+      abschlussMelden();
+    }
+    ["pushState", "replaceState"].forEach(function (name) {
+      var urspruenglich = history[name];
+      if (typeof urspruenglich !== "function") return;
+      history[name] = function () {
+        var r = urspruenglich.apply(this, arguments);
+        setTimeout(pruefen, 0);
+        return r;
+      };
+    });
+    window.addEventListener("popstate", function () { setTimeout(pruefen, 0); });
+  }
+
+  function stilllegen() {
+    try { if (window.fbq) window.fbq("consent", "revoke"); } catch (e) {}
+    // _fbp ist die Kennung im Browser, _fbc die Klick-Kennung aus der Anzeige. Wer
+    // widerruft, soll beide los sein — wie bei _ga und _gcl eine Zeile weiter oben.
+    document.cookie.split(";").forEach(function (c) {
+      var n = c.split("=")[0].trim();
+      if (/^_fb(p|c)$/.test(n)) {
+        ["", "; domain=" + location.hostname, "; domain=." + location.hostname.replace(/^www\./, "")]
+          .forEach(function (d) {
+            document.cookie = n + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/" + d;
+          });
+      }
+    });
+  }
+
+  // Wird vom Einwilligungs-Skript gerufen, sobald jemand zustimmt oder widerruft.
+  window.fwMetaEinwilligung = function (wert) {
+    if (wert === "granted") starten(); else stilllegen();
+  };
+
+  // Lag die Zustimmung schon beim Laden vor, selbst starten (siehe Kopfnotiz). Auf den
+  // Trichterseiten wird ohne Nachfrage gemessen — die Weiche `fwSofortMessen` setzt das
+  // Einwilligungsmodus-Skript ganz vorn im headStart. Kommt jemand per Seitenwechsel ohne
+  // Neuladen dorthin, meldet das Einwilligungs-Skript es über fwMetaEinwilligung nach.
+  if (lesen() === "ja" || window.fwSofortMessen) starten();
+})();
+</script>

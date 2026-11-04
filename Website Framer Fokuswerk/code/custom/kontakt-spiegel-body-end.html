@@ -1,3 +1,21 @@
+<style id="fokuswerk-danke-stil">
+/* Links in der Dankeskarte sichtbar machen.
+   Die Unterstreichung steht am Knoten selbst (textDecoration="underline" am TextRun, im
+   Projekt nachgelesen) — Framers ausgeliefertes CSS setzt sie fuer <a> im Rich-Text aber
+   wieder auf `none` und faerbt den Text wie den Absatz. Ergebnis: zwei Links, die wie
+   Fliesstext aussehen, auf genau der Seite, deren einzige Aufgabe der naechste Schritt ist.
+   Deshalb hier, und nur hier: Die Klasse setzt das Skript unten auf /kontakt/danke. */
+.fw-danke [data-framer-name="Textkarte"] .framer-text a {
+  color: rgba(14, 15, 18, 0.92);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(14, 15, 18, 0.3);
+}
+.fw-danke [data-framer-name="Textkarte"] .framer-text a:hover {
+  text-decoration-color: rgba(14, 15, 18, 0.75);
+}
+</style>
 <script id="fokuswerk-kontakt-spiegel">
 // Die Anfrage von /kontakt zusätzlich an unseren eigenen Endpunkt spiegeln.
 //
@@ -21,6 +39,14 @@
   window.fwKontaktSpiegel = true;
 
   var ZIEL = "https://fokuswerk-werkzeuge.vercel.app/api/kontakt";
+  // Die Dankesseite. Sie ist der messbare Abschluss: Framer zeigt sonst nur einen
+  // Zustandswechsel am Knopf, und ein Zustandswechsel hat keine Adresse — weder Google
+  // Ads noch Framers eigene Messung können daran etwas festmachen.
+  var DANKE = "/kontakt/danke";
+  // Derselbe Vertrag wie bei den drei Freebies (siehe meta-pixel-body-end.html): Der
+  // Schluessel im sessionStorage ist das Signal, nicht der Pfad. Wer die Adresse aus
+  // einem Lesezeichen aufruft, hat nichts abgeschickt und wird nicht gezaehlt.
+  var SCHLUESSEL = "fw-kontakt-gesendet";
   // Die unsichtbaren Felder, die Framer selbst ins Formular hängt. Achtung auf die
   // Schreibweise: Die echten Felder sind groß ("Website"), die Fallen klein ("website").
   var FALLEN = ["website", "company", "message", "subject", "title", "description",
@@ -65,20 +91,65 @@
     try { return JSON.parse(sessionStorage.getItem("fw-herkunft") || "null") || herkunftLesen(); }
     catch (e) { return herkunftLesen(); }
   }
+  // Die Dankesseite markieren, damit der Stilblock oben greift. Mitgefuehrt wird das bei
+  // jedem Seitenwechsel: Framer wechselt teils ohne Neuladen, und eine haengengebliebene
+  // Klasse wuerde die Regel auf fremden Seiten anwenden.
+  function dankeMarkieren() {
+    try {
+      var drauf = /^\/kontakt\/danke\/?$/.test(location.pathname);
+      document.documentElement.classList.toggle("fw-danke", drauf);
+    } catch (e) {}
+  }
+  dankeMarkieren();
+
   herkunftMerken();
   // Framer wechselt Seiten teils ohne Neuladen. Ohne das hier stünde die Herkunft nur,
   // wenn jemand direkt auf der beworbenen Seite einsteigt und nirgends hinklickt.
   try {
     ["pushState", "replaceState"].forEach(function (n) {
       var alt = history[n];
-      history[n] = function () { var r = alt.apply(this, arguments); herkunftMerken(); return r; };
+      history[n] = function () { var r = alt.apply(this, arguments); herkunftMerken(); dankeMarkieren(); return r; };
     });
-    addEventListener("popstate", herkunftMerken);
+    addEventListener("popstate", function () { herkunftMerken(); dankeMarkieren(); });
   } catch (e) {}
 
   // ---- Die Absendung mitlesen ---------------------------------------------
   var zuletzt = "";
   var zuletztAm = 0;
+  var eigeneAbsendung = 0;
+
+  function zurDankesseite() {
+    try { sessionStorage.setItem(SCHLUESSEL, JSON.stringify({ zeit: Date.now() })); } catch (e) {}
+    try { location.assign(DANKE); } catch (e) {}
+  }
+
+  // Framers Absendung MITLESEN, nicht anfassen. Erst wenn Framer die Anfrage angenommen
+  // hat, ist die Anfrage wirklich raus — vorher weiterzuleiten hiesse, jemandem „Danke"
+  // zu zeigen, dessen Formular gerade gescheitert ist.
+  //
+  // Warum ueber fetch und nicht ueber Framers Erfolgszustand: Der ist eine Variante am
+  // Knopf, ohne Ereignis und ohne stabile Kennung. Die Antwort des Formulardienstes ist
+  // das einzige Signal, das sagt „angekommen" statt „sieht angekommen aus".
+  //
+  // Unsere eigene Meldung an /api/kontakt traegt keepalive und ueberlebt den Wechsel.
+  try {
+    var echterFetch = window.fetch;
+    window.fetch = function (eingabe, optionen) {
+      var ergebnis = echterFetch.apply(this, arguments);
+      var adresse = "";
+      try { adresse = String(eingabe && eingabe.url ? eingabe.url : eingabe); } catch (e) {}
+      if (adresse.indexOf("api.framer.com/forms/") === -1 || adresse.indexOf("/submit") === -1) return ergebnis;
+      if (!ergebnis || typeof ergebnis.then !== "function") return ergebnis;
+      return ergebnis.then(function (antwort) {
+        // Das Zeitfenster schuetzt vor einer fremden Absendung auf einer anderen Seite:
+        // weitergeleitet wird nur, was dieser Spiegel selbst kurz zuvor gesehen hat.
+        try {
+          if (antwort && antwort.ok && Date.now() - eigeneAbsendung < 20000) zurDankesseite();
+        } catch (e) {}
+        return antwort;
+      });
+    };
+  } catch (e) {}
 
   addEventListener("submit", function (e) {
     try {
@@ -100,6 +171,7 @@
       var jetzt = Date.now();
       if (kennung === zuletzt && jetzt - zuletztAm < 10000) return;
       zuletzt = kennung; zuletztAm = jetzt;
+      eigeneAbsendung = jetzt;
 
       var fallen = {};
       FALLEN.forEach(function (n) { var v = d.get(n); if (typeof v === "string" && v.trim()) fallen[n] = v.trim(); });

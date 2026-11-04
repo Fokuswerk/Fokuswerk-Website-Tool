@@ -1,5 +1,69 @@
 # Fokuswerk — neue Website (Framer-Projekt „FW neu")
 
+## 04.11.2026 — `/kontakt/danke`: der Abschluss hat jetzt eine Adresse
+
+Framer meldet eine gelungene Absendung nur als Zustandswechsel am Knopf. Ein Zustandswechsel
+hat keine Adresse — weder Google Ads noch Framers eigene Messung können daran etwas
+festmachen. Jetzt gibt es **`/kontakt/danke`**, und damit einen zählbaren Abschluss.
+
+**Die Seite** ist nach dem Muster von `/impressum` gebaut: Marke in Klammern, das
+Geisterwort „Danke" hinter der weißen Karte, darin drei Blöcke — was jetzt passiert
+(werktags 24 Stunden, Julius oder Thees), was im Erstgespräch passiert (die 30 Minuten vom
+Kontaktseiten-Text), und der schnelle Weg (Nummer als `tel:`-Link, Mo–Fr 9–17 Uhr). Dazu ein
+Verweis auf `/arbeiten`. `metadata.noIndex` steht auf `true`, `noIndexSite` auf `false` — die
+Seite ist live erreichbar, steht aber nicht in der Sitemap und nicht im Index.
+
+**Die Weiterleitung** hängt im Kontakt-Spiegel (`code/custom/kontakt-spiegel-body-end.html`).
+Sie läuft **erst, wenn Framers Formulardienst die Anfrage angenommen hat** — dafür wird
+`window.fetch` umhüllt und die Antwort von `api.framer.com/forms/…/submit` mitgelesen. Framers
+Erfolgszustand taugt dafür nicht: Er ist eine Variante am Knopf, ohne Ereignis und ohne
+stabile Kennung. Vorher weiterzuleiten hieße, jemandem „Danke" zu zeigen, dessen Formular
+gerade gescheitert ist. Ein Zeitfenster von 20 Sekunden stellt sicher, dass nur eine
+Absendung weiterleitet, die dieser Spiegel selbst gesehen hat.
+
+**Die Lead-Messung** folgt demselben Vertrag wie die drei Freebies: Der Spiegel legt
+`fw-kontakt-gesendet` mit Zeitmarke im `sessionStorage` ab, `meta-pixel-body-end.html` kennt
+`/kontakt/danke` jetzt als vierte Abschlussseite (Kategorie `anfrage` statt `freebie`) und
+feuert `Lead` **einmal je Übergabe**, nicht je Seitenaufruf.
+
+### Gemessen, nicht angenommen
+
+Ein echter Durchlauf über das Live-Formular:
+
+| | Ergebnis |
+|---|---|
+| nach dem Absenden | Wechsel auf `/kontakt/danke` |
+| `fw-kontakt-gesendet` | `{"zeit":1793788157702}` |
+| Meta `Lead` | einmal, Marke `fw-meta-lead-kontakt-1793788157702` |
+| Seite neu geladen | **keine** zweite Marke |
+| `/api/kontakt` im Protokoll | `funnel: {"angelegt":true}` · `meldung: {"gesendet":true}` |
+
+### Drei Fallen auf dem Weg
+
+- **`curl` lieferte die kalte Hülle.** Zweimal hintereinander exakt 86.830 Zeichen, Titel und
+  Inhalt fehlten, Statuscode 200 — das sah nach einer kaputten Seite aus. Im Browser war sie
+  vollständig da, und kurz darauf lieferte `curl` 250.321 Zeichen. **Die Zeichenzahl zweier
+  Abrufe zu vergleichen genügt nicht**, wenn beide dieselbe Hülle treffen; im Zweifel den
+  Browser fragen. Ergänzt die Notiz in `reference_framer_seite_per_agent`.
+- **Framers Link-CSS schlägt die Knotenwerte.** `textDecoration="underline"` und `textColor`
+  stehen am `TextRun` — im Projekt nachgelesen, sauber gespeichert. Ausgeliefert wurde
+  trotzdem `text-decoration: none` in der Absatzfarbe: zwei Links, die wie Fließtext aussahen,
+  auf der Seite, deren einzige Aufgabe der nächste Schritt ist. Gelöst mit einer eng gefassten
+  Regel im Spiegel-Stilblock, die nur auf `/kontakt/danke` greift (Klasse `fw-danke` am
+  `<html>`, bei jedem Seitenwechsel nachgeführt).
+- **Geänderter Custom-Code baut das Paket wieder nicht neu.** „Änderungen: 0", obwohl der
+  Stilblock neu war. Eine Umbenennung auf der Leinwand hat gereicht.
+
+### Was offen bleibt
+
+`/kontakt` steht **nicht** in der Trichter-Ausnahme (`TRICHTER` in
+`einwilligungsmodus-head-start.html`), dort gilt also weiter das Einwilligungsbanner. Meta
+und Google sehen den Abschluss damit nur bei Zustimmung — bei rund 5 % gemessener Zustimmung
+ist **Framers cookielose Messung die belastbare Zahl**: ein Seitenaufruf von `/kontakt/danke`
+ist eine Anfrage. Ob `/kontakt` in die Ausnahme gehört, ist eine Entscheidung über das
+Banner, keine Reparatur im Vorbeigehen.
+
+
 ## 02.11.2026 — Durchsicht: wo ein Lead ankommt und wo nicht
 
 Anlass war eine Anfrage, deren Benachrichtigung „New Submission" hieß und als Antwortadresse
