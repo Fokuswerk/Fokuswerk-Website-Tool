@@ -34,10 +34,19 @@ export const verein = {
   /** Vertretungsberechtigt laut Kontaktseite der bisherigen Website. */
   vorsitzende: "Anja Schulte-Rogge",
 
+  /*
+    Die neuen Auftritte, vom Verein am 11.11.2026 durchgegeben und am selben
+    Tag im Browser nachgeprüft. Die alten Adressen liefen ins Leere: die alte
+    Facebook-Seite meldet „Dieser Inhalt ist momentan nicht verfügbar", und
+    beim alten Instagram-Namen fehlte das „e" (glucksbringerammeer), das
+    Profil gibt es nicht.
+
+    Beim Facebook-Link ist der mitkopierte Zusatz `&locale=bs_BA` entfernt –
+    der hätte Besuchern die Seite auf Bosnisch gezeigt.
+  */
   social: {
-    facebook:
-      "https://www.facebook.com/pages/Gl%C3%BCcksbringer-am-Meer-eV/298029483630086",
-    instagram: "https://instagram.com/glucksbringerammeer/",
+    facebook: "https://www.facebook.com/profile.php?id=61581854391895",
+    instagram: "https://www.instagram.com/gluecksbringerammeer/",
   },
 
   /**
